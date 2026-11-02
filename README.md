@@ -17,4 +17,6 @@ The initial vertical slice defines a safe session lifecycle and a local Windows 
 
 `dotnet run --project apps/windows-companion/LockIn.Companion.csproj`
 
-The companion binds to loopback by default. LAN pairing will be added only with an explicit pairing flow and authenticated transport.
+Session checks: `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj`
+
+The companion binds to loopback only and its endpoints are currently unauthenticated. Do not expose it to a network. Session state is in memory, is lost on restart, and expiration is evaluated when the store is read or a new session is started; no background restriction cleanup is implemented. LAN pairing will be added only with an explicit pairing flow and authenticated transport.

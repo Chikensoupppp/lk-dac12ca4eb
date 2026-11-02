@@ -23,7 +23,11 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 Run 41501970643 passed and its small- and large-device active, elapsed, completion, and large-text screenshots were inspected. Controls fit, but the SE completion image showed a distorted arc during the parent transition. Commit 0193e7a disables parent animation on the timestamp-driven readout. Run 41503492932 passed; its compact completion screenshot was inspected with no visible arc distortion in that frame. Video or live inspection is still needed to verify the whole transition.
 
-Run 41505024883 passed and produced eight sampled completion frames. The compact frames were inspected but all occurred before expiry, so they do not establish behavior across the reset. Commit cf10cce extends sampling to fourteen frames; inspect run 41506311990 and its `completion-frame-*` artifacts on compact and large devices. Sampling is not continuous video and may miss frames.
+Run 41506311990 passed after sampling was extended to fourteen frames. The compact frames inspected span the countdown and reset with no visible recurrence of the distorted arc. Inspected Pro Max samples were already after completion. Sampling is not continuous video and may miss frames.
+
+## Windows session reliability
+
+The loopback-only companion now evaluates expiry against an injected clock when the store is read or started, rejects simultaneous/duplicate starts with HTTP 409, and no longer advertises a placeholder workspace capability. `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj` passed boundary, stop, and concurrent-start checks. Live HTTP checks passed for 200/409/400 paths. Expiry is lazy, state is not persistent, and endpoints are unauthenticated; do not expose to LAN. Expiry uses UTC wall-clock time, so clock adjustments can shorten or extend sessions; decide and test clock-change and cross-device reconciliation semantics before enforcing restrictions. A Windows CI workflow was added but must be checked after push. Pairing needs authenticated encrypted transport, explicit approval, and recovery design before remote control.
 
 Signing handoff: `com.lockin.focus` is an unverified development placeholder, not a claimed App Store identity. The Windows-to-iOS guide documents Apple team, bundle ID, provisioning, archive, and TestFlight prerequisites. No Apple account access, signing identity, signed archive, upload, or distribution has been verified.
 

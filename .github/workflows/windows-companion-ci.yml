@@ -1,0 +1,17 @@
+name: Windows companion checks
+on:
+  push:
+    paths: ['apps/windows-companion/**', 'tests/windows-companion/**', '.github/workflows/windows-companion-ci.yml']
+  pull_request:
+    paths: ['apps/windows-companion/**', 'tests/windows-companion/**', '.github/workflows/windows-companion-ci.yml']
+  workflow_dispatch:
+jobs:
+  checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and exercise session lifecycle
+        run: dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj --configuration Release

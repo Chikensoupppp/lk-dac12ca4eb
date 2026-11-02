@@ -6,9 +6,15 @@
   "properties": {
     "id": { "type": "string" },
     "state": { "enum": ["idle", "starting", "active", "ending", "failed"] },
-    "durationSeconds": { "type": "integer", "minimum": 60 },
+    "durationSeconds": { "type": "integer", "minimum": 0 },
     "startedAt": { "type": ["string", "null"], "format": "date-time" },
     "endsAt": { "type": ["string", "null"], "format": "date-time" },
     "capabilities": { "type": "array", "items": { "type": "string" } }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "state": { "const": "active" } }, "required": ["state"] },
+      "then": { "properties": { "durationSeconds": { "minimum": 60 } } }
+    }
+  ]
 }

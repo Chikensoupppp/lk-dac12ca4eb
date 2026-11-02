@@ -8,6 +8,7 @@ Updated: 2026-11-02
 - Shared project instructions and product documents.
 - Versioned session protocol with explicit lifecycle and capability reporting.
 - Windows companion service with loopback health, session start, and session stop endpoints.
+- Windows session store expires elapsed sessions on read or start and returns an HTTP conflict for duplicate starts. A .NET console check suite covers timing boundaries, early stop and concurrent starts.
 - SwiftUI iPhone shell for selecting duration and starting/stopping a local session model.
 - Titanium countdown clock (`apps/ios/LockIn/Clock/`) driven by a single end-timestamp (`SessionTiming`).
 - XcodeGen project and macOS simulator CI; UI tests and screenshot capture are included.
@@ -16,6 +17,7 @@ Updated: 2026-11-02
 
 - `dotnet build apps/windows-companion/LockIn.Companion.csproj`
 - Live HTTP check: `/health`, `/session/start`, and `/session/stop` on `127.0.0.1:47821`
+- Windows session checks passed locally, including exact expiry and 32 concurrent start attempts. Live HTTP checks returned 200 for health/start/stop, 409 for duplicate start, and 400 for invalid duration.
 - GitHub Actions run 41492862464: Xcode 16.4 generated the project, compiled for iOS Simulator, and passed two unit tests.
 - GitHub Actions run 41493405111: full workflow passed, including UI start/end and natural completion. Idle simulator screenshots were captured and visually inspected for iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max. No clipping was observed in those idle images.
 - GitHub Actions run 41493946600: two unit tests and three UI tests passed, including returning after the session expired in the background.
@@ -27,10 +29,12 @@ Updated: 2026-11-02
 - GitHub Actions run 41499712871: full workflow passed, including iPhone SE start/end and accessibility-size controls. The compact active-state screenshot was inspected with no visible clipping.
 - GitHub Actions run 41501083353: full workflow passed, including selected-duration accessibility state and changing countdown accessibility-value assertions on standard and compact simulators.
 - GitHub Actions run 41501970643: full workflow passed with idle, active, partially elapsed, completion, and large-text UI captures on iPhone SE and iPhone 16 Pro Max. The images were inspected; controls fit. The SE completion capture showed arc distortion during the transition. Commit 0193e7a disables parent animation for the timestamp-driven readout. Run 41503492932 passed, and its SE completion frame was inspected with no visible arc distortion; a still does not verify every frame of the transition.
+- Run 41506311990 passed. SE sampled frames showed the countdown and reset without the prior arc distortion. Inspected Pro Max samples were captured after completion, so they do not verify its transition.
 
 ## Not yet verified
 
 - Manual VoiceOver, actual system-level Reduce Motion behavior, physical-device behavior, and profiling remain unverified. The debug override test does not establish that every animation is absent or verify operating-system settings.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
+- Windows CI for the new session checks has not yet been observed; the store is in-memory and lazy-expiring, wall-clock adjustments affect its deadline, and it is not a restriction enforcement or recovery mechanism.
 - Actual Windows application/site restriction enforcement.
