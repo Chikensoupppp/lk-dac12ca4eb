@@ -99,7 +99,13 @@ struct FocusView: View {
     // MARK: Session transitions
 
     private func startSession() {
-        let session = SessionTiming(startedAt: .now, duration: TimeInterval(selectedMinutes * 60))
+        var duration = TimeInterval(selectedMinutes * 60)
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-short-session") {
+            duration = 5
+        }
+        #endif
+        let session = SessionTiming(startedAt: .now, duration: duration)
         withAnimation(stateAnimation) {
             justCompleted = false
             timing = session
@@ -113,7 +119,7 @@ struct FocusView: View {
     }
 
     private func completeSession() {
-        guard timing != nil else { return }
+        guard let timing, timing.isFinished(at: .now) else { return }
         completionCount += 1
         withAnimation(stateAnimation) {
             justCompleted = true

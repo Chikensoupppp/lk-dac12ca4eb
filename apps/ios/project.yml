@@ -26,11 +26,22 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus.tests
         GENERATE_INFOPLIST_FILE: YES
+  LockInUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [LockInUITests]
+    dependencies:
+      - target: LockIn
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus.uitests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   LockIn:
     build:
       targets:
         LockIn: all
         LockInTests: [test]
+        LockInUITests: [test]
     test:
-      targets: [LockInTests]
+      targets: [LockInTests, LockInUITests]

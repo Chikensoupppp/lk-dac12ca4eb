@@ -26,6 +26,31 @@ jobs:
           cd apps/ios
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for devices in d["devices"].values() for x in devices if x["name"].startswith("iPhone") and x["isAvailable"]))')
           xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/LockIn.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+      - name: Capture simulator screens
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/screenshots"
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
+          python3 - "$RUNNER_TEMP/devices.json" > "$RUNNER_TEMP/selected-devices.txt" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1]))
+          devices=[x for group in data["devices"].values() for x in group if x["isAvailable"] and x["name"].startswith("iPhone")]
+          for names in [("iPhone SE", "iPhone 16e", "iPhone 16"), ("iPhone 16", "iPhone 15"), ("iPhone 16 Pro Max", "iPhone 15 Pro Max")]:
+              device=next((x for name in names for x in devices if x["name"] == name), None)
+              if device:
+                  print(device["udid"], device["name"].replace(" ", "-"))
+          PY
+          while read -r id name; do
+            xcrun simctl boot "$id" || true
+            xcrun simctl bootstatus "$id" -b
+            xcrun simctl install "$id" "$RUNNER_TEMP/LockInDerived/Build/Products/Debug-iphonesimulator/LockIn.app"
+            xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100
+            xcrun simctl launch "$id" com.lockin.focus
+            sleep 5
+            xcrun simctl io "$id" screenshot "$RUNNER_TEMP/screenshots/$name-idle.png"
+            xcrun simctl shutdown "$id"
+          done < "$RUNNER_TEMP/selected-devices.txt"
       - name: Upload build and test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -35,4 +60,6 @@ jobs:
             ${{ runner.temp }}/xcodebuild.log
             ${{ runner.temp }}/LockIn.xcresult
             ${{ runner.temp }}/LockInDerived/Build/Products/Debug-iphonesimulator/LockIn.app
+            ${{ runner.temp }}/screenshots
+            ${{ runner.temp }}/selected-devices.txt
           if-no-files-found: warn

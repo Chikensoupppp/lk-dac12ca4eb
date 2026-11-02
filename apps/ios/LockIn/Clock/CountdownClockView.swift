@@ -33,7 +33,8 @@ struct CountdownClockView: View {
         let remaining = timing?.remaining(at: now) ?? duration
         let seconds = Int(remaining.rounded(.up))
         // Reduce Motion: the arc steps once per second instead of sweeping continuously.
-        let fraction = reduceMotion ? Double(seconds) / duration : remaining / duration
+        let total = timing?.duration ?? duration
+        let fraction = total > 0 ? (reduceMotion ? Double(seconds) / total : remaining / total) : 0
 
         ZStack {
             ProgressArc(fraction: fraction, diameter: g.ringDiameter, lineWidth: g.ringWidth)

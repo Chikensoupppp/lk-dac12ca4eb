@@ -11,7 +11,7 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 ## Clock
 
-`apps/ios/LockIn/Clock/` holds the reusable `CountdownClockView`. `FocusView.timing` (`SessionTiming?`) is the only session clock; the view renders from it. Requires iOS 17 (`sensoryFeedback`, `smooth`). Written without a Swift toolchain: build it and tune materials in an Xcode preview first.
+`apps/ios/LockIn/Clock/` holds the reusable `CountdownClockView`. `FocusView.timing` (`SessionTiming?`) is the only session clock; the view renders from it. GitHub Actions run 41492862464 compiled it on Xcode 16.4 and passed two timing unit tests. UI tests and multi-device screenshots were added afterward and must be verified on a later run. See `docs/WINDOWS_IOS_DEVELOPMENT.md`.
 
 ## Recommended next work
 
