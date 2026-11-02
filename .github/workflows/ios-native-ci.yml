@@ -36,7 +36,7 @@ jobs:
           import json,sys
           data=json.load(open(sys.argv[1]))
           devices=[x for group in data["devices"].values() for x in group if x["isAvailable"] and x["name"].startswith("iPhone")]
-          for names in [("iPhone SE", "iPhone 16e", "iPhone 16"), ("iPhone 16", "iPhone 15"), ("iPhone 16 Pro Max", "iPhone 15 Pro Max")]:
+          for names in [("iPhone SE (3rd generation)", "iPhone 16e", "iPhone 16"), ("iPhone 16", "iPhone 15"), ("iPhone 16 Pro Max", "iPhone 15 Pro Max")]:
               device=next((x for name in names for x in devices if x["name"] == name), None)
               if device:
                   print(device["udid"], device["name"].replace(" ", "-"))

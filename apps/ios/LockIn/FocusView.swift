@@ -119,7 +119,7 @@ struct FocusView: View {
     }
 
     private func completeSession() {
-        guard let timing, timing.isFinished(at: .now) else { return }
+        guard let session = timing, session.isFinished(at: .now) else { return }
         completionCount += 1
         withAnimation(stateAnimation) {
             justCompleted = true
