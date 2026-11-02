@@ -21,10 +21,11 @@ Updated: 2026-11-02
 - GitHub Actions run 41493946600: two unit tests and three UI tests passed, including returning after the session expired in the background.
 - GitHub Actions run 41494428865: two unit tests and five UI tests passed, covering return before and after expiry, natural completion, start/end, and control reachability under a large-text launch setting. Test screenshots were exported and inspected for active, partially elapsed, completed, and large-text launch states on iPhone 16 Pro.
 - GitHub Actions run 41495360016: the scaled-text implementation passed the full workflow; the iPhone 16 Pro accessibility-size screenshot was inspected and shows visibly enlarged controls without clipping.
+- GitHub Actions run 41496429343: full workflow passed, including a separate iPhone SE accessibility-size UI test for all duration controls and the primary button. The SE screenshot was inspected and shows no visible clipping.
 
 ## Not yet verified
 
-- Accessibility-size layout on a compact iPhone, VoiceOver, Reduce Motion behavior, physical-device behavior, and profiling remain unverified.
+- VoiceOver, Reduce Motion behavior, physical-device behavior, and profiling remain unverified.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
 - Actual Windows application/site restriction enforcement.
