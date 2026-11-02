@@ -8,8 +8,15 @@ final class FocusUITests: XCTestCase {
         add(attachment)
     }
 
-    func testStartAndEnd() {
+    /// Every test starts from a clean persisted state unless it relaunches on purpose.
+    private func makeApp(reset: Bool = true) -> XCUIApplication {
         let app = XCUIApplication()
+        if reset { app.launchArguments.append("-ui-testing-reset-state") }
+        return app
+    }
+
+    func testStartAndEnd() {
+        let app = makeApp()
         app.launch()
         XCTAssertTrue(app.buttons["45 minutes"].waitForExistence(timeout: 10))
         capture("idle-45")
@@ -29,7 +36,7 @@ final class FocusUITests: XCTestCase {
     }
 
     func testNaturalCompletion() {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launchArguments.append("-ui-testing-short-session")
         app.launch()
         app.buttons["LOCK IN"].tap()
@@ -47,7 +54,7 @@ final class FocusUITests: XCTestCase {
     }
 
     func testBackgroundAfterExpiry() {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launchArguments += ["-ui-testing-short-session", "-ui-testing-completion-count"]
         app.launch()
         app.buttons["LOCK IN"].tap()
@@ -64,7 +71,7 @@ final class FocusUITests: XCTestCase {
     }
 
     func testBackgroundBeforeExpiry() {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launch()
         app.buttons["LOCK IN"].tap()
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
@@ -75,7 +82,7 @@ final class FocusUITests: XCTestCase {
     }
 
     func testLargeTextControlsAreReachable() {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
         XCTAssertTrue(app.buttons["45 minutes"].waitForExistence(timeout: 10))
@@ -87,7 +94,7 @@ final class FocusUITests: XCTestCase {
     }
 
     func testReduceMotionTimerAccessibility() {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launchArguments += ["-ui-testing-reduce-motion", "-ui-testing-short-session"]
         app.launch()
         let timer = app.otherElements["Focus timer"]
@@ -97,5 +104,69 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue((timer.value as? String ?? "").contains("remaining"))
         capture("reduce-motion-active")
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 15))
+    }
+
+    // MARK: Relaunch recovery
+
+    func testActiveSessionSurvivesTermination() {
+        let app = makeApp()
+        app.launch()
+        app.buttons["25 minutes"].tap()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        app.terminate()
+
+        let relaunched = makeApp(reset: false)
+        relaunched.launch()
+        XCTAssertTrue(relaunched.buttons["END SESSION"].waitForExistence(timeout: 10))
+        let timer = relaunched.otherElements["Focus timer"]
+        XCTAssertTrue(timer.exists)
+        XCTAssertTrue((timer.value as? String ?? "").contains("remaining"))
+        capture("restored-active")
+        relaunched.buttons["END SESSION"].tap()
+        XCTAssertTrue(relaunched.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    func testRelaunchAfterExpiryCompletesExactlyOnce() {
+        let app = makeApp()
+        app.launchArguments += ["-ui-testing-short-session"]
+        app.launch()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        app.terminate()
+        sleep(7)
+
+        let relaunched = makeApp(reset: false)
+        relaunched.launchArguments += ["-ui-testing-completion-count"]
+        relaunched.launch()
+        XCTAssertTrue(relaunched.buttons["LOCK IN"].waitForExistence(timeout: 10))
+        XCTAssertFalse(relaunched.buttons["END SESSION"].exists)
+        let count = relaunched.staticTexts["completion-count"]
+        XCTAssertTrue(count.waitForExistence(timeout: 5))
+        XCTAssertEqual(count.label, "Completion count: 1")
+        capture("restored-expired")
+        relaunched.terminate()
+
+        // The expired record was cleared, so another launch is plainly idle.
+        let third = makeApp(reset: false)
+        third.launchArguments += ["-ui-testing-completion-count"]
+        third.launch()
+        XCTAssertTrue(third.buttons["LOCK IN"].waitForExistence(timeout: 10))
+        XCTAssertEqual(third.staticTexts["completion-count"].label, "Completion count: 0")
+    }
+
+    func testEarlyCancellationDoesNotRestore() {
+        let app = makeApp()
+        app.launch()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        app.buttons["END SESSION"].tap()
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+        app.terminate()
+
+        let relaunched = makeApp(reset: false)
+        relaunched.launch()
+        XCTAssertTrue(relaunched.buttons["LOCK IN"].waitForExistence(timeout: 10))
+        XCTAssertFalse(relaunched.buttons["END SESSION"].exists)
     }
 }

@@ -6,15 +6,39 @@ import SwiftUI
 struct FocusView: View {
     private static let durationOptions = [15, 25, 45, 60, 90]
 
+    private let store: SessionStoring
+
     @State private var selectedMinutes = 45
     @State private var timing: SessionTiming?
+    @State private var sessionID: UUID?
     @State private var justCompleted = false
     @State private var completionCount = 0
+    /// Set when launch found a session that expired while the app was not running.
+    /// Cleared from storage once, in `.onAppear`, so completion cannot repeat.
+    @State private var expiredOnLaunch = false
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    init(store: SessionStoring = UserDefaultsSessionStore()) {
+        self.store = store
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-state") { store.clear() }
+        #endif
+        switch SessionRecovery.resolve(store.load(), now: .now) {
+        case .idle:
+            break
+        case .active(let record):
+            _timing = State(initialValue: record.timing)
+            _sessionID = State(initialValue: record.id)
+        case .expired:
+            _justCompleted = State(initialValue: true)
+            _completionCount = State(initialValue: 1)
+            _expiredOnLaunch = State(initialValue: true)
+        }
+    }
 
     private var isLocked: Bool { timing != nil }
 
@@ -86,6 +110,12 @@ struct FocusView: View {
             #endif
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            if expiredOnLaunch {
+                expiredOnLaunch = false
+                store.clear()
+            }
+        }
         .sensoryFeedback(.impact(weight: .medium), trigger: isLocked)
         .sensoryFeedback(.success, trigger: completionCount)
         // Fires when the end timestamp passes. Cancelled automatically when the session
@@ -116,23 +146,30 @@ struct FocusView: View {
         }
         #endif
         let session = SessionTiming(startedAt: .now, duration: duration)
+        let record = SessionRecord(timing: session)
+        store.save(record)
         withAnimation(stateAnimation) {
             justCompleted = false
+            sessionID = record.id
             timing = session
         }
     }
 
     private func endSession() {
+        store.clear()
         withAnimation(stateAnimation) {
+            sessionID = nil
             timing = nil
         }
     }
 
     private func completeSession() {
         guard let session = timing, session.isFinished(at: .now) else { return }
+        store.clear()
         completionCount += 1
         withAnimation(stateAnimation) {
             justCompleted = true
+            sessionID = nil
             timing = nil
         }
     }
