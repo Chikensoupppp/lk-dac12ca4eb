@@ -15,7 +15,12 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 ## Recommended next work
 
-1. Add authenticated pairing using a short-lived code and a local encrypted credential store.
-2. Add an integration test for start/stop/reconnect and clock drift.
-3. Move workspace operations behind an explicit reversible profile interface.
-4. On macOS, create the Xcode project target and verify Screen Time authorization on a physical iPhone.
+1. On branch `ios/native-clock-ci`, inspect run 41495360016 with `gh run view 41495360016`; if it fails, inspect `gh run view 41495360016 --log-failed`. Do not assume success while it is running.
+2. Download its artifact using `./scripts/ios-ci.ps1 -Action download -RunId 41495360016`. Inspect `test-attachments/manifest.json` and the large-text image, as well as the compact and large idle screenshots. Verify scaled controls are readable and reachable; fix and rerun if not.
+3. Test Reduce Motion and VoiceOver where practical; the existing large-text test checks reachability, not that the text actually scaled. The completion image in run 41494428865 was captured during a transition. Session data is in memory only.
+4. Confirm duplicate-completion behavior, improve compact-device active/large-text coverage, and update status from actual CI evidence. Neither Xcode Preview nor physical-device signing/install has been verified.
+5. Later: authenticated pairing, clock-drift and reconnect testing, reversible Windows workspace profiles, and physical-device Screen Time authorization. These are separate from the present iOS clock milestone.
+
+## Git and collaboration
+
+The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.
