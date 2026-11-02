@@ -21,6 +21,9 @@ struct CountdownClockView: View {
                 // Per-frame updates only touch this layer: the arc and the digits.
                 TimelineView(.animation(minimumInterval: reduceMotion ? 1 : nil, paused: timing == nil)) { context in
                     readout(at: context.date, geometry: g)
+                        // The clock is driven by timestamps; interpolating the reset arc
+                        // during the surrounding layout transition distorts the dial.
+                        .transaction { $0.animation = nil }
                 }
             }
             .frame(width: g.total, height: g.total)
