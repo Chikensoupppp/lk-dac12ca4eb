@@ -1,0 +1,38 @@
+name: iOS native CI
+on:
+  push:
+    paths: ['apps/ios/**', '.github/workflows/ios-native-ci.yml']
+  pull_request:
+    paths: ['apps/ios/**', '.github/workflows/ios-native-ci.yml']
+  workflow_dispatch:
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tool versions
+        run: xcodebuild -version && swift --version && xcrun simctl list devices available
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          cd apps/ios
+          xcodegen generate
+          xcodebuild -list -project LockIn.xcodeproj
+      - name: Build and test
+        shell: bash
+        run: |
+          set -o pipefail
+          cd apps/ios
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for devices in d["devices"].values() for x in devices if x["name"].startswith("iPhone") and x["isAvailable"]))')
+          xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/LockIn.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+      - name: Upload build and test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-native-results
+          path: |
+            ${{ runner.temp }}/xcodebuild.log
+            ${{ runner.temp }}/LockIn.xcresult
+            ${{ runner.temp }}/LockInDerived/Build/Products/Debug-iphonesimulator/LockIn.app
+          if-no-files-found: warn

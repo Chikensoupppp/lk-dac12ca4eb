@@ -1,75 +1,190 @@
 import SwiftUI
 
+/// Focus screen. `timing` is the single source of truth for the session:
+/// nil means idle, non-nil means a session is running until `timing.endsAt`.
+/// The clock, labels and completion all derive from it.
 struct FocusView: View {
-    @State private var duration: Int = 25
-    @State private var isLocked = false
-    @State private var startedAt: Date?
+    private static let durationOptions = [15, 25, 45, 60, 90]
 
-    private var endDate: Date? {
-        guard let startedAt else { return nil }
-        return startedAt.addingTimeInterval(TimeInterval(duration * 60))
+    @State private var selectedMinutes = 45
+    @State private var timing: SessionTiming?
+    @State private var justCompleted = false
+    @State private var completionCount = 0
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+
+    private var isLocked: Bool { timing != nil }
+
+    private var stateAnimation: Animation {
+        reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.7)
+    }
+
+    private var clockCaption: String {
+        if let timing {
+            return "Ends " + timing.endsAt.formatted(date: .omitted, time: .shortened)
+        }
+        return justCompleted ? "Session complete" : "Ready"
     }
 
     var body: some View {
         ZStack {
-            Color(red: 0.05, green: 0.06, blue: 0.09).ignoresSafeArea()
-            VStack(spacing: 28) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("LOCK IN").font(.system(size: 14, weight: .bold, design: .rounded)).tracking(3)
-                        Text(isLocked ? "Focus session" : "How long do you want?")
-                            .font(.system(size: 28, weight: .semibold, design: .rounded))
-                    }
-                    Spacer()
-                }
-                .foregroundStyle(.white)
+            FocusBackdrop()
 
-                if let endDate, isLocked {
-                    Text(endDate, style: .timer)
-                        .font(.system(size: 70, weight: .medium, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(.white)
-                } else {
-                    Picker("Focus duration", selection: $duration) {
-                        Text("15 minutes").tag(15)
-                        Text("25 minutes").tag(25)
-                        Text("45 minutes").tag(45)
-                        Text("60 minutes").tag(60)
-                        Text("90 minutes").tag(90)
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.white)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 14)
-                    .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-                }
+            GeometryReader { geo in
+                let side = max(min(geo.size.width - 48, geo.size.height * 0.5), 200)
 
-                Button {
-                    if isLocked {
-                        isLocked = false
-                        startedAt = nil
-                    } else {
-                        startedAt = Date()
-                        isLocked = true
-                    }
-                } label: {
-                    Text(isLocked ? "END SESSION" : "LOCK IN")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(isLocked ? .gray : Color(red: 0.35, green: 0.85, blue: 0.70))
-                .foregroundStyle(.black)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                VStack(spacing: 0) {
+                    Text("LOCK IN")
+                        .font(.system(size: 12, weight: .semibold))
+                        .tracking(5)
+                        .foregroundStyle(Color.white.opacity(isLocked ? 0.3 : 0.55))
+                        .padding(.top, 12)
 
-                Text(isLocked ? "Your focus time is running" : "Choose a time, then lock in")
-                    .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.55))
+                    Spacer(minLength: 16)
+
+                    CountdownClockView(
+                        duration: TimeInterval(selectedMinutes * 60),
+                        timing: timing,
+                        caption: clockCaption
+                    )
+                    .frame(width: side, height: side)
+
+                    Spacer(minLength: 16)
+
+                    VStack(spacing: 10) {
+                        Text("MINUTES")
+                            .font(.system(size: 10, weight: .medium))
+                            .tracking(3)
+                            .foregroundStyle(Color.white.opacity(0.3))
+                        DurationSelector(options: Self.durationOptions, selection: $selectedMinutes)
+                    }
+                    .opacity(isLocked ? 0 : 1)
+                    .allowsHitTesting(!isLocked)
+                    .accessibilityHidden(isLocked)
+                    .padding(.bottom, 24)
+
+                    Button(action: isLocked ? endSession : startSession) {
+                        Text(isLocked ? "END SESSION" : "LOCK IN")
+                    }
+                    .buttonStyle(TitaniumButtonStyle(prominent: !isLocked))
+                    .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(24)
+        }
+        .preferredColorScheme(.dark)
+        .sensoryFeedback(.impact(weight: .medium), trigger: isLocked)
+        .sensoryFeedback(.success, trigger: completionCount)
+        // Fires when the end timestamp passes. Cancelled automatically when the session
+        // changes or the view goes away.
+        .task(id: timing) {
+            guard let timing else { return }
+            while !Task.isCancelled && !timing.isFinished(at: .now) {
+                try? await Task.sleep(for: .seconds(max(timing.endsAt.timeIntervalSinceNow, 0.05)))
+            }
+            guard !Task.isCancelled else { return }
+            completeSession()
+        }
+        // The task above can be suspended in the background; re-check on return.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active, let timing, timing.isFinished(at: .now) {
+                completeSession()
+            }
+        }
+    }
+
+    // MARK: Session transitions
+
+    private func startSession() {
+        let session = SessionTiming(startedAt: .now, duration: TimeInterval(selectedMinutes * 60))
+        withAnimation(stateAnimation) {
+            justCompleted = false
+            timing = session
+        }
+    }
+
+    private func endSession() {
+        withAnimation(stateAnimation) {
+            timing = nil
+        }
+    }
+
+    private func completeSession() {
+        guard timing != nil else { return }
+        completionCount += 1
+        withAnimation(stateAnimation) {
+            justCompleted = true
+            timing = nil
         }
     }
 }
 
-#Preview { FocusView() }
+private struct FocusBackdrop: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(white: 0.065), Color(white: 0.028)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            RadialGradient(
+                colors: [Color.white.opacity(0.05), Color.clear],
+                center: UnitPoint(x: 0.3, y: 0),
+                startRadius: 0,
+                endRadius: 420
+            )
+        }
+        .ignoresSafeArea()
+    }
+}
+
+private struct DurationSelector: View {
+    let options: [Int]
+    @Binding var selection: Int
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(options, id: \.self) { minutes in
+                let selected = minutes == selection
+                Button {
+                    selection = minutes
+                } label: {
+                    Text("\(minutes)")
+                        .font(.system(size: 15, weight: selected ? .semibold : .regular).monospacedDigit())
+                        .foregroundStyle(selected ? Color.white : Color.white.opacity(0.42))
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background {
+                            if selected {
+                                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                    .fill(Color.white.opacity(0.09))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                            .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+                                    )
+                            }
+                        }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(minutes) minutes")
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .fill(Color.black.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+        )
+        .animation(.snappy(duration: 0.25), value: selection)
+        .sensoryFeedback(.selection, trigger: selection)
+    }
+}
+
+#Preview("Idle") { FocusView() }
