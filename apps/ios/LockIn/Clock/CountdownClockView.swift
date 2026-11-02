@@ -18,7 +18,7 @@ struct CountdownClockView: View {
                     .accessibilityHidden(true)
 
                 // Per-frame updates only touch this layer: the arc and the digits.
-                TimelineView(.animation(minimumInterval: reduceMotion ? 0.25 : nil, paused: timing == nil)) { context in
+                TimelineView(.animation(minimumInterval: reduceMotion ? 1 : nil, paused: timing == nil)) { context in
                     readout(at: context.date, geometry: g)
                 }
             }
