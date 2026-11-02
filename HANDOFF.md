@@ -21,6 +21,8 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 4. Run 41499182488 passed its build and UI test step, including a debug-only counter checking one completion after background expiry. Run 41499712871 passed the full workflow and added compact-device start/end coverage; its active iPhone SE screenshot was inspected without visible clipping. Run 41501083353 passed its standard and compact simulator test steps, including selected-state and changing accessibility-value assertions; screenshot capture was still running at last check. Neither Xcode Preview nor physical-device signing/install has been verified.
 5. Later: authenticated pairing, clock-drift and reconnect testing, reversible Windows workspace profiles, and physical-device Screen Time authorization. These are separate from the present iOS clock milestone.
 
+Signing handoff: `com.lockin.focus` is an unverified development placeholder, not a claimed App Store identity. The Windows-to-iOS guide documents Apple team, bundle ID, provisioning, archive, and TestFlight prerequisites. No Apple account access, signing identity, signed archive, upload, or distribution has been verified.
+
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.
