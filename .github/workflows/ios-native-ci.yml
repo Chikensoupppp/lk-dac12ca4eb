@@ -39,13 +39,27 @@ jobs:
           set -o pipefail
           cd apps/ios
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for devices in d["devices"].values() for x in devices if x["name"] == "iPhone SE (3rd generation)" and x["isAvailable"]))')
-          xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -only-testing:LockInUITests/FocusUITests/testLargeTextControlsAreReachable -only-testing:LockInUITests/FocusUITests/testStartAndEnd -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/Compact.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/compact-test.log"
+          xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -only-testing:LockInUITests/FocusUITests/testLargeTextControlsAreReachable -only-testing:LockInUITests/FocusUITests/testStartAndEnd -only-testing:LockInUITests/FocusUITests/testNaturalCompletion -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/Compact.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/compact-test.log"
       - name: Export compact-device test screenshots
         if: always()
         shell: bash
         run: |
           if [ -d "$RUNNER_TEMP/Compact.xcresult" ]; then
             xcrun xcresulttool export attachments --path "$RUNNER_TEMP/Compact.xcresult" --output-path "$RUNNER_TEMP/compact-attachments"
+          fi
+      - name: Test large-device clock states
+        shell: bash
+        run: |
+          set -o pipefail
+          cd apps/ios
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for devices in d["devices"].values() for x in devices if x["name"] == "iPhone 16 Pro Max" and x["isAvailable"]))')
+          xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -only-testing:LockInUITests/FocusUITests/testLargeTextControlsAreReachable -only-testing:LockInUITests/FocusUITests/testStartAndEnd -only-testing:LockInUITests/FocusUITests/testNaturalCompletion -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/Large.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/large-test.log"
+      - name: Export large-device test screenshots
+        if: always()
+        shell: bash
+        run: |
+          if [ -d "$RUNNER_TEMP/Large.xcresult" ]; then
+            xcrun xcresulttool export attachments --path "$RUNNER_TEMP/Large.xcresult" --output-path "$RUNNER_TEMP/large-attachments"
           fi
       - name: Capture simulator screens
         timeout-minutes: 8
@@ -87,5 +101,8 @@ jobs:
             ${{ runner.temp }}/compact-test.log
             ${{ runner.temp }}/Compact.xcresult
             ${{ runner.temp }}/compact-attachments
+            ${{ runner.temp }}/large-test.log
+            ${{ runner.temp }}/Large.xcresult
+            ${{ runner.temp }}/large-attachments
             ${{ runner.temp }}/selected-devices.txt
           if-no-files-found: warn
