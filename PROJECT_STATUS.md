@@ -23,7 +23,7 @@ Updated: 2026-11-02
 
 ## Not yet verified
 
-- The large-text screenshot looks similar to the default because the interface uses fixed-size fonts; actual Dynamic Type scaling has not been established. VoiceOver, Reduce Motion behavior, physical-device behavior, and profiling remain unverified.
+- Dynamic Type changes for the duration controls and primary button were added after run 41494428865 and are awaiting simulator verification. VoiceOver, Reduce Motion behavior, physical-device behavior, and profiling remain unverified.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
 - Actual Windows application/site restriction enforcement.
