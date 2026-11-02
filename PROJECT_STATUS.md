@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-11-02
+Updated: 2026-11-02 (branch ios/native-clock-ci)
 
 ## Implemented
 
@@ -32,10 +32,15 @@ Updated: 2026-11-02
 - GitHub Actions run 41501970643: full workflow passed with idle, active, partially elapsed, completion, and large-text UI captures on iPhone SE and iPhone 16 Pro Max. The images were inspected; controls fit. The SE completion capture showed arc distortion during the transition. Commit 0193e7a disables parent animation for the timestamp-driven readout. Run 41503492932 passed, and its SE completion frame was inspected with no visible arc distortion; a still does not verify every frame of the transition.
 - Run 41506311990 passed. SE sampled frames showed the countdown and reset without the prior arc distortion. Inspected Pro Max samples were captured after completion, so they do not verify its transition.
 
+- Run 41521075050 (branch ios/native-clock-ci, commit after 41519691608): full workflow passed. 10 unit tests (session persistence and recovery: restore active, expiry boundary, relaunch after expiry, early cancel, clock moved backwards, corrupt data; Screen Time lifecycle with a fake client: denied, failed scheduling, 15-minute minimum, stale and revoked reconcile, cleanup-callback rules) and 10 UI tests (active session survives app termination, relaunch after expiry completes exactly once and a third launch is idle, early cancel does not restore, Restrictions sheet reports "access is off"). Screenshots of idle, sheet, and restored-active were inspected.
+- The app plus the LockInMonitor Device Activity extension build for iOS Simulator with the Family Controls entitlement (unsigned).
+
 ## Not yet verified
 
 - Manual VoiceOver, actual system-level Reduce Motion behavior, physical-device behavior, and profiling remain unverified. The debug override test does not establish that every animation is absent or verify operating-system settings.
-- Screen Time authorization and signing.
+- **Screen Time enforcement.** The simulator cannot grant access. No shield has ever been applied by this code on a device. Authorization, picker, shield, backup-removal timing, and revocation are untested on hardware. See `docs/SCREEN_TIME_RESTRICTIONS.md`.
+- Signing, entitlement approval, bundle IDs (placeholders).
+- Session persistence uses UserDefaults and wall-clock timestamps; a device clock change can shorten or extend a session (a clock moved back by more than 60 seconds discards the record).
 - iPhone/Windows network pairing (Milestone 2).
 - The Windows store is in-memory and lazy-expiring, wall-clock adjustments affect its deadline, and it is not a restriction enforcement or recovery mechanism.
 - Actual Windows application/site restriction enforcement.

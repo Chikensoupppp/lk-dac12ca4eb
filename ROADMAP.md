@@ -21,6 +21,6 @@
 
 ## Milestone 4 — restrictions
 
-- [ ] iOS Screen Time authorization and shield configuration
+- [ ] iOS Screen Time authorization and shield configuration (code and simulator tests done; device verification pending)
 - [ ] Windows app/site restriction capability matrix
 - [ ] Strict mode and safe recovery

@@ -31,6 +31,18 @@ The loopback-only companion now evaluates expiry against an injected clock when 
 
 Signing handoff: `com.lockin.focus` is an unverified development placeholder, not a claimed App Store identity. The Windows-to-iOS guide documents Apple team, bundle ID, provisioning, archive, and TestFlight prerequisites. No Apple account access, signing identity, signed archive, upload, or distribution has been verified.
 
+## iPhone session recovery and Screen Time (2026-11-02)
+
+- `apps/ios/LockIn/Session/SessionRecord.swift`: persisted record (id, startedAt, duration), `SessionRecovery.resolve`, UserDefaults store. `FocusView.timing` is still the only clock; it is rebuilt from the record at launch. Expired sessions complete once and the record is cleared in `.onAppear`.
+- `apps/ios/LockIn/Restrictions/`: `RestrictionController` (lifecycle), `RestrictionPlanner` (pure rules), `ScreenTimeClient` (only file touching Apple frameworks), `RestrictionsSheet` (shield icon, top right when idle).
+- `apps/ios/LockInMonitor/`: Device Activity monitor extension, backup cleanup only. `apps/ios/Shared/RestrictionNaming.swift` is compiled into both targets.
+- Design choices: backup interval is scheduled before any shield is applied; if scheduling fails, no shield. Sessions under 15 minutes get no shields. Reconcile on launch and foreground clears stale or revoked state. No selection by default.
+- Apple facts used (from developer.apple.com): minimum interval 15 minutes; `intervalDidEnd` runs only when the device is in use, so removal may lag; settings are not guaranteed to govern behavior; individual authorization lets the user remove protections. Not tamper-proof.
+- Evidence: runs 41518261198 (persistence), 41519691608 (Screen Time build), 41521075050 (sheet UI test). All passed.
+- Requirements and device test plan: `docs/SCREEN_TIME_RESTRICTIONS.md`. Needs the owner's Apple Developer account, Family Controls entitlement for app and extension, real bundle IDs, a physical iPhone.
+
+Next steps: (1) owner gets entitlement and signs a development build; (2) run the device test plan; (3) record results; (4) only then claim enforcement. Windows pairing stays after that. Nothing was uploaded, merged, or published.
+
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.
