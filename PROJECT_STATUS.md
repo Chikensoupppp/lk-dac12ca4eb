@@ -23,6 +23,7 @@ Updated: 2026-11-02
 - GitHub Actions run 41495360016: the scaled-text implementation passed the full workflow; the iPhone 16 Pro accessibility-size screenshot was inspected and shows visibly enlarged controls without clipping.
 - GitHub Actions run 41496429343: full workflow passed, including a separate iPhone SE accessibility-size UI test for all duration controls and the primary button. The SE screenshot was inspected and shows no visible clipping.
 - GitHub Actions run 41497821630: the full workflow passed with two unit tests, six UI tests including the debug-only Reduce Motion override and timer accessibility-value check, and the separate compact-device test. The exported Reduce Motion active-state image was inspected.
+- GitHub Actions run 41499182488: the build and UI test step passed with the debug-only completion counter asserting exactly one completion after background expiry; the remaining device-capture steps were still running at last check.
 
 ## Not yet verified
 
