@@ -169,4 +169,27 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(relaunched.buttons["LOCK IN"].waitForExistence(timeout: 10))
         XCTAssertFalse(relaunched.buttons["END SESSION"].exists)
     }
+
+    // MARK: Restrictions
+
+    func testRestrictionsSheetReportsUnauthorizedStateHonestly() {
+        let app = makeApp()
+        app.launch()
+        let open = app.buttons["Restrictions"]
+        XCTAssertTrue(open.waitForExistence(timeout: 10))
+        capture("idle-with-restrictions-button")
+        open.tap()
+        let status = app.staticTexts["restrictions-status"]
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        // The simulator cannot grant Screen Time access; the sheet must not claim shields are on.
+        XCTAssertFalse(status.label.contains("Shields are on"))
+        capture("restrictions-sheet")
+        app.buttons["Done"].tap()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        // No shields were applied, so no shield status line is shown.
+        XCTAssertFalse(app.staticTexts["restrictions-line"].exists)
+        XCTAssertFalse(app.buttons["Restrictions"].exists)
+        app.buttons["END SESSION"].tap()
+    }
 }
