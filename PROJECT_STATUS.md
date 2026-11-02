@@ -18,6 +18,7 @@ Updated: 2026-11-02
 - `dotnet build apps/windows-companion/LockIn.Companion.csproj`
 - Live HTTP check: `/health`, `/session/start`, and `/session/stop` on `127.0.0.1:47821`
 - Windows session checks passed locally, including exact expiry and 32 concurrent start attempts. Live HTTP checks returned 200 for health/start/stop, 409 for duplicate start, and 400 for invalid duration.
+- GitHub Actions Windows run 41514843623 passed the companion lifecycle checks on a hosted Windows runner.
 - GitHub Actions run 41492862464: Xcode 16.4 generated the project, compiled for iOS Simulator, and passed two unit tests.
 - GitHub Actions run 41493405111: full workflow passed, including UI start/end and natural completion. Idle simulator screenshots were captured and visually inspected for iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max. No clipping was observed in those idle images.
 - GitHub Actions run 41493946600: two unit tests and three UI tests passed, including returning after the session expired in the background.
@@ -36,5 +37,5 @@ Updated: 2026-11-02
 - Manual VoiceOver, actual system-level Reduce Motion behavior, physical-device behavior, and profiling remain unverified. The debug override test does not establish that every animation is absent or verify operating-system settings.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
-- Windows CI for the new session checks has not yet been observed; the store is in-memory and lazy-expiring, wall-clock adjustments affect its deadline, and it is not a restriction enforcement or recovery mechanism.
+- The Windows store is in-memory and lazy-expiring, wall-clock adjustments affect its deadline, and it is not a restriction enforcement or recovery mechanism.
 - Actual Windows application/site restriction enforcement.
