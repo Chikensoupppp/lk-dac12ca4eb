@@ -28,6 +28,8 @@ final class FocusUITests: XCTestCase {
         app.launch()
         app.buttons["LOCK IN"].tap()
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        sleep(2)
+        capture("partially-elapsed")
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 15))
         capture("completed")
     }
@@ -53,5 +55,15 @@ final class FocusUITests: XCTestCase {
         app.activate()
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
+    }
+
+    func testLargeTextControlsAreReachable() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        XCTAssertTrue(app.buttons["45 minutes"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["45 minutes"].isHittable)
+        XCTAssertTrue(app.buttons["LOCK IN"].isHittable)
+        capture("large-text")
     }
 }

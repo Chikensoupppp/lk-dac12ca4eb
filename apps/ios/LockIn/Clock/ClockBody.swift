@@ -42,7 +42,8 @@ struct SeededRandom {
 }
 
 /// Everything that never changes while the timer runs: recessed well, titanium rim,
-/// machined face, groove and ticks. Rasterized once with `drawingGroup`.
+/// machined face, groove and ticks. Grouped for offscreen rendering with `drawingGroup`;
+/// caching and performance have not been measured.
 struct ClockBody: View {
     let geometry: ClockGeometry
 
