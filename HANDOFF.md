@@ -15,7 +15,7 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 ## Recommended next work
 
-1. Add a compact iPhone accessibility-size simulator test and inspect its image; the verified accessibility-size screenshot so far is iPhone 16 Pro only.
+1. Run 41496429343 passed the compact iPhone SE accessibility-size UI test and exported its screenshot; capture/upload were still running at handoff. Download the artifact when the run completes and inspect `compact-attachments/manifest.json` and its screenshot for clipping.
 2. Download run 41495360016 with `./scripts/ios-ci.ps1 -Action download -RunId 41495360016` if needed. `test-attachments/manifest.json` maps screenshots to test states.
 3. Test Reduce Motion and VoiceOver where practical; the existing large-text test checks reachability, not that the text actually scaled. The completion image in run 41494428865 was captured during a transition. Session data is in memory only.
 4. Confirm duplicate-completion behavior, improve compact-device active/large-text coverage, and update status from actual CI evidence. Neither Xcode Preview nor physical-device signing/install has been verified.
