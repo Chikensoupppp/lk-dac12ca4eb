@@ -23,6 +23,8 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 Run 41501970643 passed and its small- and large-device active, elapsed, completion, and large-text screenshots were inspected. Controls fit, but the SE completion image showed a distorted arc during the parent transition. Commit 0193e7a disables parent animation on the timestamp-driven readout. Run 41503492932 passed; its compact completion screenshot was inspected with no visible arc distortion in that frame. Video or live inspection is still needed to verify the whole transition.
 
+Run 41505024883 adds eight sampled completion-transition frames to the simulator UI test. It was running when recorded. Download its artifacts and inspect the `completion-frame-*` attachments on compact and large devices; sampling is not a continuous video and may miss frames.
+
 Signing handoff: `com.lockin.focus` is an unverified development placeholder, not a claimed App Store identity. The Windows-to-iOS guide documents Apple team, bundle ID, provisioning, archive, and TestFlight prerequisites. No Apple account access, signing identity, signed archive, upload, or distribution has been verified.
 
 ## Git and collaboration
