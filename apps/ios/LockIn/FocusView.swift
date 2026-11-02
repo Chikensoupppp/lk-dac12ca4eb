@@ -16,6 +16,8 @@ struct FocusView: View {
     /// Set when launch found a session that expired while the app was not running.
     /// Cleared from storage once, in `.onAppear`, so completion cannot repeat.
     @State private var expiredOnLaunch = false
+    @StateObject private var restrictions = RestrictionController()
+    @State private var showRestrictions = false
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
@@ -67,6 +69,14 @@ struct FocusView: View {
                         .foregroundStyle(Color.white.opacity(isLocked ? 0.3 : 0.55))
                         .padding(.top, 12)
 
+                    if isLocked, let line = restrictions.statusLine {
+                        Text(line)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.white.opacity(0.35))
+                            .padding(.top, 4)
+                            .accessibilityIdentifier("restrictions-line")
+                    }
+
                     Spacer(minLength: 16)
 
                     CountdownClockView(
@@ -101,6 +111,19 @@ struct FocusView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if !isLocked {
+                Button { showRestrictions = true } label: {
+                    Image(systemName: "shield.lefthalf.filled")
+                        .font(.system(size: 17))
+                        .foregroundStyle(Color.white.opacity(0.5))
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Restrictions")
+                .padding(.trailing, 8)
+            }
+        }
+        .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .overlay(alignment: .topLeading) {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-completion-count") {
@@ -115,6 +138,8 @@ struct FocusView: View {
                 expiredOnLaunch = false
                 store.clear()
             }
+            // Repairs shields left by a terminated run (expired, cancelled, or revoked).
+            restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: isLocked)
         .sensoryFeedback(.success, trigger: completionCount)
@@ -130,8 +155,11 @@ struct FocusView: View {
         }
         // The task above can be suspended in the background; re-check on return.
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active, let timing, timing.isFinished(at: .now) {
+            guard phase == .active else { return }
+            if let timing, timing.isFinished(at: .now) {
                 completeSession()
+            } else {
+                restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
             }
         }
     }
@@ -148,6 +176,7 @@ struct FocusView: View {
         let session = SessionTiming(startedAt: .now, duration: duration)
         let record = SessionRecord(timing: session)
         store.save(record)
+        restrictions.begin(record)
         withAnimation(stateAnimation) {
             justCompleted = false
             sessionID = record.id
@@ -157,6 +186,7 @@ struct FocusView: View {
 
     private func endSession() {
         store.clear()
+        restrictions.end()
         withAnimation(stateAnimation) {
             sessionID = nil
             timing = nil
@@ -166,6 +196,7 @@ struct FocusView: View {
     private func completeSession() {
         guard let session = timing, session.isFinished(at: .now) else { return }
         store.clear()
+        restrictions.end()
         completionCount += 1
         withAnimation(stateAnimation) {
             justCompleted = true

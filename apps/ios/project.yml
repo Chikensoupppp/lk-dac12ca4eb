@@ -5,17 +5,44 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
 targets:
   LockIn:
     type: application
     platform: iOS
-    sources: [LockIn]
+    sources: [LockIn, Shared]
+    entitlements:
+      path: Config/LockIn.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+    dependencies:
+      - target: LockInMonitor
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         TARGETED_DEVICE_FAMILY: "1"
+  LockInMonitor:
+    type: app-extension
+    platform: iOS
+    sources: [LockInMonitor, Shared]
+    entitlements:
+      path: Config/LockInMonitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+    info:
+      path: Config/LockInMonitor-Info.plist
+      properties:
+        CFBundleDisplayName: Lock In Monitor
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).LockInMonitor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus.monitor
+        GENERATE_INFOPLIST_FILE: NO
   LockInTests:
     type: bundle.unit-test
     platform: iOS
