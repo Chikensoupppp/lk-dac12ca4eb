@@ -22,7 +22,7 @@ Updated: 2026-11-02
 - GitHub Actions run 41494428865: two unit tests and five UI tests passed, covering return before and after expiry, natural completion, start/end, and control reachability under a large-text launch setting. Test screenshots were exported and inspected for active, partially elapsed, completed, and large-text launch states on iPhone 16 Pro.
 - GitHub Actions run 41495360016: the scaled-text implementation passed the full workflow; the iPhone 16 Pro accessibility-size screenshot was inspected and shows visibly enlarged controls without clipping.
 - GitHub Actions run 41496429343: full workflow passed, including a separate iPhone SE accessibility-size UI test for all duration controls and the primary button. The SE screenshot was inspected and shows no visible clipping.
-- GitHub Actions run 41497821630: build and UI test steps passed, including the debug-only Reduce Motion override and timer accessibility-value check; separate compact-device test passed. Screenshot capture was still running at last check.
+- GitHub Actions run 41497821630: the full workflow passed with two unit tests, six UI tests including the debug-only Reduce Motion override and timer accessibility-value check, and the separate compact-device test. The exported Reduce Motion active-state image was inspected.
 
 ## Not yet verified
 
