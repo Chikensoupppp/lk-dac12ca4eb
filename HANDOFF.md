@@ -17,7 +17,7 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 1. Run 41496429343 passed the full workflow and compact iPhone SE accessibility-size UI test; its exported screenshot was inspected and shows no visible clipping.
 2. Download run 41495360016 with `./scripts/ios-ci.ps1 -Action download -RunId 41495360016` if needed. `test-attachments/manifest.json` maps screenshots to test states.
-3. Test Reduce Motion and VoiceOver where practical; the existing large-text test checks reachability, not that the text actually scaled. The completion image in run 41494428865 was captured during a transition. Session data is in memory only.
+3. Inspect run 41497590045 for the new debug-only Reduce Motion and timer-accessibility UI test; it was queued at handoff. This is not a manual VoiceOver test, and actual system-level Reduce Motion behavior still needs verification. The completion image in run 41494428865 was captured during a transition. Session data is in memory only.
 4. Confirm duplicate-completion behavior, improve compact-device active/large-text coverage, and update status from actual CI evidence. Neither Xcode Preview nor physical-device signing/install has been verified.
 5. Later: authenticated pairing, clock-drift and reconnect testing, reversible Windows workspace profiles, and physical-device Screen Time authorization. These are separate from the present iOS clock milestone.
 
