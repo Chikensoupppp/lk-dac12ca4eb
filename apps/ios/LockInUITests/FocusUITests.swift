@@ -38,9 +38,9 @@ final class FocusUITests: XCTestCase {
         capture("partially-elapsed")
         // Sample the end transition on the real simulator; capture overhead may
         // vary, so these frames are evidence rather than a timing benchmark.
-        for frame in 0..<8 {
+        for frame in 0..<14 {
             capture("completion-frame-\(frame)")
-            Thread.sleep(forTimeInterval: 0.15)
+            Thread.sleep(forTimeInterval: 0.25)
         }
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 15))
         capture("completed")
