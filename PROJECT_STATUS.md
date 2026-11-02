@@ -26,6 +26,7 @@ Updated: 2026-11-02
 - GitHub Actions run 41499182488: the build and UI test step passed with the debug-only completion counter asserting exactly one completion after background expiry; the remaining device-capture steps were still running at last check.
 - GitHub Actions run 41499712871: full workflow passed, including iPhone SE start/end and accessibility-size controls. The compact active-state screenshot was inspected with no visible clipping.
 - GitHub Actions run 41501083353: full workflow passed, including selected-duration accessibility state and changing countdown accessibility-value assertions on standard and compact simulators.
+- GitHub Actions run 41501970643: full workflow passed with idle, active, partially elapsed, completion, and large-text UI captures on iPhone SE and iPhone 16 Pro Max. The images were inspected; controls fit. The SE completion capture showed arc distortion during the transition. Commit 0193e7a disables parent animation for the timestamp-driven readout; run 41503492932 must verify the change.
 
 ## Not yet verified
 
