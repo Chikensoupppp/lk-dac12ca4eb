@@ -29,8 +29,8 @@ private struct TitaniumButtonBody: View {
             .contentShape(shape)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
             .opacity(configuration.isPressed ? 0.88 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-            .animation(.easeInOut(duration: 0.35), value: prominent)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: prominent)
     }
 
     @ViewBuilder

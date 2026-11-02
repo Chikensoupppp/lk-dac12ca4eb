@@ -68,4 +68,17 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["LOCK IN"].isHittable)
         capture("large-text")
     }
+
+    func testReduceMotionTimerAccessibility() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing-reduce-motion", "-ui-testing-short-session"]
+        app.launch()
+        let timer = app.otherElements["Focus timer"]
+        XCTAssertTrue(timer.waitForExistence(timeout: 10))
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        XCTAssertTrue((timer.value as? String ?? "").contains("remaining"))
+        capture("reduce-motion-active")
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 15))
+    }
 }
