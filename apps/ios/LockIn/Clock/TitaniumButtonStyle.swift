@@ -13,7 +13,8 @@ private struct TitaniumButtonBody: View {
     let configuration: ButtonStyleConfiguration
     let prominent: Bool
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     @ScaledMetric(relativeTo: .body) private var labelSize: CGFloat = 16
 
     var body: some View {

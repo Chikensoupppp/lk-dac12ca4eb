@@ -8,7 +8,8 @@ struct CountdownClockView: View {
     let timing: SessionTiming?
     let caption: String
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
 
     var body: some View {
         GeometryReader { proxy in

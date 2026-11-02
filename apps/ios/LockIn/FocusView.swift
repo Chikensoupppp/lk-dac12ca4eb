@@ -11,7 +11,8 @@ struct FocusView: View {
     @State private var justCompleted = false
     @State private var completionCount = 0
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -151,7 +152,8 @@ private struct FocusBackdrop: View {
 private struct DurationSelector: View {
     let options: [Int]
     @Binding var selection: Int
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var optionFontSize: CGFloat = 15
 
