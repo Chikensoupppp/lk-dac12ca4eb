@@ -1,0 +1,22 @@
+# Secrets and local state
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.mobileprovision
+*.xcuserstate
+.DS_Store
+
+# Build output
+bin/
+obj/
+DerivedData/
+build/
+.vscode/
+.idea/
+Thumbs.db
+*.user
+*.suo
+.local/
+logs/

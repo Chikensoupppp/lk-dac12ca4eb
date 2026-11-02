@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Lock In Session",
+  "type": "object",
+  "required": ["id", "state", "durationSeconds", "startedAt", "endsAt"],
+  "properties": {
+    "id": { "type": "string" },
+    "state": { "enum": ["idle", "starting", "active", "ending", "failed"] },
+    "durationSeconds": { "type": "integer", "minimum": 60 },
+    "startedAt": { "type": ["string", "null"], "format": "date-time" },
+    "endsAt": { "type": ["string", "null"], "format": "date-time" },
+    "capabilities": { "type": "array", "items": { "type": "string" } }
+  }
+}
