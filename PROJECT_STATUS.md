@@ -13,10 +13,10 @@ Updated: 2026-11-01
 ## Verified
 
 - `dotnet build apps/windows-companion/LockIn.Companion.csproj`
-- `dotnet test apps/windows-companion/LockIn.Companion.Tests.csproj`
+- Live HTTP check: `/health`, `/session/start`, and `/session/stop` on `127.0.0.1:47821`
 
 ## Not yet verified
 
-- iOS compilation and Screen Time authorization (requires macOS/Xcode and a signed device target).
+- iOS compilation and Screen Time authorization (requires macOS/Xcode and a signed device target; the current SwiftUI source is not yet inside an Xcode project).
 - iPhone/Windows network pairing (Milestone 2).
 - Actual Windows application/site restriction enforcement.
