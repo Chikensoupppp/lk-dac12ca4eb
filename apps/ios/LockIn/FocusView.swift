@@ -17,7 +17,7 @@ struct FocusView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("LOCK IN").font(.system(size: 14, weight: .bold, design: .rounded)).tracking(3)
-                        Text(isLocked ? "Your focus is active." : "Make space for deep work.")
+                        Text(isLocked ? "Focus session" : "How long do you want?")
                             .font(.system(size: 28, weight: .semibold, design: .rounded))
                     }
                     Spacer()
@@ -30,12 +30,18 @@ struct FocusView: View {
                         .monospacedDigit()
                         .foregroundStyle(.white)
                 } else {
-                    Picker("Duration", selection: $duration) {
-                        Text("25 min").tag(25)
-                        Text("50 min").tag(50)
-                        Text("90 min").tag(90)
+                    Picker("Focus duration", selection: $duration) {
+                        Text("15 minutes").tag(15)
+                        Text("25 minutes").tag(25)
+                        Text("45 minutes").tag(45)
+                        Text("60 minutes").tag(60)
+                        Text("90 minutes").tag(90)
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
+                    .tint(.white)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
                 }
 
                 Button {
@@ -57,7 +63,7 @@ struct FocusView: View {
                 .foregroundStyle(.black)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
 
-                Text(isLocked ? "Windows workspace: readying" : "Choose a duration to begin")
+                Text(isLocked ? "Your focus time is running" : "Choose a time, then lock in")
                     .font(.footnote)
                     .foregroundStyle(.white.opacity(0.55))
             }
