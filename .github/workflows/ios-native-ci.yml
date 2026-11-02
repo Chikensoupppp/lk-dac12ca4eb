@@ -33,13 +33,13 @@ jobs:
           if [ -d "$RUNNER_TEMP/LockIn.xcresult" ]; then
             xcrun xcresulttool export attachments --path "$RUNNER_TEMP/LockIn.xcresult" --output-path "$RUNNER_TEMP/test-attachments"
           fi
-      - name: Test compact-device large text
+      - name: Test compact-device controls and active timer
         shell: bash
         run: |
           set -o pipefail
           cd apps/ios
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for devices in d["devices"].values() for x in devices if x["name"] == "iPhone SE (3rd generation)" and x["isAvailable"]))')
-          xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -only-testing:LockInUITests/FocusUITests/testLargeTextControlsAreReachable -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/Compact.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/compact-test.log"
+          xcodebuild test -project LockIn.xcodeproj -scheme LockIn -destination "platform=iOS Simulator,id=$DEVICE_ID" -only-testing:LockInUITests/FocusUITests/testLargeTextControlsAreReachable -only-testing:LockInUITests/FocusUITests/testStartAndEnd -derivedDataPath "$RUNNER_TEMP/LockInDerived" -resultBundlePath "$RUNNER_TEMP/Compact.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/compact-test.log"
       - name: Export compact-device test screenshots
         if: always()
         shell: bash
