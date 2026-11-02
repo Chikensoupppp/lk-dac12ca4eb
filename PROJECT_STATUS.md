@@ -22,10 +22,11 @@ Updated: 2026-11-02
 - GitHub Actions run 41494428865: two unit tests and five UI tests passed, covering return before and after expiry, natural completion, start/end, and control reachability under a large-text launch setting. Test screenshots were exported and inspected for active, partially elapsed, completed, and large-text launch states on iPhone 16 Pro.
 - GitHub Actions run 41495360016: the scaled-text implementation passed the full workflow; the iPhone 16 Pro accessibility-size screenshot was inspected and shows visibly enlarged controls without clipping.
 - GitHub Actions run 41496429343: full workflow passed, including a separate iPhone SE accessibility-size UI test for all duration controls and the primary button. The SE screenshot was inspected and shows no visible clipping.
+- GitHub Actions run 41497821630: build and UI test steps passed, including the debug-only Reduce Motion override and timer accessibility-value check; separate compact-device test passed. Screenshot capture was still running at last check.
 
 ## Not yet verified
 
-- VoiceOver, Reduce Motion behavior, physical-device behavior, and profiling remain unverified.
+- Manual VoiceOver, actual system-level Reduce Motion behavior, physical-device behavior, and profiling remain unverified. The debug override test does not establish that every animation is absent or verify operating-system settings.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
 - Actual Windows application/site restriction enforcement.
