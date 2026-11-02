@@ -10,7 +10,7 @@ struct SessionTiming: Equatable {
     var endsAt: Date { startedAt.addingTimeInterval(duration) }
 
     func remaining(at date: Date) -> TimeInterval {
-        min(max(endsAt.timeIntervalSince(date), 0), duration)
+        min(max(endsAt.timeIntervalSince(date), 0), max(duration, 0))
     }
 
     func fractionRemaining(at date: Date) -> Double {

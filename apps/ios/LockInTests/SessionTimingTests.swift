@@ -19,5 +19,8 @@ final class SessionTimingTests: XCTestCase {
         XCTAssertEqual(SessionTiming.display(seconds: -1), "00:00")
         let session = SessionTiming(startedAt: Date(), duration: 0)
         XCTAssertEqual(session.fractionRemaining(at: session.startedAt), 0)
+        let invalid = SessionTiming(startedAt: Date(), duration: -5)
+        XCTAssertEqual(invalid.remaining(at: invalid.startedAt), 0)
+        XCTAssertEqual(invalid.fractionRemaining(at: invalid.startedAt), 0)
     }
 }
