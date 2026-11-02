@@ -43,4 +43,15 @@ final class FocusUITests: XCTestCase {
         app.activate()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
     }
+
+    func testBackgroundBeforeExpiry() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
+        app.buttons["END SESSION"].tap()
+    }
 }

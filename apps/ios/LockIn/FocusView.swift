@@ -150,6 +150,7 @@ private struct FocusBackdrop: View {
 private struct DurationSelector: View {
     let options: [Int]
     @Binding var selection: Int
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 4) {
@@ -161,7 +162,7 @@ private struct DurationSelector: View {
                     Text("\(minutes)")
                         .font(.system(size: 15, weight: selected ? .semibold : .regular).monospacedDigit())
                         .foregroundStyle(selected ? Color.white : Color.white.opacity(0.42))
-                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                         .background {
                             if selected {
                                 RoundedRectangle(cornerRadius: 11, style: .continuous)
@@ -188,7 +189,7 @@ private struct DurationSelector: View {
                         .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
         )
-        .animation(.snappy(duration: 0.25), value: selection)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: selection)
         .sensoryFeedback(.selection, trigger: selection)
     }
 }
