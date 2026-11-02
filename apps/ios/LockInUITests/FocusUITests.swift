@@ -36,7 +36,7 @@ final class FocusUITests: XCTestCase {
 
     func testBackgroundAfterExpiry() {
         let app = XCUIApplication()
-        app.launchArguments.append("-ui-testing-short-session")
+        app.launchArguments += ["-ui-testing-short-session", "-ui-testing-completion-count"]
         app.launch()
         app.buttons["LOCK IN"].tap()
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
@@ -44,6 +44,11 @@ final class FocusUITests: XCTestCase {
         sleep(7)
         app.activate()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
+        let count = app.staticTexts["completion-count"]
+        XCTAssertTrue(count.waitForExistence(timeout: 5))
+        XCTAssertEqual(count.label, "Completion count: 1")
+        sleep(2)
+        XCTAssertEqual(count.label, "Completion count: 1")
     }
 
     func testBackgroundBeforeExpiry() {
