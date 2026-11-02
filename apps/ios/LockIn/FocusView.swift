@@ -77,14 +77,14 @@ struct FocusView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        #if DEBUG
         .overlay(alignment: .topLeading) {
+            #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-completion-count") {
                 Text("Completion count: \(completionCount)")
                     .accessibilityIdentifier("completion-count")
             }
+            #endif
         }
-        #endif
         .preferredColorScheme(.dark)
         .sensoryFeedback(.impact(weight: .medium), trigger: isLocked)
         .sensoryFeedback(.success, trigger: completionCount)
