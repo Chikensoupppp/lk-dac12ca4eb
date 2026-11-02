@@ -13,6 +13,7 @@ struct FocusView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var isLocked: Bool { timing != nil }
 
@@ -32,7 +33,7 @@ struct FocusView: View {
             FocusBackdrop()
 
             GeometryReader { geo in
-                let side = max(min(geo.size.width - 48, geo.size.height * 0.5), 200)
+                let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.32 : 0.5)), 140)
 
                 VStack(spacing: 0) {
                     Text("LOCK IN")
@@ -151,16 +152,18 @@ private struct DurationSelector: View {
     let options: [Int]
     @Binding var selection: Int
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .body) private var optionFontSize: CGFloat = 15
 
     var body: some View {
-        HStack(spacing: 4) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: dynamicTypeSize.isAccessibilitySize ? 3 : options.count), spacing: 4) {
             ForEach(options, id: \.self) { minutes in
                 let selected = minutes == selection
                 Button {
                     selection = minutes
                 } label: {
                     Text("\(minutes)")
-                        .font(.system(size: 15, weight: selected ? .semibold : .regular).monospacedDigit())
+                        .font(.system(size: optionFontSize, weight: selected ? .semibold : .regular).monospacedDigit())
                         .foregroundStyle(selected ? Color.white : Color.white.opacity(0.42))
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background {

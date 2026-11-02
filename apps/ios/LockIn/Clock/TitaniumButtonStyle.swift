@@ -14,11 +14,14 @@ private struct TitaniumButtonBody: View {
     let prominent: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .body) private var labelSize: CGFloat = 16
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: labelSize, weight: .semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .tracking(4)
             .foregroundStyle(prominent ? Color(white: 0.07) : Color(white: 0.70))
             .frame(maxWidth: .infinity, minHeight: 60)
