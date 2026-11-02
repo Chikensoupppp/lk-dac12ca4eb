@@ -14,9 +14,15 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["45 minutes"].waitForExistence(timeout: 10))
         capture("idle-45")
         app.buttons["25 minutes"].tap()
+        XCTAssertTrue(app.buttons["25 minutes"].isSelected)
         app.buttons["LOCK IN"].tap()
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.otherElements["Focus timer"].exists)
+        let timer = app.otherElements["Focus timer"]
+        XCTAssertTrue(timer.exists)
+        let initialValue = timer.value as? String
+        XCTAssertNotNil(initialValue)
+        sleep(3)
+        XCTAssertNotEqual(timer.value as? String, initialValue)
         capture("active")
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
