@@ -17,11 +17,11 @@ Updated: 2026-11-02
 - `dotnet build apps/windows-companion/LockIn.Companion.csproj`
 - Live HTTP check: `/health`, `/session/start`, and `/session/stop` on `127.0.0.1:47821`
 - GitHub Actions run 41492862464: Xcode 16.4 generated the project, compiled for iOS Simulator, and passed two unit tests.
-- GitHub Actions run 41493405111: build and test step passed, including UI start/end and natural completion. Screenshot capture was still running at the last check; the full workflow is not yet verified.
+- GitHub Actions run 41493405111: full workflow passed, including UI start/end and natural completion. Idle simulator screenshots were captured and visually inspected for iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max. No clipping was observed in those idle images.
 
 ## Not yet verified
 
-- Background-return test, simulator screenshots, visual tuning, accessibility and physical-device behavior remain unverified.
+- New background-return tests, active/completed screenshots, accessibility sizing, VoiceOver, motion behavior, and physical-device behavior remain unverified.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
 - Actual Windows application/site restriction enforcement.
