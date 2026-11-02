@@ -18,10 +18,11 @@ Updated: 2026-11-02
 - Live HTTP check: `/health`, `/session/start`, and `/session/stop` on `127.0.0.1:47821`
 - GitHub Actions run 41492862464: Xcode 16.4 generated the project, compiled for iOS Simulator, and passed two unit tests.
 - GitHub Actions run 41493405111: full workflow passed, including UI start/end and natural completion. Idle simulator screenshots were captured and visually inspected for iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max. No clipping was observed in those idle images.
+- GitHub Actions run 41493946600: two unit tests and three UI tests passed, including returning after the session expired in the background.
 
 ## Not yet verified
 
-- New background-return tests, active/completed screenshots, accessibility sizing, VoiceOver, motion behavior, and physical-device behavior remain unverified.
+- Background return before expiry, active/completed screenshots, accessibility sizing, VoiceOver, motion behavior, and physical-device behavior remain unverified.
 - Screen Time authorization and signing.
 - iPhone/Windows network pairing (Milestone 2).
 - Actual Windows application/site restriction enforcement.

@@ -11,7 +11,7 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 
 ## Clock
 
-`apps/ios/LockIn/Clock/` holds the reusable `CountdownClockView`. `FocusView.timing` (`SessionTiming?`) is the only session clock; the view renders from it. GitHub Actions run 41493405111 passed and produced idle screenshots on iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max; all three were visually inspected, with no visible clipping. Run 41493946600 includes background-return testing and XCTest screenshot attachments; inspect later runs before claiming those checks passed. See `docs/WINDOWS_IOS_DEVELOPMENT.md`.
+`apps/ios/LockIn/Clock/` holds the reusable `CountdownClockView`. `FocusView.timing` (`SessionTiming?`) is the only session clock; the view renders from it. GitHub Actions run 41493405111 passed and produced idle screenshots on iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max; all three were visually inspected, with no visible clipping. Run 41493946600 passed two unit tests and three UI tests, including background return after expiry. Later runs add further coverage and test screenshot export; inspect their results before claiming those checks passed. See `docs/WINDOWS_IOS_DEVELOPMENT.md`.
 
 ## Recommended next work
 
