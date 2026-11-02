@@ -62,7 +62,9 @@ final class FocusUITests: XCTestCase {
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
         XCTAssertTrue(app.buttons["45 minutes"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["45 minutes"].isHittable)
+        for minutes in [15, 25, 45, 60, 90] {
+            XCTAssertTrue(app.buttons["\(minutes) minutes"].isHittable, "\(minutes) minute control should be reachable")
+        }
         XCTAssertTrue(app.buttons["LOCK IN"].isHittable)
         capture("large-text")
     }
