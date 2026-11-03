@@ -35,12 +35,9 @@ jobs:
         run: |
           set -o pipefail
           cd apps/ios
-          xcodebuild archive -project LockIn.xcodeproj -scheme LockIn -configuration Release \
-            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LockIn.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tee "$RUNNER_TEMP/archive.log"
+          # Unsigned archive: the team has no registered device, so Xcode cannot make a development
+          # profile. Distribution signing happens in the export step below.
+          xcodebuild archive -project LockIn.xcodeproj -scheme LockIn -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LockIn.xcarchive"             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO             CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tee "$RUNNER_TEMP/archive.log"
       - name: Export (and upload on testflight-* tags)
         shell: bash
         run: |
