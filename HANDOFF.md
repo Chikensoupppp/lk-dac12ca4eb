@@ -43,6 +43,14 @@ Signing handoff: Bundle IDs `com.brandon132199.lockin` and `com.brandon132199.lo
 
 Next steps: (1) owner gets entitlement and signs a development build; (2) run the device test plan; (3) record results; (4) only then claim enforcement. Windows pairing stays after that. Nothing was uploaded, merged, or published.
 
+## TestFlight (2026-11-03)
+
+- Owner registered bundle IDs (app and .monitor, Family Controls Development ticked), created the App Store Connect app record ("Lock in focus123"), and added GitHub secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 (an Admin-role API key; App Manager failed with a cloud-signing permission error). Never put these values in Git or chat.
+- `.github/workflows/ios-testflight.yml` + `apps/ios/project.testflight.yml`: a clock-only build (no Family Controls entitlement, no monitor extension) built with Xcode 26 (Apple requires the iOS 26 SDK), archived unsigned, signed at export with cloud-managed distribution signing. A branch push is a dry run (export only). A tag `testflight-*` uploads. Upload only with the owner's explicit yes.
+- Evidence: run 41580614532 dry run passed (export succeeded). Run 41580725772 (tag testflight-2) uploaded to App Store Connect ("Upload succeeded", package processing). Tag testflight-1 failed validation (SDK too old) and uploaded nothing.
+- The TestFlight build contains the placeholder icon (`LockIn/Assets.xcassets`). Screen Time shows as unavailable there. Screen Time on a device still needs a registered iPhone (UDID), a development profile, and a cable or other install path; distribution needs Apple's Family Controls approval.
+- Not yet verified: the build on a real iPhone via TestFlight.
+
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.

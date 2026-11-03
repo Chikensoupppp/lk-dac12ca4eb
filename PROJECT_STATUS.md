@@ -35,6 +35,8 @@ Updated: 2026-11-02 (branch ios/native-clock-ci)
 - Run 41521075050 (branch ios/native-clock-ci, commit after 41519691608): full workflow passed. 10 unit tests (session persistence and recovery: restore active, expiry boundary, relaunch after expiry, early cancel, clock moved backwards, corrupt data; Screen Time lifecycle with a fake client: denied, failed scheduling, 15-minute minimum, stale and revoked reconcile, cleanup-callback rules) and 10 UI tests (active session survives app termination, relaunch after expiry completes exactly once and a third launch is idle, early cancel does not restore, Restrictions sheet reports "access is off"). Screenshots of idle, sheet, and restored-active were inspected.
 - The app plus the LockInMonitor Device Activity extension build for iOS Simulator with the Family Controls entitlement (unsigned).
 
+- GitHub Actions run 41580725772: archived with Xcode 26.3, signed with cloud distribution signing, and uploaded to App Store Connect (TestFlight processing). Not yet installed on an iPhone.
+
 ## Not yet verified
 
 - Manual VoiceOver, actual system-level Reduce Motion behavior, physical-device behavior, and profiling remain unverified. The debug override test does not establish that every animation is absent or verify operating-system settings.
