@@ -16,7 +16,7 @@ Replace RUN_ID with the run number shown by the list command. The artifact may c
 
 ## Physical-device and distribution preparation
 
-The simulator CI is unsigned and produces neither a signed archive nor an iPhone-installable IPA. The current bundle ID `com.lockin.focus` is a development placeholder: its availability and ownership have not been checked.
+The simulator CI is unsigned and produces neither a signed archive nor an iPhone-installable IPA. The registered bundle ID is `com.brandon132199.lockin` (extension: `.monitor`).
 
 1. Choose a unique bundle ID under the owner's Apple Developer team. For TestFlight or App Store distribution, create a matching App Store Connect app record. Choose it carefully: Apple does not allow changing the record's bundle ID after the first upload.
 2. On authorized remote macOS infrastructure, generate the project with XcodeGen, select the LockIn target, and configure the team and automatic signing. For registered-device development, use the team's development provisioning and register the test device as needed. For automated signing, use the CI provider's secure credential storage; do not put team credentials, certificates, private keys, provisioning profiles, or API keys in Git.

@@ -29,7 +29,7 @@ Run 41506311990 passed after sampling was extended to fourteen frames. The compa
 
 The loopback-only companion now evaluates expiry against an injected clock when the store is read or started, rejects simultaneous/duplicate starts with HTTP 409, and no longer advertises a placeholder workspace capability. `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj` passed boundary, stop, and concurrent-start checks. Live HTTP checks passed for 200/409/400 paths. GitHub Actions Windows run 41514843623 passed the same lifecycle checks. Expiry is lazy, state is not persistent, and endpoints are unauthenticated; do not expose to LAN. Expiry uses UTC wall-clock time, so clock adjustments can shorten or extend sessions; decide and test clock-change and cross-device reconciliation semantics before enforcing restrictions. Pairing needs authenticated encrypted transport, explicit approval, and recovery design before remote control.
 
-Signing handoff: `com.lockin.focus` is an unverified development placeholder, not a claimed App Store identity. The Windows-to-iOS guide documents Apple team, bundle ID, provisioning, archive, and TestFlight prerequisites. No Apple account access, signing identity, signed archive, upload, or distribution has been verified.
+Signing handoff: Bundle IDs `com.brandon132199.lockin` and `com.brandon132199.lockin.monitor` were registered on the owner's Apple team on 2026-11-02 with Family Controls (Development). The Windows-to-iOS guide documents Apple team, bundle ID, provisioning, archive, and TestFlight prerequisites. No Apple account access, signing identity, signed archive, upload, or distribution has been verified.
 
 ## iPhone session recovery and Screen Time (2026-11-02)
 

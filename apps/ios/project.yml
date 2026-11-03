@@ -20,7 +20,7 @@ targets:
       - target: LockInMonitor
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         TARGETED_DEVICE_FAMILY: "1"
@@ -41,7 +41,7 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).LockInMonitor
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus.monitor
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.monitor
         GENERATE_INFOPLIST_FILE: NO
   LockInTests:
     type: bundle.unit-test
@@ -51,7 +51,7 @@ targets:
       - target: LockIn
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.tests
         GENERATE_INFOPLIST_FILE: YES
   LockInUITests:
     type: bundle.ui-testing
@@ -61,7 +61,7 @@ targets:
       - target: LockIn
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lockin.focus.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.uitests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
   LockIn:

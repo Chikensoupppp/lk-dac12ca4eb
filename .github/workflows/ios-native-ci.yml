@@ -82,7 +82,7 @@ jobs:
             xcrun simctl bootstatus "$id" -b
             xcrun simctl install "$id" "$RUNNER_TEMP/LockInDerived/Build/Products/Debug-iphonesimulator/LockIn.app"
             xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100
-            xcrun simctl launch "$id" com.lockin.focus
+            xcrun simctl launch "$id" com.brandon132199.lockin
             sleep 5
             xcrun simctl io "$id" screenshot "$RUNNER_TEMP/screenshots/$name-idle.png"
             xcrun simctl shutdown "$id"

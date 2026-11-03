@@ -28,7 +28,7 @@ Lock In shields only what the user picks. The sheet tells the user not to pick P
 ## Still required before any device test
 
 1. Apple Developer Program membership (the owner's, paid).
-2. A unique bundle ID. `com.lockin.focus` and `com.lockin.focus.monitor` are placeholders; availability is unchecked.
+2. Bundle IDs `com.brandon132199.lockin` and `com.brandon132199.lockin.monitor` are registered on the owner's team, each with Family Controls (Development) ticked. Distribution still needs Apple's approval.
 3. The Family Controls capability on **both** the app and the `LockInMonitor` extension identifiers. Apple says the Account Holder must request the entitlement for distribution (and submit the same request for each extension). Request status shows as Assigned in Certificates, Identifiers & Profiles. Whether a development build needs approval first is not confirmed here; check in Xcode.
 4. Automatic signing with the owner's team. Do not put certificates, keys, profiles or API keys in Git or chat.
 5. A physical iPhone (iOS 17 or newer), registered for development.
