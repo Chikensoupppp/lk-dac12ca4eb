@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In look options</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1d1d1f; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Nunito", ui-rounded, system-ui, sans-serif; background: #d9d9de; padding: 28px; }
+  h2 { font-size: 22px; font-weight: 800; margin: 0 0 4px; color: #222; }
+  p.sub { font-size: 14px; color: #444; margin-bottom: 14px; }
+  .row { display: flex; gap: 28px; margin-bottom: 36px; flex-wrap: wrap; }
+  .group { }
+  .phones { display: flex; gap: 20px; }
+  .phone { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative;
+           display: flex; flex-direction: column; align-items: center; padding: 56px 24px 34px;
+           box-shadow: 0 14px 40px rgba(0,0,0,.22); }
+  .title { font-weight: 800; font-size: 13px; letter-spacing: .32em; text-indent: .32em; }
+  .shield { position: absolute; top: 52px; right: 20px; width: 44px; height: 44px; border-radius: 22px;
+            display: grid; place-items: center; }
+  .shield svg { width: 20px; height: 20px; }
+  .clockwrap { margin-top: auto; margin-bottom: auto; position: relative; width: 300px; height: 300px; }
+  .clockwrap svg { width: 300px; height: 300px; transform: rotate(-90deg); overflow: visible; }
+  .face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .time { font-size: 70px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .cap { margin-top: 12px; font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .minlabel { font-size: 12px; font-weight: 800; letter-spacing: .22em; margin-bottom: 10px; text-align: center; }
+  .sel { display: flex; gap: 6px; padding: 6px; border-radius: 22px; width: 100%; }
+  .sel div { flex: 1; text-align: center; padding: 12px 0; border-radius: 17px; font-weight: 700; font-size: 17px; }
+  .btn { margin-top: 20px; width: 100%; padding: 19px 0; border-radius: 26px; text-align: center; font-weight: 800; font-size: 18px; letter-spacing: .08em; }
+  .spacer { height: 98px; }
+
+  /* A: Sunrise */
+  .A { background: linear-gradient(180deg, #FFF7EC 0%, #FDE8D2 100%); color: #3B2A21; }
+  .A .title { color: #8A5A44; }
+  .A .shield { background: #FFFFFF99; color: #8A5A44; box-shadow: 0 2px 8px rgba(120,70,40,.12); }
+  .A .cap { color: #8A5A44; }
+  .A .minlabel { color: #8A5A44; }
+  .A .sel { background: #FFFFFFAA; box-shadow: inset 0 0 0 1.5px #F1D9C3; }
+  .A .sel div { color: #8A6A58; }
+  .A .sel div.on { background: #FFFFFF; color: #3B2A21; box-shadow: 0 3px 10px rgba(180,100,60,.20); }
+  .A .btn { background: #F6A06A; color: #3B2218; box-shadow: 0 8px 20px rgba(233,120,70,.35), inset 0 -3px 0 rgba(150,70,30,.18); }
+  .A .btn.quiet { background: #FFFFFFCC; color: #7A4A35; box-shadow: inset 0 0 0 2px #EBC9AE; }
+  .A .disc { position: absolute; inset: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #FFFFFF, #FFF1E0 70%);
+             box-shadow: 0 18px 36px rgba(190,110,60,.22), inset 0 -6px 14px rgba(240,190,150,.35); }
+
+  .headline { font-size: 26px; font-weight: 300; line-height: 1.25; margin-top: 34px; }
+  .donebtn { width: 70px; text-align: right; font-weight: 700; font-size: 16px; color: #7D6249; }
+  .lims { }
+  .lim { font-size: 15px; font-weight: 600; line-height: 1.4; padding: 16px 0; color: #86694F; border-top: 1.5px solid #EBDDC3; }
+  .phone.C .btn { margin-top: 26px; }
+
+  /* C: Cream */
+  .C { background: linear-gradient(180deg, #FFFBF3 0%, #F8ECD6 100%); color: #45321F; }
+  .C .title { color: #7D6249; }
+  .C .shield { background: #FFFFFFAA; color: #7D6249; box-shadow: 0 2px 8px rgba(120,90,50,.12); }
+  .C .cap { color: #7D6249; }
+  .C .minlabel { color: #7D6249; }
+  .C .sel { background: #FFFDF8CC; box-shadow: inset 0 0 0 1.5px #EBDDC3; }
+  .C .sel div { color: #86694F; }
+  .C .sel div.on { background: #FFFFFF; color: #45321F; box-shadow: 0 3px 10px rgba(150,110,60,.18); }
+  .C .btn { background: #F2C890; color: #45301D; box-shadow: 0 8px 20px rgba(200,150,80,.30), inset 0 -3px 0 rgba(140,95,40,.16); }
+  .C .btn.quiet { background: #FFFDF8DD; color: #7A5A3E; box-shadow: inset 0 0 0 2px #E9D8BB; }
+  .C .disc { position: absolute; inset: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #FFFFFF, #FFF7E6 70%);
+             box-shadow: 0 18px 36px rgba(160,120,60,.20), inset 0 -6px 14px rgba(238,214,170,.45); }
+
+  /* D: Oat milk, even creamier */
+  .D { background: linear-gradient(180deg, #FFFDF8 0%, #FBF4E4 100%); color: #4A3A2A; }
+  .D .title { color: #8A7258; }
+  .D .shield { background: #FFFFFFCC; color: #8A7258; box-shadow: 0 2px 8px rgba(130,100,60,.10); }
+  .D .cap { color: #85694D; }
+  .D .minlabel { color: #85694D; }
+  .D .sel { background: #FFFEFBDD; box-shadow: inset 0 0 0 1.5px #F0E4CE; }
+  .D .sel div { color: #8F7558; }
+  .D .sel div.on { background: #FFFFFF; color: #4A3A2A; box-shadow: 0 3px 10px rgba(160,120,70,.15); }
+  .D .btn { background: #F3DDB6; color: #4A3520; box-shadow: 0 8px 20px rgba(205,165,105,.28), inset 0 -3px 0 rgba(150,110,60,.14); }
+  .D .btn.quiet { background: #FFFEFBEE; color: #7F6244; box-shadow: inset 0 0 0 2px #EEE0C7; }
+  .D .disc { position: absolute; inset: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #FFFFFF, #FFFAF0 75%);
+             box-shadow: 0 18px 36px rgba(170,130,70,.16), inset 0 -6px 14px rgba(245,228,196,.55); }
+
+  /* B: Meadow */
+  .B { background: linear-gradient(180deg, #F1F6EA 0%, #DCEBD4 100%); color: #1F3A2B; }
+  .B .title { color: #3F6B52; }
+  .B .shield { background: #FFFFFF99; color: #3F6B52; box-shadow: 0 2px 8px rgba(40,90,60,.12); }
+  .B .cap { color: #3F6B52; }
+  .B .minlabel { color: #3F6B52; }
+  .B .sel { background: #FFFFFFAA; box-shadow: inset 0 0 0 1.5px #C9DDC2; }
+  .B .sel div { color: #55705F; }
+  .B .sel div.on { background: #FFFFFF; color: #1F3A2B; box-shadow: 0 3px 10px rgba(50,120,80,.20); }
+  .B .btn { background: #2F7D55; color: #FFFFFF; box-shadow: 0 8px 20px rgba(47,125,85,.35), inset 0 -3px 0 rgba(10,50,30,.25); }
+  .B .btn.quiet { background: #FFFFFFCC; color: #2F6A48; box-shadow: inset 0 0 0 2px #B9D3B1; }
+  .B .disc { position: absolute; inset: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #FFFFFF, #EEF6E8 70%);
+             box-shadow: 0 18px 36px rgba(50,110,70,.20), inset 0 -6px 14px rgba(170,210,160,.4); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const shieldSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.500-7-4.500-7-9V6l7-3z"/><path d="M12 3v18" opacity=".5"/></svg>';
+
+function ring(theme, frac) {
+  const r = 138, c = 2 * Math.PI * r;
+  const trackC = { A: '#F3DEC8', B: '#CFE1C8', C: '#EFE1C8', D: '#F4EAD6' }[theme];
+  const g1 = { A: '#F9B27C', B: '#7CC48F', C: '#EFC38A', D: '#EDD0A2' }[theme];
+  const g2 = { A: '#E9654B', B: '#2F7D55', C: '#D98550', D: '#D49E68' }[theme];
+  const id = 'g' + theme + Math.round(frac*100);
+  return `<svg viewBox="0 0 300 300">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g1}"/><stop offset="1" stop-color="${g2}"/></linearGradient></defs>
+    <circle cx="150" cy="150" r="${r}" fill="none" stroke="${trackC}" stroke-width="16"/>
+    <circle cx="150" cy="150" r="${r}" fill="none" stroke="url(#${id})" stroke-width="16" stroke-linecap="round"
+      stroke-dasharray="${c * frac} ${c}" />
+  </svg>`;
+}
+
+function phone(theme, running) {
+  const mins = [15, 25, 45, 60, 90].map(m => `<div class="${m === 45 ? 'on' : ''}">${m}</div>`).join('');
+  return `<div class="phone ${theme}">
+    <div class="title">LOCK IN</div>
+    ${running ? '' : `<div class="shield">${shieldSvg}</div>`}
+    <div class="clockwrap">
+      <div class="disc"></div>
+      ${ring(theme, running ? 0.71 : 1)}
+      <div class="face"><div class="time">${running ? '32:14' : '45:00'}</div><div class="cap">${running ? 'Ends 3:42 PM' : 'Ready'}</div></div>
+    </div>
+    ${running ? '<div class="spacer"></div>' : `<div style="width:100%"><div class="minlabel">MINUTES</div><div class="sel">${mins}</div></div>`}
+    <div class="btn ${running ? 'quiet' : ''}">${running ? 'END SESSION' : 'LOCK IN'}</div>
+  </div>`;
+}
+
+function sheet(theme) {
+  const limits = [
+    'Lock In shields only what you choose. Do not choose Phone or Messages if you need them.',
+    'This is a self-control aid, not tamper-proof. You can end a session any time, and you can remove access in iOS Settings.',
+    'Removal can lag the session end if Lock In is closed. iOS only reports the end when the device is in use.'
+  ].map((t, i) => `<div class="lim" style="${i ? '' : 'border-top:0'}">${t}</div>`).join('');
+  return `<div class="phone ${theme}" style="align-items:stretch">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:-4px">
+      <div style="width:70px"></div><div class="title" style="text-indent:0">RESTRICTIONS</div>
+      <div class="donebtn">Done</div>
+    </div>
+    <div class="headline">Access granted. Choose apps to shield.</div>
+    <div class="btn" style="margin-top:26px">CHOOSE APPS</div>
+  </div>`;
+}
+
+document.getElementById('app').innerHTML = `
+  <div class="row">
+    <div class="group"><h2>A2 · Cream, whole app</h2><p class="sub">Ready screen, running screen, and Restrictions screen. Same cream everywhere.</p>
+      <div class="phones">${phone('C', false)}${phone('C', true)}${sheet('C')}</div></div>
+  </div>`;
+</script>
+</body>
+</html>
