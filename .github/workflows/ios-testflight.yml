@@ -41,9 +41,17 @@ jobs:
         run: |
           set -o pipefail
           cd apps/ios
-          # Unsigned archive: the team has no registered device, so Xcode cannot make a development
-          # profile. Distribution signing happens in the export step below.
-          xcodebuild archive -project LockIn.xcodeproj -scheme LockIn -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LockIn.xcarchive"             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO             CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tee "$RUNNER_TEMP/archive.log"
+          # Ad-hoc signed archive: the team has no registered device, so Xcode cannot make a development
+          # profile. Ad-hoc signing ("-") still embeds the entitlements; a fully unsigned archive drops
+          # them and App Store Connect warns the app lacks family-controls. Distribution signing
+          # happens in the export step below.
+          xcodebuild archive -project LockIn.xcodeproj -scheme LockIn -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LockIn.xcarchive"             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES             CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tee "$RUNNER_TEMP/archive.log"
+      - name: Show entitlements in the archive (names only)
+        run: |
+          for app in "$RUNNER_TEMP"/LockIn.xcarchive/Products/Applications/LockIn.app "$RUNNER_TEMP"/LockIn.xcarchive/Products/Applications/LockIn.app/PlugIns/LockInMonitor.appex; do
+            echo "== $app"
+            codesign -d --entitlements :- "$app" 2>/dev/null | grep -o 'com.apple.developer.[a-z.-]*' || echo "no entitlements found"
+          done
       - name: Export (and upload on testflight-* tags)
         shell: bash
         run: |
