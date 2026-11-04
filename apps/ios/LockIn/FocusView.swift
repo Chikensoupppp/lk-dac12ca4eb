@@ -18,6 +18,8 @@ struct FocusView: View {
     @State private var expiredOnLaunch = false
     @StateObject private var restrictions = RestrictionController()
     @State private var showRestrictions = false
+    @StateObject private var pc = PCLink()
+    @State private var showPC = false
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
@@ -68,6 +70,8 @@ struct FocusView: View {
                         .tracking(5)
                         .foregroundStyle(Color.white.opacity(isLocked ? 0.3 : 0.55))
                         .padding(.top, 12)
+
+                    PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
 
                     if isLocked, let line = restrictions.statusLine {
                         Text(line)
@@ -124,6 +128,7 @@ struct FocusView: View {
             }
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
+        .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .overlay(alignment: .topLeading) {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-completion-count") {
@@ -140,6 +145,8 @@ struct FocusView: View {
             }
             // Repairs shields left by a terminated run (expired, cancelled, or revoked).
             restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
+            // A session restored after a relaunch tells the PC again. The PC ignores repeats.
+            if let timing, let sessionID { pc.sessionStarted(SessionRecord(id: sessionID, timing: timing)) }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: isLocked)
         .sensoryFeedback(.success, trigger: completionCount)
@@ -177,6 +184,7 @@ struct FocusView: View {
         let record = SessionRecord(timing: session)
         store.save(record)
         restrictions.begin(record)
+        pc.sessionStarted(record)
         withAnimation(stateAnimation) {
             justCompleted = false
             sessionID = record.id
@@ -187,6 +195,7 @@ struct FocusView: View {
     private func endSession() {
         store.clear()
         restrictions.end()
+        if let sessionID { pc.sessionEnded(sessionID) }
         withAnimation(stateAnimation) {
             sessionID = nil
             timing = nil
@@ -197,6 +206,7 @@ struct FocusView: View {
         guard let session = timing, session.isFinished(at: .now) else { return }
         store.clear()
         restrictions.end()
+        if let sessionID { pc.sessionEnded(sessionID) }
         completionCount += 1
         withAnimation(stateAnimation) {
             justCompleted = true

@@ -29,6 +29,8 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_CFBundleDisplayName: Lock In
+        INFOPLIST_KEY_NSCameraUsageDescription: Lock In uses the camera once, to scan the QR code that pairs your PC.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Lock In talks to your PC on your Wi-Fi so a focus session can start on both.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
   LockInMonitor:
