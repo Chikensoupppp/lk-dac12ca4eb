@@ -41,16 +41,21 @@ jobs:
         run: |
           set -o pipefail
           cd apps/ios
-          # Ad-hoc signed archive: the team has no registered device, so Xcode cannot make a development
-          # profile. Ad-hoc signing ("-") still embeds the entitlements; a fully unsigned archive drops
-          # them and App Store Connect warns the app lacks family-controls. Distribution signing
+          # Unsigned archive: the team has no registered device, so Xcode cannot make a development
+          # profile, and Xcode refuses ad-hoc signing for the iOS 26 SDK. Distribution signing
           # happens in the export step below.
-          xcodebuild archive -project LockIn.xcodeproj -scheme LockIn -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LockIn.xcarchive"             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES             CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tee "$RUNNER_TEMP/archive.log"
-      - name: Show entitlements in the archive (names only)
+          xcodebuild archive -project LockIn.xcodeproj -scheme LockIn -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LockIn.xcarchive"             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO             CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tee "$RUNNER_TEMP/archive.log"
+      - name: Embed entitlements (an unsigned archive drops them)
+        shell: bash
         run: |
-          for app in "$RUNNER_TEMP"/LockIn.xcarchive/Products/Applications/LockIn.app "$RUNNER_TEMP"/LockIn.xcarchive/Products/Applications/LockIn.app/PlugIns/LockInMonitor.appex; do
-            echo "== $app"
-            codesign -d --entitlements :- "$app" 2>/dev/null | grep -o 'com.apple.developer.[a-z.-]*' || echo "no entitlements found"
+          # Without this, export signs the app with no family-controls entitlement and App Store
+          # Connect warns about it. Export re-signs with the distribution profile and keeps these.
+          APP="$RUNNER_TEMP/LockIn.xcarchive/Products/Applications/LockIn.app"
+          codesign --force --sign - --entitlements apps/ios/Config/LockInMonitor.entitlements "$APP/PlugIns/LockInMonitor.appex"
+          codesign --force --sign - --entitlements apps/ios/Config/LockIn.entitlements "$APP"
+          for t in "$APP" "$APP/PlugIns/LockInMonitor.appex"; do
+            echo "== $t"
+            codesign -d --entitlements :- "$t" 2>/dev/null | grep -o 'com.apple.developer.[a-z.-]*' || echo "no entitlements found"
           done
       - name: Export (and upload on testflight-* tags)
         shell: bash
