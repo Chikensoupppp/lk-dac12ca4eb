@@ -37,6 +37,8 @@ Updated: 2026-11-02 (branch ios/native-clock-ci)
 
 - GitHub Actions run 41580725772: archived with Xcode 26.3, signed with cloud distribution signing, and uploaded to App Store Connect (TestFlight processing). Not yet installed on an iPhone.
 
+- 2026-11-04 (uncommitted): Windows companion got an authenticated HTTPS LAN door, one-time QR pairing, and phone-supplied session mirroring. 32 local checks pass and a live localhost run passed. See HANDOFF.md "Windows pairing, PC side". The iPhone side is not written.
+
 ## Not yet verified
 
 - Manual VoiceOver, actual system-level Reduce Motion behavior, physical-device behavior, and profiling remain unverified. The debug override test does not establish that every animation is absent or verify operating-system settings.

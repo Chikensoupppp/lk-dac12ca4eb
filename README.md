@@ -19,4 +19,4 @@ The initial vertical slice defines a safe session lifecycle and a local Windows 
 
 Session checks: `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj`
 
-The companion binds to loopback only and its endpoints are currently unauthenticated. Do not expose it to a network. Session state is in memory, is lost on restart, and expiration is evaluated when the store is read or a new session is started; no background restriction cleanup is implemented. LAN pairing will be added only with an explicit pairing flow and authenticated transport.
+The companion has two doors. The loopback door (`http://127.0.0.1:47821`) is for this PC only and is unauthenticated. The LAN door (`https://0.0.0.0:47822`) requires a bearer token from a one-time QR pairing (`LockIn.Companion.exe --pair`); see HANDOFF.md. Session state is in memory, is lost on restart, and expiration is evaluated when the store is read or a new session is started; no background restriction cleanup is implemented. Phone-side pairing code is not written yet, and the LAN door has only been tested through localhost.

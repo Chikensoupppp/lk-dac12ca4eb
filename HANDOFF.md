@@ -51,6 +51,14 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
 - The TestFlight build contains the placeholder icon (`LockIn/Assets.xcassets`). Screen Time shows as unavailable there. Screen Time on a device still needs a registered iPhone (UDID), a development profile, and a cable or other install path; distribution needs Apple's Family Controls approval.
 - Not yet verified: the build on a real iPhone via TestFlight.
 
+## Windows pairing, PC side (2026-11-04, not committed)
+
+- `apps/windows-companion/Pairing.cs` + `Program.cs`: two doors. `http://127.0.0.1:47821` (this PC only, as before). `https://0.0.0.0:47822` (LAN): everything except `/health` and `/pair` needs `Authorization: Bearer <token>`. Self-made ECDSA certificate, key kept with DPAPI in `%LOCALAPPDATA%\LockIn\companion-state.json` (override with `LOCKIN_STATE_DIR`). Only a SHA-256 of each phone token is stored.
+- Pairing: `LockIn.Companion.exe --pair` (or loopback `POST /pairing/open`) makes a 5-minute, single-use code and writes `pair-phone.png` (a QR of `{v,hosts,port,fp,code,expiresAt}`). The phone pins `fp` (SHA-256 of the cert) and posts `{code, deviceName}` to `/pair`; it gets `{deviceId, token, serverTime}`. Five wrong codes close the window. Loopback only: `GET /pairing/devices`, `DELETE /pairing/devices/{id}` (revoke).
+- Session mirroring: `POST /session/start {durationSeconds, id?, startedAt?}` takes the phone's id and start time (same id twice is safe, a different id gives 409, a start more than 60 s ahead or an already-over session gives 400). `POST /session/stop {id?}` ignores a stale id. `GET /session` returns the session and `serverTime` for drift checks.
+- Evidence: `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj` passed 32 checks on 2026-11-04. A live run on this PC confirmed 401 without a token, 404 for `/pairing/*` on the LAN door, pairing, reuse of a code (403), mirrored start/repeat/conflict/stale stop, and revoke (token then 401). Tested through localhost only.
+- Not verified: a real phone reaching the PC over Wi-Fi; Windows Firewall (an inbound rule for TCP 47822 on private networks is needed); router client isolation; no iPhone code exists yet; no tray app or installer; the QR picture was written but not scanned.
+
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.
