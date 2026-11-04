@@ -54,24 +54,32 @@ struct ClockBody: View {
     var body: some View {
         let d = geometry.diameter
         ZStack {
+            // The shadow sits outside the drawing group so it is never cut off at a square edge.
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Cream.discHigh, Cream.discLow],
-                        center: UnitPoint(x: 0.35, y: 0.25),
-                        startRadius: 0,
-                        endRadius: d * 0.8
-                    )
-                )
+                .fill(Cream.discLow)
                 .frame(width: d, height: d)
                 .shadow(color: Cream.shadow.opacity(0.26), radius: d * 0.06, x: 0, y: d * 0.035)
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.85), lineWidth: 1))
 
-            Circle()
-                .stroke(Cream.track, lineWidth: geometry.ringWidth)
-                .frame(width: geometry.ringDiameter, height: geometry.ringDiameter)
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Cream.discHigh, Cream.discLow],
+                            center: UnitPoint(x: 0.35, y: 0.25),
+                            startRadius: 0,
+                            endRadius: d * 0.8
+                        )
+                    )
+                    .frame(width: d, height: d)
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.85), lineWidth: 1))
+
+                Circle()
+                    .stroke(Cream.track, lineWidth: geometry.ringWidth)
+                    .frame(width: geometry.ringDiameter, height: geometry.ringDiameter)
+            }
+            .frame(width: geometry.total, height: geometry.total)
+            .drawingGroup()
         }
         .frame(width: geometry.total, height: geometry.total)
-        .drawingGroup()
     }
 }
