@@ -206,7 +206,7 @@ struct FocusView: View {
     }
 }
 
-private struct FocusBackdrop: View {
+struct FocusBackdrop: View {
     var body: some View {
         ZStack {
             LinearGradient(

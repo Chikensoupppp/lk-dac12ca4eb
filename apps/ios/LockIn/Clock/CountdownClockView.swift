@@ -60,7 +60,7 @@ struct CountdownClockView: View {
             Text(caption.uppercased())
                 .font(.system(size: g.diameter * 0.034, weight: .medium))
                 .tracking(g.diameter * 0.008)
-                .foregroundStyle(Color.white.opacity(0.38))
+                .foregroundStyle(Color.white.opacity(0.5))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: g.faceDiameter * 0.6)
