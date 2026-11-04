@@ -19,17 +19,17 @@ struct PCStatusLine: View {
         if let label {
             if isLocked {
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .tracking(3)
-                    .foregroundStyle(Color.white.opacity(0.45))
+                    .font(Cream.rounded(12, .semibold))
+                    .tracking(2)
+                    .foregroundStyle(Cream.inkSoft)
                     .padding(.top, 4)
                     .accessibilityIdentifier("pc-status")
             } else {
                 Button(action: open) {
                     Text(label)
-                        .font(.system(size: 11, weight: .medium))
-                        .tracking(3)
-                        .foregroundStyle(Color.white.opacity(0.55))
+                        .font(Cream.rounded(12, .semibold))
+                        .tracking(2)
+                        .foregroundStyle(Cream.inkSoft)
                         .frame(minHeight: 44)
                 }
                 .accessibilityIdentifier("pc-status")
@@ -60,37 +60,27 @@ struct PCSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         Text(headline)
-                            .font(.system(.title3, design: .default, weight: .light))
-                            .foregroundStyle(Color.white.opacity(0.92))
+                            .font(Cream.rounded(26, .light))
+                            .foregroundStyle(Cream.ink)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityIdentifier("pc-headline")
 
                         if let problem = pc.problem {
                             Text(problem)
-                                .font(.footnote)
-                                .foregroundStyle(Color.white.opacity(0.7))
+                                .font(Cream.rounded(15, .medium))
+                                .foregroundStyle(Cream.inkSoft)
                                 .accessibilityIdentifier("pc-problem")
                         }
 
                         Button { scanning = true } label: { Text("SCAN QR CODE") }
-                            .buttonStyle(TitaniumButtonStyle(prominent: !pc.isPaired))
+                            .buttonStyle(CreamButtonStyle(prominent: !pc.isPaired))
                             .disabled(pc.isPairing)
                             .accessibilityLabel("Scan the pairing QR code")
 
                         if pc.isPaired {
                             Button { pc.forget() } label: { Text("FORGET THIS PC") }
-                                .buttonStyle(TitaniumButtonStyle(prominent: false))
+                                .buttonStyle(CreamButtonStyle(prominent: false))
                                 .accessibilityLabel("Forget this PC")
-                        }
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("HOW TO PAIR")
-                                .font(.system(size: 11, weight: .medium))
-                                .tracking(3)
-                                .foregroundStyle(Color.white.opacity(0.45))
-                            Text("1. On your PC, run LockIn.Companion.exe with the word --pair after it.\n2. A picture with a QR code opens. It works for 5 minutes.\n3. Tap SCAN QR CODE here and point the camera at it.\n\nBoth must be on the same Wi-Fi. If your PC is off, Lock In still works. It just will not start the PC.")
-                                .font(.footnote)
-                                .foregroundStyle(Color.white.opacity(0.62))
                         }
                     }
                     .padding(.horizontal, 24)
@@ -104,7 +94,8 @@ struct PCSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                        .foregroundStyle(Color.white.opacity(0.8))
+                        .font(Cream.rounded(17, .semibold))
+                        .foregroundStyle(Cream.quietText)
                 }
             }
             .fullScreenCover(isPresented: $scanning) {
@@ -120,6 +111,6 @@ struct PCSheet: View {
                     onCancel: { scanning = false })
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }

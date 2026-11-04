@@ -1,18 +1,13 @@
 import FamilyControls
 import SwiftUI
 
-/// Plain-language state of Screen Time controls. It reports only what the framework
+/// Short state of Screen Time controls. It reports only what the framework
 /// reported; it never claims enforcement it has not applied.
 struct RestrictionsSheet: View {
     @ObservedObject var restrictions: RestrictionController
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var picking = false
-
-    private static let limits = [
-        "Lock In shields only what you choose. Do not choose Phone or Messages if you need them.",
-        "This is a self-control aid, not tamper-proof. You can end a session any time, and you can remove access in iOS Settings.",
-        "Removal can lag the session end if Lock In is closed. iOS only reports the end when the device is in use.",
-    ]
 
     private var headline: String {
         switch restrictions.status {
@@ -35,29 +30,12 @@ struct RestrictionsSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
                         Text(headline)
-                            .font(.system(.title3, design: .default, weight: .light))
-                            .foregroundStyle(Color.white.opacity(0.92))
+                            .font(Cream.rounded(26, .light))
+                            .foregroundStyle(Cream.ink)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityIdentifier("restrictions-status")
 
                         action
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("LIMITS")
-                                .font(.system(size: 11, weight: .medium))
-                                .tracking(3)
-                                .foregroundStyle(Color.white.opacity(0.45))
-                            VStack(alignment: .leading, spacing: 0) {
-                                ForEach(Array(Self.limits.enumerated()), id: \.offset) { index, line in
-                                    if index > 0 { Divider().overlay(Color.white.opacity(0.08)) }
-                                    Text(line)
-                                        .font(.footnote)
-                                        .foregroundStyle(Color.white.opacity(0.62))
-                                        .padding(.vertical, 14)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                            }
-                        }
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
@@ -70,14 +48,15 @@ struct RestrictionsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("RESTRICTIONS")
-                        .font(.system(size: 12, weight: .semibold))
-                        .tracking(5)
-                        .foregroundStyle(Color.white.opacity(0.55))
+                        .font(Cream.rounded(13, .bold))
+                        .tracking(4)
+                        .foregroundStyle(Cream.inkSoft)
                         .accessibilityHidden(true)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                        .foregroundStyle(Color.white.opacity(0.8))
+                        .font(Cream.rounded(17, .semibold))
+                        .foregroundStyle(Cream.quietText)
                 }
             }
             .familyActivityPicker(
@@ -85,7 +64,7 @@ struct RestrictionsSheet: View {
                 selection: Binding(get: { restrictions.selection }, set: { restrictions.setSelection($0) })
             )
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 
     @ViewBuilder
@@ -97,19 +76,23 @@ struct RestrictionsSheet: View {
             } label: {
                 Text("ALLOW ACCESS")
             }
-            .buttonStyle(TitaniumButtonStyle(prominent: true))
+            .buttonStyle(CreamButtonStyle(prominent: true))
             .accessibilityLabel("Allow Screen Time access")
         case .denied:
-            Text("Turn it on in Settings > Screen Time > Apps With Screen Time Access.")
-                .font(.footnote)
-                .foregroundStyle(Color.white.opacity(0.62))
+            Button {
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            } label: {
+                Text("OPEN SETTINGS")
+            }
+            .buttonStyle(CreamButtonStyle(prominent: true))
+            .accessibilityLabel("Open iOS Settings")
         default:
             Button {
                 picking = true
             } label: {
                 Text(restrictions.hasSelection ? "CHANGE APPS" : "CHOOSE APPS")
             }
-            .buttonStyle(TitaniumButtonStyle(prominent: !restrictions.hasSelection))
+            .buttonStyle(CreamButtonStyle(prominent: !restrictions.hasSelection))
             .accessibilityLabel(restrictions.hasSelection ? "Change chosen apps" : "Choose apps to shield")
         }
     }

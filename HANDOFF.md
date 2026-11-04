@@ -59,6 +59,14 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
 - Evidence: `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj` passed 32 checks on 2026-11-04. A live run on this PC confirmed 401 without a token, 404 for `/pairing/*` on the LAN door, pairing, reuse of a code (403), mirrored start/repeat/conflict/stale stop, and revoke (token then 401). Tested through localhost only.
 - Not verified: a real phone reaching the PC over Wi-Fi; Windows Firewall (an inbound rule for TCP 47822 on private networks is needed); router client isolation; no iPhone code exists yet; no tray app or installer; the QR picture was written but not scanned.
 
+## Windows pairing, iPhone side (2026-11-04)
+
+- `apps/ios/LockIn/PC/`: `PCModels` (offer, link record, `PCTransport`), `PCClient` (HTTPS, certificate pinned to the QR fingerprint), `PCLink` (state, Keychain store, retrying start, serialized stop), `PCViews` (status line under the title, pairing sheet), `QRScannerView` (camera). `FocusView` calls `pc.sessionStarted/sessionEnded` next to the restriction calls and re-sends a restored session on launch.
+- Phone is the boss of time; a PC that is off never changes a session. 401 from the PC forgets the pairing; 409 (PC busy) is shown and not retried.
+- `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` added to `project.yml` and `project.testflight.yml`.
+- Evidence: CI run 41776976228 (commit ddbd929) passed: 33 unit tests (12 new in `PCLinkTests.swift`) and 10 UI tests, plus compact and large device runs. The idle screenshot shows "PAIR A PC".
+- Not verified: scanning a real QR with the camera, TLS pinning against the real PC certificate, Local Network prompt, Windows Firewall (inbound TCP 47822, private networks), any real phone-to-PC traffic. The PCLink unit tests use fakes, so the network path is untested. Not uploaded to TestFlight.
+
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.

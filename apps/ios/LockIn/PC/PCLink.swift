@@ -107,12 +107,12 @@ final class PCLink: ObservableObject {
             status = .paired
         } catch PCError.rejected(let code) {
             problem = code == 403
-                ? "The pairing window closed. Make a new QR code on the PC and try again."
-                : "The PC did not accept that code. Make a new QR code on the PC and try again."
+                ? "The QR code expired. Make a new one."
+                : "The PC said no. Make a new QR code."
         } catch PCError.unreachable {
-            problem = "Could not reach the PC. Check that both are on the same Wi-Fi and that Local Network is on for Lock In in iOS Settings."
+            problem = "Could not reach the PC."
         } catch {
-            problem = "Pairing failed. Make a new QR code on the PC and try again."
+            problem = "Pairing failed. Make a new QR code."
         }
     }
 
@@ -155,15 +155,15 @@ final class PCLink: ObservableObject {
                 return
             } catch PCError.rejected(401) {
                 forget()
-                problem = "The PC no longer trusts this phone. Pair it again."
+                problem = "The PC forgot this phone."
                 return
             } catch PCError.rejected(409) {
                 status = .connected
-                problem = "The PC already has a session running, so it was not mirrored."
+                problem = "The PC is busy with another session."
                 return
             } catch PCError.rejected {
                 status = .connected
-                problem = "The PC could not take this session."
+                problem = "The PC refused this session."
                 return
             } catch {
                 status = .offline

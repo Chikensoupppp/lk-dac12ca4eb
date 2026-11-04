@@ -1,33 +1,41 @@
 # Lock In design
 
-Written from the existing app (2026-11-03). It records the identity; it does not change it.
+Rewritten 2026-11-04. The cold dark titanium look is gone. Brandon chose "A2 Cream"
+(mock: `docs/design/cream-look.html`, `cream-look.png`).
 
 ## Intent
-A precise, calm instrument for focus. One object: a titanium countdown clock. Everything else
-stays quiet so the clock is the only thing that asks for attention.
+A warm, friendly focus timer. One soft object: a cream disc with a caramel ring. Everything
+else stays quiet and short. No help paragraphs in the app.
 
 ## Look
-- Dark only (`.preferredColorScheme(.dark)`). Near-black cool-neutral backdrop (`FocusBackdrop`).
-- Material: brushed titanium and silver, built from `ClockTone.metal(...)`. Never colored accents.
-- Type: SF system. Light, large numerals for time. Small caps labels, wide tracking (3 to 5 pt),
-  semibold 10 to 12 pt for chrome, 16 pt semibold tracked 4 for buttons.
-- Shape: continuous rounded rectangles, radius 11 (selection), 15 (tray), 18 (buttons).
-- Text opacity on dark: primary 0.9, secondary 0.5 to 0.62, decorative 0.3. Do not go below 0.45
-  for text people must read.
+- Light only (`.preferredColorScheme(.light)`). Warm cream gradient `FocusBackdrop`
+  (`#FFFBF3` to `#F8ECD6`).
+- All colors live in `enum Cream` (`Clock/ClockBody.swift`). Ink `#45321F`, soft ink `#7D6249`
+  (about 5:1 on cream). Never pure black or grey.
+- Clock: white-to-cream disc with a warm soft shadow, track `#EFE1C8`, thick rounded ring
+  `#EFC38A` to `#D98550`.
+- Type: SF Rounded (`Cream.rounded`). Light large numerals. Labels 11 to 13 pt, semibold or bold,
+  tracking 2 to 4.
+- Shape: continuous rounded rectangles, radius 14 (selected cell), 18 (tray), 24 (buttons).
+- Buttons (`CreamButtonStyle`): prominent = butter `#F2C890` with brown text and a warm
+  shadow. Quiet = cream fill, 2 pt `#E9D8BB` edge, `#7A5A3E` text.
 
 ## Layout
 - Clock centered, sized from available height. Controls anchored to the bottom.
-- One primary button per screen (titanium plate). Quiet variant while a session runs.
-- Secondary screens (sheets) reuse `FocusBackdrop` and `TitaniumButtonStyle`; no stock grouped
-  lists or system blue.
+- One prominent button per screen. Quiet variant while a session runs.
+- Sheets reuse `FocusBackdrop` and `CreamButtonStyle`. No stock grouped lists or system blue.
+
+## Copy
+- Short labels and one-line status only. No explanatory, legal or how-to paragraphs.
+- An error gets one short sentence. If the user can fix it, give a button, not instructions.
 
 ## Motion
-- Smooth 0.7 s state change; 0.2 s ease with Reduce Motion. Timestamp-driven readout is never
+- Smooth 0.7 s state change; 0.2 s ease with Reduce Motion. The timestamp-driven readout is never
   animated by its parent. Haptics: impact on lock, success on completion.
 
 ## Do
-- Keep new UI in this material. Support Dynamic Type and Reduce Motion. 44 pt minimum targets.
+- Support Dynamic Type and Reduce Motion. 44 pt minimum targets.
 
 ## Don't
-- No color accents, gradients with hue, emoji icons, stock iOS list styling, or extra chrome in a
-  running session.
+- No dark surfaces (except the camera scanner), no cool greys, no emoji icons, no extra chrome in
+  a running session.

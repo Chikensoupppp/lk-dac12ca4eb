@@ -22,13 +22,6 @@ struct QRScannerScreen: View {
             } else {
                 QRScannerView(onCode: onCode, onUnavailable: { unavailable = $0 })
                     .ignoresSafeArea()
-                Text("Point the camera at the QR code on your PC.")
-                    .font(.footnote)
-                    .foregroundStyle(Color.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.6), in: Capsule())
-                    .padding(.top, 72)
             }
             HStack {
                 Spacer()
@@ -68,7 +61,7 @@ final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsD
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        let denied = "Camera access is off. Turn it on in iOS Settings > Lock In, then try again."
+        let denied = "Camera access is off."
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             configure()
@@ -87,7 +80,7 @@ final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsD
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device),
               session.canAddInput(input) else {
-            onUnavailable?("This device has no camera to scan with.")
+            onUnavailable?("No camera found.")
             return
         }
         session.addInput(input)

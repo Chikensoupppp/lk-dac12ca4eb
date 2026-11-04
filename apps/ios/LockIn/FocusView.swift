@@ -66,17 +66,17 @@ struct FocusView: View {
 
                 VStack(spacing: 0) {
                     Text("LOCK IN")
-                        .font(.system(size: 12, weight: .semibold))
-                        .tracking(5)
-                        .foregroundStyle(Color.white.opacity(isLocked ? 0.3 : 0.55))
+                        .font(Cream.rounded(13, .bold))
+                        .tracking(4)
+                        .foregroundStyle(Cream.inkSoft)
                         .padding(.top, 12)
 
                     PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
 
                     if isLocked, let line = restrictions.statusLine {
                         Text(line)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Color.white.opacity(0.35))
+                            .font(Cream.rounded(12, .medium))
+                            .foregroundStyle(Cream.inkSoft)
                             .padding(.top, 4)
                             .accessibilityIdentifier("restrictions-line")
                     }
@@ -94,9 +94,9 @@ struct FocusView: View {
 
                     VStack(spacing: 10) {
                         Text("MINUTES")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(Cream.rounded(11, .semibold))
                             .tracking(3)
-                            .foregroundStyle(Color.white.opacity(0.3))
+                            .foregroundStyle(Cream.inkSoft)
                         DurationSelector(options: Self.durationOptions, selection: $selectedMinutes)
                     }
                     .opacity(isLocked ? 0 : 1)
@@ -107,7 +107,7 @@ struct FocusView: View {
                     Button(action: isLocked ? endSession : startSession) {
                         Text(isLocked ? "END SESSION" : "LOCK IN")
                     }
-                    .buttonStyle(TitaniumButtonStyle(prominent: !isLocked))
+                    .buttonStyle(CreamButtonStyle(prominent: !isLocked))
                     .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
                 }
                 .padding(.horizontal, 24)
@@ -120,8 +120,10 @@ struct FocusView: View {
                 Button { showRestrictions = true } label: {
                     Image(systemName: "shield.lefthalf.filled")
                         .font(.system(size: 17))
-                        .foregroundStyle(Color.white.opacity(0.5))
+                        .foregroundStyle(Cream.quietText)
                         .frame(width: 44, height: 44)
+                        .background(Circle().fill(Color.white.opacity(0.7)))
+                        .shadow(color: Cream.shadow.opacity(0.18), radius: 6, x: 0, y: 3)
                 }
                 .accessibilityLabel("Restrictions")
                 .padding(.trailing, 8)
@@ -137,7 +139,7 @@ struct FocusView: View {
             }
             #endif
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onAppear {
             if expiredOnLaunch {
                 expiredOnLaunch = false
@@ -220,15 +222,9 @@ struct FocusBackdrop: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(white: 0.065), Color(white: 0.028)],
+                colors: [Cream.top, Cream.bottom],
                 startPoint: .top,
                 endPoint: .bottom
-            )
-            RadialGradient(
-                colors: [Color.white.opacity(0.05), Color.clear],
-                center: UnitPoint(x: 0.3, y: 0),
-                startRadius: 0,
-                endRadius: 420
             )
         }
         .ignoresSafeArea()
@@ -251,17 +247,14 @@ private struct DurationSelector: View {
                     selection = minutes
                 } label: {
                     Text("\(minutes)")
-                        .font(.system(size: optionFontSize, weight: selected ? .semibold : .regular).monospacedDigit())
-                        .foregroundStyle(selected ? Color.white : Color.white.opacity(0.42))
+                        .font(Cream.rounded(optionFontSize, selected ? .bold : .medium).monospacedDigit())
+                        .foregroundStyle(selected ? Cream.ink : Cream.inkSoft)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background {
                             if selected {
-                                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                    .fill(Color.white.opacity(0.09))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
-                                    )
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.white)
+                                    .shadow(color: Cream.shadow.opacity(0.22), radius: 5, x: 0, y: 2)
                             }
                         }
                         .contentShape(Rectangle())
@@ -273,11 +266,11 @@ private struct DurationSelector: View {
         }
         .padding(4)
         .background(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .fill(Color.black.opacity(0.5))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Cream.pill)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Cream.pillEdge, lineWidth: 1)
                 )
         )
         .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: selection)

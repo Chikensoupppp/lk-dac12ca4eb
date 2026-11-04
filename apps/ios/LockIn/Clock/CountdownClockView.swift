@@ -44,23 +44,16 @@ struct CountdownClockView: View {
             ProgressArc(fraction: fraction, diameter: g.ringDiameter, lineWidth: g.ringWidth)
 
             Text(SessionTiming.display(seconds: seconds))
-                .font(.system(size: g.diameter * 0.19, weight: .light).monospacedDigit())
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.98), Color(white: 0.78)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .shadow(color: Color.black.opacity(0.7), radius: 0, x: 0, y: 1)
+                .font(Cream.rounded(g.diameter * 0.19, .light).monospacedDigit())
+                .foregroundStyle(Cream.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-                .frame(width: g.faceDiameter * 0.66)
+                .frame(width: g.faceDiameter * 0.74)
 
             Text(caption.uppercased())
-                .font(.system(size: g.diameter * 0.034, weight: .medium))
-                .tracking(g.diameter * 0.008)
-                .foregroundStyle(Color.white.opacity(0.5))
+                .font(Cream.rounded(g.diameter * 0.036, .semibold))
+                .tracking(g.diameter * 0.006)
+                .foregroundStyle(Cream.inkSoft)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: g.faceDiameter * 0.6)
@@ -79,29 +72,17 @@ struct CountdownClockView: View {
     }
 }
 
-/// Thin polished-silver arc. It starts at 12 o'clock and its leading end retreats
-/// clockwise as time runs out. Highlights are fixed to the screen (light from the upper left).
+/// Thick caramel arc. It starts at 12 o'clock and its leading end retreats
+/// clockwise as time runs out. The color gradient is fixed to the screen.
 private struct ProgressArc: View {
     let fraction: Double
     let diameter: CGFloat
     let lineWidth: CGFloat
 
-    // Gradient angles are pre-rotation (the arc is rotated -90 degrees), so the
-    // upper-left highlight sits at location 0.875.
-    private static let silver = AngularGradient(
-        stops: ClockTone.metalStops([
-            (0.000, 0.50), (0.125, 0.40), (0.375, 0.72), (0.500, 0.52),
-            (0.750, 0.38), (0.875, 0.93), (1.000, 0.50)
-        ]),
-        center: .center
-    )
-
-    private static let specular = AngularGradient(
-        stops: ClockTone.lightStops([
-            (0.000, 0), (0.340, 0), (0.375, 0.45), (0.410, 0),
-            (0.820, 0), (0.875, 1.0), (0.930, 0), (1.000, 0)
-        ]),
-        center: .center
+    private static let fill = LinearGradient(
+        colors: [Cream.ringStart, Cream.ringEnd],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
     )
 
     var body: some View {
@@ -110,14 +91,10 @@ private struct ProgressArc: View {
             if f > 0.0005 {
                 Circle()
                     .trim(from: 1 - f, to: 1)
-                    .stroke(Self.silver, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                Circle()
-                    .trim(from: 1 - f, to: 1)
-                    .stroke(Self.specular, style: StrokeStyle(lineWidth: lineWidth * 0.38, lineCap: .round))
+                    .rotation(.degrees(-90))
+                    .stroke(Self.fill, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
             }
         }
-        .rotationEffect(.degrees(-90))
         .frame(width: diameter, height: diameter)
-        .shadow(color: Color.black.opacity(0.7), radius: lineWidth * 0.6, x: 0, y: lineWidth * 0.5)
     }
 }
