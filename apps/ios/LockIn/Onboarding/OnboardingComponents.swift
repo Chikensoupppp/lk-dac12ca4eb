@@ -10,6 +10,16 @@ enum OB {
     static let soft = Color(hex: 0xD2D4D9)
 }
 
+private struct OBBackKey: EnvironmentKey { static let defaultValue: (() -> Void)? = nil }
+
+extension EnvironmentValues {
+    /// Set by the flow on every step after the first. Nil on step one, so no Back button shows.
+    var obBack: (() -> Void)? {
+        get { self[OBBackKey.self] }
+        set { self[OBBackKey.self] = newValue }
+    }
+}
+
 /// Fades and lifts a view in, one after another. Skipped when motion is limited.
 struct StaggerIn: ViewModifier {
     let index: Int
@@ -44,6 +54,7 @@ struct OBScaffold<Content: View>: View {
     let secondaryTitle: String?
     let secondaryAction: (() -> Void)?
     let content: Content
+    @Environment(\.obBack) private var back
 
     init(step: Int, title: String, subtitle: String? = nil, subtitleLarge: Bool = false,
          primaryTitle: String, primaryEnabled: Bool = true, primaryAction: @escaping () -> Void,
@@ -72,6 +83,25 @@ struct OBScaffold<Content: View>: View {
             .padding(.top, 12)
             .accessibilityHidden(true)
 
+            HStack {
+                if let back {
+                    Button(action: back) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(Matte.text)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("Back")
+                }
+                Spacer()
+                Text("\(step) of \(OnboardingFlow.stepCount)")
+                    .font(Cream.rounded(14, .semibold))
+                    .foregroundStyle(Matte.textSoft)
+                    .accessibilityLabel("Step \(step) of \(OnboardingFlow.stepCount)")
+            }
+            .frame(height: 44)
+            .padding(.horizontal, 12)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(title)
@@ -96,7 +126,7 @@ struct OBScaffold<Content: View>: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
-                .padding(.top, 36)
+                .padding(.top, 12)
                 .padding(.bottom, 24)
             }
             .scrollBounceBehavior(.basedOnSize)
@@ -181,6 +211,8 @@ struct ChoiceTile: View {
     let symbol: String
     let color: Color
     let selected: Bool
+    /// Use dark text when the picked color is light (ice). Dark colors keep white text.
+    var darkTextWhenSelected: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -201,7 +233,7 @@ struct ChoiceTile: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                     .padding(16)
             }
-            .foregroundStyle(Matte.text)
+            .foregroundStyle(selected && darkTextWhenSelected ? OB.ink : Matte.text)
             .frame(maxWidth: .infinity, minHeight: 104)
             .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(selected ? color : OB.panel))
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(selected ? color : Matte.edge, lineWidth: 1.5))

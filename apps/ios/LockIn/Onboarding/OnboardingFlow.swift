@@ -3,14 +3,13 @@ import ManagedSettings
 import ManagedSettingsUI
 import SwiftUI
 
-/// First-run flow. Ten steps. Choices that matter (Screen Time access, the app list, the PC
-/// pairing) are made on the real screens here, so nothing has to be set up again afterwards.
+/// First-run flow. Nine steps. Screen Time access and the app list are set on the real screens
+/// here. PC pairing is not part of it: it comes after Plus is bought, from the PC sheet.
 /// Nothing in this flow claims a feature that is not built: Plus is shown as "coming soon".
 struct OnboardingFlow: View {
-    static let stepCount = 10
+    static let stepCount = 9
 
     @ObservedObject var restrictions: RestrictionController
-    @ObservedObject var pc: PCLink
     /// `true` means the user asked to start a first session right away.
     let onFinish: (Bool) -> Void
 
@@ -22,10 +21,29 @@ struct OnboardingFlow: View {
 
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
 
-    private func next() {
-        let move = { step = min(step + 1, Self.stepCount) }
+    @State private var goingBack = false
+
+    /// The "Look at your year" step. It needs the hours answer, so it is left out when that
+    /// question was skipped, rather than showing a number the user never earned.
+    private static let yearStep = 7
+
+    private func go(to target: Int, back: Bool) {
+        goingBack = back
+        let move = { step = min(max(target, 1), Self.stepCount) }
         if reduceMotion { withAnimation(.easeInOut(duration: 0.2), move) }
         else { withAnimation(.spring(response: 0.5, dampingFraction: 0.86), move) }
+    }
+
+    private func next() {
+        var target = step + 1
+        if target == Self.yearStep && hoursIndex == nil { target += 1 }
+        go(to: target, back: false)
+    }
+
+    private func back() {
+        var target = step - 1
+        if target == Self.yearStep && hoursIndex == nil { target -= 1 }
+        go(to: target, back: true)
     }
 
     private func finish(start: Bool) {
@@ -45,17 +63,17 @@ struct OnboardingFlow: View {
                 case 5: ShieldStep(restrictions: restrictions, next: next)
                 case 6: GoalsStep(goals: $goals, next: next)
                 case 7: YearStep(hoursIndex: hoursIndex ?? 2, next: next)
-                case 8: PCStep(pc: pc, next: next)
-                case 9: PlusStep(next: next)
+                case 8: PlusStep(next: next)
                 default: ReadyStep(start: { finish(start: true) }, later: { finish(start: false) })
                 }
             }
+            .environment(\.obBack, step > 1 ? back : nil)
             .id(step)
             .transition(reduceMotion
                 ? .opacity
                 : .asymmetric(
-                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                    removal: .move(edge: .leading).combined(with: .opacity)))
+                    insertion: .move(edge: goingBack ? .leading : .trailing).combined(with: .opacity),
+                    removal: .move(edge: goingBack ? .trailing : .leading).combined(with: .opacity)))
         }
         .preferredColorScheme(.dark)
     }
@@ -110,7 +128,8 @@ private struct HoursStep: View {
 
     var body: some View {
         OBScaffold(step: 2, title: "How long are you on your phone each day?",
-                   primaryTitle: "NEXT", primaryEnabled: hoursIndex != nil, primaryAction: next) {
+                   primaryTitle: "NEXT", primaryEnabled: hoursIndex != nil, primaryAction: next,
+                   secondaryTitle: "Skip", secondaryAction: next) {
             VStack(spacing: 12) {
                 ForEach(Array(OnboardingMath.hoursChoices.enumerated()), id: \.offset) { index, label in
                     ChoiceRow(title: label, selected: hoursIndex == index) { hoursIndex = index }
@@ -134,7 +153,8 @@ private struct CategoriesStep: View {
 
     var body: some View {
         OBScaffold(step: 3, title: "Which apps pull you in the most?",
-                   primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next) {
+                   primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
+                   secondaryTitle: "Skip", secondaryAction: next) {
             VStack(alignment: .leading, spacing: 20) {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible())], spacing: 14) {
                     ForEach(Self.items, id: \.0) { item in
@@ -251,7 +271,8 @@ private struct ShieldStep: View {
         if has { return "LOOKS RIGHT" }
         switch restrictions.status {
         case .denied: return "OPEN SETTINGS"
-        case .needsAuthorization, .failed: return "ALLOW SCREEN TIME"
+        // Apple's guidance: a screen before a system permission box uses "Continue", never "Allow".
+        case .needsAuthorization, .failed: return "CONTINUE"
         default: return "CHOOSE APPS"
         }
     }
@@ -354,11 +375,12 @@ private struct GoalsStep: View {
 
     var body: some View {
         OBScaffold(step: 6, title: "What do you want to focus on?",
-                   primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next) {
+                   primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
+                   secondaryTitle: "Skip", secondaryAction: next) {
             VStack(alignment: .leading, spacing: 18) {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible())], spacing: 12) {
                     ForEach(Self.items, id: \.0) { item in
-                        ChoiceTile(title: item.0, symbol: item.1, color: OB.ice, selected: goals.contains(item.0)) {
+                        ChoiceTile(title: item.0, symbol: item.1, color: OB.ice, selected: goals.contains(item.0), darkTextWhenSelected: true) {
                             if goals.contains(item.0) { goals.remove(item.0) } else { goals.insert(item.0) }
                         }
                     }
@@ -435,76 +457,7 @@ private struct YearStep: View {
     }
 }
 
-// MARK: 8. PC
-
-private struct PCStep: View {
-    @ObservedObject var pc: PCLink
-    let next: () -> Void
-    @State private var scanning = false
-
-    var body: some View {
-        OBScaffold(
-            step: 8,
-            title: "Do you have a PC?",
-            subtitle: "Open Lock In on it, then scan the code it shows.",
-            primaryTitle: pc.isPaired ? "CONTINUE" : (pc.isPairing ? "PAIRING..." : "SCAN THE CODE"),
-            primaryEnabled: !pc.isPairing,
-            primaryAction: { if pc.isPaired { next() } else { scanning = true } },
-            secondaryTitle: pc.isPaired ? nil : "I only have a phone",
-            secondaryAction: pc.isPaired ? nil : next
-        ) {
-            VStack(spacing: 22) {
-                HStack(spacing: 10) {
-                    deviceTile("iphone")
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(height: 3)
-                        .overlay(
-                            Line().stroke(pc.isPaired ? OB.sage : OB.ice.opacity(0.7),
-                                          style: StrokeStyle(lineWidth: 3, dash: pc.isPaired ? [] : [6, 5]))
-                        )
-                    deviceTile("desktopcomputer")
-                }
-                .padding(.top, 20)
-                if pc.isPaired {
-                    StickerNote(text: "phone and PC, linked", color: OB.sage, tilt: -3)
-                } else if let problem = pc.problem {
-                    Text(problem).font(Cream.rounded(15, .medium)).foregroundStyle(Matte.textQuiet)
-                }
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .fullScreenCover(isPresented: $scanning) {
-            QRScannerScreen(
-                onCode: { text in
-                    scanning = false
-                    guard let offer = PCPairingOffer.decode(text) else {
-                        pc.report("That QR code is not from Lock In.")
-                        return
-                    }
-                    Task { await pc.pair(offer: offer) }
-                },
-                onCancel: { scanning = false })
-        }
-    }
-
-    private func deviceTile(_ symbol: String) -> some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous).fill(OB.panel)
-            .frame(width: 64, height: 64)
-            .overlay(Image(systemName: symbol).font(.system(size: 28)).foregroundStyle(Matte.text))
-    }
-
-    private struct Line: Shape {
-        func path(in rect: CGRect) -> Path {
-            var p = Path()
-            p.move(to: CGPoint(x: rect.minX, y: rect.midY))
-            p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-            return p
-        }
-    }
-}
-
-// MARK: 9. Plus (preview only)
+// MARK: 8. Plus (preview only)
 
 private struct PlusStep: View {
     let next: () -> Void
@@ -516,7 +469,7 @@ private struct PlusStep: View {
     ]
 
     var body: some View {
-        OBScaffold(step: 9, title: "Plus works on your PC.", primaryTitle: "NEXT", primaryAction: next) {
+        OBScaffold(step: 8, title: "Plus works on your PC.", subtitle: "You link your PC after you get Plus.", primaryTitle: "NOT NOW", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
                 StickerNote(text: "coming soon", color: OB.warm, tilt: -3)
                 ForEach(Self.items, id: \.0) { item in
@@ -537,7 +490,7 @@ private struct PlusStep: View {
     }
 }
 
-// MARK: 10. Ready
+// MARK: 9. Ready
 
 private struct ReadyStep: View {
     let start: () -> Void
@@ -547,7 +500,7 @@ private struct ReadyStep: View {
 
     var body: some View {
         OBScaffold(
-            step: 10, title: "Ready to focus?", subtitle: "25 minutes. Phone down.",
+            step: 9, title: "Ready to focus?", subtitle: "25 minutes. Phone down.",
             primaryTitle: "START 25 MINUTES", primaryAction: start,
             secondaryTitle: "Not now", secondaryAction: later
         ) {

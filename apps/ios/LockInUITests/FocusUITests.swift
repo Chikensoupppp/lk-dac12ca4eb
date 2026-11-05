@@ -213,16 +213,45 @@ final class FocusUITests: XCTestCase {
         step("onboarding-1-hero", tap: "SHOW ME")
         step("onboarding-2-hours", tap: "NEXT", pre: { app.buttons["5 to 6 hours"].tap() })
         step("onboarding-3-categories", tap: "NEXT", pre: { app.buttons["Social"].tap() })
+        // Back returns to the previous step with the choice kept.
+        XCTAssertTrue(app.buttons["CONTINUE"].waitForExistence(timeout: 10))
+        app.buttons["Back"].tap()
+        XCTAssertTrue(app.buttons["NEXT"].waitForExistence(timeout: 5))
+        app.buttons["NEXT"].tap()
         step("onboarding-4-permission", tap: "CONTINUE")
         step("onboarding-5-shield", tap: "Skip for now")
         step("onboarding-6-goals", tap: "NEXT", pre: { app.buttons["Study"].tap() })
         step("onboarding-7-year", tap: "LET\u{2019}S DO IT")
-        step("onboarding-8-pc", tap: "I only have a phone")
-        step("onboarding-9-plus", tap: "NEXT")
-        step("onboarding-10-ready", tap: "START 25 MINUTES")
+        step("onboarding-8-plus", tap: "NOT NOW")
+        step("onboarding-9-ready", tap: "START 25 MINUTES")
 
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    /// Skipping every question still reaches a session, and leaves out the year step.
+    func testFirstRunCanBeSkipped() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing-calm-background", "-ui-testing-reset-state", "-ui-testing-onboarding"]
+        app.launch()
+
+        func tap(_ label: String) {
+            let button = app.buttons[label]
+            XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label)")
+            button.tap()
+        }
+        tap("SHOW ME")
+        tap("Skip")          // hours
+        tap("Skip")          // apps
+        tap("CONTINUE")
+        tap("Skip for now")
+        tap("Skip")          // focus goals
+        capture("onboarding-skip-plus")
+        XCTAssertFalse(app.staticTexts["Look at your year."].exists)
+        tap("NOT NOW")
+        tap("START 25 MINUTES")
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
+        app.buttons["END SESSION"].tap()
     }
 }

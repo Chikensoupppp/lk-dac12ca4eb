@@ -9,6 +9,10 @@ The repository is bootstrapped with a Windows companion vertical slice and an iP
 - This Windows machine has .NET and GitHub CLI, but not a Swift/Xcode toolchain; iOS build verification must happen on macOS.
 - iOS restriction behavior must be capability-gated through Screen Time APIs; unsupported controls must be surfaced as unavailable rather than simulated as active.
 
+## First-run onboarding
+
+`apps/ios/LockIn/Onboarding/` (flow, components, store). 9 steps. Skippable: hours, apps, focus goals; skipping hours also skips the "year" step so no made-up number shows. `OnboardingStore.isDone()` skips it in UI tests unless `-ui-testing-onboarding`. Design mocks: `docs/design/` (`slides-v9.html`, `real-onboarding-sheet.png`). Plus (step 8) is a preview with one button, "Not now"; build Plus before changing that. PC pairing was moved out on purpose: do it after purchase. Unverified: Screen Time on a device, app picker icons (`Label(token)` size), QR scan.
+
 ## Clock
 
 `apps/ios/LockIn/Clock/` holds the reusable `CountdownClockView`. `FocusView.timing` (`SessionTiming?`) is the only session clock; the view renders from it. GitHub Actions run 41493405111 passed and produced idle screenshots on iPhone SE (3rd generation), iPhone 16, and iPhone 16 Pro Max; all three were visually inspected, with no visible clipping. Run 41494428865 passed two unit tests and five UI tests, including background return before and after expiry. Runs 41495360016 and 41496429343 passed after Dynamic Type changes; iPhone 16 Pro and iPhone SE large-text images were inspected and show enlarged, unclipped controls. VoiceOver remains unverified. See `docs/WINDOWS_IOS_DEVELOPMENT.md`.

@@ -12,8 +12,11 @@ Updated: 2026-11-02 (branch ios/native-clock-ci)
 - SwiftUI iPhone shell for selecting duration and starting/stopping a local session model.
 - Titanium countdown clock (`apps/ios/LockIn/Clock/`) driven by a single end-timestamp (`SessionTiming`).
 - XcodeGen project and macOS simulator CI; UI tests and screenshot capture are included.
+- First-run onboarding (`apps/ios/LockIn/Onboarding/`): 9 steps with Back, "N of 9", and Skip on the hours, apps and focus questions. Screen Time access and the app picker are on the real screens. PC pairing is not in onboarding; it stays in the PC sheet and belongs after Plus. Plus is a "coming soon" preview only; it is not built.
 
 ## Verified
+
+- GitHub Actions run 42079862575 (10-step onboarding build): passed on simulator, including the first-run UI test and the unit tests. Screens were inspected. Not verified: Screen Time authorization and the app picker (need a physical device), QR scanning, the 9-step version with Back and Skip, VoiceOver.
 
 - `dotnet build apps/windows-companion/LockIn.Companion.csproj`
 - Live HTTP check: `/health`, `/session/start`, and `/session/stop` on `127.0.0.1:47821`

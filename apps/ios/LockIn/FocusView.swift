@@ -147,7 +147,7 @@ struct FocusView: View {
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow(restrictions: restrictions, pc: pc) { startNow in
+            OnboardingFlow(restrictions: restrictions) { startNow in
                 onboardingDone = true
                 if startNow {
                     selectedMinutes = 25
