@@ -11,6 +11,7 @@ final class FocusUITests: XCTestCase {
     /// Every test starts from a clean persisted state unless it relaunches on purpose.
     private func makeApp(reset: Bool = true) -> XCUIApplication {
         let app = XCUIApplication()
+        app.launchArguments.append("-ui-testing-calm-background")
         if reset { app.launchArguments.append("-ui-testing-reset-state") }
         return app
     }

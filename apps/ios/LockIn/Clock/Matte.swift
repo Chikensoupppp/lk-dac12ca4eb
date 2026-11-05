@@ -31,7 +31,11 @@ enum Matte {
 
 /// True when decorative motion should be off: system Reduce Motion or Low Power Mode.
 func motionLimited(_ systemReduceMotion: Bool) -> Bool {
-    effectiveReduceMotion(systemReduceMotion) || ProcessInfo.processInfo.isLowPowerModeEnabled
+    #if DEBUG
+    // The CI simulator draws on the CPU. UI tests turn the live background off so they stay fast.
+    if ProcessInfo.processInfo.arguments.contains("-ui-testing-calm-background") { return true }
+    #endif
+    return effectiveReduceMotion(systemReduceMotion) || ProcessInfo.processInfo.isLowPowerModeEnabled
 }
 
 /// What the Focus screen feels like right now. Drives glow color, glow strength and ring color.

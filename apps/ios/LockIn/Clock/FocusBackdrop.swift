@@ -11,7 +11,7 @@ struct FocusBackdrop: View {
     private var motion: Bool { !motionLimited(systemReduceMotion) }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: motion ? 1.0 / 30 : 1, paused: !motion && timing == nil)) { context in
+        TimelineView(.animation(minimumInterval: motion ? 1.0 / 20 : 1, paused: !motion && timing == nil)) { context in
             let mood = FocusMood.resolve(timing: timing, flash: flash, now: context.date)
             let t = motion ? context.date.timeIntervalSinceReferenceDate : 0
             ZStack {
