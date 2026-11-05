@@ -16,7 +16,14 @@ Written 2026-11-04. Sources are design-agency and vendor blogs, so this is opini
 - **B. Soft glass.** Frosted translucent layers over a gentle honey, peach, sage and sky glow. Glowing gold ring and a gold button. Feels modern and light. Risk: needs care for contrast and for Reduce Transparency.
 - **C. Warm metal.** Brass ring with a metal sheen, pressed (inset) minutes tray, raised gold button, soft deep shadow under the disc. Feels tactile and solid. Risk: close to the old titanium idea Brandon dropped, but warm and light instead of cold and dark.
 
-## Recommendation
+## Round 2: Brandon said "colder, a lot more"
+He did not like the warm options. Colder was drawn in icy blue and steel on a light base (he dropped dark earlier, so dark was not used). Mock: `docs/design/premium-cold.png`.
+- **A. Quiet luxury, cold:** white and pale steel base, navy serif numerals, one steel-blue ring line, navy button.
+- **B. Soft glass, cold:** frosted layers over ice blue, lilac and mint, glowing blue ring, blue button.
+- **C. Cool platinum:** silver ring, pressed minutes tray, raised blue button.
+Open: confirm light (not dark) and pick A, B or C. Contrast not yet measured (pale blue on white fails easily).
+
+## Recommendation (round 1, warm)
 Pick one direction, not a blend. My lean: **B for friendliness, C for solidity**; A is the most premium but the least warm. Whichever is chosen, keep the honest rules: no paragraphs, 44 pt targets, contrast measured, Reduce Motion and Reduce Transparency respected.
 
 ## Sources
