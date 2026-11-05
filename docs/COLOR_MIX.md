@@ -32,6 +32,13 @@ Lesson: a full different color on every tab looks like four apps. Caramel must l
 - **Lavender:** rest-day dot only. **Honey:** "Firm" dot.
 - Mock: `docs/design/colors-ideas.png` (this is now v2).
 
+## Version 3 (Brandon: "a little less warmth, a little more pop")
+- Base moved from yellow-cream to a neutral oat (`#FBFAF6` to `#EFEBE1`). Text is a neutral dark (`#2F2A26`, soft `#6B6258`) instead of brown.
+- Main color moved from orange-caramel to honey gold (button `#F3BE55`, ring `#F6CE7A` to `#E59A32`).
+- Touches got stronger: sage `#8FD0A0`/`#3E9B62`, blue `#9FCBF2`/`#3F82C7`, rose `#F6AEB9`/`#D9546B`, lavender `#7A68D0`.
+- Mock: `docs/design/colors-ideas-v3.png`. Not built. Build 6 in TestFlight still has the v1 Cream look.
+- To do before building: measure contrast for every text and button pair.
+
 ## Other ways to mix (pick one or two)
 1. **Meaning colors.** Streak honey, rest day lavender, shields-on sage, PC-connected blue, warning terracotta. Same color always means the same thing.
 2. **Workspace colors.** Each PC workspace gets its own color (Study blue, Code caramel, Write rose). The user can change it.
