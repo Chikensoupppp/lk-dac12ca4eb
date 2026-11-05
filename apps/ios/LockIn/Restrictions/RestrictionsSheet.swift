@@ -26,12 +26,12 @@ struct RestrictionsSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                CreamBackdrop()
+                FocusBackdrop(timing: nil, flash: nil)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
                         Text(headline)
                             .font(Cream.rounded(26, .light))
-                            .foregroundStyle(Cream.ink)
+                            .foregroundStyle(Matte.text)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityIdentifier("restrictions-status")
 
@@ -50,13 +50,13 @@ struct RestrictionsSheet: View {
                     Text("RESTRICTIONS")
                         .font(Cream.rounded(13, .bold))
                         .tracking(4)
-                        .foregroundStyle(Cream.inkSoft)
+                        .foregroundStyle(Matte.textSoft)
                         .accessibilityHidden(true)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .font(Cream.rounded(17, .semibold))
-                        .foregroundStyle(Cream.quietText)
+                        .foregroundStyle(Matte.textQuiet)
                 }
             }
             .familyActivityPicker(
@@ -64,7 +64,7 @@ struct RestrictionsSheet: View {
                 selection: Binding(get: { restrictions.selection }, set: { restrictions.setSelection($0) })
             )
         }
-        .preferredColorScheme(.light)
+        .preferredColorScheme(.dark)
     }
 
     @ViewBuilder
@@ -76,7 +76,7 @@ struct RestrictionsSheet: View {
             } label: {
                 Text("ALLOW ACCESS")
             }
-            .buttonStyle(CreamButtonStyle(prominent: true))
+            .buttonStyle(MatteButtonStyle(prominent: true))
             .accessibilityLabel("Allow Screen Time access")
         case .denied:
             Button {
@@ -84,7 +84,7 @@ struct RestrictionsSheet: View {
             } label: {
                 Text("OPEN SETTINGS")
             }
-            .buttonStyle(CreamButtonStyle(prominent: true))
+            .buttonStyle(MatteButtonStyle(prominent: true))
             .accessibilityLabel("Open iOS Settings")
         default:
             Button {
@@ -92,7 +92,7 @@ struct RestrictionsSheet: View {
             } label: {
                 Text(restrictions.hasSelection ? "CHANGE APPS" : "CHOOSE APPS")
             }
-            .buttonStyle(CreamButtonStyle(prominent: !restrictions.hasSelection))
+            .buttonStyle(MatteButtonStyle(prominent: !restrictions.hasSelection))
             .accessibilityLabel(restrictions.hasSelection ? "Change chosen apps" : "Choose apps to shield")
         }
     }

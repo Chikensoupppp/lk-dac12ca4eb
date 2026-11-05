@@ -56,30 +56,30 @@ struct PCSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                CreamBackdrop()
+                FocusBackdrop(timing: nil, flash: nil)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         Text(headline)
                             .font(Cream.rounded(26, .light))
-                            .foregroundStyle(Cream.ink)
+                            .foregroundStyle(Matte.text)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityIdentifier("pc-headline")
 
                         if let problem = pc.problem {
                             Text(problem)
                                 .font(Cream.rounded(15, .medium))
-                                .foregroundStyle(Cream.inkSoft)
+                                .foregroundStyle(Matte.textSoft)
                                 .accessibilityIdentifier("pc-problem")
                         }
 
                         Button { scanning = true } label: { Text("SCAN QR CODE") }
-                            .buttonStyle(CreamButtonStyle(prominent: !pc.isPaired))
+                            .buttonStyle(MatteButtonStyle(prominent: !pc.isPaired))
                             .disabled(pc.isPairing)
                             .accessibilityLabel("Scan the pairing QR code")
 
                         if pc.isPaired {
                             Button { pc.forget() } label: { Text("FORGET THIS PC") }
-                                .buttonStyle(CreamButtonStyle(prominent: false))
+                                .buttonStyle(MatteButtonStyle(prominent: false))
                                 .accessibilityLabel("Forget this PC")
                         }
                     }
@@ -95,7 +95,7 @@ struct PCSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .font(Cream.rounded(17, .semibold))
-                        .foregroundStyle(Cream.quietText)
+                        .foregroundStyle(Matte.textQuiet)
                 }
             }
             .fullScreenCover(isPresented: $scanning) {
@@ -111,6 +111,6 @@ struct PCSheet: View {
                     onCancel: { scanning = false })
             }
         }
-        .preferredColorScheme(.light)
+        .preferredColorScheme(.dark)
     }
 }
