@@ -49,7 +49,7 @@ enum FocusMood: Equatable {
         return flash ?? .idle
     }
 
-    private static let blue = [Color(hex: 0x2C5FA8), Color(hex: 0x4B3FA0), Color(hex: 0x1F7C86)]
+    private static let blue = [Color(hex: 0x3A7BD8), Color(hex: 0x6A4FD6), Color(hex: 0x229BA6)]
     private static let warm = [Color(hex: 0xB8742C), Color(hex: 0xA8462F), Color(hex: 0x8A6A2A)]
     private static let gray = [Color(hex: 0x2A2D32), Color(hex: 0x25282C), Color(hex: 0x2A2D32)]
 
@@ -76,10 +76,10 @@ enum FocusMood: Equatable {
     var glowAmount: Double {
         switch self {
         case .idle: return 1
-        case .running: return 0.6
-        case .lastMinute: return 0.75
+        case .running: return 0.9
+        case .lastMinute: return 1.0
         case .finished: return 1.15
-        case .endedEarly: return 0.5
+        case .endedEarly: return 0.6
         }
     }
 

@@ -65,8 +65,8 @@ private struct MoodGlows: View {
             .padding(170)
             .blur(radius: 55)
             .drawingGroup()
-            .opacity(0.55 * mood.glowAmount)
-            .scaleEffect(mood.calm ? 0.82 : 1)
+            .opacity(0.8 * mood.glowAmount)
+            .scaleEffect(mood.calm ? 0.92 : 1)
             .animation(.easeInOut(duration: fade), value: mood)
     }
 
