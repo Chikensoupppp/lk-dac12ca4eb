@@ -48,3 +48,5 @@ Updated: 2026-11-02 (branch ios/native-clock-ci)
 - iPhone/Windows network pairing (Milestone 2).
 - The Windows store is in-memory and lazy-expiring, wall-clock adjustments affect its deadline, and it is not a restriction enforcement or recovery mechanism.
 - Actual Windows application/site restriction enforcement.
+
+- 2026-11-04: Focus screen rebuilt as matte black with a living background (drifting glows, dust, rim glint, ripples), mood colors (running, last minute, finished, ended early), start edge-run and ring, light sweep on finish, heavy/success/warning haptics. Run 41951086970 passed (33 unit and 10 UI tests; UI tests run with the live background off via `-ui-testing-calm-background`). Idle screenshots on SE, 16 and Pro Max were inspected. The animated state, battery use and frame rate are NOT verified on a device. Sheets (Restrictions, PC) still use the Cream look.
