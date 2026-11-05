@@ -23,7 +23,7 @@ enum Cream {
     static let shadow = Color(hex: 0x8C6432)
 
     static func rounded(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        AppFont.font(size, weight)
     }
 }
 

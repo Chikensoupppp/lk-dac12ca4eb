@@ -2,6 +2,11 @@ import SwiftUI
 
 @main
 struct LockInApp: App {
+    init() {
+        AppFont.register()
+        AppFont.styleNavigationBar()
+    }
+
     var body: some Scene {
         WindowGroup { FocusView() }
     }

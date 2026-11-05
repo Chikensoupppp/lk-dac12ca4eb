@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In goal flow</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Caveat:wght@600&display=swap">
+<style>
+  * { box-sizing:border-box; margin:0; }
+  :root { --ink:#EDEBE6; --soft:#8D9096; --ice:#9CC9F5; --sage:#8FD3B0; --panel:#1A1C20; }
+  body { font-family:-apple-system,"Inter",system-ui,sans-serif; background:#cfcfd2; padding:22px; }
+  .row { display:flex; gap:16px; }
+  .cap { font:600 13px system-ui; color:#444; margin:0 0 6px 6px; }
+  .wrap { zoom:.78; width:393px; height:852px; flex:none; }
+  .phone { width:393px; height:852px; border-radius:52px; overflow:hidden; position:relative; background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%); color:var(--ink); }
+  .island { position:absolute; top:11px; left:50%; width:120px; height:34px; margin-left:-60px; border-radius:20px; background:#000; }
+  .sb { position:absolute; top:18px; left:34px; font-weight:600; font-size:16px; }
+  .bars { position:absolute; left:26px; right:26px; top:54px; display:flex; gap:5px; }
+  .bars i { flex:1; height:4px; border-radius:2px; background:#2B2E34; } .bars i.on { background:var(--ink); }
+  .mark { position:absolute; top:66px; left:26px; font-family:Fraunces,Georgia,serif; font-weight:600; font-size:17px; }
+  .skip { position:absolute; top:66px; right:26px; font-size:15px; color:var(--soft); }
+  h1 { position:absolute; left:26px; right:26px; top:120px; font-family:Fraunces,Georgia,serif; font-weight:500; font-size:50px; line-height:1; letter-spacing:-1.2px; }
+  .lead { position:absolute; left:26px; width:330px; font-size:19px; line-height:1.35; }
+  .lead b { font-weight:600; }
+  .note { position:absolute; font-family:Caveat,"Segoe Script",cursive; font-weight:600; font-size:26px; line-height:1.05; color:var(--ice); transform:rotate(var(--r,-4deg)); }
+  .note.warm { color:var(--ink); }
+  .src { position:absolute; left:26px; right:40px; bottom:128px; font-size:14px; line-height:1.4; color:var(--soft); }
+  .btn { position:absolute; left:26px; right:26px; bottom:60px; height:58px; border-radius:14px; display:grid; place-items:center; font-weight:650; font-size:17px; background:var(--ink); color:#0A0B0D; }
+  .btn.sage { background:var(--sage); }
+  .foot { position:absolute; left:0; right:0; bottom:28px; text-align:center; font-size:13px; color:var(--soft); }
+  .card { position:absolute; left:26px; right:26px; border-radius:18px; background:var(--panel); padding:14px 16px; }
+  .card h3 { font-family:Fraunces,Georgia,serif; font-weight:500; font-size:20px; }
+  .lbl { font-size:14px; display:flex; justify-content:space-between; margin:11px 0 5px; } .lbl span { color:var(--soft); }
+  .bar { height:11px; border-radius:6px; }
+  .tog { display:flex; align-items:center; justify-content:space-between; font-size:17px; font-weight:600; }
+  .sw { width:50px; height:30px; border-radius:15px; background:#33363C; position:relative; } .sw::after { content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#8D9096; }
+  .sw.on { background:var(--sage); } .sw.on::after { left:23px; background:#0A0B0D; }
+  .ban { position:absolute; left:20px; right:20px; border-radius:22px; background:#23262B; padding:13px 16px; font-size:15px; line-height:1.3; }
+  .ban small { display:flex; justify-content:space-between; color:var(--soft); font-size:12px; margin-bottom:3px; letter-spacing:.2px; }
+  .ban b { font-weight:600; }
+  svg { position:absolute; overflow:visible; } svg.rough { filter:url(#rough); }
+  .chips { position:absolute; left:26px; right:26px; display:flex; gap:10px; }
+  .chips div { flex:1; height:52px; border-radius:14px; background:var(--panel); display:grid; place-items:center; font-weight:650; font-size:17px; }
+  .chips div.sel { box-shadow:inset 0 0 0 2.5px var(--ice); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter></svg>
+<div class="row" id="r"></div>
+<script>
+const bars = (n, t = 7) => `<div class="bars">${[...Array(t).keys()].map(i => `<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
+const frame = (cap, inner) => `<div><div class="cap">${cap}</div><div class="wrap"><div class="phone"><div class="island"></div><div class="sb">9:41</div>${inner}</div></div></div>`;
+const tick = '<svg width="24" height="20" viewBox="0 0 28 24" fill="none" stroke="#8FD3B0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="position:static"><path d="M3 13 C6 15 8 18 10 21 C14 13 19 7 25 2"/></svg>';
+
+/* 1 building the plan */
+const p1 = frame('1. Building your plan (slide)', `${bars(2)}
+  <div class="mark">Lock In</div>
+  <h1 style="top:128px">Building<br>your plan.</h1>
+  <p class="lead" style="top:238px">Using what you told us.</p>
+  <svg class="rough" style="left:116px;top:318px" width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="70" fill="none" stroke="#25282D" stroke-width="12"/><path d="M80 10 A70 70 0 1 1 22 119" fill="none" stroke="#9CC9F5" stroke-width="12" stroke-linecap="round"/></svg>
+  <div style="position:absolute;left:36px;right:36px;top:520px;font-size:18px;font-weight:600;line-height:2.3">
+    <div style="display:flex;gap:12px;align-items:center">${tick}Adding up your hours</div>
+    <div style="display:flex;gap:12px;align-items:center">${tick}Looking at your PC</div>
+    <div style="display:flex;gap:12px;align-items:center;color:#8D9096"><span style="width:24px;height:20px;display:grid;place-items:center"><i style="width:9px;height:9px;border-radius:50%;background:#9CC9F5;display:block"></i></span>Picking a first goal</div></div>
+  <div class="note" style="left:36px;top:330px;--r:-5deg">one sec.</div>
+  <div class="foot" style="bottom:70px">A few seconds. Nothing leaves your phone.</div>`);
+
+/* 2 the math */
+let dots = ''; for (let i = 0; i < 365; i++) { const x = (i % 28) * 10.6 + 4, y = Math.floor(i / 28) * 10.6 + 4; dots += `<circle cx="${x}" cy="${y}" r="3.2" fill="${i < 53 ? '#9CC9F5' : '#2E3238'}"/>`; }
+const p2 = frame('2. The math (slide)', `${bars(3)}
+  <div class="mark">Lock In</div><div class="skip">Skip</div>
+  <h1 style="top:120px">That adds up.</h1>
+  <p class="lead" style="top:182px">At 3 to 4 hours a day, that is about 25 hours a week.</p>
+  <svg class="rough" style="left:46px;top:270px" width="300" height="150" viewBox="0 0 300 150">${dots}</svg>
+  <div style="position:absolute;left:26px;top:454px"><span style="font-family:Fraunces,Georgia,serif;font-size:92px;letter-spacing:-4px;line-height:.9;color:#9CC9F5">53</span></div>
+  <p class="lead" style="top:560px;font-size:20px;font-weight:600">days a year, on your phone.</p>
+  <div class="note warm" style="left:190px;top:468px;--r:-4deg">no judging.<br>just math.</div>
+  <p class="src">An estimate from your answer: 3.5 hours a day, 365 days. Blue dots are 53 of the year's days.</p>
+  <div class="btn">Next</div>`);
+
+/* 3 goal page (in the app) */
+const p3 = frame('3. Goal page (in the app)', `
+  <div class="mark">Goal</div><div class="skip">Close</div>
+  <h1 style="top:112px">Set your<br>goal.</h1>
+  <p class="lead" style="top:226px">Hours of real focus, this week.</p>
+  <div style="position:absolute;left:26px;right:26px;top:286px;display:flex;align-items:center;justify-content:space-between">
+    <div style="width:56px;height:56px;border-radius:16px;background:var(--panel);display:grid;place-items:center;font-size:30px;color:#C9CBD0">&minus;</div>
+    <div style="font-family:Fraunces,Georgia,serif;font-size:96px;letter-spacing:-4px;line-height:1">4<span style="font-size:36px;letter-spacing:0"> h</span></div>
+    <div style="width:56px;height:56px;border-radius:16px;background:var(--panel);display:grid;place-items:center;font-size:30px;color:#C9CBD0">+</div></div>
+  <div class="chips" style="top:420px"><div>2 h</div><div class="sel">4 h</div><div>6 h</div><div>8 h</div></div>
+  <div class="note" style="left:30px;top:486px;--r:-3deg">start small. that's about<br>5 blocks of 45 minutes.</div>
+  <div class="card" style="top:560px;padding:6px 16px"><div class="tog" style="padding:11px 0">Remind me along the way<span class="sw on"></span></div><div class="tog" style="padding:11px 0;border-top:0">Weekdays only<span class="sw"></span></div></div>
+  <div class="btn">Set goal</div><div class="foot">You can change it any time.</div>`);
+
+/* 4 in progress with reminders */
+const p4 = frame('4. Midweek, with reminders (sample)', `
+  <div class="mark">Goal</div><div class="skip">Close</div>
+  <h1 style="top:112px">Your goal.</h1>
+  <p class="lead" style="top:174px"><b>1 h of 4 h.</b> 25% there.</p>
+  <div style="position:absolute;left:26px;right:26px;top:226px;height:18px;border-radius:9px;background:#25282D"></div>
+  <div style="position:absolute;left:26px;width:85px;top:226px;height:18px;border-radius:9px;background:var(--ice)"></div>
+  <div style="position:absolute;left:26px;right:26px;top:256px;display:flex;justify-content:space-between;font-size:13px;color:var(--soft)"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+  <div class="note" style="left:96px;top:292px;--r:2deg;white-space:nowrap">reminders look like this:</div>
+  <div class="ban" style="top:340px"><small><span>LOCK IN</span><span>now</span></small><b>You're 25% of the way to 4 hours.</b> One 45 minute block gets you to about 44%.</div>
+  <div class="ban" style="top:462px"><small><span>LOCK IN</span><span>Wed, 6:00 PM</span></small><b>Halfway there.</b> 2 hours to go. Two blocks tonight and tomorrow.</div>
+  <div class="ban" style="top:574px"><small><span>LOCK IN</span><span>Sat, 10:00 AM</span></small><b>One block left.</b> 45 minutes finishes your goal.</div>
+  <div class="btn">Start 45 minutes</div><div class="foot">Reminders use your Lock In sessions only.</div>`);
+
+/* 5 sunday report, goal reached */
+const p5 = frame('5. Sunday report, goal reached (sample)', `
+  <div class="mark">Lock In</div><div class="skip">Done</div>
+  <h1 style="top:104px;font-size:44px">You did it.</h1>
+  <p class="lead" style="top:158px;font-size:17px"><b>Goal: 4 hours. You focused 4 h 20.</b> That is 5 sessions, 2 more than last week.</p>
+  <div style="position:absolute;left:26px;right:26px;top:238px;height:18px;border-radius:9px;background:var(--sage)"></div>
+  <div class="note warm" style="left:236px;top:262px;--r:-4deg">told you.</div>
+  <div class="card" style="top:322px;height:178px"><h3>PC, by app</h3>
+    <div class="lbl" style="margin-top:12px">Editor<span>5 h</span></div><div class="bar" style="width:52%;background:var(--sage)"></div>
+    <div class="lbl">Browser<span>6 h</span></div><div class="bar" style="width:62%;background:var(--ice)"></div>
+    <div class="lbl">Games<span>11 h</span></div><div class="bar" style="width:100%;background:#3A3F47"></div></div>
+  <p class="lead" style="top:522px;font-size:15px;color:#8D9096"><b style="color:#EDEBE6">Best day:</b> Thu. <b style="color:#EDEBE6">By task:</b> Thesis 2 h 10, Email 1 h 35.</p>
+  <div class="chips" style="top:586px"><div>4 h</div><div class="sel">5 h</div><div>6 h</div></div>
+  <div class="note" style="left:30px;top:652px;--r:-2deg">raise the bar next week?</div>
+  <div class="btn sage">Set next week's goal</div><div class="foot">Your numbers stay on your devices.</div>`);
+
+document.getElementById('r').innerHTML = p1 + p2 + p3 + p4 + p5;
+</script>
+</body>
+</html>

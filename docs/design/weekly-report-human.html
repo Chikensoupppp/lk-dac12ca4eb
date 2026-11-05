@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In weekly report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Caveat:wght@600&display=swap">
+<style>
+  * { box-sizing:border-box; margin:0; }
+  :root { --ink:#EDEBE6; --soft:#8D9096; --ice:#9CC9F5; --sage:#8FD3B0; --panel:#1A1C20; }
+  body { font-family:-apple-system,"Inter",system-ui,sans-serif; background:#cfcfd2; padding:22px; }
+  .row { display:flex; gap:16px; }
+  .cap { font:600 13px system-ui; color:#444; margin:0 0 6px 6px; }
+  .wrap { zoom:.78; width:393px; height:852px; flex:none; }
+  .phone { width:393px; height:852px; border-radius:52px; overflow:hidden; position:relative; background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%); color:var(--ink); }
+  .island { position:absolute; top:11px; left:50%; width:120px; height:34px; margin-left:-60px; border-radius:20px; background:#000; }
+  .sb { position:absolute; top:18px; left:34px; font-weight:600; font-size:16px; }
+  .mark { position:absolute; top:66px; left:26px; font-family:Fraunces,Georgia,serif; font-weight:600; font-size:17px; }
+  .skip { position:absolute; top:66px; right:26px; font-size:15px; color:var(--soft); }
+  h1 { position:absolute; left:26px; right:26px; top:104px; font-family:Fraunces,Georgia,serif; font-weight:500; font-size:44px; line-height:1; letter-spacing:-1px; }
+  .lead { position:absolute; left:26px; width:336px; font-size:17px; line-height:1.3; color:#C9CBD0; }
+  .lead b { color:var(--ink); font-weight:600; }
+  .card { position:absolute; left:26px; right:26px; border-radius:18px; background:var(--panel); padding:14px 16px; }
+  .card h3 { font-family:Fraunces,Georgia,serif; font-weight:500; font-size:20px; letter-spacing:-.2px; }
+  .card .by { position:absolute; right:16px; top:17px; font-size:12px; color:var(--soft); }
+  .lbl { font-size:14px; display:flex; justify-content:space-between; margin:11px 0 5px; }
+  .lbl span { color:var(--soft); font-variant-numeric:tabular-nums; } .up { color:var(--sage) !important; }
+  .bar { height:11px; border-radius:6px; }
+  .stats { position:absolute; left:26px; right:26px; display:flex; gap:10px; }
+  .stats div { flex:1; padding:2px 0; }
+  .stats b { display:block; font-family:Fraunces,Georgia,serif; font-weight:500; font-size:30px; letter-spacing:-.8px; }
+  .stats small { font-size:13px; color:var(--soft); }
+  .note { position:absolute; font-family:Caveat,"Segoe Script",cursive; font-weight:600; font-size:26px; line-height:1.05; color:var(--ice); transform:rotate(var(--r,-4deg)); }
+  .note.warm { color:var(--ink); }
+  .btn { position:absolute; left:26px; right:26px; bottom:60px; height:58px; border-radius:14px; display:grid; place-items:center; font-weight:650; font-size:17px; background:var(--ink); color:#0A0B0D; }
+  .foot { position:absolute; left:0; right:0; bottom:28px; text-align:center; font-size:13px; color:var(--soft); }
+  svg { position:absolute; overflow:visible; }
+</style>
+</head>
+<body>
+<div class="row" id="r"></div>
+<script>
+const days = ['M','T','W','T','F','S','S'], h = [4.1, 3.4, 5.2, 3.8, 4.6, 6.1, 5.4];
+const chart = (w, ht) => days.map((d, i) => { const x = 8 + i * 40, hh = h[i] / 6.2 * (ht - 28), y = ht - 18 - hh; return `<rect x="${x}" y="${y}" width="26" height="${hh}" rx="5" fill="${i===5?'#9CC9F5':'#3A3F47'}"/><text x="${x+13}" y="${ht-4}" text-anchor="middle" font-size="11" fill="#8D9096">${d}</text>`; }).join('');
+const frame = (cap, inner) => `<div><div class="cap">${cap}</div><div class="wrap"><div class="phone"><div class="island"></div><div class="sb">9:41</div>${inner}</div></div></div>`;
+
+/* 1: first open, right after Allow Screen Time */
+const p1 = frame('1. First open (sample numbers)', `
+  <div class="mark">Lock In</div><div class="skip">Skip</div>
+  <h1>Your last<br>7 days.</h1>
+  <p class="lead" style="top:204px">Already on your phone and your PC. No waiting a week.</p>
+  <div class="card" style="top:262px;height:188px"><h3>Phone</h3><div class="by">report by Apple</div>
+    <svg style="left:16px;top:42px" width="290" height="104" viewBox="0 0 290 104">${chart(290,104)}</svg>
+    <div style="position:absolute;left:16px;right:16px;top:150px;font-size:14px;color:#C9CBD0;display:flex;justify-content:space-between"><span>Photo feed</span><span>Short posts</span><span>Videos</span></div></div>
+  <div class="card" style="top:466px;height:198px"><h3>PC</h3><div class="by">scanned on your PC</div>
+    <div class="lbl" style="margin-top:14px">Work apps<span>9 h</span></div><div class="bar" style="width:46%;background:var(--sage)"></div>
+    <div class="lbl">Browser<span>6 h</span></div><div class="bar" style="width:31%;background:var(--ice)"></div>
+    <div class="lbl">Games<span>11 h</span></div><div class="bar" style="width:100%;background:#3A3F47"></div></div>
+  <div class="note" style="left:30px;top:676px;--r:-2deg">that's the week. next one's yours.</div>
+  <div class="btn">Start 45 minutes on your work</div><div class="foot">Your numbers stay on your devices.</div>`);
+
+/* 2: the weekly report, every Sunday */
+const p2 = frame('2. Your week, every Sunday (sample numbers)', `
+  <div class="mark">Lock In</div><div class="skip">Done</div>
+  <h1>Your week.</h1>
+  <p class="lead" style="top:158px"><b>9 hours in work apps</b>, up 2 from last week. Games still ran longer, at 11.</p>
+  <div class="stats" style="top:232px"><div><b>5</b><small>sessions, +2</small></div><div><b>3h 45</b><small>focused</small></div><div><b>Thu</b><small>best day</small></div></div>
+  <div class="card" style="top:322px;height:192px"><h3>PC, by app</h3><div class="by">vs last week</div>
+    <div class="lbl" style="margin-top:12px">Editor<span>5 h <span class="up">+1.5</span></span></div><div class="bar" style="width:52%;background:var(--sage)"></div>
+    <div class="lbl">Browser<span>6 h <span>-0.5</span></span></div><div class="bar" style="width:62%;background:var(--ice)"></div>
+    <div class="lbl">Games<span>11 h <span>-1</span></span></div><div class="bar" style="width:100%;background:#3A3F47"></div></div>
+  <div class="card" style="top:526px;height:112px"><h3>Phone</h3><div class="by">report by Apple</div>
+    <svg style="left:16px;top:36px" width="290" height="70" viewBox="0 0 290 70">${chart(290,70)}</svg></div>
+  <p class="lead" style="top:652px;font-size:15px;color:var(--soft)"><b>By task:</b> Thesis 2 h 10, Email 1 h 35.</p>
+  <div class="note" style="left:200px;top:684px;--r:-3deg">plan next week?</div>
+  <div class="btn">Pick Monday's first block</div><div class="foot">Your numbers stay on your devices.</div>`);
+
+document.getElementById('r').innerHTML = p1 + p2;
+</script>
+</body>
+</html>

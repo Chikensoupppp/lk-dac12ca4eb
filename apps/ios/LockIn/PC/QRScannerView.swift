@@ -13,7 +13,7 @@ struct QRScannerScreen: View {
             Color.black.ignoresSafeArea()
             if let unavailable {
                 Text(unavailable)
-                    .font(.body)
+                    .font(AppFont.font(17))
                     .foregroundStyle(Color.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(32)
