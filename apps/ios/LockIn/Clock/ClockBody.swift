@@ -141,8 +141,8 @@ struct ClockAmbient: View {
                 for k in 0..<3 {
                     var p = (t / period + Double(k) / 3).truncatingRemainder(dividingBy: 1)
                     if p < 0 { p += 1 }
-                    let r = u * (0.45 + 0.35 * p)
-                    let alpha = p < 0.12 ? p / 0.12 * 0.3 : 0.3 * (1 - p)
+                    let r = u * (0.50 + 0.24 * p)
+                    let alpha = p < 0.12 ? p / 0.12 * 0.45 : 0.45 * (1 - p)
                     let rect = CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
                     ctx.stroke(Path(ellipseIn: rect), with: .color(Color(hex: 0x78AAE6).opacity(alpha)), lineWidth: 1)
                 }
