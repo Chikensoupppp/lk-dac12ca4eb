@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In focus motion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  @property --b1 { syntax: '<color>'; inherits: true; initial-value: #2C5FA8; }
+  @property --b2 { syntax: '<color>'; inherits: true; initial-value: #4B3FA0; }
+  @property --b3 { syntax: '<color>'; inherits: true; initial-value: #1F7C86; }
+  @property --ring { syntax: '<color>'; inherits: true; initial-value: #5BA3EA; }
+  @property --gl { syntax: '<number>'; inherits: true; initial-value: 1; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Nunito", system-ui, sans-serif; background: #d9d9de; min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 56px; padding: 28px; }
+  .cap-box { width: 380px; }
+  .cap-box .step { font: 800 13px Nunito; letter-spacing: .2em; color: #6a6f78; margin-bottom: 10px; }
+  .cap-box h3 { font: 800 34px Nunito; color: #1b1d21; line-height: 1.1; margin-bottom: 12px; }
+  .cap-box p { font: 700 20px Nunito; color: #3b3f46; line-height: 1.35; min-height: 56px; }
+  .hap { display: inline-block; margin-top: 18px; padding: 8px 16px; border-radius: 20px; font: 800 14px Nunito; letter-spacing: .08em; background: #15171a; color: #9fd0ff; opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s; }
+  .hap.on { opacity: 1; transform: none; }
+  .fast { margin-top: 14px; font: 700 14px Nunito; color: #7a7f88; opacity: 0; transition: opacity .3s; }
+  .fast.on { opacity: 1; }
+
+  .phone { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; padding: 60px 26px 38px; color: #EEF1F5; flex: none;
+           background: linear-gradient(180deg, #121417 0%, #0A0B0D 60%, #08090A 100%);
+           box-shadow: 0 14px 40px rgba(0,0,0,.35);
+           transition: --b1 1.6s ease, --b2 1.6s ease, --b3 1.6s ease, --ring 1.6s ease, --gl 1.4s ease; }
+  .glows { position: absolute; inset: 0; opacity: var(--gl); transition: transform 1.4s ease; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; }
+  .b1 { width: 340px; height: 340px; left: -90px; top: 70px; background: var(--b1); animation: d1 14s ease-in-out infinite alternate; }
+  .b2 { width: 320px; height: 320px; right: -110px; top: 300px; background: var(--b2); animation: d2 17s ease-in-out infinite alternate; }
+  .b3 { width: 360px; height: 300px; left: 10px; bottom: -80px; background: var(--b3); animation: d3 19s ease-in-out infinite alternate; }
+  @keyframes d1 { to { transform: translate(60px, 90px) scale(1.15); } }
+  @keyframes d2 { to { transform: translate(-70px, -80px) scale(1.2); } }
+  @keyframes d3 { to { transform: translate(50px, -60px) scale(1.1); } }
+  .phone.calm .glows { transform: scale(.82); }
+  .phone.calm .blob { animation-duration: 40s; }
+
+  .dust { position: absolute; inset: 0; pointer-events: none; overflow: hidden; transition: opacity 1.2s; }
+  .phone.calm .dust { opacity: .35; }
+  .dust i { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: #BFD8F5; opacity: 0; animation: rise linear infinite; }
+  @keyframes rise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .55; } 85% { opacity: .3; } 100% { transform: translateY(-860px); opacity: 0; } }
+
+  .ripples { position: absolute; left: 50%; top: 0; width: 0; height: 0; pointer-events: none; }
+  .ripples i { position: absolute; border-radius: 50%; border: 1px solid rgba(120,170,230,.28); opacity: 0; animation: rip 9s ease-out infinite; }
+  @keyframes rip { 0% { transform: scale(.55); opacity: 0; } 12% { opacity: .5; } 100% { transform: scale(1.5); opacity: 0; } }
+  .phone.calm .ripples i { animation-duration: 16s; }
+
+  .vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%); z-index: 2; }
+  .phone > *:not(.glows):not(.dust):not(.vig):not(.touch):not(.shock):not(.ripples) { position: relative; z-index: 3; }
+
+  .head { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .title { font: 800 12px Nunito; letter-spacing: .36em; text-indent: .36em; color: #8E97A3; }
+  .pill { display: flex; gap: 10px; align-items: center; font: 800 13px Nunito; padding: 8px 16px; border-radius: 22px; color: #CBD2DB; background: linear-gradient(180deg, #1B1E22, #141619); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 4px 10px rgba(0,0,0,.5); transition: opacity .6s; }
+  .pill i { width: 4px; height: 4px; border-radius: 50%; background: #5BA3EA; box-shadow: 0 0 6px #5BA3EA; }
+  .phone.run .pill { opacity: 0; }
+
+  .clockwrap { margin: auto 0; position: relative; width: 310px; height: 310px; }
+  .clockwrap > svg { position: absolute; inset: 0; width: 310px; height: 310px; overflow: visible; }
+  .bezel { position: absolute; inset: 6px; border-radius: 50%; background: conic-gradient(from 210deg, #2B2F35, #101215 18%, #23272C 38%, #0D0F11 58%, #2A2E34 78%, #2B2F35); box-shadow: 0 26px 50px rgba(0,0,0,.7), 0 2px 0 rgba(255,255,255,.06) inset, 0 0 0 1px rgba(0,0,0,.8); }
+  .glint { position: absolute; inset: 6px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 80%, rgba(190,220,255,.55) 90%, transparent 100%); -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 62% 100%); mask: radial-gradient(circle, transparent 0 60%, #000 62% 100%); animation: spin 8s linear infinite; mix-blend-mode: screen; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .face { position: absolute; inset: 30px; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #1D2025 0%, #121417 55%, #0C0D0F 100%); box-shadow: inset 0 10px 24px rgba(0,0,0,.7), inset 0 -2px 0 rgba(255,255,255,.05), 0 0 0 1px rgba(255,255,255,.04); overflow: hidden; }
+  .sweep { position: absolute; top: -20%; bottom: -20%; left: -60%; width: 40%; background: linear-gradient(90deg, transparent, rgba(220,240,255,.5), transparent); transform: skewX(-20deg); opacity: 0; }
+  .sweep.go { animation: sweep 1.3s ease-in-out forwards; }
+  @keyframes sweep { 0% { left: -60%; opacity: 0; } 20% { opacity: 1; } 100% { left: 130%; opacity: 0; } }
+  .readout { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .time { font: 700 62px Nunito; letter-spacing: -.01em; font-variant-numeric: tabular-nums; line-height: 1; color: #F3F5F8; text-shadow: 0 1px 0 rgba(0,0,0,.8); }
+  .cap { margin-top: 12px; font: 800 12px Nunito; letter-spacing: .22em; color: #8E97A3; }
+  #tip { transition: opacity .3s; }
+  #tip.pulse { animation: tp 2.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes tp { 50% { transform: scale(1.9); opacity: .4; } }
+
+  .selwrap { width: 100%; transition: opacity .6s, transform .6s; }
+  .phone.run .selwrap { opacity: 0; transform: translateY(14px); pointer-events: none; }
+  .lab { font: 800 11px Nunito; letter-spacing: .26em; margin-bottom: 10px; text-align: center; color: #7E8794; }
+  .sel { display: flex; width: 100%; margin-bottom: 18px; padding: 6px; gap: 4px; border-radius: 20px; background: #0B0C0E; box-shadow: inset 0 3px 8px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.04), 0 1px 0 rgba(255,255,255,.05); }
+  .sel div { flex: 1; text-align: center; padding: 12px 0; border-radius: 15px; font: 800 17px Nunito; color: #7E8794; transition: background .3s, color .3s, box-shadow .3s; }
+  .sel div.on { color: #fff; background: linear-gradient(180deg, #2E3238, #1F2227); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 4px 10px rgba(0,0,0,.6); }
+
+  .btnwrap { position: relative; width: 100%; }
+  .btn { width: 100%; text-align: center; padding: 19px 0; border-radius: 22px; font: 800 17px Nunito; letter-spacing: .12em; color: #0E1218; background: linear-gradient(180deg, #F4F6F9 0%, #D5DBE2 100%); box-shadow: inset 0 1.5px 0 #fff, inset 0 -3px 0 rgba(60,75,95,.28), 0 10px 24px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.5); transition: background .6s, color .6s, box-shadow .6s, transform .2s; }
+  .btn.quiet { color: #C3CAD3; background: linear-gradient(180deg, #1B1E22, #131518); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1.5px #2B2F35, 0 6px 14px rgba(0,0,0,.5); }
+  .btn.pressed { transform: scale(.975); }
+  .hold { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); pointer-events: none; overflow: visible; }
+  .hold rect { fill: none; stroke: #8CC4FF; stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 6px #5BA3EA); }
+  .hold.go rect { transition: stroke-dashoffset 1.3s linear; stroke-dashoffset: 0; }
+  .hold.out rect { transition: opacity .4s; opacity: 0; }
+
+  .touch { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(255,255,255,.22); border: 1.5px solid rgba(255,255,255,.5); z-index: 6; opacity: 0; left: 195px; top: 700px; transition: left .55s cubic-bezier(.3,.7,.2,1), top .55s cubic-bezier(.3,.7,.2,1), opacity .25s, transform .15s; pointer-events: none; }
+  .touch.show { opacity: 1; }
+  .touch.tap { transform: scale(.8); }
+
+  .shock { position: absolute; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 2px solid rgba(150,200,255,.8); z-index: 5; opacity: 0; pointer-events: none; }
+  .shock.go { animation: shock 1s ease-out forwards; }
+  @keyframes shock { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(14); opacity: 0; } }
+
+  @media (prefers-reduced-motion: reduce) { .blob, .dust i, .ripples i, .glint, #tip { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="glows"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+  <div class="dust" id="dust"></div>
+  <div class="ripples" id="rip" style="top:455px"></div>
+  <div class="vig"></div>
+  <div class="head"><div class="title">LOCK IN</div><div class="pill"><i></i>52 / 90 min<span style="color:#5D6674">|</span>6 days</div></div>
+  <div class="clockwrap">
+    <div class="bezel"></div><div class="glint"></div>
+    <div class="face"><div class="sweep" id="sweep"></div></div>
+    <svg viewBox="0 0 310 310"><g id="ticks"></g>
+      <g transform="rotate(-90 155 155)">
+        <circle cx="155" cy="155" r="134" fill="none" stroke="#050607" stroke-width="16"/>
+        <circle cx="155" cy="155" r="134" fill="none" stroke="#1B1F24" stroke-width="12"/>
+        <circle id="arcGlow" cx="155" cy="155" r="134" fill="none" stroke="var(--ring)" stroke-opacity=".5" stroke-width="12" stroke-linecap="round" style="filter: blur(6px)"/>
+        <circle id="arc" cx="155" cy="155" r="134" fill="none" stroke="var(--ring)" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      <circle id="tip" cx="155" cy="21" r="2.8" fill="#EAF5FF"/>
+    </svg>
+    <div class="readout"><div class="time" id="time">45:00</div><div class="cap" id="cap">READY</div></div>
+  </div>
+  <div class="selwrap"><div class="lab">MINUTES</div><div class="sel" id="sel"><div data-m="15">15</div><div data-m="25">25</div><div class="on" data-m="45">45</div><div data-m="60">60</div><div data-m="90">90</div></div></div>
+  <div class="btnwrap"><svg class="hold" id="hold"><rect id="holdRect" x="0" y="0" rx="25" ry="25" pathLength="1"/></svg><div class="btn" id="btn">LOCK IN</div></div>
+  <div class="touch" id="touch"></div>
+  <div class="shock" id="shock"></div>
+</div>
+
+<div class="cap-box">
+  <div class="step" id="step">STEP 1</div>
+  <h3 id="h">Idle</h3>
+  <p id="p">Glows drift. Dust rises. A glint circles the rim.</p>
+  <div class="hap" id="hap">Haptic</div>
+  <div class="fast" id="fast">Time is sped up in this video.</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+const C = 2 * Math.PI * 134;
+let frac = .5, secs = 2700;
+
+// build ticks, dust, ripples, hold rect
+(function () {
+  let out = '';
+  for (let i = 0; i < 60; i++) {
+    const a = i / 60 * 2 * Math.PI, major = i % 5 === 0, r2 = 112 - (major ? 9 : 5);
+    out += `<line x1="${(155+Math.cos(a)*112).toFixed(1)}" y1="${(155+Math.sin(a)*112).toFixed(1)}" x2="${(155+Math.cos(a)*r2).toFixed(1)}" y2="${(155+Math.sin(a)*r2).toFixed(1)}" stroke="${major?'#5D6674':'#323841'}" stroke-width="${major?1.6:1}"/>`;
+  }
+  $('ticks').innerHTML = out;
+  let d = '';
+  for (let i = 0; i < 16; i++) d += `<i style="left:${Math.round(Math.random()*370)}px;animation-duration:${14+Math.random()*12}s;animation-delay:${-Math.random()*20}s"></i>`;
+  $('dust').innerHTML = d;
+  $('rip').innerHTML = [0,3,6].map((s, i) => { const sz = 330 + i*10; return `<i style="width:${sz}px;height:${sz}px;left:${-sz/2}px;top:${-sz/2}px;animation-delay:${-s}s"></i>`; }).join('');
+  const b = $('btn'), w = b.offsetWidth + 8, h = b.offsetHeight + 8, r = $('holdRect');
+  r.setAttribute('width', w); r.setAttribute('height', h);
+})();
+
+function setFrac(f) {
+  frac = f;
+  const dash = `${C*Math.max(f,0)} ${C}`;
+  $('arc').setAttribute('stroke-dasharray', dash);
+  $('arcGlow').setAttribute('stroke-dasharray', dash);
+  const a = f * 2 * Math.PI - Math.PI / 2;
+  $('tip').setAttribute('cx', 155 + Math.cos(a) * 134);
+  $('tip').setAttribute('cy', 155 + Math.sin(a) * 134);
+  $('tip').style.opacity = (f <= .005 || f >= .999) ? 0 : .95;
+}
+function setTime(s) {
+  secs = s; s = Math.max(0, Math.round(s));
+  $('time').textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+function tween(ms, fn, e = ease) {
+  return new Promise(res => { const t0 = performance.now(); (function f(now) { const t = Math.min(1, (now - t0) / ms); fn(e(t)); t < 1 ? requestAnimationFrame(f) : res(); })(t0); });
+}
+const lerp = (a, b, t) => a + (b - a) * t;
+function say(step, h, p, hap, fast) {
+  $('step').textContent = step; $('h').textContent = h; $('p').textContent = p;
+  $('hap').textContent = hap || ''; $('hap').classList.toggle('on', !!hap);
+  $('fast').classList.toggle('on', !!fast);
+}
+function touchTo(el, show = true) {
+  const pr = $('phone').getBoundingClientRect(), r = el.getBoundingClientRect();
+  const t = $('touch'); t.style.left = (r.left + r.width/2 - pr.left) + 'px'; t.style.top = (r.top + r.height/2 - pr.top) + 'px';
+  t.classList.toggle('show', show);
+}
+async function tap() { $('touch').classList.add('tap'); await sleep(140); $('touch').classList.remove('tap'); }
+function shockAt(el) {
+  const pr = $('phone').getBoundingClientRect(), r = el.getBoundingClientRect(), s = $('shock');
+  s.style.left = (r.left + r.width/2 - pr.left) + 'px'; s.style.top = (r.top + r.height/2 - pr.top) + 'px';
+  s.classList.remove('go'); void s.offsetWidth; s.classList.add('go');
+}
+const BLUE = ['#2C5FA8', '#4B3FA0', '#1F7C86', '#5BA3EA'];
+const WARM = ['#B8742C', '#A8462F', '#8A6A2A', '#F0A860'];
+const GRAY = ['#2A2D32', '#25282C', '#2A2D32', '#6C7480'];
+function palette(p, gl) {
+  const ph = $('phone').style;
+  ph.setProperty('--b1', p[0]); ph.setProperty('--b2', p[1]); ph.setProperty('--b3', p[2]); ph.setProperty('--ring', p[3]);
+  if (gl != null) ph.setProperty('--gl', gl);
+}
+async function selectMin(m) {
+  const el = document.querySelector(`#sel [data-m="${m}"]`);
+  touchTo(el); await sleep(600); await tap();
+  document.querySelectorAll('#sel div').forEach(d => d.classList.toggle('on', d === el));
+  const f0 = frac, s0 = secs;
+  await tween(900, t => { setFrac(lerp(f0, m/90, t)); setTime(lerp(s0, m*60, t)); });
+}
+async function lockIn(total) {
+  const b = $('btn'), ph = $('phone'), hold = $('hold');
+  touchTo(b); await sleep(650);
+  $('touch').classList.add('tap'); b.classList.add('pressed');
+  hold.classList.remove('out'); hold.classList.add('go');
+  say('STEP 3', 'Hold to lock in', 'A ring fills around the button while you hold.');
+  await sleep(1400);
+  hold.classList.add('out');
+  shockAt(b);
+  say('STEP 3', 'Locked', 'A heavy latch. The glows pull in and dim.', 'Haptic: heavy latch');
+  $('touch').classList.remove('tap'); $('touch').classList.remove('show'); b.classList.remove('pressed');
+  ph.classList.add('run', 'calm'); b.classList.add('quiet'); b.textContent = 'END SESSION';
+  $('cap').textContent = 'LOCKED';
+  palette(BLUE, .6);
+  const f0 = frac; await tween(700, t => setFrac(lerp(f0, 1, t)));
+  $('tip').classList.add('pulse');
+  hold.classList.remove('go', 'out'); void hold.offsetWidth;
+}
+async function runDown(from, to, ms) {
+  $('cap').textContent = 'ENDS 3:42 PM';
+  await tween(ms, t => { const s = lerp(from, to, t); setTime(s); setFrac(s / total); }, t => t);
+}
+let total = 2700;
+async function resetIdle() {
+  const ph = $('phone'), b = $('btn');
+  ph.classList.remove('run', 'calm'); b.classList.remove('quiet'); b.textContent = 'LOCK IN';
+  $('tip').classList.remove('pulse'); palette(BLUE, 1); $('cap').textContent = 'READY';
+  document.querySelectorAll('#sel div').forEach(d => d.classList.toggle('on', d.dataset.m === '45'));
+  const f0 = frac, s0 = secs; await tween(900, t => { setFrac(lerp(f0, .5, t)); setTime(lerp(s0, 2700, t)); });
+}
+
+async function main() {
+  setFrac(.5); setTime(2700);
+  say('STEP 1', 'Idle', 'Glows drift. Dust rises. A glint circles the rim.');
+  await sleep(3000);
+
+  say('STEP 2', 'Pick minutes', 'The ring grows or shrinks. The digits roll.');
+  await selectMin(90); await sleep(900);
+  await selectMin(25); await sleep(900);
+  await selectMin(45); await sleep(900);
+
+  total = 2700;
+  await lockIn();
+  say('STEP 4', 'Running', 'Calm glows. The ring tip pulses.', '', true);
+  await runDown(2700, 60, 6500);
+
+  say('STEP 5', 'Last minute', 'The glow turns slowly warmer. It does not flash.', '', true);
+  palette(WARM, .75);
+  await runDown(60, 0, 5000);
+
+  $('tip').classList.remove('pulse');
+  say('STEP 6', 'Finished', 'The ring closes. A light sweeps across. The glows brighten.', 'Haptic: success');
+  $('cap').textContent = 'DONE';
+  $('phone').classList.remove('calm'); palette(BLUE, 1.15);
+  $('sweep').classList.remove('go'); void $('sweep').offsetWidth; $('sweep').classList.add('go');
+  await tween(800, t => setFrac(t));
+  await sleep(3200);
+
+  say('', 'Back to idle', 'Ready for the next one.');
+  await resetIdle(); await sleep(1200);
+
+  // part 2: end early
+  say('STEP 7', 'Lock in again', 'Same steps as before, sped up.');
+  total = 2700; await lockIn();
+  say('STEP 7', 'Running', 'About 15 minutes in.', '', true);
+  await runDown(2700, 1800, 3000);
+
+  const b = $('btn');
+  say('STEP 7', 'End early', 'I tap END SESSION.');
+  touchTo(b); await sleep(700); await tap();
+  say('STEP 7', 'It costs something', 'The ring drains backward. The glows go gray.', 'Haptic: warning');
+  $('tip').classList.remove('pulse'); $('cap').textContent = 'ENDED EARLY';
+  palette(GRAY, .5);
+  $('touch').classList.remove('show');
+  const f0 = frac, s0 = secs;
+  await tween(1200, t => { setFrac(lerp(f0, 0, t)); setTime(lerp(s0, 0, t)); });
+  await sleep(3000);
+
+  say('', 'Back to idle', 'Colors return.');
+  setFrac(0); await resetIdle(); await sleep(2500);
+  say('END', 'Done', 'That is the full Focus flow.');
+  document.title = 'Lock In focus motion (finished)';
+  window.__done = true;
+}
+window.addEventListener('load', () => setTimeout(main, 800));
+</script>
+</body>
+</html>
