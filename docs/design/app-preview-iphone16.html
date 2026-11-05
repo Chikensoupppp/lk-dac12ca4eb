@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In app preview iPhone 16</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, "SF Pro Rounded", "Nunito", system-ui, sans-serif; background: #d9d9de; padding: 20px; display: flex; gap: 20px; }
+  .phone { width: 393px; height: 852px; border-radius: 52px; overflow: hidden; position: relative; background: linear-gradient(180deg, #121417 0%, #0A0B0D 60%, #08090A 100%); color: #F3F5F8; flex: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(55px); }
+  .vig { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%); pointer-events: none; }
+  .title { position: absolute; top: 66px; width: 100%; text-align: center; font-weight: 700; font-size: 13px; letter-spacing: 4px; color: #8E97A3; }
+  .pc { position: absolute; top: 90px; width: 100%; text-align: center; font-weight: 600; font-size: 12px; letter-spacing: 2px; color: #8E97A3; }
+  .shield { position: absolute; top: 56px; right: 12px; width: 44px; height: 44px; border-radius: 50%; background: #0B0C0E; box-shadow: inset 0 0 0 1px #2B2F35; display: grid; place-items: center; color: #C3CAD3; font-size: 16px; }
+  .clock { position: absolute; left: 24px; width: 345px; height: 345px; }
+  .clock svg { position: absolute; inset: 0; overflow: visible; }
+  .bezel { position: absolute; left: 2%; top: 2%; width: 96%; height: 96%; border-radius: 50%; background: conic-gradient(from 210deg, #2B2F35, #101215, #23272C, #0D0F11, #2A2E34, #2B2F35); box-shadow: 0 24px 28px rgba(0,0,0,.7); }
+  .face { position: absolute; left: 9.7%; top: 9.7%; width: 80.6%; height: 80.6%; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #1D2025, #121417 55%, #0C0D0F); box-shadow: inset 0 0 0 2px rgba(0,0,0,.5); }
+  .time { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-62%); text-align: center; font-weight: 600; font-size: 69px; font-variant-numeric: tabular-nums; }
+  .cap { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(190%); text-align: center; font-weight: 700; font-size: 13.5px; letter-spacing: 2.4px; color: #8E97A3; }
+  .rip { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1px solid rgba(120,170,230,var(--a)); transform: translate(-50%,-50%); }
+  .tray { position: absolute; left: 24px; right: 24px; bottom: 104px; background: #0B0C0E; border-radius: 20px; padding: 4px; display: flex; gap: 4px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+  .tray div { flex: 1; height: 44px; display: grid; place-items: center; font-weight: 500; font-size: 15px; color: #7E8794; border-radius: 15px; }
+  .tray .on { color: #fff; font-weight: 700; background: linear-gradient(180deg, #2E3238, #1F2227); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 3px 5px rgba(0,0,0,.6); }
+  .lab { position: absolute; bottom: 160px; width: 100%; text-align: center; font-weight: 600; font-size: 11px; letter-spacing: 3px; color: #8E97A3; }
+  .btn { position: absolute; left: 24px; right: 24px; bottom: 34px; height: 60px; border-radius: 22px; display: grid; place-items: center; font-weight: 800; font-size: 16px; letter-spacing: 2px; }
+  .btn.p { background: linear-gradient(180deg, #F4F6F9, #D5DBE2); color: #0E1218; box-shadow: 0 8px 12px rgba(0,0,0,.6); }
+  .btn.q { background: linear-gradient(180deg, #1B1E22, #131518); color: #C3CAD3; box-shadow: inset 0 0 0 1.5px #2B2F35; }
+  .dot { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #BFD8F5; }
+  .island { position: absolute; top: 11px; left: 50%; width: 120px; height: 34px; margin-left: -60px; border-radius: 20px; background: #000; z-index: 5; }
+  .sb { position: absolute; top: 18px; left: 34px; font-weight: 600; font-size: 16px; z-index: 5; }
+  .cap2 { position: absolute; top: -0px; }
+  h4 { font: 700 13px system-ui; color: #333; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div id="root" style="display:flex;gap:20px"></div>
+<script>
+const W = 393, H = 852, U = 345;
+function ticks() {
+  let o = '';
+  const c = U / 2, r1 = U * 0.361;
+  for (let i = 0; i < 60; i++) {
+    const a = i / 60 * 2 * Math.PI, maj = i % 5 === 0, r2 = r1 - U * (maj ? 0.029 : 0.016);
+    o += `<line x1="${c + Math.cos(a) * r1}" y1="${c + Math.sin(a) * r1}" x2="${c + Math.cos(a) * r2}" y2="${c + Math.sin(a) * r2}" stroke="${maj ? '#5D6674' : '#323841'}" stroke-width="${maj ? 1.6 : 1}"/>`;
+  }
+  return o;
+}
+function arc(f, colors) {
+  const rd = U * 0.865 / 2, lw = U * 0.036, cc = 2 * Math.PI * rd, c = U / 2;
+  const id = 'g' + Math.random().toString(36).slice(2, 7);
+  const a = (1 - f) * 2 * Math.PI - Math.PI / 2;
+  const tip = f < .999 ? `<circle cx="${c + Math.cos(a) * rd}" cy="${c + Math.sin(a) * rd}" r="${lw * 0.15}" fill="#EAF5FF"/>` : '';
+  return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${colors[0]}"/><stop offset=".5" stop-color="${colors[1]}"/><stop offset="1" stop-color="${colors[2]}"/></linearGradient></defs>
+  <circle cx="${c}" cy="${c}" r="${rd}" fill="none" stroke="#050607" stroke-width="${lw + 4}"/>
+  <circle cx="${c}" cy="${c}" r="${rd}" fill="none" stroke="#1B1F24" stroke-width="${lw}"/>
+  <g transform="rotate(-90 ${c} ${c})"><circle cx="${c}" cy="${c}" r="${rd}" fill="none" stroke="url(#${id})" stroke-width="${lw}" stroke-linecap="round" stroke-dasharray="${cc * f} ${cc}" stroke-dashoffset="${-cc * (1 - f)}"/></g>${tip}`;
+}
+function phone(opts) {
+  const { run, calm, amount, time, cap, frac, label } = opts;
+  const g = [['#3A7BD8', .10, .25, .87], ['#6A4FD6', .95, .50, .82], ['#229BA6', .50, 1.0, .92]];
+  const sc = calm ? .92 : 1;
+  const blobs = g.map(([c, x, y, s]) => { const d = W * s * sc; return `<div class="blob" style="width:${d}px;height:${d}px;left:${W * x - d / 2}px;top:${H * y - d / 2}px;background:${c};opacity:${0.8 * amount}"></div>`; }).join('');
+  let dust = '';
+  [[40, 120], [320, 90], [350, 300], [60, 520], [300, 600], [190, 700], [30, 360], [370, 480]].forEach(([x, y]) => dust += `<div class="dot" style="left:${x}px;top:${y}px;opacity:${calm ? .2 : .5}"></div>`);
+  const top = 118 + (run ? 40 : 0);
+  const cy = 128 + 0; // clock top
+  const rip = [0.12, 0.45, 0.78].map(p => { const r = U * (0.5 + 0.24 * p) * 2; const al = p < .12 ? p / .12 * .45 : .45 * (1 - p); return `<div class="rip" style="width:${r}px;height:${r}px;--a:${al}"></div>`; }).join('');
+  const colors = run ? ['#B5DCFC', '#6AAEF0', '#4C8EE0'] : ['#B5DCFC', '#6AAEF0', '#4C8EE0'];
+  return `<div><h4>${label}</h4><div class="phone">${blobs}${dust}<div class="vig"></div>
+  <div class="island"></div><div class="sb">9:41</div>
+  <div class="title">LOCK IN</div>${run ? '' : '<div class="pc">PAIR A PC</div><div class="shield">&#9680;</div>'}
+  <div class="clock" style="top:${run ? 200 : 168}px">${rip}<div class="bezel"></div><div class="face"></div>
+    <svg viewBox="0 0 ${U} ${U}"><g>${ticks()}</g>${arc(frac, colors)}</svg>
+    <div class="time">${time}</div><div class="cap">${cap}</div></div>
+  ${run ? '' : '<div class="lab">MINUTES</div><div class="tray"><div>15</div><div>25</div><div class="on">45</div><div>60</div><div>90</div></div>'}
+  <div class="btn ${run ? 'q' : 'p'}">${run ? 'END SESSION' : 'LOCK IN'}</div></div></div>`;
+}
+document.getElementById('root').innerHTML =
+  phone({ run: false, calm: false, amount: 1, time: '45:00', cap: 'READY', frac: .5, label: 'Idle' }) +
+  phone({ run: true, calm: true, amount: .9, time: '58:11', cap: 'ENDS 10:36 PM', frac: .97, label: 'Running (like your photo)' });
+</script>
+</body>
+</html>
