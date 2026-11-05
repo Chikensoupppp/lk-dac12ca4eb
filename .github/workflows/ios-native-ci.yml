@@ -62,7 +62,7 @@ jobs:
             xcrun xcresulttool export attachments --path "$RUNNER_TEMP/Large.xcresult" --output-path "$RUNNER_TEMP/large-attachments"
           fi
       - name: Capture simulator screens
-        timeout-minutes: 8
+        timeout-minutes: 12
         shell: bash
         run: |
           set -euo pipefail
