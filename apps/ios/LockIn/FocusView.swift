@@ -25,6 +25,8 @@ struct FocusView: View {
     @State private var flashTask: Task<Void, Never>?
     @State private var startCount = 0
     @State private var endEarlyCount = 0
+    /// First-run flow. Skipped for anyone with a session already running.
+    @State private var onboardingDone: Bool
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
@@ -37,17 +39,21 @@ struct FocusView: View {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-state") { store.clear() }
         #endif
+        var hadSession = false
         switch SessionRecovery.resolve(store.load(), now: .now) {
         case .idle:
             break
         case .active(let record):
+            hadSession = true
             _timing = State(initialValue: record.timing)
             _sessionID = State(initialValue: record.id)
         case .expired:
+            hadSession = true
             _justCompleted = State(initialValue: true)
             _completionCount = State(initialValue: 1)
             _expiredOnLaunch = State(initialValue: true)
         }
+        _onboardingDone = State(initialValue: OnboardingStore.isDone() || hadSession)
     }
 
     private var isLocked: Bool { timing != nil }
@@ -140,6 +146,15 @@ struct FocusView: View {
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
+            OnboardingFlow(restrictions: restrictions, pc: pc) { startNow in
+                onboardingDone = true
+                if startNow {
+                    selectedMinutes = 25
+                    startSession()
+                }
+            }
+        }
         .overlay(alignment: .topLeading) {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-completion-count") {

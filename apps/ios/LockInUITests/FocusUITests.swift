@@ -193,4 +193,36 @@ final class FocusUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Restrictions"].exists)
         app.buttons["END SESSION"].tap()
     }
+
+    // MARK: First-run flow
+
+    func testFirstRunFlowReachesAFocusSession() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing-calm-background", "-ui-testing-reset-state", "-ui-testing-onboarding"]
+        app.launch()
+
+        func step(_ name: String, tap label: String, pre: (() -> Void)? = nil) {
+            let button = app.buttons[label]
+            XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label) on \(name)")
+            sleep(2)
+            capture(name)
+            pre?()
+            button.tap()
+        }
+
+        step("onboarding-1-hero", tap: "SHOW ME")
+        step("onboarding-2-hours", tap: "NEXT", pre: { app.buttons["5 to 6 hours"].tap() })
+        step("onboarding-3-categories", tap: "NEXT", pre: { app.buttons["Social"].tap() })
+        step("onboarding-4-permission", tap: "CONTINUE")
+        step("onboarding-5-shield", tap: "Skip for now")
+        step("onboarding-6-goals", tap: "NEXT", pre: { app.buttons["Study"].tap() })
+        step("onboarding-7-year", tap: "LET\u{2019}S DO IT")
+        step("onboarding-8-pc", tap: "I only have a phone")
+        step("onboarding-9-plus", tap: "NEXT")
+        step("onboarding-10-ready", tap: "START 25 MINUTES")
+
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
+        app.buttons["END SESSION"].tap()
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
 }
