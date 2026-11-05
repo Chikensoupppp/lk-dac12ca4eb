@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Lock In mixed colors</title>
+<title>Lock In mixed colors v2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -13,10 +13,10 @@
   .col p { font-size: 14px; font-weight: 700; color: #333; margin: 0 0 8px 6px; }
   .phone { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative;
            display: flex; flex-direction: column; align-items: center; padding: 56px 22px 118px;
-           background: linear-gradient(180deg, #FFFBF3 0%, var(--bg2) 100%); color: #45321F; box-shadow: 0 14px 40px rgba(0,0,0,.22); }
+           background: linear-gradient(180deg, #FFFBF3 0%, #F8ECD6 100%); color: #45321F; box-shadow: 0 14px 40px rgba(0,0,0,.22); }
   .title { font-weight: 800; font-size: 13px; letter-spacing: .32em; text-indent: .32em; color: #7D6249; }
   .btn { width: 100%; padding: 19px 0; border-radius: 26px; text-align: center; font-weight: 800; font-size: 18px; letter-spacing: .08em;
-         background: var(--fill); color: #45301D; box-shadow: 0 8px 20px rgba(200,150,80,.30), inset 0 -3px 0 rgba(140,95,40,.16); }
+         background: #F2C890; color: #45301D; box-shadow: 0 8px 20px rgba(200,150,80,.30), inset 0 -3px 0 rgba(140,95,40,.16); }
   .btn.quiet { background: #FFFDF8DD; color: #7A5A3E; box-shadow: inset 0 0 0 2px #E9D8BB; }
 
   /* tab bar */
@@ -24,7 +24,7 @@
           background: #FFFDF8E6; box-shadow: 0 10px 28px rgba(150,110,60,.22), inset 0 0 0 1.5px #EBDDC3; }
   .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 78px; padding: 8px 0; border-radius: 28px; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: #86694F; }
   .tab svg { width: 24px; height: 24px; }
-  .tab.on { background: var(--fill); color: #45301D; box-shadow: 0 4px 10px rgba(200,150,80,.28); }
+  .tab.on { background: #F2C890; color: #45301D; box-shadow: 0 4px 10px rgba(200,150,80,.28); }
 
   .clockwrap { margin: auto 0; position: relative; width: 250px; height: 250px; }
   .clockwrap svg { width: 250px; height: 250px; transform: rotate(-90deg); overflow: visible; }
@@ -46,38 +46,31 @@
   .week { display: flex; justify-content: space-between; width: 100%; margin-top: 16px; }
   .day { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; color: #7D6249; }
   .dot { width: 36px; height: 36px; border-radius: 50%; background: #EFE1C8; display: grid; place-items: center; }
-  .dot.full { background: linear-gradient(135deg, var(--a1), var(--a2)); color: #fff; }
-  .dot.rest { background: #FFFDF8; box-shadow: inset 0 0 0 2px #E9D8BB; color: #B58E62; }
-  .dot.now { background: #FFFDF8; box-shadow: 0 0 0 3px var(--fill); }
+  .dot.full { background: linear-gradient(135deg, #B5D3A5, #6FA37A); color: #fff; }
+  .dot.rest { background: #F3F0FA; box-shadow: inset 0 0 0 2px #D8D0EE; color: #8F83BF; }
+  .dot.now { background: #FFFDF8; box-shadow: 0 0 0 3px #F2C890; }
   .dot svg { width: 17px; height: 17px; }
   .rows { width: 100%; margin-top: 18px; }
   .row { display: flex; justify-content: space-between; align-items: center; padding: 15px 4px; border-top: 1.5px solid #EBDDC3; font-weight: 700; font-size: 16px; }
   .row span:first-child { color: #7D6249; }
   .cards { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
   .card { width: 100%; border-radius: 26px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: radial-gradient(circle at 35% 15%, #FFFFFF, #FFF7E6 80%); box-shadow: 0 8px 20px rgba(160,120,60,.16); }
-  .ico { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(135deg, var(--a1), var(--a2)); color: #fff; font-weight: 800; font-size: 20px; }
+  .ico { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(135deg, #F7D3A0, #E39A62); color: #fff; font-weight: 800; font-size: 20px; }
   .card b { font-size: 18px; font-weight: 800; display: block; }
   .card small { font-size: 13px; font-weight: 700; color: #7D6249; }
   .status { width: 100%; margin-top: 22px; border-radius: 26px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; background: #FFFDF8CC; box-shadow: inset 0 0 0 1.5px #EBDDC3; font-weight: 800; }
-  .led { width: 12px; height: 12px; border-radius: 50%; background: #7FB77E; box-shadow: 0 0 0 4px #7FB77E33; }
-  .plus { font-size: 10px; font-weight: 800; letter-spacing: .14em; padding: 4px 8px; border-radius: 10px; background: var(--fill); color: #45301D; }
+  .led { width: 12px; height: 12px; border-radius: 50%; background: #6FA37A; box-shadow: 0 0 0 4px #6FA37A33; }
+  .plus { font-size: 10px; font-weight: 800; letter-spacing: .14em; padding: 4px 8px; border-radius: 10px; background: #F2C890; color: #45301D; }
   .seg { display: flex; gap: 6px; padding: 5px; border-radius: 18px; background: #FFFDF8CC; box-shadow: inset 0 0 0 1.5px #EBDDC3; margin-top: 4px; width: 100%; }
   .seg div { flex: 1; text-align: center; padding: 10px 0; border-radius: 14px; font-weight: 700; font-size: 15px; color: #86694F; }
   .seg div.on { background: #fff; color: #45321F; box-shadow: 0 3px 10px rgba(150,110,60,.18); }
+  .sd { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; }
   .lab { align-self: flex-start; margin-top: 22px; font-size: 12px; font-weight: 800; letter-spacing: .22em; color: #7D6249; }
   .chev { color: #B58E62; font-weight: 800; }
-
-  .g1 { stop-color: var(--a1); } .g2 { stop-color: var(--a2); }
-  .plus { background: #F2C890 !important; }
-  .P1 { --fill:#F2C890; --a1:#EFC38A; --a2:#D98550; --bg2:#F8ECD6; }
-  .P2 { --fill:#C7DDB9; --a1:#B5D3A5; --a2:#6FA37A; --bg2:#EBEED8; }
-  .P3 { --fill:#C2D8EA; --a1:#A9CBE3; --a2:#5E93B8; --bg2:#E6EEEA; }
-  .P4 { --fill:#F1CBC7; --a1:#F2BDB9; --a2:#CF7F86; --bg2:#F6E7E0; }
-  .led { background:#6FA37A; box-shadow:0 0 0 4px #6FA37A33; }
 </style>
 </head>
 <body>
-<h2>Mixed colors: each tab gets its own accent</h2>
+<h2>Mixed colors v2: caramel leads, others are small touches</h2>
 <div class="phones">
 
 <!-- icons -->
@@ -89,11 +82,11 @@
 </defs></svg>
 
   <div class="col"><p>Focus</p>
-  <div class="phone P1">
+  <div class="phone">
     <div class="title">LOCK IN</div>
-    <div class="today"><svg width="30" height="30" viewBox="0 0 30 30" style="transform:rotate(-90deg)"><circle cx="15" cy="15" r="11" fill="none" stroke="#EFE1C8" stroke-width="5"/><circle cx="15" cy="15" r="11" fill="none" style="stroke:var(--a2)" stroke-width="5" stroke-linecap="round" stroke-dasharray="40 69"/></svg><span>52 / 90 min</span><div class="sep"></div><span>6 days</span></div>
+    <div class="today"><svg width="30" height="30" viewBox="0 0 30 30" style="transform:rotate(-90deg)"><circle cx="15" cy="15" r="11" fill="none" stroke="#EFE1C8" stroke-width="5"/><circle cx="15" cy="15" r="11" fill="none" stroke="#D98550" stroke-width="5" stroke-linecap="round" stroke-dasharray="40 69"/></svg><span>52 / 90 min</span><div class="sep"></div><span>6 days</span></div>
     <div class="clockwrap"><div class="disc"></div>
-      <svg viewBox="0 0 300 300"><defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="g1"/><stop offset="1" class="g2"/></linearGradient></defs><circle cx="150" cy="150" r="138" fill="none" stroke="#EFE1C8" stroke-width="16"/><circle cx="150" cy="150" r="138" fill="none" stroke="url(#a)" stroke-width="16" stroke-linecap="round" stroke-dasharray="867 867"/></svg>
+      <svg viewBox="0 0 300 300"><defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EFC38A"/><stop offset="1" stop-color="#D98550"/></linearGradient></defs><circle cx="150" cy="150" r="138" fill="none" stroke="#EFE1C8" stroke-width="16"/><circle cx="150" cy="150" r="138" fill="none" stroke="url(#a)" stroke-width="16" stroke-linecap="round" stroke-dasharray="867 867"/></svg>
       <div class="face"><div class="time">45:00</div><div class="cap">Ready</div></div></div>
     <div class="sel"><div>15</div><div>25</div><div class="on">45</div><div>60</div><div>90</div></div>
     <div class="btn">LOCK IN</div>
@@ -101,10 +94,10 @@
   </div></div>
 
   <div class="col"><p>Progress</p>
-  <div class="phone P2" style="align-items:stretch">
+  <div class="phone" style="align-items:stretch">
     <div class="title" style="align-self:center">PROGRESS</div>
     <div class="big">6 day streak</div>
-    <div class="bigring" style="align-self:center"><svg viewBox="0 0 230 230"><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="g1"/><stop offset="1" class="g2"/></linearGradient></defs><circle cx="115" cy="115" r="100" fill="none" stroke="#EFE1C8" stroke-width="18"/><circle cx="115" cy="115" r="100" fill="none" stroke="url(#b)" stroke-width="18" stroke-linecap="round" stroke-dasharray="363 628"/></svg><div class="face"><b>52</b><span>OF 90 MIN</span></div></div>
+    <div class="bigring" style="align-self:center"><svg viewBox="0 0 230 230"><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EFC38A"/><stop offset="1" stop-color="#D98550"/></linearGradient></defs><circle cx="115" cy="115" r="100" fill="none" stroke="#EFE1C8" stroke-width="18"/><circle cx="115" cy="115" r="100" fill="none" stroke="url(#b)" stroke-width="18" stroke-linecap="round" stroke-dasharray="363 628"/></svg><div class="face"><b>52</b><span>OF 90 MIN</span></div></div>
     <div class="week">
       <div class="day"><div class="dot full"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>M</div>
       <div class="day"><div class="dot full"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>T</div>
@@ -118,13 +111,14 @@
   </div></div>
 
   <div class="col"><p>PC</p>
-  <div class="phone P3" style="align-items:stretch">
+  <div class="phone" style="align-items:stretch">
     <div class="title" style="align-self:center">PC</div>
     <div class="status"><div class="led"></div><div style="flex:1">Connected<br><small style="font-weight:700;color:#7D6249">BRANDON-PC</small></div><span class="chev">›</span></div>
     <div class="lab">WORKSPACES</div>
     <div class="cards" style="margin-top:12px">
-      <div class="card"><div class="ico">S</div><div style="flex:1"><b>Study</b><small>4 things open</small></div><span class="plus">PLUS</span></div>
+      <div class="card"><div class="ico" style="background:linear-gradient(135deg,#A9CBE3,#5E93B8)">S</div><div style="flex:1"><b>Study</b><small>4 things open</small></div><span class="plus">PLUS</span></div>
       <div class="card"><div class="ico" style="background:linear-gradient(135deg,#EFC38A,#D98550)">C</div><div style="flex:1"><b>Code</b><small>3 things open</small></div><span class="plus">PLUS</span></div>
+      <div class="card"><div class="ico" style="background:linear-gradient(135deg,#F2BDB9,#CF7F86)">W</div><div style="flex:1"><b>Write</b><small>2 things open</small></div><span class="plus">PLUS</span></div>
       <div class="card" style="box-shadow:inset 0 0 0 2px #E9D8BB;background:#FFFDF8AA"><div class="ico" style="background:#EFE1C8;color:#7D6249">+</div><div style="flex:1"><b>New workspace</b></div></div>
     </div>
     <div class="rows" style="margin-top:20px"><div class="row"><span>Lock PC if I quit early</span><span>15 min <span class="plus" style="margin-left:6px">PLUS</span></span></div></div>
@@ -132,10 +126,10 @@
   </div></div>
 
   <div class="col"><p>You</p>
-  <div class="phone P4" style="align-items:stretch">
+  <div class="phone" style="align-items:stretch">
     <div class="title" style="align-self:center">YOU</div>
     <div class="lab">EXIT STRENGTH</div>
-    <div class="seg"><div>Gentle</div><div class="on">Firm</div><div>Locked</div></div>
+    <div class="seg"><div><i class="sd" style="background:#6FA37A"></i>Gentle</div><div class="on"><i class="sd" style="background:#E0A24A"></i>Firm</div><div><i class="sd" style="background:#CF7F86"></i>Locked</div></div>
     <div class="lab">EXITS LEFT THIS WEEK</div>
     <div class="big" style="margin-top:6px;font-size:40px;font-weight:700">2 of 2</div>
     <div class="rows" style="margin-top:22px">

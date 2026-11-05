@@ -24,6 +24,14 @@ Cream stays the base. Text stays warm brown. Color shows up in the ring, the mai
 
 Each tab also tints the background a little (cream to sage, mint, or blush at the bottom).
 
+## Version 2 (Brandon's feedback: v1 was "all totally different")
+Lesson: a full different color on every tab looks like four apps. Caramel must lead, and the others must be small touches.
+- **Caramel pops most.** All backgrounds stay the same cream. Every ring, main button and selected tab is caramel.
+- **Sage pops a little:** check dots for finished days, the "PC connected" light, "Gentle".
+- **Dusty blue and rose pop least:** only on small workspace icons (Study blue, Write rose) and the "Locked" dot.
+- **Lavender:** rest-day dot only. **Honey:** "Firm" dot.
+- Mock: `docs/design/colors-ideas.png` (this is now v2).
+
 ## Other ways to mix (pick one or two)
 1. **Meaning colors.** Streak honey, rest day lavender, shields-on sage, PC-connected blue, warning terracotta. Same color always means the same thing.
 2. **Workspace colors.** Each PC workspace gets its own color (Study blue, Code caramel, Write rose). The user can change it.
