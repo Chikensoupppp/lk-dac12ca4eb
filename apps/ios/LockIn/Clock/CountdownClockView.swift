@@ -52,18 +52,9 @@ struct CountdownClockView: View {
         let remaining = timing?.remaining(at: now) ?? duration
         let seconds = Int(remaining.rounded(.up))
         let mood = FocusMood.resolve(timing: timing, flash: flash, now: now)
-        // Reduce Motion: the arc steps once per second instead of sweeping continuously.
-        let total = timing?.duration ?? duration
-        let remainingFraction = total > 0 ? (reduceMotion ? Double(seconds) / total : remaining / total) : 0
-        let fraction: Double
-        if let timing {
-            // Grows from the idle length to full, then drains. Pure function of timestamps.
-            let grow = min(max(now.timeIntervalSince(timing.startedAt) / Self.growTime, 0), 1)
-            let eased = reduceMotion ? 1 : grow * grow * (3 - 2 * grow)
-            fraction = idleFraction + (remainingFraction - idleFraction) * eased
-        } else {
-            fraction = idleFraction
-        }
+        let fraction = ringFraction(now: now, remaining: remaining, seconds: seconds)
+        let arcKey: Double = timing == nil ? idleFraction : -1
+        let arcFade: Double = reduceMotion ? 0.2 : 1.4
 
         ZStack {
             ProgressArc(
@@ -72,44 +63,69 @@ struct CountdownClockView: View {
                 lineWidth: g.ringWidth,
                 colors: mood.ring
             )
-            .animation(reduceMotion ? nil : .smooth(duration: 0.7), value: timing == nil ? idleFraction : -1)
-            .animation(.easeInOut(duration: reduceMotion ? 0.2 : 1.4), value: mood)
+            .animation(reduceMotion ? nil : .smooth(duration: 0.7), value: arcKey)
+            .animation(.easeInOut(duration: arcFade), value: mood)
 
             if timing != nil, fraction > 0.005, fraction < 0.999 {
-                let angle = (1 - fraction) * 2 * .pi - .pi / 2
-                let r = g.ringDiameter / 2
-                let beat = reduceMotion ? 0 : 0.5 - 0.5 * cos(now.timeIntervalSinceReferenceDate * 2 * .pi / 2.2)
-                Circle()
-                    .fill(Matte.tip)
-                    .frame(width: g.ringWidth * 0.3, height: g.ringWidth * 0.3)
-                    .scaleEffect(1 + 0.9 * beat)
-                    .opacity(0.95 - 0.45 * beat)
-                    .offset(x: cos(angle) * r, y: sin(angle) * r)
+                tipDot(fraction: fraction, now: now, geometry: g)
             }
 
-            Text(SessionTiming.display(seconds: seconds))
-                .font(Cream.rounded(g.total * 0.2, .semibold).monospacedDigit())
-                .foregroundStyle(Matte.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .frame(width: g.faceDiameter * 0.82)
-                .contentTransition(.numericText())
-                .animation(reduceMotion ? nil : .smooth(duration: 0.5), value: timing == nil ? seconds : -1)
+            timeText(seconds: seconds, geometry: g)
 
-            Text(caption.uppercased())
-                .font(Cream.rounded(g.total * 0.039, .bold))
-                .tracking(g.total * 0.007)
-                .foregroundStyle(Matte.textSoft)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .frame(width: g.faceDiameter * 0.6)
-                .offset(y: g.total * 0.14)
+            captionText(geometry: g)
         }
         .frame(width: g.total, height: g.total)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Focus timer")
         .accessibilityValue(spokenValue(seconds: seconds))
         .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    /// Ring length. Grows from the idle length to full when a session starts, then drains.
+    /// A pure function of timestamps. Reduce Motion: steps once per second instead of sweeping.
+    private func ringFraction(now: Date, remaining: TimeInterval, seconds: Int) -> Double {
+        guard let timing else { return idleFraction }
+        let total: Double = timing.duration
+        let remainingFraction: Double = total > 0 ? (reduceMotion ? Double(seconds) / total : remaining / total) : 0
+        let grow: Double = min(max(now.timeIntervalSince(timing.startedAt) / Self.growTime, 0), 1)
+        let eased: Double = reduceMotion ? 1 : grow * grow * (3 - 2 * grow)
+        return idleFraction + (remainingFraction - idleFraction) * eased
+    }
+
+    private func tipDot(fraction: Double, now: Date, geometry g: ClockGeometry) -> some View {
+        let angle: Double = (1 - fraction) * 2 * Double.pi - Double.pi / 2
+        let r: Double = Double(g.ringDiameter) / 2
+        let t: Double = now.timeIntervalSinceReferenceDate * 2 * Double.pi / 2.2
+        let beat: Double = reduceMotion ? 0 : 0.5 - 0.5 * cos(t)
+        let size: CGFloat = g.ringWidth * 0.3
+        return Circle()
+            .fill(Matte.tip)
+            .frame(width: size, height: size)
+            .scaleEffect(1 + 0.9 * beat)
+            .opacity(0.95 - 0.45 * beat)
+            .offset(x: CGFloat(cos(angle) * r), y: CGFloat(sin(angle) * r))
+    }
+
+    private func timeText(seconds: Int, geometry g: ClockGeometry) -> some View {
+        Text(SessionTiming.display(seconds: seconds))
+            .font(Cream.rounded(g.total * 0.2, .semibold).monospacedDigit())
+            .foregroundStyle(Matte.text)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(width: g.faceDiameter * 0.82)
+            .contentTransition(.numericText())
+            .animation(reduceMotion ? nil : .smooth(duration: 0.5), value: timing == nil ? seconds : -1)
+    }
+
+    private func captionText(geometry g: ClockGeometry) -> some View {
+        Text(caption.uppercased())
+            .font(Cream.rounded(g.total * 0.039, .bold))
+            .tracking(g.total * 0.007)
+            .foregroundStyle(Matte.textSoft)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(width: g.faceDiameter * 0.6)
+            .offset(y: g.total * 0.14)
     }
 
     private func spokenValue(seconds: Int) -> String {
