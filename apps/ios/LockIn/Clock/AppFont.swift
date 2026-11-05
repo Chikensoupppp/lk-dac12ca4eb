@@ -15,7 +15,9 @@ enum AppFont {
     }
 
     static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .custom(family, size: size).weight(weight)
+        // fixedSize keeps the old behavior: sizes only grow where a view uses @ScaledMetric.
+        // A plain .custom(size:) would scale every label and push controls off screen.
+        .custom(family, fixedSize: size).weight(weight)
     }
 
     /// Navigation bar titles and the QR scanner are UIKit-drawn, so they need the font set directly.
