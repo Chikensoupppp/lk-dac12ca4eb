@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In matte gray and matte black</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Nunito", system-ui, sans-serif; background: #d9d9de; padding: 28px; }
+  h2 { font-size: 20px; font-weight: 800; color: #222; margin-bottom: 14px; }
+  .phones { display: flex; gap: 24px; }
+  .col p { font-size: 14px; font-weight: 700; color: #333; margin: 0 0 8px 6px; }
+  .phone { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; padding: 60px 26px 38px; box-shadow: 0 14px 40px rgba(0,0,0,.22); }
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: .09; mix-blend-mode: overlay; }
+  .phone > *:not(.grain) { position: relative; z-index: 1; }
+  .head { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .title { font: 800 12px Nunito; letter-spacing: .34em; text-indent: .34em; }
+  .pill { font: 800 13px Nunito; padding: 8px 16px; border-radius: 22px; }
+  .clockwrap { margin: auto 0; position: relative; width: 300px; height: 300px; }
+  .clockwrap svg { position: absolute; inset: 0; width: 300px; height: 300px; transform: rotate(-90deg); overflow: visible; }
+  .disc { position: absolute; inset: 20px; border-radius: 50%; }
+  .face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .time { font: 700 66px Nunito; letter-spacing: -.01em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .cap { margin-top: 12px; font: 800 13px Nunito; letter-spacing: .18em; }
+  .lab { font: 800 11px Nunito; letter-spacing: .24em; margin-bottom: 10px; text-align: center; }
+  .sel { display: flex; width: 100%; margin-bottom: 18px; padding: 6px; gap: 4px; border-radius: 20px; }
+  .sel div { flex: 1; text-align: center; padding: 12px 0; border-radius: 15px; font: 800 17px Nunito; }
+  .btn { width: 100%; text-align: center; padding: 19px 0; border-radius: 22px; font: 800 17px Nunito; letter-spacing: .12em; }
+
+  /* Matte gray (flat mid graphite) */
+  .G { background: #6C7178; color: #F4F6F8; }
+  .G .title, .G .lab, .G .cap { color: #E1E5EA; }
+  .G .pill { background: #62676E; color: #F4F6F8; }
+  .G .disc { background: #7A8087; box-shadow: 0 18px 34px rgba(20,24,30,.28); }
+  .G .sel { background: #62676E; }
+  .G .sel div { color: #DDE1E6; }
+  .G .sel div.on { background: #868C94; color: #FFFFFF; }
+  .G .btn { background: #EDF0F3; color: #1B2026; box-shadow: 0 10px 22px rgba(20,24,30,.3); }
+
+  /* Matte black */
+  .K { background: #0F1012; color: #EEF0F3; }
+  .K .title, .K .lab, .K .cap { color: #9AA1AA; }
+  .K .pill { background: #1A1C1F; color: #D5DAE0; }
+  .K .disc { background: #17191C; box-shadow: 0 0 0 1px #24272B; }
+  .K .sel { background: #17191C; }
+  .K .sel div { color: #8B929B; }
+  .K .sel div.on { background: #2A2D32; color: #FFFFFF; }
+  .K .btn { background: #EDF0F3; color: #101216; }
+</style>
+</head>
+<body>
+<h2>Matte gray and matte black</h2>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+  <linearGradient id="ice" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A5D4FB"/><stop offset="1" stop-color="#5BA3EA"/></linearGradient>
+</defs></svg>
+<div class="phones">
+
+  <div class="col"><p>Matte gray: flat graphite, no shine, light text</p>
+  <div class="phone G">
+    <svg class="grain" width="390" height="844"><rect width="390" height="844" filter="url(#noise)"/></svg>
+    <div class="head"><div class="title">LOCK IN</div><div class="pill">52 / 90 min · 6 days</div></div>
+    <div class="clockwrap"><div class="disc"></div>
+      <svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="136" fill="none" stroke="#5B6067" stroke-width="14"/><circle cx="150" cy="150" r="136" fill="none" stroke="url(#ice)" stroke-width="14" stroke-linecap="round" stroke-dasharray="854 854"/></svg>
+      <div class="face"><div class="time">45:00</div><div class="cap">READY</div></div></div>
+    <div style="width:100%"><div class="lab">MINUTES</div><div class="sel"><div>15</div><div>25</div><div class="on">45</div><div>60</div><div>90</div></div></div>
+    <div class="btn">LOCK IN</div>
+  </div></div>
+
+  <div class="col"><p>Matte black: flat near-black, soft grey text</p>
+  <div class="phone K">
+    <svg class="grain" width="390" height="844"><rect width="390" height="844" filter="url(#noise)"/></svg>
+    <div class="head"><div class="title">LOCK IN</div><div class="pill">52 / 90 min · 6 days</div></div>
+    <div class="clockwrap"><div class="disc"></div>
+      <svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="136" fill="none" stroke="#25282C" stroke-width="14"/><circle cx="150" cy="150" r="136" fill="none" stroke="url(#ice)" stroke-width="14" stroke-linecap="round" stroke-dasharray="854 854"/></svg>
+      <div class="face"><div class="time">45:00</div><div class="cap">READY</div></div></div>
+    <div style="width:100%"><div class="lab">MINUTES</div><div class="sel"><div>15</div><div>25</div><div class="on">45</div><div>60</div><div>90</div></div></div>
+    <div class="btn">LOCK IN</div>
+  </div></div>
+
+</div>
+</body>
+</html>
