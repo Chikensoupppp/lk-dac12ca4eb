@@ -20,9 +20,15 @@ struct FocusView: View {
     @State private var showRestrictions = false
     @StateObject private var pc = PCLink()
     @State private var showPC = false
+    /// Short mood after a session ends (finished glow, gray glow for an early end).
+    @State private var flash: FocusMood?
+    @State private var flashTask: Task<Void, Never>?
+    @State private var startCount = 0
+    @State private var endEarlyCount = 0
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
+    private var motion: Bool { !motionLimited(systemReduceMotion) }
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -59,7 +65,7 @@ struct FocusView: View {
 
     var body: some View {
         ZStack {
-            FocusBackdrop()
+            FocusBackdrop(timing: timing, flash: flash)
 
             GeometryReader { geo in
                 let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.32 : 0.5)), 140)
@@ -68,7 +74,7 @@ struct FocusView: View {
                     Text("LOCK IN")
                         .font(Cream.rounded(13, .bold))
                         .tracking(4)
-                        .foregroundStyle(Cream.inkSoft)
+                        .foregroundStyle(Matte.textSoft)
                         .padding(.top, 12)
 
                     PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
@@ -76,7 +82,7 @@ struct FocusView: View {
                     if isLocked, let line = restrictions.statusLine {
                         Text(line)
                             .font(Cream.rounded(12, .medium))
-                            .foregroundStyle(Cream.inkSoft)
+                            .foregroundStyle(Matte.textSoft)
                             .padding(.top, 4)
                             .accessibilityIdentifier("restrictions-line")
                     }
@@ -86,7 +92,10 @@ struct FocusView: View {
                     CountdownClockView(
                         duration: TimeInterval(selectedMinutes * 60),
                         timing: timing,
-                        caption: clockCaption
+                        caption: clockCaption,
+                        idleFraction: flash == .finished ? 1 : Double(selectedMinutes) / 90,
+                        flash: flash,
+                        sweepTrigger: completionCount
                     )
                     .frame(width: side, height: side)
 
@@ -96,7 +105,7 @@ struct FocusView: View {
                         Text("MINUTES")
                             .font(Cream.rounded(11, .semibold))
                             .tracking(3)
-                            .foregroundStyle(Cream.inkSoft)
+                            .foregroundStyle(Matte.textSoft)
                         DurationSelector(options: Self.durationOptions, selection: $selectedMinutes)
                     }
                     .opacity(isLocked ? 0 : 1)
@@ -107,7 +116,8 @@ struct FocusView: View {
                     Button(action: isLocked ? endSession : startSession) {
                         Text(isLocked ? "END SESSION" : "LOCK IN")
                     }
-                    .buttonStyle(CreamButtonStyle(prominent: !isLocked))
+                    .buttonStyle(MatteButtonStyle(prominent: !isLocked))
+                    .overlay { LatchEffect(trigger: startCount, enabled: motion) }
                     .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
                 }
                 .padding(.horizontal, 24)
@@ -120,10 +130,9 @@ struct FocusView: View {
                 Button { showRestrictions = true } label: {
                     Image(systemName: "shield.lefthalf.filled")
                         .font(.system(size: 17))
-                        .foregroundStyle(Cream.quietText)
+                        .foregroundStyle(Matte.textQuiet)
                         .frame(width: 44, height: 44)
-                        .background(Circle().fill(Color.white.opacity(0.7)))
-                        .shadow(color: Cream.shadow.opacity(0.18), radius: 6, x: 0, y: 3)
+                        .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
                 }
                 .accessibilityLabel("Restrictions")
                 .padding(.trailing, 8)
@@ -139,7 +148,7 @@ struct FocusView: View {
             }
             #endif
         }
-        .preferredColorScheme(.light)
+        .preferredColorScheme(.dark)
         .onAppear {
             if expiredOnLaunch {
                 expiredOnLaunch = false
@@ -150,7 +159,8 @@ struct FocusView: View {
             // A session restored after a relaunch tells the PC again. The PC ignores repeats.
             if let timing, let sessionID { pc.sessionStarted(SessionRecord(id: sessionID, timing: timing)) }
         }
-        .sensoryFeedback(.impact(weight: .medium), trigger: isLocked)
+        .sensoryFeedback(.impact(weight: .heavy), trigger: startCount)
+        .sensoryFeedback(.warning, trigger: endEarlyCount)
         .sensoryFeedback(.success, trigger: completionCount)
         // Fires when the end timestamp passes. Cancelled automatically when the session
         // changes or the view goes away.
@@ -187,6 +197,9 @@ struct FocusView: View {
         store.save(record)
         restrictions.begin(record)
         pc.sessionStarted(record)
+        flashTask?.cancel()
+        flash = nil
+        startCount += 1
         withAnimation(stateAnimation) {
             justCompleted = false
             sessionID = record.id
@@ -198,9 +211,22 @@ struct FocusView: View {
         store.clear()
         restrictions.end()
         if let sessionID { pc.sessionEnded(sessionID) }
+        endEarlyCount += 1
+        showFlash(.endedEarly, seconds: 2.2)
         withAnimation(stateAnimation) {
             sessionID = nil
             timing = nil
+        }
+    }
+
+    /// Holds a short mood (glow color) after a session ends, then returns to idle.
+    private func showFlash(_ mood: FocusMood, seconds: Double) {
+        flashTask?.cancel()
+        flash = mood
+        flashTask = Task {
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            flash = nil
         }
     }
 
@@ -210,24 +236,12 @@ struct FocusView: View {
         restrictions.end()
         if let sessionID { pc.sessionEnded(sessionID) }
         completionCount += 1
+        showFlash(.finished, seconds: 3.2)
         withAnimation(stateAnimation) {
             justCompleted = true
             sessionID = nil
             timing = nil
         }
-    }
-}
-
-struct FocusBackdrop: View {
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Cream.top, Cream.bottom],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        }
-        .ignoresSafeArea()
     }
 }
 
@@ -248,13 +262,17 @@ private struct DurationSelector: View {
                 } label: {
                     Text("\(minutes)")
                         .font(Cream.rounded(optionFontSize, selected ? .bold : .medium).monospacedDigit())
-                        .foregroundStyle(selected ? Cream.ink : Cream.inkSoft)
+                        .foregroundStyle(selected ? Color.white : Matte.textDim)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background {
                             if selected {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white)
-                                    .shadow(color: Cream.shadow.opacity(0.22), radius: 5, x: 0, y: 2)
+                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                    .fill(LinearGradient(colors: [Matte.chipHigh, Matte.chipLow], startPoint: .top, endPoint: .bottom))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                                    )
+                                    .shadow(color: .black.opacity(0.6), radius: 5, x: 0, y: 3)
                             }
                         }
                         .contentShape(Rectangle())
@@ -266,11 +284,11 @@ private struct DurationSelector: View {
         }
         .padding(4)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Cream.pill)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Matte.tray)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(Cream.pillEdge, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
                 )
         )
         .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: selection)

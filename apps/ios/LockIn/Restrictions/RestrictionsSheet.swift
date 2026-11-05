@@ -26,7 +26,7 @@ struct RestrictionsSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FocusBackdrop()
+                CreamBackdrop()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
                         Text(headline)

@@ -2,14 +2,23 @@ import SwiftUI
 
 /// Reusable circular countdown clock. Purely presentational: it renders `timing`
 /// (the session's end timestamp) and never keeps a countdown of its own.
-/// `timing == nil` shows the idle dial at `duration`.
+/// `timing == nil` shows the idle dial at `duration`, with the ring at `idleFraction`.
 struct CountdownClockView: View {
     let duration: TimeInterval
     let timing: SessionTiming?
     let caption: String
+    /// Ring length while idle (selected minutes out of 90). Changes animate.
+    var idleFraction: Double = 1
+    var flash: FocusMood?
+    /// Changes when a session finishes; plays one light sweep across the face.
+    var sweepTrigger: Int = 0
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
+    private var motion: Bool { !motionLimited(systemReduceMotion) }
+
+    /// How long the ring takes to grow from its idle length to full when a session starts.
+    private static let growTime: TimeInterval = 0.7
 
     var body: some View {
         GeometryReader { proxy in
@@ -17,6 +26,12 @@ struct CountdownClockView: View {
             ZStack {
                 ClockBody(geometry: g)
                     .accessibilityHidden(true)
+
+                if motion {
+                    ClockAmbient(geometry: g, calm: timing != nil)
+                }
+
+                LightSweep(trigger: sweepTrigger, diameter: g.faceDiameter, enabled: motion)
 
                 // Per-frame updates only touch this layer: the arc and the digits.
                 TimelineView(.animation(minimumInterval: reduceMotion ? 1 : nil, paused: timing == nil)) { context in
@@ -36,28 +51,59 @@ struct CountdownClockView: View {
     private func readout(at now: Date, geometry g: ClockGeometry) -> some View {
         let remaining = timing?.remaining(at: now) ?? duration
         let seconds = Int(remaining.rounded(.up))
+        let mood = FocusMood.resolve(timing: timing, flash: flash, now: now)
         // Reduce Motion: the arc steps once per second instead of sweeping continuously.
         let total = timing?.duration ?? duration
-        let fraction = total > 0 ? (reduceMotion ? Double(seconds) / total : remaining / total) : 0
+        let remainingFraction = total > 0 ? (reduceMotion ? Double(seconds) / total : remaining / total) : 0
+        let fraction: Double
+        if let timing {
+            // Grows from the idle length to full, then drains. Pure function of timestamps.
+            let grow = min(max(now.timeIntervalSince(timing.startedAt) / Self.growTime, 0), 1)
+            let eased = reduceMotion ? 1 : grow * grow * (3 - 2 * grow)
+            fraction = idleFraction + (remainingFraction - idleFraction) * eased
+        } else {
+            fraction = idleFraction
+        }
 
         ZStack {
-            ProgressArc(fraction: fraction, diameter: g.ringDiameter, lineWidth: g.ringWidth)
+            ProgressArc(
+                fraction: fraction,
+                diameter: g.ringDiameter,
+                lineWidth: g.ringWidth,
+                colors: mood.ring
+            )
+            .animation(reduceMotion ? nil : .smooth(duration: 0.7), value: timing == nil ? idleFraction : -1)
+            .animation(.easeInOut(duration: reduceMotion ? 0.2 : 1.4), value: mood)
+
+            if timing != nil, fraction > 0.005, fraction < 0.999 {
+                let angle = (1 - fraction) * 2 * .pi - .pi / 2
+                let r = g.ringDiameter / 2
+                let beat = reduceMotion ? 0 : 0.5 - 0.5 * cos(now.timeIntervalSinceReferenceDate * 2 * .pi / 2.2)
+                Circle()
+                    .fill(Matte.tip)
+                    .frame(width: g.ringWidth * 0.3, height: g.ringWidth * 0.3)
+                    .scaleEffect(1 + 0.9 * beat)
+                    .opacity(0.95 - 0.45 * beat)
+                    .offset(x: cos(angle) * r, y: sin(angle) * r)
+            }
 
             Text(SessionTiming.display(seconds: seconds))
-                .font(Cream.rounded(g.diameter * 0.19, .light).monospacedDigit())
-                .foregroundStyle(Cream.ink)
+                .font(Cream.rounded(g.total * 0.2, .semibold).monospacedDigit())
+                .foregroundStyle(Matte.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-                .frame(width: g.faceDiameter * 0.74)
+                .frame(width: g.faceDiameter * 0.82)
+                .contentTransition(.numericText())
+                .animation(reduceMotion ? nil : .smooth(duration: 0.5), value: timing == nil ? seconds : -1)
 
             Text(caption.uppercased())
-                .font(Cream.rounded(g.diameter * 0.036, .semibold))
-                .tracking(g.diameter * 0.006)
-                .foregroundStyle(Cream.inkSoft)
+                .font(Cream.rounded(g.total * 0.039, .bold))
+                .tracking(g.total * 0.007)
+                .foregroundStyle(Matte.textSoft)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: g.faceDiameter * 0.6)
-                .offset(y: g.diameter * 0.15)
+                .offset(y: g.total * 0.14)
         }
         .frame(width: g.total, height: g.total)
         .accessibilityElement(children: .ignore)
@@ -72,29 +118,79 @@ struct CountdownClockView: View {
     }
 }
 
-/// Thick caramel arc. It starts at 12 o'clock and its leading end retreats
-/// clockwise as time runs out. The color gradient is fixed to the screen.
+/// Ring arc. It starts at 12 o'clock and its leading end retreats
+/// clockwise as time runs out. `fraction` is animatable so idle length changes glide.
+private struct ArcShape: Shape {
+    var fraction: Double
+
+    var animatableData: Double {
+        get { fraction }
+        set { fraction = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let f = min(max(fraction, 0), 1)
+        guard f > 0.0005 else { return Path() }
+        // Same construction as the previous trim + rotation: the arc ends at 12 o'clock.
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let turn = CGAffineTransform(translationX: center.x, y: center.y)
+            .rotated(by: -.pi / 2)
+            .translatedBy(x: -center.x, y: -center.y)
+        return Circle().trim(from: 1 - f, to: 1).path(in: rect).applying(turn)
+    }
+}
+
 private struct ProgressArc: View {
     let fraction: Double
     let diameter: CGFloat
     let lineWidth: CGFloat
-
-    private static let fill = LinearGradient(
-        colors: [Cream.ringStart, Cream.ringEnd],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    let colors: [Color]
 
     var body: some View {
-        let f = min(max(fraction, 0), 1)
-        ZStack {
-            if f > 0.0005 {
-                Circle()
-                    .trim(from: 1 - f, to: 1)
-                    .rotation(.degrees(-90))
-                    .stroke(Self.fill, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+        ArcShape(fraction: fraction)
+            .stroke(
+                LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+            )
+            .shadow(color: (colors.count > 1 ? colors[1] : .clear).opacity(0.5), radius: lineWidth * 0.6)
+            .frame(width: diameter, height: diameter)
+    }
+}
+
+/// One light sweep across the clock face when `trigger` changes.
+private struct LightSweep: View {
+    let trigger: Int
+    let diameter: CGFloat
+    let enabled: Bool
+
+    @State private var x: CGFloat = -0.8
+    @State private var opacity: Double = 0
+
+    var body: some View {
+        Rectangle()
+            .fill(LinearGradient(
+                colors: [.clear, Color(hex: 0xDCF0FF).opacity(0.45), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            ))
+            .frame(width: diameter * 0.4, height: diameter * 1.5)
+            .rotationEffect(.degrees(20))
+            .offset(x: x * diameter)
+            .opacity(opacity)
+            .frame(width: diameter, height: diameter)
+            .clipShape(Circle())
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            .onChange(of: trigger) { _, _ in
+                guard enabled else { return }
+                Task { @MainActor in
+                    var reset = Transaction()
+                    reset.disablesAnimations = true
+                    withTransaction(reset) { x = -0.8; opacity = 1 }
+                    await Task.yield()
+                    withAnimation(.easeInOut(duration: 1.3)) { x = 0.8 }
+                    withAnimation(.easeOut(duration: 0.4).delay(0.9)) { opacity = 0 }
+                }
             }
-        }
-        .frame(width: diameter, height: diameter)
     }
 }

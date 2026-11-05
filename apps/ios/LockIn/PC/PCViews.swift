@@ -21,7 +21,7 @@ struct PCStatusLine: View {
                 Text(label)
                     .font(Cream.rounded(12, .semibold))
                     .tracking(2)
-                    .foregroundStyle(Cream.inkSoft)
+                    .foregroundStyle(Matte.textSoft)
                     .padding(.top, 4)
                     .accessibilityIdentifier("pc-status")
             } else {
@@ -29,7 +29,7 @@ struct PCStatusLine: View {
                     Text(label)
                         .font(Cream.rounded(12, .semibold))
                         .tracking(2)
-                        .foregroundStyle(Cream.inkSoft)
+                        .foregroundStyle(Matte.textSoft)
                         .frame(minHeight: 44)
                 }
                 .accessibilityIdentifier("pc-status")
@@ -56,7 +56,7 @@ struct PCSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FocusBackdrop()
+                CreamBackdrop()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         Text(headline)
