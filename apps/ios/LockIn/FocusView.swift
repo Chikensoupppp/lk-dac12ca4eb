@@ -144,6 +144,21 @@ struct FocusView: View {
                 .padding(.trailing, 8)
             }
         }
+        // TEST BUTTON: replays the first-run slides. Remove before a public release.
+        .overlay(alignment: .topLeading) {
+            if !isLocked {
+                Button { onboardingDone = false } label: {
+                    Text("Replay intro")
+                        .font(Cream.rounded(13, .semibold))
+                        .foregroundStyle(Matte.textQuiet)
+                        .padding(.horizontal, 14)
+                        .frame(height: 44)
+                        .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
+                }
+                .accessibilityIdentifier("replay-intro")
+                .padding(.leading, 8)
+            }
+        }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {

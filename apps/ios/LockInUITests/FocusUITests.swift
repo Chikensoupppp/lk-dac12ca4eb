@@ -254,4 +254,14 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
     }
+
+    /// The test button on the main screen replays the first-run slides.
+    func testReplayIntroButtonShowsTheSlidesAgain() {
+        let app = makeApp()
+        app.launch()
+        let replay = app.buttons["replay-intro"]
+        XCTAssertTrue(replay.waitForExistence(timeout: 10))
+        replay.tap()
+        XCTAssertTrue(app.buttons["SHOW ME"].waitForExistence(timeout: 10))
+    }
 }
