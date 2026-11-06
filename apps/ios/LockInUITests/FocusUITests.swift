@@ -221,9 +221,16 @@ final class FocusUITests: XCTestCase {
         step("onboarding-4-permission", tap: "CONTINUE")
         step("onboarding-5-shield", tap: "Skip for now")
         step("onboarding-6-goals", tap: "NEXT", pre: { app.buttons["Study"].tap() })
+        // "Working it out" moves on by itself after about 5 seconds.
+        XCTAssertTrue(app.staticTexts["Working it out."].waitForExistence(timeout: 10))
+        capture("onboarding-6b-working")
         step("onboarding-7-year", tap: "LET\u{2019}S DO IT")
         step("onboarding-8-plus", tap: "NOT NOW")
-        step("onboarding-9-ready", tap: "START 25 MINUTES")
+        let hold = app.buttons["hold-to-start"]
+        XCTAssertTrue(hold.waitForExistence(timeout: 10))
+        sleep(2)
+        capture("onboarding-9-ready")
+        hold.press(forDuration: 3.6)
 
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
@@ -250,7 +257,9 @@ final class FocusUITests: XCTestCase {
         capture("onboarding-skip-plus")
         XCTAssertFalse(app.staticTexts["Look at your year."].exists)
         tap("NOT NOW")
-        tap("START 25 MINUTES")
+        let hold = app.buttons["hold-to-start"]
+        XCTAssertTrue(hold.waitForExistence(timeout: 10))
+        hold.press(forDuration: 3.6)
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
     }

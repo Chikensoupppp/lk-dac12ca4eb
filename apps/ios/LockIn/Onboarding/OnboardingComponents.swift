@@ -48,16 +48,20 @@ struct OBScaffold<Content: View>: View {
     let title: String
     let subtitle: String?
     let subtitleLarge: Bool
-    let primaryTitle: String
+    /// Nil shows no button (the "Working it out" screen moves on by itself).
+    let primaryTitle: String?
     let primaryEnabled: Bool
     let primaryAction: () -> Void
+    /// Replaces the plain button, for the hold-to-start button.
+    let primaryView: AnyView?
     let secondaryTitle: String?
     let secondaryAction: (() -> Void)?
     let content: Content
     @Environment(\.obBack) private var back
 
     init(step: Int, title: String, subtitle: String? = nil, subtitleLarge: Bool = false,
-         primaryTitle: String, primaryEnabled: Bool = true, primaryAction: @escaping () -> Void,
+         primaryTitle: String? = nil, primaryEnabled: Bool = true, primaryAction: @escaping () -> Void = {},
+         primaryView: AnyView? = nil,
          secondaryTitle: String? = nil, secondaryAction: (() -> Void)? = nil,
          @ViewBuilder content: () -> Content) {
         self.step = step
@@ -67,6 +71,7 @@ struct OBScaffold<Content: View>: View {
         self.primaryTitle = primaryTitle
         self.primaryEnabled = primaryEnabled
         self.primaryAction = primaryAction
+        self.primaryView = primaryView
         self.secondaryTitle = secondaryTitle
         self.secondaryAction = secondaryAction
         self.content = content()
@@ -132,10 +137,14 @@ struct OBScaffold<Content: View>: View {
             .scrollBounceBehavior(.basedOnSize)
 
             VStack(spacing: 4) {
-                Button(action: primaryAction) { Text(primaryTitle) }
-                    .buttonStyle(MatteButtonStyle(prominent: true))
-                    .disabled(!primaryEnabled)
-                    .opacity(primaryEnabled ? 1 : 0.4)
+                if let primaryView {
+                    primaryView
+                } else if let primaryTitle {
+                    Button(action: primaryAction) { Text(primaryTitle) }
+                        .buttonStyle(MatteButtonStyle(prominent: true))
+                        .disabled(!primaryEnabled)
+                        .opacity(primaryEnabled ? 1 : 0.4)
+                }
                 if let secondaryTitle, let secondaryAction {
                     Button(action: secondaryAction) {
                         Text(secondaryTitle)

@@ -12,7 +12,7 @@ Updated: 2026-11-02 (branch ios/native-clock-ci)
 - SwiftUI iPhone shell for selecting duration and starting/stopping a local session model.
 - Titanium countdown clock (`apps/ios/LockIn/Clock/`) driven by a single end-timestamp (`SessionTiming`).
 - XcodeGen project and macOS simulator CI; UI tests and screenshot capture are included.
-- First-run onboarding (`apps/ios/LockIn/Onboarding/`): 9 steps with Back, "N of 9", and Skip on the hours, apps and focus questions. Screen Time access and the app picker are on the real screens. PC pairing is not in onboarding; it stays in the PC sheet and belongs after Plus. Plus is a "coming soon" preview only; it is not built.
+- First-run onboarding (`apps/ios/LockIn/Onboarding/`): 9 steps with Back, "N of 9", and Skip on the hours, apps and focus questions. Screen Time access and the app picker are on the real screens. PC pairing is not in onboarding; it stays in the PC sheet and belongs after Plus. Plus is a "coming soon" preview only; it is not built. Added 2026-11-05 (not compiled and not CI-tested; Brandon tests by hand): reaction stickers after the hours and goals answers, a "Working it out" screen between goals and year (5 s, auto-advances, skipped when hours were skipped), a hold-to-start final screen (3 s hold, VoiceOver gets a "Start now" action), and a streak screen (`StreakView`, `StreakStore`) after the first finished session of a day. Test buttons "Replay intro" and "Show streak" on the main screen must be removed before a public release.
 
 ## Verified
 

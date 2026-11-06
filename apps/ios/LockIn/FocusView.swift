@@ -27,6 +27,9 @@ struct FocusView: View {
     @State private var endEarlyCount = 0
     /// First-run flow. Skipped for anyone with a session already running.
     @State private var onboardingDone: Bool
+    /// Streak screen, shown after the first finished session of a day.
+    @State private var showStreak = false
+    @State private var streakMinutes = 0
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
@@ -57,6 +60,15 @@ struct FocusView: View {
     }
 
     private var isLocked: Bool { timing != nil }
+
+    /// UI tests that finish sessions must not be covered by the streak screen, unless asked.
+    private var streakScreenAllowed: Bool {
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains(where: { $0.hasPrefix("-ui-testing") }) { return args.contains("-ui-testing-streak") }
+        #endif
+        return true
+    }
 
     private var stateAnimation: Animation {
         reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.7)
@@ -147,15 +159,15 @@ struct FocusView: View {
         // TEST BUTTON: replays the first-run slides. Remove before a public release.
         .overlay(alignment: .topLeading) {
             if !isLocked {
-                Button { onboardingDone = false } label: {
-                    Text("Replay intro")
-                        .font(Cream.rounded(13, .semibold))
-                        .foregroundStyle(Matte.textQuiet)
-                        .padding(.horizontal, 14)
-                        .frame(height: 44)
-                        .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
+                HStack(spacing: 8) {
+                    testButton("Replay intro", id: "replay-intro") { onboardingDone = false }
+                    testButton("Show streak", id: "show-streak") {
+                        // Counts today as a finished day so the screen has something to show.
+                        StreakStore.record()
+                        streakMinutes = 25
+                        showStreak = true
+                    }
                 }
-                .accessibilityIdentifier("replay-intro")
                 .padding(.leading, 8)
             }
         }
@@ -170,6 +182,9 @@ struct FocusView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showStreak) {
+            StreakView(minutes: streakMinutes) { showStreak = false }
+        }
         .overlay(alignment: .topLeading) {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-completion-count") {
@@ -183,6 +198,9 @@ struct FocusView: View {
             if expiredOnLaunch {
                 expiredOnLaunch = false
                 store.clear()
+                // The session ended while the app was closed. It counts for the streak,
+                // but the length is unknown here, so the streak screen is not shown.
+                StreakStore.record()
             }
             // Repairs shields left by a terminated run (expired, cancelled, or revoked).
             restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
@@ -211,6 +229,19 @@ struct FocusView: View {
                 restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
             }
         }
+    }
+
+    /// TEST BUTTON style. Remove with the buttons before a public release.
+    private func testButton(_ title: String, id: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Cream.rounded(13, .semibold))
+                .foregroundStyle(Matte.textQuiet)
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
+        }
+        .accessibilityIdentifier(id)
     }
 
     // MARK: Session transitions
@@ -266,6 +297,15 @@ struct FocusView: View {
         restrictions.end()
         if let sessionID { pc.sessionEnded(sessionID) }
         completionCount += 1
+        let firstToday = StreakStore.record()
+        if firstToday && streakScreenAllowed {
+            streakMinutes = Int((session.duration / 60).rounded())
+            // Let the finished glow play first.
+            Task {
+                try? await Task.sleep(for: .milliseconds(1800))
+                showStreak = true
+            }
+        }
         showFlash(.finished, seconds: 3.2)
         withAnimation(stateAnimation) {
             justCompleted = true

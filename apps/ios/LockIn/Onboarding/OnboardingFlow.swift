@@ -34,13 +34,34 @@ struct OnboardingFlow: View {
         else { withAnimation(.spring(response: 0.5, dampingFraction: 0.86), move) }
     }
 
+    /// "Working it out" sits between Goals (6) and Year (7). It is not a numbered step: it
+    /// keeps "6 of 9". It only shows when the hours answer exists, like the Year step.
+    @State private var working = false
+
     private func next() {
+        if step == Self.yearStep - 1 && hoursIndex != nil && !working {
+            goingBack = false
+            let move = { working = true }
+            if reduceMotion { withAnimation(.easeInOut(duration: 0.2), move) }
+            else { withAnimation(.spring(response: 0.5, dampingFraction: 0.86), move) }
+            return
+        }
         var target = step + 1
         if target == Self.yearStep && hoursIndex == nil { target += 1 }
-        go(to: target, back: false)
+        goingBack = false
+        let move = { working = false; step = min(max(target, 1), Self.stepCount) }
+        if reduceMotion { withAnimation(.easeInOut(duration: 0.2), move) }
+        else { withAnimation(.spring(response: 0.5, dampingFraction: 0.86), move) }
     }
 
     private func back() {
+        if working {
+            goingBack = true
+            let move = { working = false }
+            if reduceMotion { withAnimation(.easeInOut(duration: 0.2), move) }
+            else { withAnimation(.spring(response: 0.5, dampingFraction: 0.86), move) }
+            return
+        }
         var target = step - 1
         if target == Self.yearStep && hoursIndex == nil { target -= 1 }
         go(to: target, back: true)
@@ -55,6 +76,9 @@ struct OnboardingFlow: View {
         ZStack {
             Matte.bgMid.ignoresSafeArea()
             Group {
+                if working {
+                    WorkingStep(done: next)
+                } else {
                 switch step {
                 case 1: HeroStep(next: next)
                 case 2: HoursStep(hoursIndex: $hoursIndex, next: next)
@@ -66,9 +90,10 @@ struct OnboardingFlow: View {
                 case 8: PlusStep(next: next)
                 default: ReadyStep(start: { finish(start: true) }, later: { finish(start: false) })
                 }
+                }
             }
             .environment(\.obBack, step > 1 ? back : nil)
-            .id(step)
+            .id(working ? 0 : step)
             .transition(reduceMotion
                 ? .opacity
                 : .asymmetric(
@@ -130,13 +155,28 @@ private struct HoursStep: View {
         OBScaffold(step: 2, title: "How long are you on your phone each day?",
                    primaryTitle: "NEXT", primaryEnabled: hoursIndex != nil, primaryAction: next,
                    secondaryTitle: "Skip", secondaryAction: next) {
-            VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(Array(OnboardingMath.hoursChoices.enumerated()), id: \.offset) { index, label in
                     ChoiceRow(title: label, selected: hoursIndex == index) { hoursIndex = index }
                 }
+                if let hoursIndex {
+                    StickerNote(text: Self.reactions[min(hoursIndex, Self.reactions.count - 1)], color: OB.sage, tilt: -2)
+                        .padding(.top, 8)
+                        .id(hoursIndex)
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                }
             }
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: hoursIndex)
         }
     }
+
+    /// One line per answer. It reacts to the answer and makes no promise about the app.
+    private static let reactions = [
+        "Not bad. Let\u{2019}s keep it that way.",
+        "That adds up. Let\u{2019}s trim it.",
+        "That is a lot. Let\u{2019}s fix it.",
+        "That is a big part of your day. Let\u{2019}s fix it."
+    ]
 }
 
 // MARK: 3. Categories
@@ -385,8 +425,86 @@ private struct GoalsStep: View {
                         }
                     }
                 }
-                StickerNote(text: "pick as many as you like", color: OB.sage, tilt: -3)
+                StickerNote(text: goals.isEmpty ? "pick as many as you like" : "Good. Let\u{2019}s protect that time.", color: OB.sage, tilt: -3)
+                    .id(goals.isEmpty)
+                    .transition(.scale(scale: 0.8).combined(with: .opacity))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: goals.isEmpty)
             }
+        }
+    }
+}
+
+// MARK: Working it out (between 6 and 7, no number of its own)
+
+/// A short pause before the year. The bar fills over 4 seconds. Three checks land one by one.
+/// It moves on by itself after a short rest. The sums are instant; this pause is only pacing.
+/// Back stays available, so it is not a trap.
+private struct WorkingStep: View {
+    let done: () -> Void
+    @State private var progress: CGFloat = 0
+    @State private var checks = 0
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+
+    private static let rows = ["Your hours a day", "Your apps", "Your year"]
+
+    var body: some View {
+        OBScaffold(step: 6, title: "Working it out.") {
+            VStack(alignment: .leading, spacing: 14) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color(hex: 0x23262B))
+                        Capsule().fill(OB.ice).frame(width: geo.size.width * progress)
+                    }
+                }
+                .frame(height: 14)
+                .padding(.bottom, 14)
+                .accessibilityHidden(true)
+
+                ForEach(Array(Self.rows.enumerated()), id: \.offset) { index, label in
+                    HStack(spacing: 14) {
+                        ZStack {
+                            if checks > index {
+                                Circle().fill(OB.sage).frame(width: 26, height: 26)
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 13, weight: .heavy))
+                                    .foregroundStyle(OB.ink)
+                            } else if checks == index {
+                                ProgressView().tint(OB.ice)
+                            } else {
+                                Circle().strokeBorder(Matte.edge, lineWidth: 3).frame(width: 26, height: 26)
+                            }
+                        }
+                        .frame(width: 26, height: 26)
+                        Text(label)
+                            .font(Cream.rounded(20, .bold))
+                            .foregroundStyle(checks > index ? Matte.text : OB.soft)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 20).padding(.vertical, 18)
+                    .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(OB.panel))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(checks > index ? "\(label), done" : label)
+                }
+            }
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: checks)
+        .task {
+            if effectiveReduceMotion(systemReduceMotion) {
+                progress = 1
+                checks = Self.rows.count
+                try? await Task.sleep(for: .milliseconds(900))
+                if !Task.isCancelled { done() }
+                return
+            }
+            withAnimation(.linear(duration: 4.0)) { progress = 1 }
+            for i in 1...Self.rows.count {
+                try? await Task.sleep(for: .milliseconds(1300))
+                guard !Task.isCancelled else { return }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { checks = i }
+            }
+            try? await Task.sleep(for: .milliseconds(1100))
+            guard !Task.isCancelled else { return }
+            done()
         }
     }
 }
@@ -492,16 +610,31 @@ private struct PlusStep: View {
 
 // MARK: 9. Ready
 
+/// Hold the button for 3 seconds to start the first session. The ring fills while you hold.
+/// Let go early and it empties. VoiceOver and Switch Control get a plain "Start now" action,
+/// because a long hold can be hard to do.
 private struct ReadyStep: View {
+    static let holdSeconds = 3.0
+
     let start: () -> Void
     let later: () -> Void
     @State private var ring: CGFloat = 0
+    @State private var holding = false
+    @State private var locked = false
+    @State private var burst = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+
+    private var reduce: Bool { effectiveReduceMotion(systemReduceMotion) }
+
+    private var holdLabel: String {
+        if locked { return "LOCKED IN" }
+        return holding ? "KEEP HOLDING" : "HOLD TO START"
+    }
 
     var body: some View {
         OBScaffold(
-            step: 9, title: "Ready to focus?", subtitle: "25 minutes. Phone down.",
-            primaryTitle: "START 25 MINUTES", primaryAction: start,
+            step: 9, title: "Make a promise.", subtitle: "25 minutes. Phone down.",
+            primaryView: AnyView(holdButton),
             secondaryTitle: "Not now", secondaryAction: later
         ) {
             ZStack {
@@ -511,17 +644,86 @@ private struct ReadyStep: View {
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: 2) {
                     Text("25:00").font(Cream.rounded(58, .heavy)).kerning(-2).foregroundStyle(Matte.text).monospacedDigit()
-                    Text("minutes").font(Cream.rounded(16, .medium)).foregroundStyle(Matte.textSoft)
+                    Text(locked ? "locked in" : holding ? "keep holding" : "hold the button")
+                        .font(Cream.rounded(16, .medium)).foregroundStyle(Matte.textSoft)
                 }
+                ConfettiBurst(go: burst)
             }
             .frame(width: 260, height: 260)
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("25 minutes")
         }
-        .onAppear {
-            if effectiveReduceMotion(systemReduceMotion) { ring = 1; return }
-            withAnimation(.easeOut(duration: 1.1).delay(0.3)) { ring = 1 }
+    }
+
+    private var holdButton: some View {
+        Text(holdLabel)
+            .font(Cream.rounded(17, .heavy))
+            .tracking(1)
+            .foregroundStyle(OB.ink)
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(OB.ice))
+            .scaleEffect(holding && !locked ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.15), value: holding)
+            .contentShape(Rectangle())
+            .onLongPressGesture(minimumDuration: Self.holdSeconds, maximumDistance: 60) {
+                commit()
+            } onPressingChanged: { pressing in
+                guard !locked else { return }
+                holding = pressing
+                if pressing {
+                    withAnimation(.linear(duration: Self.holdSeconds)) { ring = 1 }
+                } else {
+                    withAnimation(.easeOut(duration: 0.3)) { ring = 0 }
+                }
+            }
+            .sensoryFeedback(.success, trigger: locked)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Hold to start 25 minutes")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction(named: "Start now") { commit() }
+            .accessibilityIdentifier("hold-to-start")
+    }
+
+    private func commit() {
+        guard !locked else { return }
+        locked = true
+        holding = false
+        ring = 1
+        if !reduce { burst = true }
+        Task {
+            try? await Task.sleep(for: .milliseconds(reduce ? 200 : 800))
+            start()
+        }
+    }
+}
+
+/// Small dots that fly out from the middle once.
+private struct ConfettiBurst: View {
+    let go: Bool
+    @State private var started = false
+    @State private var flying = false
+    @State private var fading = false
+    private static let colors = [OB.ice, OB.sage, OB.warm]
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<18, id: \.self) { i in
+                let angle = Double(i) / 18 * 2 * Double.pi
+                Circle()
+                    .fill(Self.colors[i % Self.colors.count])
+                    .frame(width: 9, height: 9)
+                    .offset(x: flying ? cos(angle) * 150 : 0, y: flying ? sin(angle) * 150 : 0)
+                    .opacity(started && !fading ? 1 : 0)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .onChange(of: go) { _, now in
+            guard now else { return }
+            started = true
+            withAnimation(.easeOut(duration: 0.9)) { flying = true }
+            withAnimation(.easeIn(duration: 0.5).delay(0.4)) { fading = true }
         }
     }
 }
