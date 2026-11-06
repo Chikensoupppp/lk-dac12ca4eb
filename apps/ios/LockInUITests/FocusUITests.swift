@@ -212,6 +212,7 @@ final class FocusUITests: XCTestCase {
 
         step("onboarding-1-hero", tap: "SHOW ME")
         step("onboarding-2-hours", tap: "NEXT", pre: { app.buttons["5 to 6 hours"].tap() })
+        step("onboarding-2b-fact", tap: "CONTINUE")
         step("onboarding-3-categories", tap: "NEXT", pre: { app.buttons["Social"].tap() })
         // Back returns to the previous step with the choice kept.
         XCTAssertTrue(app.buttons["CONTINUE"].waitForExistence(timeout: 10))

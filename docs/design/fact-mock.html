@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Study fact</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A}
+body{background:#cfcfd2;padding:20px;font-family:Onest,system-ui,sans-serif}
+.row{display:flex;gap:20px;width:max-content}
+.cap{font:700 15px Onest;color:#222;margin:0 0 6px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i.on{background:var(--ink)}
+.hdr{position:absolute;left:12px;right:12px;top:68px;height:44px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px;color:#B9BBC0}
+.bk{width:44px;height:44px;display:grid;place-items:center}
+h1{position:absolute;left:26px;right:26px;top:122px;font:800 40px/1.03 Onest;letter-spacing:-1.4px}
+.card{position:absolute;left:26px;right:26px;top:226px;border-radius:28px;background:var(--panel);border:1.5px solid var(--edge);padding:22px 22px 18px}
+.lab{font:700 12px Onest;letter-spacing:2px;color:var(--soft)}
+.big{font:800 92px/0.95 Onest;letter-spacing:-4px;margin-top:8px}
+.unit{font:800 28px Onest;letter-spacing:-1px;margin-top:2px}
+.txt{font:500 18px/1.35 Onest;color:#D2D4D9;margin-top:14px}
+.src{font:500 12.5px/1.35 Onest;color:var(--soft);margin-top:14px;padding-top:12px;border-top:1.5px solid var(--edge)}
+.note{position:absolute;font-weight:700;font-size:15px;padding:6px 12px;border-radius:12px;color:#0A0B0D;transform:rotate(4deg);right:30px;top:196px}
+.help{position:absolute;left:26px;right:26px;top:648px;border-radius:22px;padding:16px 18px;display:flex;gap:14px;align-items:center;font:700 17px/1.3 Onest;color:#0A0B0D;transform:rotate(-1deg)}
+.help svg{flex:none}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D}
+.praise .big{font-size:150px;margin-top:0}
+</style></head><body>
+<div class="row" id="row"></div>
+<script>
+const lock='<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const back='<svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#EDEBE6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg>';
+const V=[
+{cap:'1 to 2 hours',title:'Good job.',accent:'sage',note:'nice work',lab:'YOUR DAY',big:'1-2',unit:'hours a day',txt:'That is a light phone day. Keep it there.',src:'',help:'Lock In keeps it there. Start a timer and your chosen apps lock.',praise:1},
+{cap:'3 to 4 hours',title:'Small cuts add up.',accent:'ice',note:'real study',lab:'WHAT RESEARCHERS FOUND',big:'124',unit:'adults',txt:'Checked email 3 times a day for a week. They felt less stress than in the week they checked as often as they liked.',src:'Kushlev and Dunn, University of British Columbia, 2015. Computers in Human Behavior.',help:'Lock In locks your chosen apps while the timer runs. Fewer checks.'},
+{cap:'5 to 6 hours',title:'Less phone helps.',accent:'warm',note:'real study',lab:'WHAT RESEARCHERS FOUND',big:'143',unit:'students',txt:'Cut social apps to 10 minutes a day each, for 3 weeks. They felt less lonely and less depressed than students who changed nothing.',src:'Hunt et al., University of Pennsylvania, 2018. Journal of Social and Clinical Psychology.',help:'Start a timer. Your chosen apps stay locked until it ends.'},
+{cap:'7 hours or more',title:'Mind your nights.',accent:'warm',note:'real study',lab:'WHAT RESEARCHERS FOUND',big:'844',unit:'adults',txt:'People who used their phone after lights out had worse sleep, more insomnia and more tiredness in the day.',src:'Exelmans and Van den Bulck, 2016. Social Science and Medicine. Shows a link, not a cause.',help:'Begin with one 25 minute session a day. Your streak keeps you going.'}
+];
+document.getElementById('row').innerHTML=V.map(v=>`<div><div class="cap">${v.cap}</div><div class="phone ${v.praise?'praise':''}"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="hdr"><div class="bk">${back}</div><div>2 of 9</div></div>
+<h1>${v.title}</h1>
+<div class="note" style="background:var(--${v.accent==='ice'?'sage':v.accent==='sage'?'warm':'sage'})">${v.note}</div>
+<div class="card"><div class="lab">${v.lab}</div>
+<div class="big" style="color:var(--${v.accent})">${v.big}</div><div class="unit">${v.unit}</div>
+<div class="txt">${v.txt}</div>${v.src?`<div class="src">${v.src}</div>`:''}</div>
+<div class="help" style="background:var(--${v.accent})">${lock}<span>${v.help}</span></div>
+<div class="btn">CONTINUE</div></div></div>`).join('');
+</script></body></html>
