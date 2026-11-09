@@ -180,12 +180,23 @@ private struct HoursStep: View {
 
 // MARK: Fact after Hours (between 2 and 3, no number of its own)
 
-/// One screen per hours answer. A light day gets praise. The other three show one real study.
-/// The study lines are paraphrases of the published results; sources are on the card.
-/// Nothing here claims more than the study did, and the app lines name only what is built.
+/// One screen per hours answer. A light day gets a note about protecting focus time.
+/// The other three show one published study, with a tappable source.
+/// Study lines are paraphrases of the abstracts (checked 2026-11). Nothing here claims more than the
+/// study did, no study tested Lock In, and the app lines name only what is built.
 private struct HoursFactStep: View {
     let hoursIndex: Int
     let next: () -> Void
+
+    @ScaledMetric(relativeTo: .body) private var bodySize: CGFloat = 18
+    @ScaledMetric(relativeTo: .footnote) private var citeSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .body) private var bannerSize: CGFloat = 17
+    @ScaledMetric(relativeTo: .title) private var unitSize: CGFloat = 28
+
+    private struct Citation {
+        let text: String
+        let url: String
+    }
 
     private struct Fact {
         let title: String
@@ -195,31 +206,34 @@ private struct HoursFactStep: View {
         let big: String
         let unit: String
         let text: String
-        let source: String?
+        let citation: Citation?
         let help: String
     }
 
     private static let facts: [Fact] = [
-        Fact(title: "Nice. Keep it that way.", accent: OB.sage, sticker: "nice work",
-             label: "YOUR DAY", big: "1-2", unit: "hours a day",
-             text: "That\u{2019}s a light phone day. Nice.",
-             source: nil,
-             help: "Lock In helps you keep it there. Start a timer and your apps lock."),
-        Fact(title: "Checking less feels better.", accent: OB.ice, sticker: "real study",
-             label: "IN ONE STUDY", big: "124", unit: "adults",
-             text: "Checked email just 3 times a day for a week. They felt less stress than in the week they checked whenever they liked.",
-             source: "Kushlev and Dunn, University of British Columbia, 2015. Computers in Human Behavior.",
-             help: "Lock In locks your apps while the timer runs. That means less checking."),
-        Fact(title: "Less phone helps.", accent: OB.warm, sticker: "real study",
-             label: "IN ONE STUDY", big: "143", unit: "students",
-             text: "Cut social apps to 10 minutes a day each for 3 weeks. They felt less lonely and less depressed than students who changed nothing.",
-             source: "Hunt et al., University of Pennsylvania, 2018. Journal of Social and Clinical Psychology.",
-             help: "Start a timer. Your apps stay locked until it ends."),
-        Fact(title: "Your nights matter.", accent: OB.warm, sticker: "real study",
-             label: "IN ONE STUDY", big: "844", unit: "adults",
-             text: "People who used their phone after lights out slept worse and felt more tired the next day.",
-             source: "Exelmans and Van den Bulck, 2016. Social Science and Medicine. It shows a link, not proof of cause.",
-             help: "Try one 25 minute session a day. Your streak helps you keep going.")
+        Fact(title: "More of your day, on your terms.", accent: OB.sage, sticker: "nice work",
+             label: "YOUR ESTIMATE", big: "1\u{2013}2", unit: "hours a day",
+             text: "Your screen time is already on the lighter side. Lock In helps you protect the moments when you want to be fully focused.",
+             citation: nil,
+             help: "Keep distractions out of the way when it matters. Pick a timer and Lock In."),
+        Fact(title: "Fewer check-ins. More headspace.", accent: OB.ice, sticker: "real study",
+             label: "IN A RESEARCH STUDY", big: "124", unit: "adults",
+             text: "People who limited email checks to three times a day reported less daily stress than when they checked as often as they wanted.",
+             citation: Citation(text: "Kushlev & Dunn, 2015 \u{2014} Computers in Human Behavior",
+                                url: "https://doi.org/10.1016/j.chb.2014.11.005"),
+             help: "Lock In blocks your chosen distractions while you focus on what matters."),
+        Fact(title: "Small limits can make a difference.", accent: OB.warm, sticker: "real study",
+             label: "IN A RESEARCH STUDY", big: "143", unit: "students",
+             text: "Students who limited three social apps to 10 minutes each per day experienced greater reductions in loneliness and depression over three weeks.",
+             citation: Citation(text: "Hunt et al., 2018 \u{2014} Journal of Social and Clinical Psychology",
+                                url: "https://doi.org/10.1521/jscp.2018.37.10.751"),
+             help: "You don\u{2019}t have to change your whole day. Start with one focused session."),
+        Fact(title: "Give your evenings a quieter ending.", accent: OB.warm, sticker: "real study",
+             label: "IN A RESEARCH STUDY", big: "844", unit: "adults",
+             text: "Researchers found that bedtime phone use was linked to poorer sleep and greater fatigue. The study didn\u{2019}t establish cause and effect.",
+             citation: Citation(text: "Exelmans & Van den Bulck, 2016 \u{2014} Social Science & Medicine",
+                                url: "https://doi.org/10.1016/j.socscimed.2015.11.037"),
+             help: "Start small. Choose a time to disconnect, and let Lock In handle the distractions.")
     ]
 
     private var fact: Fact { Self.facts[min(max(hoursIndex, 0), Self.facts.count - 1)] }
@@ -228,58 +242,77 @@ private struct HoursFactStep: View {
         let fact = self.fact
         OBScaffold(step: 2, title: fact.title, primaryTitle: "CONTINUE", primaryAction: next) {
             VStack(alignment: .leading, spacing: 16) {
-                StickerNote(text: fact.sticker, color: fact.accent == OB.sage ? OB.warm : OB.sage, tilt: 3)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(fact.label)
-                        .font(Cream.rounded(12, .bold))
-                        .tracking(2)
-                        .foregroundStyle(Matte.textSoft)
-                    Text(fact.big)
-                        .font(Cream.rounded(92, .heavy))
-                        .kerning(-4)
-                        .foregroundStyle(fact.accent)
-                        .minimumScaleFactor(0.6)
-                        .lineLimit(1)
-                        .padding(.top, 6)
-                    Text(fact.unit)
-                        .font(Cream.rounded(28, .heavy))
-                        .kerning(-1)
-                        .foregroundStyle(Matte.text)
-                    Text(fact.text)
-                        .font(Cream.rounded(18, .medium))
-                        .foregroundStyle(OB.soft)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 14)
-                    if let source = fact.source {
-                        Text(source)
-                            .font(Cream.rounded(12.5, .medium))
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(fact.label)
+                            .font(Cream.rounded(12, .bold))
+                            .tracking(2)
                             .foregroundStyle(Matte.textSoft)
+                        Text(fact.big)
+                            .font(Cream.rounded(80, .heavy))
+                            .kerning(-3.5)
+                            .foregroundStyle(fact.accent)
+                            .minimumScaleFactor(0.6)
+                            .lineLimit(1)
+                            .padding(.top, 6)
+                        Text(fact.unit)
+                            .font(Cream.rounded(unitSize, .heavy))
+                            .kerning(-1)
+                            .foregroundStyle(Matte.text)
+                        Text(fact.text)
+                            .font(Cream.rounded(bodySize, .medium))
+                            .foregroundStyle(OB.soft)
+                            .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 12)
-                            .overlay(alignment: .top) { Rectangle().fill(Matte.edge).frame(height: 1.5) }
                             .padding(.top, 14)
+                    }
+                    .accessibilityElement(children: .combine)
+
+                    if let cite = fact.citation, let url = URL(string: cite.url) {
+                        Link(destination: url) {
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text(cite.text)
+                                    .font(Cream.rounded(citeSize, .semibold))
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 12, weight: .bold))
+                            }
+                            .foregroundStyle(OB.soft)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        }
+                        .padding(.top, 12)
+                        .overlay(alignment: .top) { Rectangle().fill(Matte.edge).frame(height: 1.5) }
+                        .padding(.top, 14)
+                        .accessibilityLabel("Source: \(cite.text)")
+                        .accessibilityHint("Opens the study in your browser")
                     }
                 }
                 .padding(22)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(OB.panel))
                 .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Matte.edge, lineWidth: 1.5))
-                .accessibilityElement(children: .combine)
+                .overlay(alignment: .topTrailing) {
+                    // The badge sits on the card edge so the banner stays above the button.
+                    StickerNote(text: fact.sticker, color: fact.accent == OB.sage ? OB.warm : OB.sage, tilt: 3)
+                        .offset(x: -14, y: -16)
+                }
+                .padding(.top, 14)
 
-                HStack(spacing: 14) {
+                HStack(alignment: .top, spacing: 14) {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 22, weight: .bold))
+                        .padding(.top, 2)
                     Text(fact.help)
-                        .font(Cream.rounded(17, .bold))
+                        .font(Cream.rounded(bannerSize, .bold))
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
                 .foregroundStyle(OB.ink)
-                .padding(.horizontal, 18).padding(.vertical, 16)
+                .padding(.horizontal, 18).padding(.vertical, 18)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(fact.accent))
-                .rotationEffect(.degrees(-1))
                 .accessibilityElement(children: .combine)
             }
         }
