@@ -16,19 +16,12 @@ struct BrainStep: View {
     @State private var proud = false
     @State private var squash: CGFloat = 0
     @State private var bubble: String?
-    @State private var tile: TileFx?
+    @State private var tileIndex: Int?
+    @State private var tileGone = false
     @State private var pow: PowFx?
     @State private var powShown = false
     @State private var dayShown = 0
     @State private var finished = false
-
-    private struct TileFx {
-        var i: Int
-        var y: CGFloat
-        var rot: Double
-        var scale: CGFloat
-        var opacity: Double
-    }
 
     private struct PowFx {
         var word: String
@@ -119,17 +112,22 @@ struct BrainStep: View {
         .accessibilityHidden(true)
     }
 
+    /// Space above the brain. The tile falls through it, so it is only kept when tiles fall.
+    private var topGap: CGFloat { low ? 70 : 150 }
+
     private var scene: some View {
         ZStack(alignment: .top) {
             BrainView(damage: damage, mood: mood, squash: squash, reduce: reduce, proud: proud, size: 260)
-                .padding(.top, 70)
+                .padding(.top, topGap)
 
-            if let tile {
-                let style = Self.tileStyles[tile.i % Self.tileStyles.count]
-                SymbolTile(symbol: style.symbol, color: Color(hex: style.color), size: 64, tilt: tile.rot)
-                    .offset(x: Self.tileX[tile.i % Self.tileX.count], y: tile.y)
-                    .scaleEffect(tile.scale)
-                    .opacity(tile.opacity)
+            if let tileIndex {
+                let style = Self.tileStyles[tileIndex % Self.tileStyles.count]
+                BrainFallingTile(symbol: style.symbol, color: Color(hex: style.color),
+                                 x: Self.tileX[tileIndex % Self.tileX.count] * 0.6,
+                                 spin: tileIndex % 2 == 0 ? 200 : -200,
+                                 landY: topGap - 46, gone: tileGone)
+                    .id(tileIndex)
+                    .zIndex(3)
             }
 
             if let pow {
@@ -138,13 +136,13 @@ struct BrainStep: View {
                     .rotationEffect(.degrees(pow.rot))
                     .scaleEffect(powShown ? 1 : 0.2)
                     .opacity(powShown ? 1 : 0)
-                    .offset(x: pow.x, y: 40)
+                    .offset(x: pow.x, y: topGap - 20)
             }
 
             if let bubble {
                 BrainSpeechBubble(text: bubble)
                     .padding(.horizontal, 24)
-                    .padding(.top, 70 + 227 + 14)
+                    .padding(.top, topGap + 227 + 14)
                     .transition(.scale(scale: 0.5, anchor: .top).combined(with: .opacity))
             }
 
@@ -156,7 +154,7 @@ struct BrainStep: View {
             if low && finished { BrainSparkles(reduce: reduce) }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: low ? 70 + 235 : 70 + 227 + 14 + 80)
+        .frame(height: topGap + (low ? 235 : 227 + 14 + 80))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("A cartoon brain. \(finished ? Self.statusLines[index] : "")")
     }
@@ -233,25 +231,18 @@ struct BrainStep: View {
     private func runHits() async {
         guard await pause(0.8) else { return }
         for i in 0..<hits {
-            tile = TileFx(i: i, y: -120, rot: 0, scale: 1, opacity: 1)
-            guard await pause(0.03) else { return }
-            withAnimation(.easeIn(duration: 0.55)) {
-                tile?.y = 60
-                tile?.rot = i % 2 == 0 ? 240 : -240
-            }
-            guard await pause(0.55) else { return }
+            tileGone = false
+            tileIndex = i
+            guard await pause(0.7) else { return }
 
             withAnimation(.easeOut(duration: 0.15)) { bubble = nil }
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { damage += 1 }
             squash = 1
             withAnimation(.spring(response: 0.45, dampingFraction: 0.4)) { squash = 0 }
             showPow(i)
-            withAnimation(.easeOut(duration: 0.2)) {
-                tile?.scale = 0.05
-                tile?.opacity = 0
-            }
-            guard await pause(0.25) else { return }
-            tile = nil
+            tileGone = true
+            guard await pause(0.3) else { return }
+            tileIndex = nil
 
             if let text = line(afterHit: i) {
                 guard await pause(0.3) else { return }
@@ -597,6 +588,42 @@ private struct BrainView: View {
 }
 
 // MARK: - Comic bits
+
+/// One app-style tile that drops onto the brain. It starts its fall as soon as it appears, and is
+/// shrunk away by the parent after it lands.
+private struct BrainFallingTile: View {
+    let symbol: String
+    let color: Color
+    let x: CGFloat
+    let spin: Double
+    let landY: CGFloat
+    let gone: Bool
+
+    @State private var dropped = false
+
+    var body: some View {
+        SymbolTile(symbol: symbol, color: color, size: 76, tilt: dropped ? spin : 0)
+            .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 6)
+            .overlay(alignment: .top) {
+                // Speed streaks above the tile while it falls.
+                HStack(spacing: 10) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        Capsule().fill(Color.white.opacity(0.35)).frame(width: 3, height: 26)
+                    }
+                }
+                .offset(y: -34)
+                .opacity(dropped ? 0 : 1)
+            }
+            .offset(x: x, y: dropped ? landY : -20)
+            .scaleEffect(gone ? 0.05 : 1)
+            .opacity(gone ? 0 : 1)
+            .animation(.easeOut(duration: 0.25), value: gone)
+            .onAppear {
+                withAnimation(.easeIn(duration: 0.6)) { dropped = true }
+            }
+            .accessibilityHidden(true)
+    }
+}
 
 private struct BrainStarburst: Shape {
     func path(in rect: CGRect) -> Path {
