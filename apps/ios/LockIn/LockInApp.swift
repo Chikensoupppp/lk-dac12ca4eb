@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct LockInApp: App {
     init() {
+        FreshStart.runIfNewBuild()
         AppFont.register()
         AppFont.styleNavigationBar()
     }
