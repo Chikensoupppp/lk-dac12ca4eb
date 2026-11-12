@@ -18,6 +18,8 @@ struct BrainStep: View {
     @State private var bubble: String?
     @State private var tileIndex: Int?
     @State private var tileGone = false
+    /// Extra health lost on a light day, in sixths of the bar. Small, so the bar stays nearly full.
+    @State private var barDip: CGFloat = 0
     @State private var pow: PowFx?
     @State private var powShown = false
     @State private var dayShown = 0
@@ -45,6 +47,7 @@ struct BrainStep: View {
         "Your brain is gone."
     ]
     private static let more = ["just 1 more\u{2026}", "ok, 1 more\u{2026}", "12 more minutes\u{2026}", "1 more, then I stop\u{2026}"]
+    private static let lowLines = ["ow! just a tiny one.", "ok, I can take that."]
     private static let plea = "no more brain rot plsss\u{2026}"
 
     /// What the brain says after hit `i`. The last hit is silent, and the fifth hit is the plea.
@@ -103,10 +106,10 @@ struct BrainStep: View {
                 Capsule().fill(Color(hex: 0x1B1D22))
                 Capsule()
                     .fill(Color(hex: Self.barColors[damage]))
-                    .frame(width: g.size.width * CGFloat(6 - damage) / 6)
+                    .frame(width: g.size.width * (CGFloat(6 - damage) - barDip) / 6)
             }
             .overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 2))
-            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: damage)
+            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: CGFloat(damage) + barDip)
         }
         .frame(height: 16)
         .accessibilityHidden(true)
@@ -154,7 +157,7 @@ struct BrainStep: View {
             if low && finished { BrainSparkles(reduce: reduce) }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: topGap + (low ? 235 : 227 + 14 + 80))
+        .frame(height: topGap + 227 + 14 + 80)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("A cartoon brain. \(finished ? Self.statusLines[index] : "")")
     }
@@ -201,6 +204,7 @@ struct BrainStep: View {
     private func settle() {
         damage = hits
         proud = low
+        barDip = low ? 1 : 0
         dayShown = 24
         bubble = hits == 5 ? Self.plea : nil
         finished = true
@@ -223,10 +227,15 @@ struct BrainStep: View {
             squash = 1
             withAnimation(.spring(response: 0.45, dampingFraction: 0.4)) { squash = 0 }
             tileGone = true
+            barDip += 0.5
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { dayShown = i + 1 }
             guard await pause(0.3) else { return }
             tileIndex = nil
-            guard await pause(0.5) else { return }
+            guard await pause(0.3) else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { bubble = Self.lowLines[i] }
+            guard await pause(1.1) else { return }
+            withAnimation(.easeOut(duration: 0.15)) { bubble = nil }
+            guard await pause(0.3) else { return }
         }
         // The rest of the day is the user's.
         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { proud = true }
