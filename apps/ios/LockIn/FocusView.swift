@@ -135,14 +135,22 @@ struct FocusView: View {
             FocusBackdrop(timing: timing, flash: flash)
 
             GeometryReader { geo in
-                let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.32 : 0.5)), 140)
+                let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : 0.45)), 140)
 
                 VStack(spacing: 0) {
+                    // Its own row, so the buttons can never sit on the title. Hidden (but still
+                    // taking its space) during a session, so nothing jumps.
+                    topBar
+                        .opacity(isLocked ? 0 : 1)
+                        .allowsHitTesting(!isLocked)
+                        .accessibilityHidden(isLocked)
+                        .padding(.top, 4)
+
                     Text("LOCK IN")
                         .font(Cream.rounded(13, .bold))
                         .tracking(4)
                         .foregroundStyle(Matte.textSoft)
-                        .padding(.top, 12)
+                        .padding(.top, 6)
 
                     PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
 
@@ -191,52 +199,6 @@ struct FocusView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if !isLocked {
-                HStack(spacing: 8) {
-                    Button { showGoals = true } label: {
-                        Image(systemName: "target")
-                            .font(.system(size: 17))
-                            .foregroundStyle(Matte.textQuiet)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
-                    }
-                    .accessibilityLabel("Weekly goal")
-                    Button { showKeys = true } label: {
-                        Image(systemName: "key.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(Matte.textQuiet)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
-                    }
-                    .accessibilityLabel("Keys")
-                    Button { showRestrictions = true } label: {
-                        Image(systemName: "shield.lefthalf.filled")
-                            .font(.system(size: 17))
-                            .foregroundStyle(Matte.textQuiet)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
-                    }
-                    .accessibilityLabel("Restrictions")
-                }
-                .padding(.trailing, 8)
-            }
-        }
-        // TEST BUTTON: replays the first-run slides. Remove before a public release.
-        .overlay(alignment: .topLeading) {
-            if !isLocked {
-                HStack(spacing: 8) {
-                    testButton("Replay intro", id: "replay-intro") { onboardingDone = false }
-                    testButton("Show streak", id: "show-streak") {
-                        // Counts today as a finished day so the screen has something to show.
-                        StreakStore.record()
-                        streakMinutes = 25
-                        showStreak = true
-                    }
-                }
-                .padding(.leading, 8)
             }
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
@@ -333,17 +295,47 @@ struct FocusView: View {
         }
     }
 
-    /// TEST BUTTON style. Remove with the buttons before a public release.
-    private func testButton(_ title: String, id: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(Cream.rounded(13, .semibold))
-                .foregroundStyle(Matte.textQuiet)
-                .padding(.horizontal, 14)
-                .frame(height: 44)
-                .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
+    /// Top row: the test menu on the left, goal / keys / restrictions on the right.
+    private var topBar: some View {
+        HStack(spacing: 8) {
+            // TEST MENU: replays the first-run slides or shows the streak screen. Remove before a
+            // public release.
+            Menu {
+                Button("Replay intro") { onboardingDone = false }
+                    .accessibilityIdentifier("replay-intro")
+                Button("Show streak") {
+                    // Counts today as a finished day so the screen has something to show.
+                    StreakStore.record()
+                    streakMinutes = 25
+                    showStreak = true
+                }
+                .accessibilityIdentifier("show-streak")
+            } label: {
+                Text("TEST")
+                    .font(Cream.rounded(12, .bold))
+                    .tracking(1.5)
+                    .foregroundStyle(Matte.textQuiet)
+                    .padding(.horizontal, 14)
+                    .frame(height: 44)
+                    .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
+            }
+            .accessibilityIdentifier("test-menu")
+            Spacer(minLength: 8)
+            roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
+            roundButton("key.fill", size: 16, label: "Keys") { showKeys = true }
+            roundButton("shield.lefthalf.filled", size: 17, label: "Restrictions") { showRestrictions = true }
         }
-        .accessibilityIdentifier(id)
+    }
+
+    private func roundButton(_ icon: String, size: CGFloat, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size))
+                .foregroundStyle(Matte.textQuiet)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
+        }
+        .accessibilityLabel(label)
     }
 
     // MARK: Session transitions

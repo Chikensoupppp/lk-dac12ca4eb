@@ -283,20 +283,23 @@ struct WeekReportView: View {
             .font(PrintFont.mono(11, .heavy))
             .foregroundStyle(Ink.soft)
 
-            ZStack(alignment: .topTrailing) {
-                Text(headline.uppercased())
-                    .font(PrintFont.head(58))
+            Text(headline.uppercased())
+                .font(PrintFont.head(58))
+                .foregroundStyle(Ink.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            // The stamp gets its own space beside the line, so it never covers the numbers.
+            HStack(alignment: .center, spacing: 12) {
+                Text(line)
+                    .font(PrintFont.body(16))
                     .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if goal != nil {
                     Stamp(text: hit ? "Goal hit" : "Missed", color: hit ? Ink.blue : Ink.red, size: 18, tilt: hit ? -9 : 7)
-                        .offset(y: 50)
+                        .fixedSize()
+                        .padding(.trailing, 4)
                 }
             }
-            Text(line)
-                .font(PrintFont.body(16))
-                .foregroundStyle(Ink.ink)
-                .fixedSize(horizontal: false, vertical: true)
 
             WeekBars(week: week, goal: goal, ink: Ink.ink, fill: Ink.ink, empty: Ink.ink.opacity(0.1))
                 .padding(.vertical, 6)

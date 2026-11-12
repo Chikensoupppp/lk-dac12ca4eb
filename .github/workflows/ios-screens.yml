@@ -8,7 +8,7 @@ on:
 jobs:
   screens:
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - name: Generate project
@@ -26,7 +26,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/build.log" | grep -E "error:|warning: .*FocusView|BUILD" || true
           test -d "$RUNNER_TEMP/D/Build/Products/Debug-iphonesimulator/LockIn.app"
       - name: Photograph every screen
-        timeout-minutes: 25
+        timeout-minutes: 30
         shell: bash
         run: |
           set -uo pipefail
@@ -38,7 +38,7 @@ jobs:
             xcrun simctl uninstall "$1" com.brandon132199.lockin >/dev/null 2>&1
             xcrun simctl install "$1" "$APP"
             xcrun simctl launch "$1" com.brandon132199.lockin -shot "$3" >/dev/null
-            sleep 5
+            sleep 4
             xcrun simctl io "$1" screenshot "$OUT/$2-$3.png" >/dev/null 2>&1
             xcrun simctl terminate "$1" com.brandon132199.lockin >/dev/null 2>&1
           }
