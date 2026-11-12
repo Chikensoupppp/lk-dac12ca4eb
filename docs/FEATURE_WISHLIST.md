@@ -21,6 +21,7 @@ Status is checked against `apps/` code by search, not on a device.
 | 6 | Hard-to-cheat early exit ("not just wait 30 sec") | 11-04 | `COMPETITOR_FEATURES.md` (exit budget, intent card) |
 | 7 | Lock screen countdown (Live Activity) | "yea" (11-04) | `LIVE_ACTIVITY_PLAN.md` |
 | 8 | Proof Check: warn if Screen Time access gets turned off | "save it" (11-04) | `COMPETITOR_FEATURES.md` |
+| 10 | Brain widget: rots as phone time and one heavy app add up today; always has a heartbeat. Code written 11-12, not compiled | 11-12 | HANDOFF.md, `docs/design/widget-brain.html` |
 | 9 | Onboarding v2 in the real app (guess, real hours reveal, heart-monitor brain, study card). Code written 11-12, not compiled | 11-12 | `ONBOARDING_V2.md` |
 
 ## Before a public release

@@ -52,8 +52,9 @@ jobs:
           # Connect warns about it. Export re-signs with the distribution profile and keeps these.
           APP="$RUNNER_TEMP/LockIn.xcarchive/Products/Applications/LockIn.app"
           codesign --force --sign - --entitlements apps/ios/Config/LockInMonitor.entitlements "$APP/PlugIns/LockInMonitor.appex"
+          codesign --force --sign - --entitlements apps/ios/Config/LockInWidget.entitlements "$APP/PlugIns/LockInWidget.appex"
           codesign --force --sign - --entitlements apps/ios/Config/LockIn.entitlements "$APP"
-          for t in "$APP" "$APP/PlugIns/LockInMonitor.appex"; do
+          for t in "$APP" "$APP/PlugIns/LockInMonitor.appex" "$APP/PlugIns/LockInWidget.appex"; do
             echo "== $t"
             codesign -d --entitlements :- "$t" 2>/dev/null | grep -o 'com.apple.developer.[a-z.-]*' || echo "no entitlements found"
           done

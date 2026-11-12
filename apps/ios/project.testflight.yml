@@ -16,13 +16,15 @@ targets:
     # The LockInReport extension (real hours on the reveal slide) is not in this build yet: its
     # bundle ID needs Family Controls (Distribution) approval first. Without it the app skips the
     # reveal and uses the user's guess (see ScreenTimeReport.isAvailable).
-    sources: [LockIn, Shared, ReportShared]
+    sources: [LockIn, Shared, ReportShared, BrainArt]
     entitlements:
       path: Config/LockIn.entitlements
       properties:
         com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
     dependencies:
       - target: LockInMonitor
+      - target: LockInWidget
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin
@@ -44,6 +46,7 @@ targets:
       path: Config/LockInMonitor.entitlements
       properties:
         com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
     info:
       path: Config/LockInMonitor-Info.plist
       properties:
@@ -54,6 +57,27 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.monitor
+        DEVELOPMENT_TEAM: D6TH2NSZLT
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
+  # The home screen brain widget. Reads the day's level from the shared app group (BrainLevel).
+  LockInWidget:
+    type: app-extension
+    platform: iOS
+    sources: [LockInWidget, Shared, BrainArt]
+    entitlements:
+      path: Config/LockInWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
+    info:
+      path: Config/LockInWidget-Info.plist
+      properties:
+        CFBundleDisplayName: Lock In Brain
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.widget
         DEVELOPMENT_TEAM: D6TH2NSZLT
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: NO

@@ -11,13 +11,15 @@ targets:
   LockIn:
     type: application
     platform: iOS
-    sources: [LockIn, Shared, ReportShared]
+    sources: [LockIn, Shared, ReportShared, BrainArt]
     entitlements:
       path: Config/LockIn.entitlements
       properties:
         com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
     dependencies:
       - target: LockInMonitor
+      - target: LockInWidget
       - target: LockInReport
     settings:
       base:
@@ -37,6 +39,7 @@ targets:
       path: Config/LockInMonitor.entitlements
       properties:
         com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
     info:
       path: Config/LockInMonitor-Info.plist
       properties:
@@ -67,6 +70,25 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.report
+        GENERATE_INFOPLIST_FILE: NO
+  # The home screen brain widget. Reads the day's level from the shared app group (BrainLevel).
+  LockInWidget:
+    type: app-extension
+    platform: iOS
+    sources: [LockInWidget, Shared, BrainArt]
+    entitlements:
+      path: Config/LockInWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
+    info:
+      path: Config/LockInWidget-Info.plist
+      properties:
+        CFBundleDisplayName: Lock In Brain
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.widget
         GENERATE_INFOPLIST_FILE: NO
   LockInTests:
     type: bundle.unit-test

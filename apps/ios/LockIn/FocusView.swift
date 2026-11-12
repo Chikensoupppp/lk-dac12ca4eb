@@ -195,7 +195,11 @@ struct FocusView: View {
             #endif
         }
         .preferredColorScheme(.dark)
+        // The brain widget watches the apps picked to lock; keep that watch in step.
+        .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
+        .onChange(of: restrictions.status) { _, _ in updateBrainWatch() }
         .onAppear {
+            updateBrainWatch()
             if expiredOnLaunch {
                 expiredOnLaunch = false
                 store.clear()
@@ -246,6 +250,15 @@ struct FocusView: View {
     }
 
     // MARK: Session transitions
+
+    private func updateBrainWatch() {
+        let approved: Bool
+        switch restrictions.status {
+        case .needsAuthorization, .denied: approved = false
+        default: approved = true
+        }
+        BrainWatch.update(selection: restrictions.selection, authorized: approved)
+    }
 
     private func startSession() {
         var duration = TimeInterval(selectedMinutes * 60)
