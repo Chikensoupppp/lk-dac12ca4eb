@@ -125,6 +125,9 @@ struct QuitSheet: View {
         .background(QuitInk.bg.ignoresSafeArea())
         .preferredColorScheme(.dark)
         .onChange(of: waited) { _, now in if now { typing = true } }
+        #if DEBUG
+        .onAppear { if DebugShot.name == "quit-type" { waited = true } }
+        #endif
     }
 }
 

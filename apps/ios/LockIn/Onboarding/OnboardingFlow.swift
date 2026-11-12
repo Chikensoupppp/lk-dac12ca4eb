@@ -123,5 +123,14 @@ struct OnboardingFlow: View {
                     removal: .move(edge: goingBack ? .trailing : .leading).combined(with: .opacity)))
         }
         .preferredColorScheme(step.isDark ? .dark : .light)
+        #if DEBUG
+        .onAppear {
+            if let n = DebugShot.onboardingStep, let target = Step(rawValue: n) {
+                guessIndex = 2
+                history = [.hook]
+                step = target
+            }
+        }
+        #endif
     }
 }

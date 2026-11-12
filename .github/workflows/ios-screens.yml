@@ -1,0 +1,63 @@
+name: iOS screens
+# Builds a Debug simulator app once, then photographs every screen with `-shot <name>`
+# (see apps/ios/LockIn/DebugShot.swift). Run it before each TestFlight tag by pushing a
+# `screens-N` tag. The app is reinstalled before each shot so every screen starts clean.
+on:
+  push:
+    tags: ['screens-*']
+jobs:
+  screens:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          cd apps/ios
+          xcodegen generate
+      - name: Build for simulator
+        shell: bash
+        run: |
+          set -o pipefail
+          cd apps/ios
+          xcodebuild build -project LockIn.xcodeproj -scheme LockIn -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/D" \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/build.log" | grep -E "error:|warning: .*FocusView|BUILD" || true
+          test -d "$RUNNER_TEMP/D/Build/Products/Debug-iphonesimulator/LockIn.app"
+      - name: Photograph every screen
+        timeout-minutes: 25
+        shell: bash
+        run: |
+          set -uo pipefail
+          APP="$RUNNER_TEMP/D/Build/Products/Debug-iphonesimulator/LockIn.app"
+          OUT="$RUNNER_TEMP/screens"; mkdir -p "$OUT"
+          SHOTS="ob-1 ob-2 ob-3 ob-5 ob-6 ob-7 ob-8 ob-9 ob-10 ob-11 ob-12 idle active quit quit-type locked proof keys goals report streak plus restrictions"
+          pick() { xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin); n=sys.argv[1:]; print(next(x['udid'] for name in n for g in d['devices'].values() for x in g if x['name']==name))" "$@"; }
+          shoot() { # device-id label shot [extra]
+            xcrun simctl uninstall "$1" com.brandon132199.lockin >/dev/null 2>&1
+            xcrun simctl install "$1" "$APP"
+            xcrun simctl launch "$1" com.brandon132199.lockin -shot "$3" >/dev/null
+            sleep 5
+            xcrun simctl io "$1" screenshot "$OUT/$2-$3.png" >/dev/null 2>&1
+            xcrun simctl terminate "$1" com.brandon132199.lockin >/dev/null 2>&1
+          }
+          for spec in "16:iPhone 16 Pro:iPhone 16:iPhone 15" "SE:iPhone SE (3rd generation):iPhone 16e"; do
+            label="${spec%%:*}"; names="${spec#*:}"
+            IFS=: read -ra list <<< "$names"
+            id=$(pick "${list[@]}") || continue
+            xcrun simctl boot "$id"; xcrun simctl bootstatus "$id" -b >/dev/null
+            xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100
+            for s in $SHOTS; do shoot "$id" "$label" "$s"; done
+            xcrun simctl ui "$id" content_size accessibility-extra-large
+            for s in idle goals quit-type; do shoot "$id" "$label-bigtext" "$s"; done
+            xcrun simctl shutdown "$id"
+          done
+          ls "$OUT" | wc -l
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screens
+          path: |
+            ${{ runner.temp }}/screens
+            ${{ runner.temp }}/build.log

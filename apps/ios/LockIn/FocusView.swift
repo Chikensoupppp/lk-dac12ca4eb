@@ -76,7 +76,37 @@ struct FocusView: View {
             _expiredOnLaunch = State(initialValue: true)
         }
         _onboardingDone = State(initialValue: OnboardingStore.isDone() || hadSession)
+        #if DEBUG
+        if DebugShot.name != nil {
+            _onboardingDone = State(initialValue: DebugShot.onboardingStep == nil)
+            DebugShot.seed()
+        }
+        #endif
     }
+
+    #if DEBUG
+    /// Opens the screen named by `-shot` (see `DebugShot`), after the main screen has settled.
+    private func runShot() {
+        guard let name = DebugShot.name, DebugShot.onboardingStep == nil else { return }
+        Task {
+            try? await Task.sleep(for: .milliseconds(600))
+            switch name {
+            case "active": startSession()
+            case "quit", "quit-type": startSession(); showQuit = true
+            case "locked": startSession(); QuitRules.markLocked(sessionID); showLockedExit = true
+            case "proof": startSession(); showProofBroken = true
+            case "keys": showKeys = true
+            case "goals": showGoals = true
+            case "report":
+                report = ReportWeek(id: FocusLog.calendar.date(byAdding: .day, value: -7, to: FocusLog.weekStart(.now))!)
+            case "streak": StreakStore.record(); streakMinutes = 45; showStreak = true
+            case "plus": showPlusOffer = true
+            case "restrictions": showRestrictions = true
+            default: break
+            }
+        }
+    }
+    #endif
 
     private var isLocked: Bool { timing != nil }
 
@@ -266,6 +296,9 @@ struct FocusView: View {
             }
             goals.reschedule()
             checkReport()
+            #if DEBUG
+            runShot()
+            #endif
             // Repairs shields left by a terminated run (expired, cancelled, or revoked).
             restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
             // A session restored after a relaunch tells the PC again. The PC ignores repeats.
@@ -360,6 +393,7 @@ struct FocusView: View {
     private func checkReport() {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { return }
+        if DebugShot.name != nil { return }
         #endif
         guard timing == nil, onboardingDone, report == nil, let week = goals.pendingReport() else { return }
         report = ReportWeek(id: week)
