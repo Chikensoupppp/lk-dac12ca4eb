@@ -206,6 +206,8 @@ struct CheckStep: View {
     @State private var rows = 0
     @State private var asking = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
 
     private static let reasons = [
         "Reads Screen Time on this phone.",
@@ -213,13 +215,42 @@ struct CheckStep: View {
         "Also lets Lock In lock your apps."
     ]
 
-    var body: some View {
+    /// iOS shows its Screen Time box only once. After that the answer sticks until the app is
+    /// deleted, so this slide says what the answer already is instead of silently moving on.
+    private enum Access { case ask, on, off }
+
+    private var access: Access {
+        switch restrictions.status {
+        case .needsAuthorization, .failed: return .ask
+        case .denied: return .off
+        default: return .on
+        }
+    }
+
+    private var primaryTitle: String {
+        if asking { return "ASKING..." }
+        switch access {
         // Apple's guidance: the screen before a system permission box says "Continue", not "Allow".
+        case .ask: return "CONTINUE"
+        case .on: return "NEXT"
+        case .off: return "OPEN SETTINGS"
+        }
+    }
+
+    var body: some View {
         PrintScaffold(step: 3, title: "Now let\u{2019}s\ncheck.", grain: true,
-                      primaryTitle: asking ? "ASKING..." : "CONTINUE", primaryEnabled: !asking, primaryAction: ask,
-                      secondaryTitle: "Not now (keep my guess)", secondaryAction: skip) {
+                      primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
+                      secondaryTitle: access == .on ? nil : "Not now (keep my guess)", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {
                 printer
+                if access == .on {
+                    Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
+                } else if access == .off {
+                    Text("Screen Time is off for Lock In. iPhone only asks once, so turn it on in Settings > Screen Time > Apps with Screen Time Access.")
+                        .font(PrintFont.body(15))
+                        .foregroundStyle(Ink.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(Array(Self.reasons.enumerated()), id: \.offset) { i, text in
                         HStack(spacing: 12) {
@@ -236,6 +267,10 @@ struct CheckStep: View {
                     }
                 }
             }
+        }
+        // Coming back from Settings: pick up a changed answer.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { restrictions.refresh() }
         }
         .task {
             if effectiveReduceMotion(systemReduceMotion) { printed = 1; rows = 3; return }
@@ -292,16 +327,18 @@ struct CheckStep: View {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-onboarding") { next(); return }
         #endif
-        switch restrictions.status {
-        case .needsAuthorization, .failed:
+        switch access {
+        case .ask:
             asking = true
             Task {
                 await restrictions.requestAuthorization()
                 asking = false
                 next()
             }
-        default:
+        case .on:
             next()
+        case .off:
+            if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
         }
     }
 }
