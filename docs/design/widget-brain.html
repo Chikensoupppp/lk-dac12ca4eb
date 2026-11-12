@@ -89,11 +89,13 @@ function medium(st, hrs, appLine) {
   const reached = [0, 1, 2, 4, 5, 7][st];
   return `<div class="w med">
    <div style="position:absolute;left:4px;top:12px">${brainSVG(st, 150)}</div>
-   <div style="position:absolute;left:160px;right:14px;top:14px">
-    <div class="mono" style="color:${hrsCol(st)}">ON YOUR PHONE TODAY</div>
-    <div class="big" style="font-size:40px;margin-top:4px">${hrs}</div>
-    <div class="bars" style="margin-top:6px">${[1,2,3,4,5,6,7].map(h => `<i style="${h <= reached ? 'background:' + (h >= 5 ? '#FF3B3B' : h >= 4 ? '#FFC233' : '#4BFF9A') : ''}"></i>`).join('')}</div>
-    <div style="height:16px;margin-top:6px;font:700 13px Archivo;font-stretch:90%;color:#FF8FB8">${appLine ? `&#9650; ${appLine}` : ''}</div>
+   <div style="position:absolute;left:160px;right:14px;top:13px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+     <div class="mono" style="color:${hrsCol(st)}">YOUR BRAIN</div>
+     <div class="mono" style="color:${hrsCol(st)};font-size:12px">&#9829; ${[72, 98, 126, 154, 188, 38][st]} BPM</div></div>
+    <div class="big" style="font-size:40px;margin-top:3px">${WORD[st]}</div>
+    <div style="font:700 13px Archivo;font-stretch:88%;margin-top:2px;white-space:nowrap">${hrs === 'Under 1h' ? 'Under 1 hr' : hrs.replace('h+', '+ hrs')} on phone${appLine ? ` <span style="color:#FF8FB8">&middot; 1 app 2h+</span>` : ''}</div>
+    <div class="bars" style="margin-top:7px">${[1,2,3,4,5,6,7].map(h => `<i style="${h <= reached ? 'background:' + (h >= 5 ? '#FF3B3B' : h >= 4 ? '#FFC233' : '#4BFF9A') : ''}"></i>`).join('')}</div>
     <div style="margin:2px 0 0 -2px">${ecg(st, 168)}</div>
    </div></div>`;
 }

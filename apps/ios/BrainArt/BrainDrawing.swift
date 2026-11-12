@@ -29,7 +29,7 @@ enum BrainDrawing {
     static func ecg(stage: Int, t: Double, width: CGFloat, mid: CGFloat = 58, scale: CGFloat = 1,
                     beat: Double = 90, neverFlat: Bool = false) -> Path {
         let weak = stage == 5 && neverFlat
-        let amp: CGFloat = ([34, 34, 32, 30, 0, weak ? 15 : 0] as [CGFloat])[stage] * scale
+        let amp: CGFloat = ([34, 34, 32, 30, 0, weak ? 26 : 0] as [CGFloat])[stage] * scale
         let bpm = weak ? 38 : bpmBase[stage]
         let period = bpm > 0 ? beat * 72 / Double(bpm) : beat
         var p = Path()
