@@ -164,7 +164,7 @@ struct BrainStep: View {
     /// The two hour tiles that fall onto the first two squares of the day.
     private var lowDrop: some View {
         GeometryReader { g in
-            let cell = max((g.size.width - 66) / 12, 10)
+            let cell = max((g.size.width - 42) / 8, 10)
             if let i = lowTile {
                 let style = Self.tileStyles[i % Self.tileStyles.count]
                 BrainSquareDrop(symbol: style.symbol, color: Color(hex: style.color),
@@ -179,7 +179,7 @@ struct BrainStep: View {
     /// The day as 24 squares. Two are phone. The rest is the user's.
     private var dayStrip: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 12), spacing: 6) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 8), spacing: 6) {
                 ForEach(0..<24, id: \.self) { i in
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(i < 2 ? OB.warm : OB.sage.opacity(0.22))
@@ -237,7 +237,7 @@ struct BrainStep: View {
         for i in 0..<2 {
             lowGone = false
             lowTile = i
-            guard await pause(0.7) else { return }
+            guard await pause(1.05) else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { dayShown = i + 1 }
             lowGone = true
             guard await pause(0.4) else { return }
@@ -249,7 +249,7 @@ struct BrainStep: View {
         withAnimation(.spring(response: 0.45, dampingFraction: 0.4)) { squash = 0 }
         for k in 3...24 {
             dayShown = k
-            guard await pause(0.07) else { return }
+            guard await pause(0.09) else { return }
         }
         guard await pause(0.4) else { return }
         finished = true
@@ -629,13 +629,13 @@ private struct BrainSquareDrop: View {
     @State private var dropped = false
 
     var body: some View {
-        SymbolTile(symbol: symbol, color: color, size: 48)
+        SymbolTile(symbol: symbol, color: color, size: 72)
             .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 4)
-            .scaleEffect(dropped ? cell / 48 : 1)
-            .position(x: targetX, y: dropped ? targetY : -90)
+            .scaleEffect(dropped ? cell / 72 : 1)
+            .position(x: targetX, y: dropped ? targetY : -110)
             .opacity(gone ? 0 : 1)
             .onAppear {
-                withAnimation(.easeIn(duration: 0.65)) { dropped = true }
+                withAnimation(.easeIn(duration: 1.0)) { dropped = true }
             }
             .accessibilityHidden(true)
     }
