@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 /// Focus screen. `timing` is the single source of truth for the session:
 /// nil means idle, non-nil means a session is running until `timing.endsAt`.
@@ -29,6 +30,8 @@ struct FocusView: View {
     @State private var showKeys = false
     @State private var showPlusOffer = false
     @State private var showPC = false
+    /// Proof Check: Screen Time access was turned off during this session.
+    @State private var showProofBroken = false
     /// Short mood after a session ends (finished glow, gray glow for an early end).
     @State private var flash: FocusMood?
     @State private var flashTask: Task<Void, Never>?
@@ -198,6 +201,9 @@ struct FocusView: View {
         .fullScreenCover(isPresented: $showQuit) {
             QuitSheet(onQuit: { showQuit = false; endSession() }, onStay: { showQuit = false })
         }
+        .fullScreenCover(isPresented: $showProofBroken) {
+            ProofBrokenSheet(turnBackOn: turnShieldsBackOn) { showProofBroken = false }
+        }
         .fullScreenCover(isPresented: $showLockedExit) {
             if let sessionID {
                 LockedExitSheet(keys: keys, sessionID: sessionID,
@@ -228,9 +234,10 @@ struct FocusView: View {
         .preferredColorScheme(.dark)
         // The brain widget watches the apps picked to lock; keep that watch in step.
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
-        .onChange(of: restrictions.status) { _, _ in updateBrainWatch() }
+        .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
         .onAppear {
             updateBrainWatch()
+            runProofCheck()
             checkKeyRequests()
             if expiredOnLaunch {
                 expiredOnLaunch = false
@@ -243,6 +250,7 @@ struct FocusView: View {
             restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
             // A session restored after a relaunch tells the PC again. The PC ignores repeats.
             if let timing, let sessionID { pc.sessionStarted(SessionRecord(id: sessionID, timing: timing)) }
+            LiveCountdown.reconcile(currentRecord, locked: QuitRules.isLocked(sessionID))
         }
         .sensoryFeedback(.impact(weight: .heavy), trigger: startCount)
         .sensoryFeedback(.warning, trigger: endEarlyCount)
@@ -261,10 +269,12 @@ struct FocusView: View {
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             checkKeyRequests()
+            runProofCheck()
             if let timing, timing.isFinished(at: .now) {
                 completeSession()
             } else {
                 restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
+                LiveCountdown.reconcile(currentRecord, locked: QuitRules.isLocked(sessionID))
             }
         }
     }
@@ -325,6 +335,38 @@ struct FocusView: View {
         if QuitRules.isLocked(sessionID) { showLockedExit = true } else { showQuit = true }
     }
 
+    private var currentRecord: SessionRecord? {
+        guard let timing, let sessionID else { return nil }
+        return SessionRecord(id: sessionID, timing: timing)
+    }
+
+    /// Proof Check. Turning Screen Time access off mid-session drops the shields, so it counts
+    /// as a quit (weekly count + brain scar) and the user is told right away.
+    private func runProofCheck() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { return }
+        #endif
+        let change = ProofCheck.update(approved: restrictions.isAuthorized)
+        guard change != .none else { return }
+        WidgetCenter.shared.reloadTimelines(ofKind: BrainLevel.widgetKind)
+        if change == .turnedOff, timing != nil {
+            QuitRules.recordEarlyEnd()
+            showProofBroken = true
+        }
+    }
+
+    /// Asks for Screen Time access again and, if given, puts the shields back for the rest of
+    /// the session.
+    private func turnShieldsBackOn() async -> Bool {
+        await restrictions.requestAuthorization()
+        guard restrictions.isAuthorized else { return false }
+        if let record = currentRecord {
+            restrictions.begin(record, locked: QuitRules.isLocked(record.id))
+        }
+        runProofCheck()
+        return true
+    }
+
     private func checkKeyRequests() {
         guard !keys.friends.isEmpty else { return }
         Task {
@@ -348,6 +390,7 @@ struct FocusView: View {
         let locked = lockedNext && plus.hasPlus && restrictions.hasSelection
         QuitRules.markLocked(locked ? record.id : nil)
         restrictions.begin(record, locked: locked)
+        LiveCountdown.start(record, locked: locked)
         pc.sessionStarted(record)
         flashTask?.cancel()
         flash = nil
@@ -364,6 +407,7 @@ struct FocusView: View {
         QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
+        LiveCountdown.end()
         if let sessionID { pc.sessionEnded(sessionID) }
         endEarlyCount += 1
         showFlash(.endedEarly, seconds: 2.2)
@@ -389,6 +433,7 @@ struct FocusView: View {
         QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
+        LiveCountdown.end()
         if let sessionID { pc.sessionEnded(sessionID) }
         completionCount += 1
         let firstToday = StreakStore.record()

@@ -16,7 +16,7 @@ targets:
     # The LockInReport extension (real hours on the reveal slide) is not in this build yet: its
     # bundle ID needs Family Controls (Distribution) approval first. Without it the app skips the
     # reveal and uses the user's guess (see ScreenTimeReport.isAvailable).
-    sources: [LockIn, Shared, ReportShared, BrainArt]
+    sources: [LockIn, Shared, ReportShared, BrainArt, LiveShared]
     entitlements:
       path: Config/LockIn.entitlements
       properties:
@@ -68,7 +68,7 @@ targets:
   LockInWidget:
     type: app-extension
     platform: iOS
-    sources: [LockInWidget, Shared, BrainArt]
+    sources: [LockInWidget, Shared, BrainArt, LiveShared]
     entitlements:
       path: Config/LockInWidget.entitlements
       properties:

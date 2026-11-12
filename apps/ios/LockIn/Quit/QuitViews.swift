@@ -224,3 +224,54 @@ struct EmergencyExitView: View {
         }
     }
 }
+
+/// Proof Check: Screen Time access was turned off in Settings during a session. The shields are
+/// gone, so it counts as a quit. The user can turn it back on and get the shields back.
+struct ProofBrokenSheet: View {
+    let turnBackOn: () async -> Bool
+    let onClose: () -> Void
+    @State private var working = false
+    @State private var failed = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("SIGNAL LOST")
+                    .font(PrintFont.mono(13))
+                    .tracking(2)
+                    .foregroundStyle(QuitInk.alarm)
+                Text("Screen Time\nwas turned off.")
+                    .font(PrintFont.head(52))
+                    .foregroundStyle(QuitInk.cream)
+                Text("Your apps are not locked right now. That counts as a quit, and your brain widget has a scar until tomorrow.")
+                    .font(PrintFont.body(16))
+                    .foregroundStyle(QuitInk.cream.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+                if failed {
+                    Text("Still off. Allow Lock In when iPhone asks.")
+                        .font(PrintFont.mono(12))
+                        .foregroundStyle(QuitInk.alarm)
+                }
+                Button(working ? "ASKING..." : "TURN IT BACK ON") {
+                    working = true
+                    Task {
+                        let ok = await turnBackOn()
+                        working = false
+                        if ok { onClose() } else { failed = true }
+                    }
+                }
+                .buttonStyle(PrintButtonStyle(fill: QuitInk.green, text: QuitInk.bg))
+                .disabled(working)
+                .padding(.top, 6)
+                Button("Keep going without shields") { onClose() }
+                    .font(PrintFont.body(15))
+                    .foregroundStyle(QuitInk.cream.opacity(0.6))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .padding(24)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .background(QuitInk.bg.ignoresSafeArea())
+        .preferredColorScheme(.dark)
+    }
+}

@@ -9,6 +9,8 @@
 		<string>_lockin-key._tcp</string>
 		<string>_lockin-key._udp</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSNearbyInteractionUsageDescription</key>
 	<string>Lock In checks that your Key Holder's phone is right next to yours before they can end your session.</string>
 </dict>

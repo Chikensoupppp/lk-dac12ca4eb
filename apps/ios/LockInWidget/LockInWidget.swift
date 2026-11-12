@@ -6,7 +6,10 @@ import WidgetKit
 /// Widgets cannot animate on their own, so the heart trace is a still picture of the current beat.
 @main
 struct LockInWidgets: WidgetBundle {
-    var body: some Widget { BrainWidget() }
+    var body: some Widget {
+        BrainWidget()
+        SessionLiveActivity()
+    }
 }
 
 struct BrainWidget: Widget {
@@ -27,6 +30,8 @@ struct BrainEntry: TimelineEntry {
     /// Which frame this is. Each frame shifts the beat line and nudges the BPM, so the monitor
     /// looks alive when glanced at (widgets cannot animate on their own).
     let frame: Int
+    /// Proof Check: Screen Time access was turned off after being on.
+    var proofOff = false
 }
 
 struct BrainProvider: TimelineProvider {
@@ -55,7 +60,8 @@ struct BrainProvider: TimelineProvider {
     }
 
     private func entry(at date: Date, frame: Int) -> BrainEntry {
-        BrainEntry(date: date, today: BrainLevel.today(now: date), watching: BrainLevel.isWatching(), frame: frame)
+        BrainEntry(date: date, today: BrainLevel.today(now: date), watching: BrainLevel.isWatching(), frame: frame,
+                   proofOff: ProofCheck.offSince() != nil)
     }
 }
 
@@ -116,6 +122,15 @@ struct BrainWidgetView: View {
                     hoursLine
                     hourBar
                         .padding(.top, 2)
+                } else if entry.proofOff {
+                    Text("SIGNAL LOST")
+                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                        .tracking(1.2)
+                        .foregroundStyle(BrainDrawing.alarm)
+                    Text("Screen Time was turned off. Open Lock In to turn it back on.")
+                        .font(.system(size: 16, weight: .heavy).width(.condensed))
+                        .foregroundStyle(BrainDrawing.cream)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text("YOUR BRAIN")
                         .font(.system(size: 10, weight: .heavy, design: .monospaced))
@@ -134,6 +149,7 @@ struct BrainWidgetView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(entry.watching
             ? "Your brain is \(Self.words[stage].lowercased()), \(bpm) beats a minute. \(entry.today.headline) on your phone today. \(entry.today.appLine ?? "")"
+            : entry.proofOff ? "Screen Time was turned off. Open Lock In to turn it back on."
             : "Your brain. Open Lock In and pick the apps to watch.")
     }
 

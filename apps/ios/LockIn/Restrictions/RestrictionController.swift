@@ -53,6 +53,9 @@ final class RestrictionController: ObservableObject {
 
     var hasSelection: Bool { !selectionIsEmpty(selection) }
 
+    /// Screen Time access is on right now (read live, not from `status`).
+    var isAuthorized: Bool { client.authorization == .approved }
+
     var appliedMarker: AppliedMarker? {
         defaults.data(forKey: Self.markerKey).flatMap { try? JSONDecoder().decode(AppliedMarker.self, from: $0) }
     }

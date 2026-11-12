@@ -11,7 +11,7 @@ targets:
   LockIn:
     type: application
     platform: iOS
-    sources: [LockIn, Shared, ReportShared, BrainArt]
+    sources: [LockIn, Shared, ReportShared, BrainArt, LiveShared]
     entitlements:
       path: Config/LockIn.entitlements
       properties:
@@ -79,7 +79,7 @@ targets:
   LockInWidget:
     type: app-extension
     platform: iOS
-    sources: [LockInWidget, Shared, BrainArt]
+    sources: [LockInWidget, Shared, BrainArt, LiveShared]
     entitlements:
       path: Config/LockInWidget.entitlements
       properties:
