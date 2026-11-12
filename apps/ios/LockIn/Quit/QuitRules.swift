@@ -70,12 +70,13 @@ enum QuitRules {
         return defaults.string(forKey: lockedKey) == sessionID.uuidString
     }
 
-    /// Does the typed text match the sentence? Case, spaces and the end period do not matter.
+    /// Does the typed text match the sentence? Only the letters count: case, spaces and every
+    /// kind of apostrophe or period are ignored. The iPhone keyboard swaps in curly or other
+    /// apostrophes and double spaces, so a strict compare rejected correct typing.
     static func matches(_ typed: String) -> Bool {
         func clean(_ s: String) -> String {
-            s.lowercased()
-                .replacingOccurrences(of: "\u{2019}", with: "'")
-                .trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: ".!")))
+            String(s.lowercased().unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }
+                .map(Character.init))
         }
         return clean(typed) == clean(sentence)
     }

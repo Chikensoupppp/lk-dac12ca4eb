@@ -100,6 +100,9 @@ struct QuitSheet: View {
                         .font(PrintFont.body(17))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .keyboardType(.asciiCapable)
+                        .submitLabel(.done)
+                        .onSubmit { if QuitRules.matches(typed) { onQuit() } }
                         .focused($typing)
                         .padding(14)
                         .background(RoundedRectangle(cornerRadius: 14).fill(QuitInk.panel))
