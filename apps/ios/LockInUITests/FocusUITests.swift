@@ -210,35 +210,35 @@ final class FocusUITests: XCTestCase {
             button.tap()
         }
 
-        step("onboarding-1-hero", tap: "SHOW ME")
-        step("onboarding-2-hours", tap: "NEXT", pre: { app.buttons["5 to 6 hours"].tap() })
-        step("onboarding-2b-fact", tap: "CONTINUE")
-        step("onboarding-3-categories", tap: "NEXT", pre: { app.buttons["Social"].tap() })
-        // Back returns to the previous step with the choice kept.
-        XCTAssertTrue(app.buttons["CONTINUE"].waitForExistence(timeout: 10))
+        step("onboarding-1-hook", tap: "GUESS")
+        step("onboarding-2-guess", tap: "NEXT", pre: { app.buttons["5\u{2013}6 hours"].tap() })
+        // In UI tests "Continue" skips the Screen Time box; there is no access, so no reveal slide.
+        step("onboarding-3-check", tap: "CONTINUE")
+        step("onboarding-5-brain", tap: "CONTINUE")
+        step("onboarding-6-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
+        // Back returns to the previous slide with the choice kept.
+        XCTAssertTrue(app.buttons["Skip for now"].waitForExistence(timeout: 10))
         app.buttons["Back"].tap()
         XCTAssertTrue(app.buttons["NEXT"].waitForExistence(timeout: 5))
         app.buttons["NEXT"].tap()
-        step("onboarding-4-permission", tap: "CONTINUE")
-        step("onboarding-5-shield", tap: "Skip for now")
-        step("onboarding-6-goals", tap: "NEXT", pre: { app.buttons["Study"].tap() })
-        // "Working it out" moves on by itself after about 5 seconds.
-        XCTAssertTrue(app.staticTexts["Working it out."].waitForExistence(timeout: 10))
-        capture("onboarding-6b-working")
-        step("onboarding-7-year", tap: "LET\u{2019}S DO IT")
-        step("onboarding-8-plus", tap: "NOT NOW")
-        let hold = app.buttons["hold-to-start"]
-        XCTAssertTrue(hold.waitForExistence(timeout: 10))
-        sleep(2)
-        capture("onboarding-9-ready")
-        hold.press(forDuration: 3.6)
+        step("onboarding-7-lock", tap: "Skip for now")
+        step("onboarding-8-year", tap: "LET\u{2019}S DO IT")
+        step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Study for real"].tap() })
+        // "Making your plan" moves on by itself.
+        let hold = app.buttons["hold-to-sign"]
+        XCTAssertTrue(hold.waitForExistence(timeout: 15))
+        sleep(1)
+        capture("onboarding-11-promise")
+        hold.press(forDuration: 2.6)
+        // No product in the simulator, so the offer says it is not on sale; "Not now" moves on.
+        step("onboarding-12-plus", tap: "Not now")
 
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
     }
 
-    /// Skipping every question still reaches a session, and leaves out the year step.
+    /// Skipping everything reaches the main screen with no session, and leaves out the year slide.
     func testFirstRunCanBeSkipped() {
         let app = XCUIApplication()
         app.launchArguments += ["-ui-testing-calm-background", "-ui-testing-reset-state", "-ui-testing-onboarding"]
@@ -249,20 +249,19 @@ final class FocusUITests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label)")
             button.tap()
         }
-        tap("SHOW ME")
-        tap("Skip")          // hours
-        tap("Skip")          // apps
-        tap("CONTINUE")
-        tap("Skip for now")
-        tap("Skip")          // focus goals
+        tap("GUESS")
+        tap("Skip")                      // guess
+        tap("Not now (keep my guess)")   // Screen Time
+        tap("Skip")                      // what pulls you in
+        tap("Skip for now")              // lock apps
+        XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
+        tap("Skip")                      // goals
+        let notNow = app.buttons["Not now"]
+        XCTAssertTrue(notNow.waitForExistence(timeout: 15))   // promise, after the plan prints
+        notNow.tap()
         capture("onboarding-skip-plus")
-        XCTAssertFalse(app.staticTexts["Look at your year."].exists)
-        tap("NOT NOW")
-        let hold = app.buttons["hold-to-start"]
-        XCTAssertTrue(hold.waitForExistence(timeout: 10))
-        hold.press(forDuration: 3.6)
-        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
-        app.buttons["END SESSION"].tap()
+        tap("Not now")                   // offer
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
     }
 
     /// The test button on the main screen replays the first-run slides.
@@ -272,6 +271,6 @@ final class FocusUITests: XCTestCase {
         let replay = app.buttons["replay-intro"]
         XCTAssertTrue(replay.waitForExistence(timeout: 10))
         replay.tap()
-        XCTAssertTrue(app.buttons["SHOW ME"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["GUESS"].waitForExistence(timeout: 10))
     }
 }

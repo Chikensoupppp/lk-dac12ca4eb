@@ -11,13 +11,14 @@ targets:
   LockIn:
     type: application
     platform: iOS
-    sources: [LockIn, Shared]
+    sources: [LockIn, Shared, ReportShared]
     entitlements:
       path: Config/LockIn.entitlements
       properties:
         com.apple.developer.family-controls: true
     dependencies:
       - target: LockInMonitor
+      - target: LockInReport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin
@@ -46,6 +47,26 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.monitor
+        GENERATE_INFOPLIST_FILE: NO
+  # Draws the user's real Screen Time on the onboarding reveal slide. Apple sandboxes it: it can
+  # read usage but cannot send anything back to the app.
+  LockInReport:
+    type: app-extension
+    platform: iOS
+    sources: [LockInReport, ReportShared]
+    entitlements:
+      path: Config/LockInReport.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+    info:
+      path: Config/LockInReport-Info.plist
+      properties:
+        CFBundleDisplayName: Lock In Report
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivityui.report-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.report
         GENERATE_INFOPLIST_FILE: NO
   LockInTests:
     type: bundle.unit-test

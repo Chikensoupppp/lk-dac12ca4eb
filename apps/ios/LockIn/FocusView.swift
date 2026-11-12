@@ -19,6 +19,7 @@ struct FocusView: View {
     @StateObject private var restrictions = RestrictionController()
     @State private var showRestrictions = false
     @StateObject private var pc = PCLink()
+    @StateObject private var plus = PlusStore()
     @State private var showPC = false
     /// Short mood after a session ends (finished glow, gray glow for an early end).
     @State private var flash: FocusMood?
@@ -174,7 +175,7 @@ struct FocusView: View {
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow(restrictions: restrictions) { startNow in
+            OnboardingFlow(restrictions: restrictions, plus: plus) { startNow in
                 onboardingDone = true
                 if startNow {
                     selectedMinutes = 25

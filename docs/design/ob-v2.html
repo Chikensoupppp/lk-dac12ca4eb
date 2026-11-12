@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Onboarding v2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600;800&family=Caveat+Brush&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--paper:#F2ECE1;--ink:#15120F;--org:#FF4A1C;--blue:#2E4BFF;--navy:#0E1640;--soft:#6E675E;--line:#15120F22}
+body{background:#cbc6bd;font-family:Archivo,system-ui,sans-serif;padding:24px;width:1300px;display:flex;flex-wrap:wrap;gap:30px 26px}
+.row{display:contents}
+.lab{font:800 20px Archivo;color:#222;margin:0 0 10px 6px;width:393px}
+.lab span{font-weight:500;color:#555;font-size:15px;display:block}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;background:var(--paper);color:var(--ink)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:9}
+.sb{position:absolute;top:18px;left:34px;font:600 16px system-ui}
+.bars{position:absolute;left:24px;right:24px;top:56px;display:flex;gap:3px;z-index:3}
+.bars i{flex:1;height:4px;border-radius:2px;background:currentColor;opacity:.18}.bars i.on{opacity:1}
+.abs{position:absolute}
+.h{position:absolute;left:24px;right:24px;top:92px;font:900 52px/.9 Archivo;font-stretch:62%;text-transform:uppercase;letter-spacing:-.3px}
+.btn{position:absolute;left:24px;right:24px;bottom:44px;height:60px;border-radius:30px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font:800 18px Archivo;letter-spacing:2px;font-stretch:90%}
+.skip{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:600 14px Archivo;opacity:.55}
+.mono{font-family:'JetBrains Mono',monospace}
+.marker{font-family:'Caveat Brush',cursive}
+.grain:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+ background-image:radial-gradient(#15120F14 1px,transparent 1.2px);background-size:5px 5px}
+.ht{background-image:radial-gradient(currentColor 38%,transparent 40%);background-size:7px 7px}
+
+/* 1 receipt */
+.s1{background:var(--org)}
+.slot{left:18px;right:18px;top:270px;height:16px;border-radius:8px;background:var(--ink);box-shadow:inset 0 3px 0 #000}
+.rc{left:34px;right:34px;top:278px;height:392px;background:#F6F1E7;font:500 13px/1.55 'JetBrains Mono',monospace;color:#1c1917;padding:22px 20px 0;box-shadow:0 18px 30px -12px #0006;transform:rotate(-1.2deg);transform-origin:top center;
+ -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 10px repeat-x;
+ mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 10px repeat-x}
+.rc .c{text-align:center}.rc .big{font-weight:800;font-size:15px;letter-spacing:2px}
+.rw{display:flex;gap:6px}.rw span:nth-child(2){flex:1;overflow:hidden;white-space:nowrap;color:#a8a29e}.rw span:nth-child(2):before{content:"................................................"}
+.rc hr{border:0;border-top:1.5px dashed #1c191766;margin:10px 0}
+.tot{font-weight:800;font-size:19px}.red{color:#D9381E}
+.bc{height:34px;margin:12px auto 0;width:200px;background:repeating-linear-gradient(90deg,#1c1917 0 2px,transparent 2px 4px,#1c1917 4px 5px,transparent 5px 8px,#1c1917 8px 11px,transparent 11px 12px)}
+.stamp{padding:6px 12px;border:3.5px solid #D9381E;color:#D9381E;border-radius:8px;font:900 22px Archivo;font-stretch:75%;letter-spacing:1px;background:#F6F1E7ee}
+
+/* 2 lost poster with pull tabs */
+.poster{left:30px;right:30px;top:262px;height:400px;background:#fff;box-shadow:0 14px 26px -12px #0005;transform:rotate(1.2deg)}
+.poster .t{padding:20px 18px 0;font:900 76px/.85 Archivo;font-stretch:62%;color:var(--org)}
+.poster .d{padding:8px 18px 0;font:600 15px/1.35 'JetBrains Mono',monospace}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:150px;display:flex;border-top:2px dashed #15120F55}
+.tabs div{flex:1;border-right:2px dashed #15120F55;display:grid;place-items:center}
+.tabs div:last-child{border-right:0}
+.tabs b{writing-mode:vertical-rl;transform:rotate(180deg);font:900 28px Archivo;font-stretch:70%;letter-spacing:1px}
+.torn{background:var(--paper)}
+.tape{width:70px;height:24px;background:#FF4A1Caa}
+
+/* 3 brain, riso */
+.s3{background:var(--paper)}
+.gauge{left:24px;right:24px;top:236px;height:22px;border:3px solid var(--ink);border-radius:12px;overflow:hidden}
+.gauge i{display:block;height:100%;width:38%;background:var(--org)}
+.bubble{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:10px 16px;font:800 24px Archivo;font-stretch:80%}
+
+/* 4 sticker sheet */
+.s4{background:var(--org)}
+.st{position:absolute;display:grid;place-items:center;font:900 26px Archivo;font-stretch:70%;text-transform:uppercase;background:var(--paper);color:var(--ink);box-shadow:0 0 0 6px #fff,0 10px 18px -6px #0006}
+.st.on{background:var(--ink);color:var(--paper)}
+.chk{position:absolute;right:-8px;top:-10px;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font:900 16px Archivo;box-shadow:0 0 0 3px #fff}
+
+/* 5 calendar */
+.cal{left:24px;right:24px;top:300px;height:270px;background:#fff;padding:14px;box-shadow:0 12px 24px -12px #0005}
+.cal .g{display:grid;grid-template-columns:repeat(26,1fr);gap:2px}
+.cal .g i{aspect-ratio:1;background:#15120F18;border-radius:1px;position:relative}
+.cal .g i.x{background:var(--org)}
+.cal .g i.k{background:var(--blue)}
+
+/* 6 notebook */
+.s6{background:#FBF8F1}
+.lines{left:0;right:0;top:250px;bottom:120px;background:repeating-linear-gradient(#FBF8F1 0 47px,#2E4BFF33 47px 49px)}
+.margin{left:56px;top:0;bottom:0;width:2px;background:#FF4A1C66}
+.goal{position:absolute;left:72px;font:400 34px 'Caveat Brush';display:flex;align-items:center;gap:14px}
+.box{width:28px;height:28px;border:3px solid var(--ink);border-radius:4px;position:relative}
+.box.on:after{content:"";position:absolute;left:3px;top:-10px;width:12px;height:24px;border:solid var(--blue);border-width:0 5px 5px 0;transform:rotate(40deg)}
+
+/* 7 printer */
+.s7{background:var(--ink);color:var(--paper)}
+.tape2{left:60px;right:60px;top:300px;height:330px;background:#F6F1E7;color:var(--ink);padding:18px;font:600 14px/2 'JetBrains Mono',monospace}
+
+/* 8 permit */
+.permit{left:28px;right:28px;top:290px;height:300px;border-radius:18px;background:#fff;border:3px solid var(--ink);padding:20px;box-shadow:8px 8px 0 var(--ink)}
+.permit .k{font:900 64px/.9 Archivo;font-stretch:62%;color:var(--blue)}
+.permit p{font:600 16px/1.4 'JetBrains Mono',monospace;margin-top:14px}
+
+/* 10 contract */
+.contract{left:24px;right:24px;top:270px;height:380px;background:#fff;padding:24px 22px;box-shadow:0 12px 24px -12px #0005;font:600 22px/1.4 Archivo;font-stretch:85%}
+.sig{margin-top:30px;border-bottom:3px solid var(--ink);height:70px;position:relative}
+.sig b{position:absolute;left:4px;bottom:4px;font:400 52px 'Caveat Brush';color:var(--blue);transform:rotate(-4deg)}
+.hold{position:absolute;left:24px;right:24px;bottom:44px;height:60px;border-radius:30px;background:var(--ink);color:var(--paper);overflow:hidden;display:grid;place-items:center;font:800 18px Archivo;letter-spacing:2px;font-stretch:90%}
+.hold i{position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--org)}
+.hold span{position:relative}
+
+/* 11 Plus */
+.s11{background:var(--navy);color:#F2ECE1}
+.card{left:36px;right:36px;top:250px;height:200px;border-radius:22px;background:linear-gradient(135deg,#2E4BFF,#1A2BB0);transform:rotate(-4deg);padding:20px;box-shadow:0 30px 40px -18px #000c;overflow:hidden}
+.card .n{font:900 40px/.9 Archivo;font-stretch:62%;text-transform:uppercase}
+.card .m{position:absolute;left:20px;bottom:18px;font:600 13px 'JetBrains Mono',monospace;opacity:.85}
+.card .o{position:absolute;right:-40px;bottom:-60px;width:180px;height:180px;border-radius:50%;border:18px solid #ffffff22}
+.tl{left:24px;right:24px;top:494px}
+.tl div{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}.tl div div{display:block}
+.tl i{width:22px;height:22px;border-radius:50%;border:3px solid #F2ECE1;flex:none;margin-top:2px}
+.tl b{display:block;min-width:60px;font:800 18px Archivo;font-stretch:85%}.tl span{font:500 14px 'JetBrains Mono',monospace;opacity:.75}
+.s11 .btn{background:#F2ECE1;color:var(--navy)}
+
+/* why we ask */
+.printer{left:30px;right:30px;top:268px;height:96px;border-radius:22px;background:var(--ink);box-shadow:0 14px 24px -12px #0007}
+.pslot{position:absolute;left:24px;right:24px;bottom:18px;height:12px;border-radius:6px;background:#000;box-shadow:inset 0 2px 0 #333}
+.led{position:absolute;right:24px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 12px var(--blue)}
+.plabel{position:absolute;left:24px;top:18px;color:var(--paper);font-size:11px;letter-spacing:2px;opacity:.7}
+.blank{left:62px;right:62px;top:352px;height:176px;background:#F6F1E7;font:500 13px/1.6 'JetBrains Mono',monospace;color:#1c1917;padding:16px 16px 0;box-shadow:0 12px 20px -10px #0005;
+ -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 10px repeat-x;
+ mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 10px repeat-x}
+.blank hr,.rc2 hr{border:0;border-top:1.5px dashed #1c191766;margin:8px 0}
+.blank .rw span:first-child{color:#1c191733;letter-spacing:-1px}
+.why{left:24px;right:24px;top:556px}
+.why div{display:flex;gap:12px;align-items:center;margin-bottom:12px;font:700 18px Archivo;font-stretch:85%}
+.why b{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font:800 14px 'JetBrains Mono';flex:none}
+/* hook */
+.qnum{left:20px;top:300px;white-space:nowrap;font:900 128px/.85 Archivo;font-stretch:62%;letter-spacing:-2px;color:#15120F}
+.guessline{left:26px;top:150px;font-size:14px;font-weight:800;letter-spacing:1px}
+.guessline s{text-decoration-thickness:3px;text-decoration-color:#15120F}
+/* reveal */
+.bignum{left:22px;top:172px;font:900 110px/.85 Archivo;font-stretch:62%;color:var(--ink);letter-spacing:-1px}
+.rc2{left:30px;right:30px;top:296px;height:356px;background:#F6F1E7;font:500 13px/1.7 'JetBrains Mono',monospace;color:#1c1917;padding:18px 18px 0;box-shadow:0 18px 30px -12px #0006;transform:rotate(1deg);
+ -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 10px repeat-x;
+ mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 10px repeat-x}
+.ico{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:7px}
+/* 12 locked */
+.s12{background:#0A0B0D;color:#F2ECE1}
+</style></head><body>
+
+<!-- ROW 1 -->
+<div class="row">
+
+<div><div class="lab">1. The hook<span>A blank total. No fake numbers.</span></div>
+<div class="phone s1"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h" style="font-size:58px">You lose hours<br>to your phone.</div>
+ <div class="abs qnum">?H ??M</div>
+ <div class="abs mono" style="left:26px;top:418px;font-size:14px;font-weight:600">a day. but how many?</div>
+ <svg class="abs" style="left:236px;top:440px" width="110" height="90" fill="none"><path d="M96 80 C 80 40, 50 20, 14 14" stroke="#15120F" stroke-width="4" stroke-linecap="round"/><path d="M30 2 L12 14 L28 28" stroke="#15120F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ <div class="abs marker" style="left:300px;top:520px;font-size:34px;transform:rotate(-6deg)">you?</div>
+ <div class="abs" style="left:24px;top:640px;right:24px;font:900 30px/1 Archivo;font-stretch:70%;text-transform:uppercase">Take a guess.</div>
+ <div class="btn">GUESS</div></div></div>
+
+<div><div class="lab">2. The guess<span>A &ldquo;lost&rdquo; poster. Tear off your guess.</span></div>
+<div class="phone grain"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h" style="font-size:46px">Your guess:<br>how long a day?</div>
+ <div class="abs poster"><div class="t">LOST:<br>MY DAY</div><div class="d">Last seen in my phone.<br>Answers to &ldquo;one more video&rdquo;.</div>
+  <div class="tabs"><div><b>1&ndash;2 HRS</b></div><div class="torn"></div><div><b>5&ndash;6 HRS</b></div><div><b>7+ HRS</b></div></div></div>
+ <div class="abs" style="left:268px;top:284px;width:76px;height:130px;background:#fff;transform:rotate(9deg);box-shadow:0 12px 20px -8px #0006;display:grid;place-items:center"><b style="writing-mode:vertical-rl;transform:rotate(180deg);font:900 28px Archivo;font-stretch:70%;color:var(--org)">3&ndash;4 HRS</b><div class="abs tape" style="top:-10px;left:8px;transform:rotate(6deg)"></div></div>
+ <div class="abs stamp" style="left:28px;top:690px;transform:rotate(-4deg);border-color:var(--ink);color:var(--ink);font-size:18px;background:none">JUST GUESS</div>
+ <div class="btn">NEXT</div><div class="skip">Skip</div></div></div>
+
+<div><div class="lab">3. Let&rsquo;s check<span>Why we ask for Screen Time</span></div>
+<div class="phone grain"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h">Now let&rsquo;s<br>check.</div>
+ <div class="abs printer"><div class="pslot"></div><div class="led"></div><div class="mono plabel">LOCK IN &middot; PRINTER</div></div>
+ <div class="abs blank"><div class="c big">YOUR SCREEN TIME</div><hr><div class="rw"><span>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</span><span></span><span>?h ??m</span></div><div class="rw"><span>&#9608;&#9608;&#9608;&#9608;</span><span></span><span>?h ??m</span></div><hr><div class="rw tot"><span>TOTAL</span><span></span><span>?h ??m</span></div></div>
+ <div class="abs why">
+  <div><b>1</b><span>Reads Screen Time on this phone.</span></div>
+  <div><b>2</b><span>Stays on your phone. We never see it.</span></div>
+  <div><b>3</b><span>Also lets Lock In lock your apps.</span></div></div>
+ <div class="btn" style="bottom:66px">CONTINUE</div><div class="skip" style="bottom:30px">Not now (keep my guess)</div></div></div>
+
+<div><div class="lab">4. The reveal<span>Your guess vs. the truth</span></div>
+<div class="phone s1"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h" style="font-size:56px">Oh wow.</div>
+ <div class="abs guessline mono">YOU GUESSED <s>3&ndash;4 HRS</s></div>
+ <div class="abs bignum">6H 12M</div>
+ <div class="abs mono" style="left:26px;top:272px;font-size:14px;font-weight:600">a day, on average this week</div>
+ <div class="abs rc2"><div class="c big">YOUR RECEIPT</div><div class="c">THIS WEEK &middot; PER DAY</div><hr>
+  <div class="rw"><span><i class="ico" style="background:#E5484D"></i>Video app</span><span></span><span>2h 31m</span></div>
+  <div class="rw"><span><i class="ico" style="background:#8E4EC6"></i>Photo app</span><span></span><span>1h 48m</span></div>
+  <div class="rw"><span><i class="ico" style="background:#3E63DD"></i>Chat app</span><span></span><span>0h 59m</span></div>
+  <div class="rw"><span><i class="ico" style="background:#15120F"></i>Short videos</span><span></span><span>0h 54m</span></div><hr>
+  <div class="rw tot"><span>TOTAL</span><span></span><span>6h 12m</span></div>
+  <div class="rw red"><span>PICKUPS</span><span></span><span>&times;112</span></div></div>
+ <div class="abs stamp" style="right:34px;top:560px;transform:rotate(-9deg)">THAT&rsquo;S A LOT</div>
+ <div class="abs" style="left:24px;top:668px;right:24px;font:900 26px/1 Archivo;font-stretch:70%;text-transform:uppercase">That&rsquo;s 94 days a year.</div>
+ <div class="btn">NEXT</div></div></div>
+
+<div><div class="lab">5. Your brain<span>Riso print brain, damage by your hours</span></div>
+<div class="phone s3 grain"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h">5&ndash;6 hours<br>a day.</div>
+ <div class="abs gauge"><i></i></div>
+ <svg class="abs" style="left:46px;top:300px" width="300" height="270" viewBox="0 0 300 270">
+  <defs><pattern id="dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="2.6" fill="#FF4A1C"/></pattern></defs>
+  <path d="M60 120c-30-40 10-90 55-75 15-35 75-35 90 0 45-15 80 30 60 70 30 25 15 80-30 80-10 30-60 40-85 15-30 25-85 10-85-25-35-10-40-55-5-65z" fill="url(#dots)" transform="translate(6 5)"/>
+  <path d="M60 120c-30-40 10-90 55-75 15-35 75-35 90 0 45-15 80 30 60 70 30 25 15 80-30 80-10 30-60 40-85 15-30 25-85 10-85-25-35-10-40-55-5-65z" fill="none" stroke="#15120F" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M115 45c-5 25 10 40 30 45M205 45c5 25-10 40-30 45M90 160c20-10 40 0 50 15M230 150c-15-5-35 5-40 20" stroke="#15120F" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <g stroke="#15120F" stroke-width="6" stroke-linecap="round"><path d="M118 118l18 18M136 118l-18 18M176 118l18 18M194 118l-18 18"/></g>
+  <path d="M135 175q22-14 44 0" stroke="#15120F" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M150 250v22" stroke="#15120F" stroke-width="10" stroke-linecap="round"/>
+ </svg>
+ <div class="abs bubble" style="left:150px;top:590px;transform:rotate(3deg)">12 more minutes&hellip;</div>
+ <div class="abs stamp" style="left:24px;top:276px;transform:rotate(-6deg);font-size:15px;border-width:3px">JUST FOR FUN</div>
+ <div class="abs" style="left:24px;top:672px;font:800 22px Archivo;font-stretch:80%">Your brain is begging.</div>
+ <div class="btn">CONTINUE</div></div></div>
+
+</div>
+<div class="row">
+
+<div><div class="lab">6. What pulls you in<span>Peel the stickers that are you</span></div>
+<div class="phone s4"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h">What pulls<br>you in?</div>
+ <div class="st on" style="left:34px;top:270px;width:150px;height:150px;border-radius:50%;transform:rotate(-8deg)">Video<div class="chk">&check;</div></div>
+ <div class="st" style="left:206px;top:262px;width:150px;height:96px;border-radius:48px;transform:rotate(6deg)">Games</div>
+ <div class="st on" style="left:216px;top:384px;width:140px;height:140px;border-radius:30px;transform:rotate(-5deg)">Social<div class="chk">&check;</div></div>
+ <div class="st" style="left:30px;top:446px;width:170px;height:88px;border-radius:16px;transform:rotate(4deg)">Shopping</div>
+ <div class="st" style="left:44px;top:566px;width:130px;height:130px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);border-radius:0;box-shadow:none">News</div>
+ <div class="st" style="left:200px;top:560px;width:150px;height:100px;border-radius:50px 50px 50px 8px;transform:rotate(-3deg)">Chat</div>
+ <div class="btn">NEXT</div><div class="skip" style="color:var(--ink)">Skip</div></div></div>
+
+<div><div class="lab">7. Your year<span>Bad news, then good news (Opal&rsquo;s best screen)</span></div>
+<div class="phone grain"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="h">Your next<br>year.</div>
+ <div class="abs" style="left:24px;top:206px;font:900 92px/.9 Archivo;font-stretch:62%;color:var(--org)">94 DAYS</div>
+ <div class="abs" style="left:26px;top:290px;font:600 15px 'JetBrains Mono'">on your phone, at this pace</div>
+ <div class="abs cal" style="top:322px;height:auto"><div class="g" id="g"></div></div>
+ <div class="abs" style="left:24px;top:600px;right:24px;display:flex;align-items:center;gap:12px">
+  <div style="font:900 40px/.9 Archivo;font-stretch:62%;color:var(--blue);border:3.5px solid var(--blue);border-radius:50%;padding:12px 18px;transform:rotate(-4deg)">+47</div>
+  <div style="font:800 24px/1.05 Archivo;font-stretch:80%">Cut it in half.<br>Get 47 days back.</div></div>
+ <div class="btn">LET&rsquo;S DO IT</div></div></div>
+
+<div><div class="lab">8. Your goals<span>A to-do list in your own hand</span></div>
+<div class="phone s6"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+ <div class="h">What will you<br>do with them?</div>
+ <div class="abs lines"><div class="abs margin"></div></div>
+ <div class="goal" style="top:262px"><div class="box on"></div>Study for real</div>
+ <div class="goal" style="top:311px"><div class="box"></div>Train</div>
+ <div class="goal" style="top:360px"><div class="box on"></div>Build something</div>
+ <div class="goal" style="top:409px"><div class="box"></div>Sleep before 1</div>
+ <div class="goal" style="top:458px"><div class="box"></div>Read</div>
+ <div class="goal" style="top:507px"><div class="box"></div>Time with people</div>
+ <svg class="abs" style="left:52px;top:356px" width="260" height="56" fill="none"><ellipse cx="128" cy="28" rx="124" ry="24" stroke="#2E4BFF" stroke-width="3" transform="rotate(-2 128 28)"/></svg>
+ <div class="btn">NEXT</div><div class="skip">Skip</div></div></div>
+
+</div>
+<div class="row">
+
+<div><div class="lab">9. Building your plan<span>A dot-matrix print-out (loading)</span></div>
+<div class="phone s7"><div class="island"></div><div class="sb">9:41</div><div class="bars" style="color:#F2ECE1"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+ <div class="h">Making<br>your plan.</div>
+ <div class="abs" style="left:40px;right:40px;top:290px;height:14px;border-radius:7px;background:#000;box-shadow:inset 0 2px 0 #333"></div>
+ <div class="abs tape2"><div>PLAN FOR: YOU</div><div>-------------------------</div><div>&check; 5&ndash;6 HRS A DAY</div><div>&check; VIDEO + SOCIAL</div><div>&check; GOAL: STUDY, BUILD</div><div>&#9612; DAILY LOCK: 25 MIN</div><div style="opacity:.35">&middot; &middot; &middot;</div></div>
+ </div></div>
+
+<div><div class="lab">10. Make a promise<span>A contract. Hold to sign.</span></div>
+<div class="phone grain"><div class="island"></div><div class="sb">9:41</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+ <div class="h">Make a<br>promise.</div>
+ <div class="abs contract"><div class="mono" style="font-size:12px;letter-spacing:2px;opacity:.6">AGREEMENT</div>
+  <p style="margin-top:12px">I will put my phone down for <b style="background:#FF4A1C33;padding:0 4px">25 minutes</b> today.</p>
+  <p style="margin-top:12px">No &ldquo;just one more.&rdquo;</p>
+  <div class="sig"><b>Brandon</b></div><div class="mono" style="font-size:12px;margin-top:6px;opacity:.6">SIGNED, 11 NOV</div></div>
+ <div class="hold"><i></i><span>HOLD TO SIGN</span></div></div></div>
+
+</div>
+<div class="row">
+
+<div><div class="lab">11. Plus (the offer)<span>Calm blue world. Honest trial timeline.</span></div>
+<div class="phone s11"><div class="island"></div><div class="sb">9:41</div><div class="bars" style="color:#F2ECE1"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+ <div class="h">Your plan<br>is ready.</div>
+ <div class="abs card"><div class="n">Lock In<br>Plus</div><div class="m">MEMBER &middot; SINCE TODAY</div><div class="o"></div></div>
+ <div class="abs tl">
+  <div><i style="background:#F2ECE1"></i><div><b>Today</b><span>Everything unlocked. $0.</span></div></div>
+  <div><i></i><div><b>Day 5</b><span>We remind you.</span></div></div>
+  <div><i></i><div><b>Day 7</b><span>$29.99 a year. Cancel any time.</span></div></div></div>
+ <div class="btn" style="bottom:66px">TRY FOR $0</div><div class="skip" style="bottom:30px;opacity:.7">Not now</div>
+ <div class="abs mono" style="left:0;right:0;bottom:10px;text-align:center;font-size:10px;opacity:.45">Restore &middot; Terms &middot; Privacy</div></div></div>
+
+<div><div class="lab">12. Locked in<span>The noise stops. Into the real app.</span></div>
+<div class="phone s12"><div class="island"></div><div class="sb">9:41</div>
+ <svg class="abs" style="left:46px;top:240px" width="300" height="300" viewBox="0 0 300 300" fill="none"><circle cx="150" cy="150" r="128" stroke="#1E2026" stroke-width="16"/><circle cx="150" cy="150" r="128" stroke="#FF4A1C" stroke-width="16" stroke-linecap="round" stroke-dasharray="804" stroke-dashoffset="20" transform="rotate(-90 150 150)"/></svg>
+ <div class="abs" style="left:0;right:0;top:340px;text-align:center;font:900 72px/.9 Archivo;font-stretch:62%">25:00</div>
+ <div class="abs mono" style="left:0;right:0;top:416px;text-align:center;font-size:14px;opacity:.6">LOCKED IN</div>
+ <div class="abs" style="left:24px;right:24px;top:600px;text-align:center;font:900 44px/.9 Archivo;font-stretch:62%;text-transform:uppercase">Quiet now.</div>
+ </div></div>
+
+</div>
+<script>
+const g=document.getElementById('g');let h='';for(let i=0;i<364;i++){h+=`<i class="${i<47?'k':i<94?'x':''}"></i>`}g.innerHTML=h;
+</script>
+<script src="ob-v2-play.js"></script>
+</body></html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Brain v2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600;800&family=Caveat+Brush&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--bg:#0B1A16;--panel:#10241F;--grid:#16332B;--ecg:#4BFF9A;--cream:#F2ECE1;--pink:#FF5FA2;--alarm:#FF3B3B}
+body{background:#1b1a18;display:flex;gap:24px;padding:24px;flex-wrap:wrap;width:max-content;font-family:Archivo,system-ui,sans-serif}
+body.play{width:auto;min-height:100vh;place-content:center;padding:0}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;background:var(--bg);color:var(--cream)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:9}
+.sb{position:absolute;top:18px;left:34px;font:600 16px system-ui}
+.bars{position:absolute;left:24px;right:24px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--cream);opacity:.18}.bars i.on{opacity:1}
+.h{position:absolute;left:24px;right:24px;top:90px;font:900 46px/.9 Archivo;font-stretch:62%;text-transform:uppercase;white-space:nowrap}
+.sub{position:absolute;left:24px;right:24px;top:142px;font:700 18px/1.2 Archivo;font-stretch:88%;color:var(--cream);opacity:.88}
+/* study notes: a doctor's chart that slides up at the end */
+.notes{position:absolute;left:12px;right:12px;bottom:12px;border-radius:26px;background:var(--cream);color:#0B1A16;padding:16px 16px 0;z-index:8}
+.nh{font:800 11px 'JetBrains Mono';letter-spacing:2px;color:#C42B2B;padding-bottom:4px}
+.note{display:flex;gap:10px;padding:10px 0;border-bottom:1.5px dashed #0B1A1626}
+.note b{flex:none;width:54px;height:26px;border-radius:13px;background:#0B1A16;color:var(--cream);font:800 11px 'JetBrains Mono';display:grid;place-items:center;margin-top:1px}
+.note.good b{background:#17824A}.note.you b{background:var(--alarm)}
+.note p{font:700 15px/1.18 Archivo;font-stretch:90%}
+.note small{display:block;font:500 10px/1.3 'JetBrains Mono';opacity:.62;margin-top:4px}
+.note small i{font-style:normal;color:#C42B2B;font-weight:800;opacity:1}
+.note.good small i{color:#17824A}
+.fine{font:500 9.5px 'JetBrains Mono';opacity:.5;padding:8px 0 10px}
+.btn2{height:56px;border-radius:28px;background:#0B1A16;color:var(--cream);display:grid;place-items:center;font:800 17px Archivo;letter-spacing:2px;font-stretch:90%;margin-bottom:14px}
+.abs{position:absolute}
+/* heart monitor */
+.mon{left:20px;right:20px;top:208px;height:96px;border-radius:16px;background:var(--panel);overflow:hidden;
+ background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:16px 16px;box-shadow:inset 0 0 0 1.5px #1F4238}
+.mon svg{position:absolute;left:0;top:0}
+.bpm{position:absolute;right:0;top:0;bottom:0;width:86px;padding:12px 14px 0 0;background:linear-gradient(90deg,#10241F00,#10241F 22%);z-index:2;text-align:right;font:800 30px/1 'JetBrains Mono';color:var(--ecg)}
+.bpm small{display:block;font-size:10px;letter-spacing:2px;opacity:.7;margin-top:3px}
+.mlab{position:absolute;left:12px;top:9px;font:800 12px 'JetBrains Mono';letter-spacing:1px;color:var(--ecg);z-index:3;background:var(--panel);padding:1px 4px;border-radius:4px}
+.alarm .bpm,.alarm .mlab{color:var(--alarm)}
+.warn .bpm{color:#FFC233}
+.crit .bpm,.crit .mlab{color:var(--alarm);animation:blink .6s steps(2,jump-none) infinite}
+@keyframes blink{50%{opacity:.25}}
+.hours{left:24px;top:318px;display:flex;gap:6px}
+.hours i{width:34px;height:34px;border-radius:9px;border:2px solid #2A4A41;display:grid;place-items:center;font:16px system-ui;color:#4E7A6D;font-style:normal}
+.hours i.on{border-color:transparent;color:#fff}
+.stage{left:0;right:0;top:360px;height:330px}
+.status{left:24px;right:24px;top:700px;font:900 30px/1 Archivo;font-stretch:70%;text-transform:uppercase}
+.btn{position:absolute;left:24px;right:24px;bottom:44px;height:60px;border-radius:30px;background:var(--cream);color:var(--bg);display:grid;place-items:center;font:800 18px Archivo;letter-spacing:2px;font-stretch:90%}
+.bubble{position:absolute;background:var(--cream);color:#0B1A16;border-radius:18px;padding:9px 15px;font:800 21px Archivo;font-stretch:80%;white-space:nowrap}
+.bubble:after{content:"";position:absolute;left:22px;bottom:-12px;border:8px solid transparent;border-top:12px solid var(--cream);border-bottom:0}
+.tile{position:absolute;width:64px;height:64px;border-radius:16px;display:grid;place-items:center;box-shadow:0 8px 16px #0008}
+.pow{position:absolute;font:900 34px Archivo;font-stretch:62%;color:#0B1A16;padding:10px 14px;background:#FFE14D;clip-path:polygon(50% 0,61% 22%,86% 8%,80% 34%,100% 45%,79% 58%,92% 84%,64% 76%,52% 100%,40% 77%,12% 90%,22% 62%,0 48%,21% 36%,12% 10%,39% 22%)}
+.lab{font:800 18px Archivo;color:#ddd;margin:0 0 8px 6px}
+</style></head><body>
+<script>
+const P = new URLSearchParams(location.search);
+const STAGES = 6; // 0 fine .. 5 gone
+const COL = ['#FF5FA2','#FF7AA6','#EE93A0','#CFA08C','#ADA37A','#8C9670'];
+const BPM = [72, 98, 126, 154, 188, 0];
+// Study findings, shown by hours. Short plain summaries (not word-for-word quotes). All are links found
+// in studies, not proof of cause; the card says so. Sources: docs/ONBOARDING_V2.md.
+const NOTES = {
+  m30:   ['30 MIN', 'Students who cut social media to 30 min a day felt less lonely and less depressed in 3 weeks.', 'U. of Pennsylvania, 2018'],
+  mod:   ['1&ndash;2H', 'Up to about 2 hours a day was not linked to harm in 120,000 teens.', 'Oxford, Psychological Science, 2017'],
+  h3:    ['3H+', 'Teens on social media over 3 hours a day had 1.6&times; the risk of anxiety and depression signs.', 'Johns Hopkins, JAMA Psychiatry, 2019'],
+  h6:    ['6H+', 'Over 6 hours a day, that risk went up to 1.8&times;.', 'Johns Hopkins, JAMA Psychiatry, 2019'],
+  h7:    ['7H+', 'Teens on screens 7+ hours a day were over 2&times; as likely to be diagnosed with depression or anxiety.', 'Twenge &amp; Campbell, 2018'],
+  sleep: ['SLEEP', 'More screen time meant worse sleep in 9 of 10 studies.', 'Sleep Medicine Reviews, 2015'],
+};
+// which three notes each day gets, and which one is "you"
+function notesFor(h) {
+  if (h < 2.5) return { head: 'GOOD NEWS &middot; WHAT STUDIES FOUND', rows: [['mod', 'good you'], ['m30', 'good'], ['h3', '']] };
+  if (h < 5) return { head: 'WHAT STUDIES FOUND', rows: [['mod', 'good'], ['h3', 'you'], ['sleep', '']] };
+  if (h < 6) return { head: 'WHAT STUDIES FOUND', rows: [['h3', 'you'], ['h6', ''], ['sleep', '']] };
+  if (h < 7) return { head: 'WHAT STUDIES FOUND', rows: [['h3', ''], ['h6', 'you'], ['sleep', '']] };
+  return { head: 'WHAT STUDIES FOUND', rows: [['h3', ''], ['h6', ''], ['h7', 'you']] };
+}
+function notesHTML(h) {
+  const n = notesFor(h);
+  return `<div class="notes"><div class="nh">${n.head}</div>${n.rows.map(([k, c]) => `<div class="note ${c}"><b>${NOTES[k][0]}</b><div><p>${NOTES[k][1]}</p><small>${c.includes('you') ? '<i>YOU ARE HERE &middot; </i>' : ''}${NOTES[k][2]}</small></div></div>`).join('')}<div class="fine">Studies show links, not proof. Not medical advice.</div><div class="btn2">CONTINUE</div></div>`;
+}
+const clock = m => `TIME ON PHONE &middot; ${Math.floor(m / 60)}H ${String(Math.round(m % 60)).padStart(2, '0')}M`;
+const STAGE_SMALL = 'transform:translate(92px,-66px) scale(.44);transform-origin:50% 0';
+const MON = st => st === 5 ? 'alarm' : st === 4 ? 'crit' : st === 3 ? 'warn' : '';
+const LINES = [null,'just 1 more…','ok, 1 more…','12 more minutes…','no more brain rot plsss…',null];
+const STATUS = ['Your brain feels fine.','Your brain is tired.','Your brain is dizzy.','Your brain is fading.','Your brain is begging.','Your brain is gone.'];
+const TILES = [['#E5484D', '&#9654;'], ['#8E4EC6', '&#9673;'], ['#2B2F36', '&#9835;'], ['#3E63DD', '&#9993;'], ['#D6336C', '&#9829;']];
+const BODY = 'M70 132c-34-44 10-100 62-84 18-38 84-38 100 0 50-16 90 34 66 78 34 28 16 90-34 90-12 34-66 44-94 16-34 28-96 10-96-28-40-12-44-62-4-72z';
+
+function brainSVG(st, t = 0) {
+  const c = COL[st], ink = '#0B1A16', cream = '#F2ECE1';
+  const sway = st >= 3 ? Math.sin(t * 1.4) * (st - 2) * 1.6 : Math.sin(t * 2) * 1.2;
+  const droop = [0, 0, 0, 6, 10, 18][st];
+  const shake = st === 4 ? Math.sin(t * 40) * 1.4 : 0;
+  let face = '';
+  const ex = [150, 214], ey = 150;
+  // eyes
+  if (st === 0) face += ex.map(x => `<circle cx="${x}" cy="${ey}" r="17" fill="${cream}" stroke="${ink}" stroke-width="5"/><circle cx="${x + 3}" cy="${ey + 2}" r="8" fill="${ink}"/><circle cx="${x + 6}" cy="${ey - 2}" r="3" fill="${cream}"/>`).join('');
+  if (st === 1) face += ex.map((x, i) => `<circle cx="${x}" cy="${ey}" r="16" fill="${cream}" stroke="${ink}" stroke-width="5"/><circle cx="${x}" cy="${ey + 3}" r="7" fill="${ink}"/><path d="M${x - 16} ${ey - 26 + (i ? -6 : 6)} L${x + 16} ${ey - 26 + (i ? 6 : -6)}" stroke="${ink}" stroke-width="5" stroke-linecap="round"/>`).join('');
+  if (st === 2) face += ex.map(x => `<circle cx="${x}" cy="${ey}" r="17" fill="${cream}" stroke="${ink}" stroke-width="5"/><path d="M${x} ${ey} m-1 0 a2 2 0 0 1 4 0 a5 5 0 0 1 -9 0 a8 8 0 0 1 15 0 a11 11 0 0 1 -20 0" fill="none" stroke="${ink}" stroke-width="3.2" transform="rotate(${t * 300} ${x} ${ey})"/>`).join('');
+  if (st === 3) face += ex.map(x => `<circle cx="${x}" cy="${ey + 4}" r="15" fill="${cream}" stroke="${ink}" stroke-width="5"/><circle cx="${x}" cy="${ey + 9}" r="6" fill="${ink}"/><path d="M${x - 17} ${ey + 2} h34" stroke="${ink}" stroke-width="6" stroke-linecap="round"/><path d="M${x - 16} ${ey + 1} a16 16 0 0 1 32 0z" fill="${c}"/>`).join('');
+  if (st === 4) face += ex.map((x, i) => `<path d="M${x - 15} ${ey + 2} q15 -14 30 0" stroke="${ink}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M${x + (i ? 8 : -8)} ${ey + 8} q${i ? 4 : -4} ${18 + (t * 60 % 20)} 0 ${30 + (t * 60 % 20)}" stroke="#7FD8FF" stroke-width="7" fill="none" stroke-linecap="round" opacity=".9"/>`).join('');
+  if (st === 5) face += ex.map(x => `<path d="M${x - 12} ${ey - 12} l24 24 M${x + 12} ${ey - 12} l-24 24" stroke="${ink}" stroke-width="7" stroke-linecap="round"/>`).join('');
+  // mouth
+  const mx = 182, my = 200;
+  face += [
+    `<path d="M${mx - 26} ${my - 6} q26 26 52 0" stroke="${ink}" stroke-width="6" fill="${ink}"/><path d="M${mx - 12} ${my + 5} q12 8 24 0" fill="#FF8FB8"/>`,
+    `<path d="M${mx - 24} ${my} q8 -8 16 0 t16 0 t16 0" stroke="${ink}" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+    `<ellipse cx="${mx}" cy="${my}" rx="11" ry="14" fill="${ink}"/>`,
+    `<path d="M${mx - 22} ${my + 2} h44" stroke="${ink}" stroke-width="6" stroke-linecap="round"/>`,
+    `<path d="M${mx - 26} ${my + 12} q26 -26 52 0z" fill="${ink}" stroke="${ink}" stroke-width="5" stroke-linejoin="round"/>`,
+    `<path d="M${mx - 24} ${my} h48" stroke="${ink}" stroke-width="6" stroke-linecap="round"/><path d="M${mx + 2} ${my} v16 a9 9 0 0 0 18 0 v-16" fill="#FF8FB8" stroke="${ink}" stroke-width="5"/>`
+  ][st];
+  // damage extras
+  let extra = '';
+  if (st === 1) extra += `<path d="M262 96 q8 14 0 22 q-8 -8 0 -22z" fill="#7FD8FF" stroke="${ink}" stroke-width="3"/>`;
+  if (st >= 2) extra += `<g transform="rotate(-24 120 90)"><rect x="92" y="78" width="60" height="22" rx="6" fill="${cream}" stroke="${ink}" stroke-width="4"/><path d="M114 82v14M122 82v14M130 82v14" stroke="${ink}" stroke-width="2.5"/></g>`;
+  if (st >= 3) extra += `<path d="M232 60 l-10 22 l14 8 l-12 24" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (st >= 4) extra += `<path d="M86 196 l18 6 l-6 14 l16 10" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g transform="rotate(20 270 170)"><rect x="244" y="160" width="56" height="20" rx="6" fill="${cream}" stroke="${ink}" stroke-width="4"/></g>`;
+  if (st === 5) {
+    extra += [0, 1, 2].map(i => `<path d="M${130 + i * 50} ${40 - (t * 30 + i * 10) % 30} q-8 -10 0 -20 q8 -10 0 -20" stroke="#8C9670" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/>`).join('');
+    extra += [0, 1].map(i => { const a = t * 3 + i * 3; const fx = 182 + Math.cos(a) * 130, fy = 120 + Math.sin(a * 1.3) * 60; return `<circle cx="${fx}" cy="${fy}" r="4" fill="${cream}"/><ellipse cx="${fx - 4}" cy="${fy - 5}" rx="5" ry="3" fill="${cream}" opacity=".5"/>`; }).join('');
+  }
+  return `<svg viewBox="0 0 364 300" width="364" height="300" style="overflow:visible">
+   <defs><pattern id="d${st}" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="2.7" fill="${c}"/></pattern></defs>
+   <g transform="translate(${shake} ${droop}) rotate(${sway + droop * .4} 182 150)">
+    <path d="${BODY}" fill="${c}" opacity=".35" transform="translate(7 6)"/>
+    <path d="${BODY}" fill="url(#d${st})"/>
+    <path d="${BODY}" fill="none" stroke="${cream}" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M132 50c-6 26 10 42 32 48M232 50c6 26-10 42-32 48M100 176c22-10 44 0 54 16M264 168c-16-6-38 4-44 20" stroke="${cream}" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>
+    ${extra}${face}
+    <path d="M182 268 v26" stroke="${cream}" stroke-width="12" stroke-linecap="round"/>
+   </g></svg>`;
+}
+
+// Real stress path: the heart speeds up (72 -> 150+), skips beats, then shakes in a chaotic
+// rhythm (like v-fib), then stops. It never slows down first, so it never looks "calmer".
+function ecgPath(st, t) {
+  const W = 353, mid = 58, amp = [34, 34, 32, 30, 0, 0][st];
+  const period = 90 * 72 / BPM[st] || 90; // px per beat; trace scrolls at a fixed speed, so a faster heart = beats closer together
+  let d = `M0 ${mid}`;
+  for (let x = 0; x <= W; x += 2) {
+    let y = mid;
+    if (st === 4) {
+      // chaotic wobble, no clear beats
+      y = mid + Math.sin(x * .21 + t * 9) * 11 + Math.sin(x * .53 + t * 13) * 7 + Math.sin(x * .09 - t * 5) * 6;
+    } else if (amp) {
+      const pos = (x + t * 108) / period, n = Math.floor(pos), ph = pos - n;
+      const skip = st === 3 && (n % 4 === 2); // a missed beat now and then
+      const a = amp * (st === 3 ? (n % 3 === 0 ? .7 : 1) : 1);
+      if (!skip) {
+        if (ph > .30 && ph < .36) y = mid - a * .22;
+        else if (ph > .42 && ph < .46) y = mid + a * .22;
+        else if (ph >= .46 && ph < .50) y = mid - a;
+        else if (ph >= .50 && ph < .54) y = mid + a * .45;
+        else if (ph > .64 && ph < .76) y = mid - a * .22;
+      }
+    }
+    d += ` L${x} ${y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function phoneHTML(st, opts = {}) {
+  const hits = opts.hits ?? 5;
+  return `<div class="phone ${st === 5 ? 'alarm' : ''}" data-st="${st}"><div class="island"></div><div class="sb">9:41</div>
+   <div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+   <div class="h">${opts.title || '7+ hours a day.'}</div>
+   <div class="sub">This is your brain over one day.<br>Each hit = more time on your phone.</div>
+   <div class="abs mon ${MON(st)}"><div class="mlab">${clock(opts.mins ?? 0)}</div><div class="bpm"><span class="n">${BPM[st]}</span><small>BPM</small></div><svg width="353" height="96"><path class="ecgp" d="${ecgPath(st, 0)}" fill="none" stroke="${st === 5 ? '#FF3B3B' : '#4BFF9A'}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${st === 5 ? '#FF3B3B' : '#4BFF9A'})"/></svg></div>
+   <div class="abs hours">${Array.from({ length: hits }, (_, i) => `<i class="${i < st ? 'on' : ''}" style="${i < st ? 'background:' + TILES[i][0] : ''}">${TILES[i][1]}</i>`).join('')}</div>
+   <div class="abs stage" style="${opts.notes ? STAGE_SMALL : ''}"><div class="brain" style="position:absolute;left:14px;top:10px">${brainSVG(st)}</div></div>
+   ${LINES[st] && !opts.notes ? `<div class="bubble" style="left:${st === 4 ? 104 : 170}px;top:${st === 4 ? 352 : 360}px;transform:rotate(3deg)">${LINES[st]}</div>` : ''}
+   <div class="abs status" style="${opts.notes ? 'opacity:0' : ''}">${STATUS[st]}</div>
+   <div class="btn">CONTINUE</div>${opts.notes ? notesHTML(opts.notes) : ''}</div>`;
+}
+
+if (!P.has('play')) {
+  // a sheet of every stage
+  document.write(Array.from({ length: STAGES }, (_, st) => `<div><div class="lab">Stage ${st}${st === 0 ? ' (before any hours)' : ''}</div>${phoneHTML(st, { mins: st * 90 })}</div>`).join(''));
+  // the end of the slide for each answer: the brain shrinks, the study card slides up
+  document.write([[1.5, 0, '1&ndash;2 hours a day.'], [3.5, 2, '3&ndash;4 hours a day.'], [6.2, 5, '6h 12m a day.'], [7.5, 5, '7+ hours a day.']]
+    .map(([h, st, title]) => `<div><div class="lab">End: ${title.replace(' a day.', '')}</div>${phoneHTML(st, { notes: h, title, mins: h * 60 })}</div>`).join(''));
+} else {
+  // one phone, live: tiles hit the brain one hour at a time. ?play&hits=5 (7+ hours) or 2 (1-2 hours)
+  document.body.classList.add('play');
+  const hits = +(P.get('hits') || 5);
+  const titles = { 1: '1&ndash;2 hours a day.', 2: '3&ndash;4 hours a day.', 4: '5&ndash;6 hours a day.', 5: '7+ hours a day.' };
+  const hours = +(P.get('hours') || { 1: 1.5, 2: 3.5, 4: 5.5, 5: 7.5 }[hits] || hits);
+  document.body.innerHTML = phoneHTML(0, { hits, title: P.get('title') || titles[hits] });
+  const mlab = document.querySelector('.mlab');
+  const ph = document.querySelector('.phone'), brain = ph.querySelector('.brain'), ecg = ph.querySelector('.ecgp'), bpm = ph.querySelector('.bpm .n');
+  const status = ph.querySelector('.status'), mon = ph.querySelector('.mon');
+  let st = 0, t0 = performance.now(), squash = 0;
+  (function loop() {
+    const t = (performance.now() - t0) / 1000;
+    brain.innerHTML = brainSVG(st, t);
+    brain.style.transform = `scale(${1 + squash * .08},${1 - squash * .12})`; brain.style.transformOrigin = '50% 100%';
+    squash *= .86;
+    ecg.setAttribute('d', ecgPath(st, t));
+    // real monitors drift a few beats up and down
+    if (st > 0 && st < 5 && Math.floor(t * 1.5) !== loop.k) { loop.k = Math.floor(t * 1.5); bpm.textContent = BPM[st] + Math.round(Math.random() * 6 - 3); }
+    requestAnimationFrame(loop);
+  })();
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const tiles = TILES; const maxSt = { 1: 1, 2: 2, 4: 4, 5: 5 }[hits] || hits;
+  const pows = ['BONK!', 'POW!', 'WHAM!', 'SMACK!', 'K.O.'];
+  (async () => {
+    await document.fonts.ready; await sleep(900);
+    for (let i = 0; i < hits; i++) {
+      const tl = document.createElement('div'); tl.className = 'tile';
+      tl.style.cssText += `background:${tiles[i][0]};color:#fff;font-size:28px;left:${150 + (i % 2 ? 40 : -30)}px;top:-80px;z-index:5`;
+      tl.innerHTML = tiles[i][1]; ph.appendChild(tl);
+      await tl.animate([{ transform: 'translateY(0) rotate(0)' }, { transform: `translateY(500px) rotate(${i % 2 ? 220 : -220}deg)` }], { duration: 650, easing: 'cubic-bezier(.55,0,1,.6)', fill: 'forwards' }).finished;
+      tl.animate([{ transform: `translateY(500px) scale(1)`, opacity: 1 }, { transform: `translateY(520px) scale(.1)`, opacity: 0 }], { duration: 200, fill: 'forwards' });
+      const bubble = ph.querySelector('.bubble'); if (bubble) bubble.remove();
+      // hours on 7+ go straight to gone; lighter days stop earlier
+      st = Math.round((i + 1) * maxSt / hits);
+      squash = 1;
+      const chip = ph.querySelectorAll('.hours i')[i]; chip.classList.add('on'); chip.style.background = TILES[i][0];
+      bpm.textContent = BPM[st]; mlab.innerHTML = clock(hours * 60 * (i + 1) / hits);
+      mon.className = 'abs mon ' + MON(st); ph.querySelector('.mon svg path').setAttribute('stroke', st === 5 ? '#FF3B3B' : '#4BFF9A');
+      ph.querySelector('.mon svg path').style.filter = `drop-shadow(0 0 6px ${st === 5 ? '#FF3B3B' : '#4BFF9A'})`;
+      const pw = document.createElement('div'); pw.className = 'pow'; pw.textContent = pows[i];
+      pw.style.cssText += `left:${i % 2 ? 230 : 40}px;top:400px;z-index:6`; ph.appendChild(pw);
+      pw.animate([{ transform: 'scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'scale(1.1) rotate(-8deg)', opacity: 1, offset: .5 }, { transform: 'scale(1) rotate(-8deg)', opacity: 0 }], { duration: 750, fill: 'forwards' }).finished.then(() => pw.remove());
+      status.textContent = STATUS[st];
+      ph.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(5px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 260 });
+      await sleep(450);
+      if (LINES[st] && i < hits - 1 || st === 4) {
+        const b = document.createElement('div'); b.className = 'bubble'; b.textContent = LINES[st];
+        b.style.cssText += `left:${st === 4 ? 104 : 170}px;top:${st === 4 ? 352 : 360}px;transform:rotate(3deg);z-index:7`; ph.appendChild(b);
+        b.animate([{ transform: 'rotate(3deg) scale(.3)', opacity: 0 }, { transform: 'rotate(3deg) scale(1)', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+        await sleep(st === 4 ? 1700 : 1100);
+      } else await sleep(700);
+    }
+    if (st === 5) { const b = ph.querySelector('.bubble'); if (b) b.remove(); bpm.textContent = '0'; }
+    if (hits === 1) { st = 0; squash = 1; bpm.textContent = BPM[0]; status.textContent = 'Well done. Keep it like that.'; const b = document.createElement('div'); b.className = 'bubble'; b.textContent = 'I feel great!'; b.style.cssText += 'left:170px;top:360px;transform:rotate(3deg);z-index:7'; ph.appendChild(b); }
+    await sleep(1800);
+    // the proof: brain shrinks up, the study card slides in
+    const bb = ph.querySelector('.bubble'); if (bb) bb.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+    status.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+    ph.querySelector('.stage').animate([{ transform: 'none', transformOrigin: '50% 0' }, { transform: 'translate(92px,-66px) scale(.44)', transformOrigin: '50% 0' }], { duration: 500, easing: 'cubic-bezier(.3,1.2,.4,1)', fill: 'forwards' });
+    ph.insertAdjacentHTML('beforeend', notesHTML(hours));
+    const card = ph.querySelector('.notes');
+    card.querySelectorAll('.note').forEach(r => r.style.opacity = 0);
+    await card.animate([{ transform: 'translateY(110%)' }, { transform: 'none' }], { duration: 560, easing: 'cubic-bezier(.2,1.15,.4,1)' }).finished;
+    for (const r of card.querySelectorAll('.note')) {
+      r.animate([{ opacity: 0, transform: 'translateX(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, fill: 'forwards' });
+      await sleep(700);
+    }
+    await sleep(+(P.get('read') || 3500));
+    window.__done = true;
+    if (parent !== window) parent.postMessage('brain-done', '*'); // lets the full-flow player move on
+  })();
+}
+</script>
+</body></html>
