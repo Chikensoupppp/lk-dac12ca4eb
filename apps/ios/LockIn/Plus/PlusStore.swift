@@ -37,6 +37,12 @@ final class PlusStore: ObservableObject {
 
     deinit { updates?.cancel() }
 
+    /// TestFlight builds unlock Plus features so they can be tried before Plus is on sale.
+    /// App Store builds never match this.
+    static let isTestFlight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+
+    var hasPlus: Bool { isPlus || Self.isTestFlight }
+
     func load() async {
         do {
             let products = try await Product.products(for: [Self.yearlyID])

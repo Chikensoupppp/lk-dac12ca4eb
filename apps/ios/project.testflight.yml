@@ -22,12 +22,16 @@ targets:
       properties:
         com.apple.developer.family-controls: true
         com.apple.security.application-groups: [group.com.brandon132199.lockin]
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.brandon132199.lockin]
+        com.apple.developer.icloud-services: [CloudKit]
+        aps-environment: production
     dependencies:
       - target: LockInMonitor
       - target: LockInWidget
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin
+        INFOPLIST_FILE: AppInfo/LockIn-Extra.plist
         DEVELOPMENT_TEAM: D6TH2NSZLT
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES
@@ -35,7 +39,7 @@ targets:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_CFBundleDisplayName: Lock In
         INFOPLIST_KEY_NSCameraUsageDescription: Lock In uses the camera once, to scan the QR code that pairs your PC.
-        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Lock In talks to your PC on your Wi-Fi so a focus session can start on both.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Lock In talks to your PC and to your Key Holder's phone nearby, so a session can start on both or a friend can let you out.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
   LockInMonitor:

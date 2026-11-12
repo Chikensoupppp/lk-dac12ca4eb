@@ -18,7 +18,15 @@ protocol ScreenTimeClient: AnyObject {
     func startMonitoring(activity: String, from: Date, to: Date) throws
     func stopMonitoring()
     func applyShield(_ selection: FamilyActivitySelection)
+    /// Locked mode: no deleting apps (Lock In included) and no changing the clock. Cleared with
+    /// the shield. Apple notes it is not guaranteed under individual authorization: turning off
+    /// Lock In's Screen Time access in Settings removes it (a Screen Time passcode stops that).
+    func applyLock(_ on: Bool)
     func clearShield()
+}
+
+extension ScreenTimeClient {
+    func applyLock(_ on: Bool) {}
 }
 
 @MainActor
@@ -61,6 +69,11 @@ final class SystemScreenTimeClient: ScreenTimeClient {
         store.shield.applicationCategories = selection.categoryTokens.isEmpty
             ? nil : .specific(selection.categoryTokens)
         store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+    }
+
+    func applyLock(_ on: Bool) {
+        store.application.denyAppRemoval = on ? true : nil
+        store.dateAndTime.requireAutomaticDateAndTime = on ? true : nil
     }
 
     func clearShield() {

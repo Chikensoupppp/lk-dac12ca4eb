@@ -50,13 +50,21 @@ enum BrainLevel {
         return true
     }
 
+    /// Quitting a session early scars today's brain: one stage worse until tomorrow morning.
+    static func markScar(now: Date = .now, defaults: UserDefaults? = shared) {
+        defaults?.set(true, forKey: "brain.\(dayKey(now)).scar")
+    }
+
     struct Today: Equatable {
         /// Highest whole hour reached across watched apps today (0 = under 1 hour).
         var total: Int
         /// Highest whole hour one single app reached today (0 = none over 2 hours).
         var app: Int
+        /// A session was quit early today.
+        var scar: Bool = false
 
-        /// 0 fresh, 1 tired, 2 dizzy, 3 fading, 4 begging, 5 rotten. One heavy app makes it one worse.
+        /// 0 fresh, 1 tired, 2 dizzy, 3 fading, 4 begging, 5 rotten. One heavy app, or quitting
+        /// early, each make it one worse.
         var stage: Int {
             let base: Int
             switch total {
@@ -67,7 +75,7 @@ enum BrainLevel {
             case 1: base = 1
             default: base = 0
             }
-            return min(5, base + (app >= 2 ? 1 : 0))
+            return min(5, base + (app >= 2 ? 1 : 0) + (scar ? 1 : 0))
         }
 
         var headline: String { total == 0 ? "UNDER 1H" : "\(total)H+" }
@@ -78,7 +86,8 @@ enum BrainLevel {
     static func today(now: Date = .now, defaults: UserDefaults? = shared) -> Today {
         let day = dayKey(now)
         return Today(total: defaults?.integer(forKey: "brain.\(day).total") ?? 0,
-                     app: defaults?.integer(forKey: "brain.\(day).app") ?? 0)
+                     app: defaults?.integer(forKey: "brain.\(day).app") ?? 0,
+                     scar: defaults?.bool(forKey: "brain.\(day).scar") ?? false)
     }
 
     /// Whether the app has set up watching (Screen Time on and apps picked).

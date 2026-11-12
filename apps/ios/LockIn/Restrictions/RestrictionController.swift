@@ -84,7 +84,7 @@ final class RestrictionController: ObservableObject {
     /// Apply restrictions for a freshly started session. Fails closed: if the backup cleanup
     /// cannot be scheduled, no shield is applied, so no state exists that only this process
     /// could remove.
-    func begin(_ record: SessionRecord, now: Date = .now) {
+    func begin(_ record: SessionRecord, locked: Bool = false, now: Date = .now) {
         let plan = RestrictionPlanner.plan(
             for: record, now: now,
             isAuthorized: client.authorization == .approved,
@@ -102,6 +102,7 @@ final class RestrictionController: ObservableObject {
                 return
             }
             client.applyShield(selection)
+            if locked { client.applyLock(true) }
             let marker = AppliedMarker(sessionID: record.id, endsAt: record.timing.endsAt)
             if let data = try? JSONEncoder().encode(marker) { defaults.set(data, forKey: Self.markerKey) }
             status = .active

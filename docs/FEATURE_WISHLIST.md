@@ -18,7 +18,7 @@ Status is checked against `apps/` code by search, not on a device.
 | 3 | Sunday weekly report: apps and time, PC data too, "you hit your goal" | 11-05 | `WEEKLY_REPORT.md` |
 | 4 | The PC opens your work (workspace launch and restore) + Windows tray app | "i love this" (11-04) | `DIFFERENTIATION_PLAN.md` |
 | 5 | PC Lockdown: quit early and the PC locks for a while (Plus) | 11-04 | `COMPETITOR_FEATURES.md` |
-| 6 | Hard-to-cheat early exit ("not just wait 30 sec") | 11-04 | `COMPETITOR_FEATURES.md` (exit budget, intent card) |
+| 6 | Hard-to-cheat early exit ("not just wait 30 sec"). Built 11-12: free watched wait + typed sentence + widget scar; Plus Locked mode with Friend Key (in person + iCloud) and weekly emergency exit. Not tested on devices | 11-04, 11-12 | HANDOFF.md |
 | 7 | Lock screen countdown (Live Activity) | "yea" (11-04) | `LIVE_ACTIVITY_PLAN.md` |
 | 8 | Proof Check: warn if Screen Time access gets turned off | "save it" (11-04) | `COMPETITOR_FEATURES.md` |
 | 10 | Brain widget: rots as phone time and one heavy app add up today; always has a heartbeat. Code written 11-12, not compiled | 11-12 | HANDOFF.md, `docs/design/widget-brain.html` |

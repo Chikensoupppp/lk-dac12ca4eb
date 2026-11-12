@@ -20,6 +20,14 @@ struct FocusView: View {
     @State private var showRestrictions = false
     @StateObject private var pc = PCLink()
     @StateObject private var plus = PlusStore()
+    @StateObject private var keys = KeyStore()
+    /// Plus: the next session is Locked (no quit button; only a Key Holder or the weekly
+    /// emergency exit ends it early).
+    @State private var lockedNext = false
+    @State private var showQuit = false
+    @State private var showLockedExit = false
+    @State private var showKeys = false
+    @State private var showPlusOffer = false
     @State private var showPC = false
     /// Short mood after a session ends (finished glow, gray glow for an early end).
     @State private var flash: FocusMood?
@@ -126,14 +134,15 @@ struct FocusView: View {
                             .tracking(3)
                             .foregroundStyle(Matte.textSoft)
                         DurationSelector(options: Self.durationOptions, selection: $selectedMinutes)
+                        lockedToggle
                     }
                     .opacity(isLocked ? 0 : 1)
                     .allowsHitTesting(!isLocked)
                     .accessibilityHidden(isLocked)
                     .padding(.bottom, 24)
 
-                    Button(action: isLocked ? endSession : startSession) {
-                        Text(isLocked ? "END SESSION" : "LOCK IN")
+                    Button(action: isLocked ? askToEnd : startSession) {
+                        Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
                     }
                     .buttonStyle(MatteButtonStyle(prominent: !isLocked))
                     .overlay { LatchEffect(trigger: startCount, enabled: motion) }
@@ -146,14 +155,24 @@ struct FocusView: View {
         }
         .overlay(alignment: .topTrailing) {
             if !isLocked {
-                Button { showRestrictions = true } label: {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .font(.system(size: 17))
-                        .foregroundStyle(Matte.textQuiet)
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
+                HStack(spacing: 8) {
+                    Button { showKeys = true } label: {
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(Matte.textQuiet)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
+                    }
+                    .accessibilityLabel("Keys")
+                    Button { showRestrictions = true } label: {
+                        Image(systemName: "shield.lefthalf.filled")
+                            .font(.system(size: 17))
+                            .foregroundStyle(Matte.textQuiet)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
+                    }
+                    .accessibilityLabel("Restrictions")
                 }
-                .accessibilityLabel("Restrictions")
                 .padding(.trailing, 8)
             }
         }
@@ -174,6 +193,18 @@ struct FocusView: View {
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
+        .sheet(isPresented: $showPlusOffer) { PlusOfferStep(plus: plus) { showPlusOffer = false } }
+        .fullScreenCover(isPresented: $showQuit) {
+            QuitSheet(onQuit: { showQuit = false; endSession() }, onStay: { showQuit = false })
+        }
+        .fullScreenCover(isPresented: $showLockedExit) {
+            if let sessionID {
+                LockedExitSheet(keys: keys, sessionID: sessionID,
+                                onExit: { showLockedExit = false; endSession() },
+                                onStay: { showLockedExit = false })
+            }
+        }
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow(restrictions: restrictions, plus: plus) { startNow in
                 onboardingDone = true
@@ -200,6 +231,7 @@ struct FocusView: View {
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch() }
         .onAppear {
             updateBrainWatch()
+            checkKeyRequests()
             if expiredOnLaunch {
                 expiredOnLaunch = false
                 store.clear()
@@ -228,6 +260,7 @@ struct FocusView: View {
         // The task above can be suspended in the background; re-check on return.
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            checkKeyRequests()
             if let timing, timing.isFinished(at: .now) {
                 completeSession()
             } else {
@@ -260,6 +293,48 @@ struct FocusView: View {
         BrainWatch.update(selection: restrictions.selection, authorized: approved)
     }
 
+    /// Plus switch under the minutes. Locked needs apps picked, so the delete lock has something
+    /// to ride on (it is applied with the shield).
+    private var lockedToggle: some View {
+        Button {
+            if !plus.hasPlus { showPlusOffer = true; return }
+            lockedNext.toggle()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: lockedNext ? "lock.fill" : "lock.open")
+                Text(lockedNext ? "LOCKED: NO QUITTING" : "LOCKED MODE")
+                    .font(Cream.rounded(12, .bold)).tracking(1.5)
+                if !plus.hasPlus {
+                    Text("PLUS").font(Cream.rounded(10, .heavy)).padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Matte.edge))
+                }
+            }
+            .foregroundStyle(lockedNext ? Color(hex: 0xFF4A1C) : Matte.textSoft)
+            .frame(minHeight: 44)
+        }
+        .disabled(plus.hasPlus && !restrictions.hasSelection)
+        .opacity(plus.hasPlus && !restrictions.hasSelection ? 0.4 : 1)
+        .accessibilityHint(restrictions.hasSelection ? "No quit button for the next session" : "Pick apps to lock first")
+    }
+
+    /// END SESSION. Free sessions go through the quit screen; Locked ones only have the ways out.
+    private func askToEnd() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { endSession(); return }
+        #endif
+        if QuitRules.isLocked(sessionID) { showLockedExit = true } else { showQuit = true }
+    }
+
+    private func checkKeyRequests() {
+        guard !keys.friends.isEmpty else { return }
+        Task {
+            await RemoteKeys.subscribe(for: keys)
+            if let pending = try? await RemoteKeys.pending(for: keys), !pending.isEmpty, timing == nil {
+                showKeys = true
+            }
+        }
+    }
+
     private func startSession() {
         var duration = TimeInterval(selectedMinutes * 60)
         #if DEBUG
@@ -270,7 +345,9 @@ struct FocusView: View {
         let session = SessionTiming(startedAt: .now, duration: duration)
         let record = SessionRecord(timing: session)
         store.save(record)
-        restrictions.begin(record)
+        let locked = lockedNext && plus.hasPlus && restrictions.hasSelection
+        QuitRules.markLocked(locked ? record.id : nil)
+        restrictions.begin(record, locked: locked)
         pc.sessionStarted(record)
         flashTask?.cancel()
         flash = nil
@@ -283,6 +360,8 @@ struct FocusView: View {
     }
 
     private func endSession() {
+        QuitRules.recordEarlyEnd()
+        QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
         if let sessionID { pc.sessionEnded(sessionID) }
@@ -307,6 +386,7 @@ struct FocusView: View {
 
     private func completeSession() {
         guard let session = timing, session.isFinished(at: .now) else { return }
+        QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
         if let sessionID { pc.sessionEnded(sessionID) }

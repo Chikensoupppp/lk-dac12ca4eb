@@ -82,6 +82,9 @@ struct BrainWidgetView: View {
         if entry.today.app >= 2 {
             line = line + Text(" \u{00B7} 1 app \(entry.today.app)h+").foregroundColor(BrainDrawing.tongueColor)
         }
+        if entry.today.scar {
+            line = line + Text(" \u{00B7} quit early").foregroundColor(BrainDrawing.alarm)
+        }
         return line
             .font(.system(size: 13, weight: .bold).width(.condensed))
             .lineLimit(1)
