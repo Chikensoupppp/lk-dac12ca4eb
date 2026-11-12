@@ -18,6 +18,8 @@ struct BrainStep: View {
     @State private var bubble: String?
     @State private var tileIndex: Int?
     @State private var tileGone = false
+    @State private var lowTile: Int?
+    @State private var lowGone = false
     @State private var pow: PowFx?
     @State private var powShown = false
     @State private var dayShown = 0
@@ -81,8 +83,8 @@ struct BrainStep: View {
         OBScaffold(step: 2, title: Self.titles[index], primaryTitle: "CONTINUE", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
                 bar
-                scene
                 if low { dayStrip }
+                scene
                 if finished {
                     Text(Self.statusLines[index])
                         .font(Cream.rounded(22, .bold))
@@ -113,7 +115,7 @@ struct BrainStep: View {
     }
 
     /// Space above the brain. The tile falls through it, so it is only kept when tiles fall.
-    private var topGap: CGFloat { low ? 70 : 150 }
+    private var topGap: CGFloat { low ? 56 : 150 }
 
     private var scene: some View {
         ZStack(alignment: .top) {
@@ -159,6 +161,21 @@ struct BrainStep: View {
         .accessibilityLabel("A cartoon brain. \(finished ? Self.statusLines[index] : "")")
     }
 
+    /// The two hour tiles that fall onto the first two squares of the day.
+    private var lowDrop: some View {
+        GeometryReader { g in
+            let cell = max((g.size.width - 66) / 12, 10)
+            if let i = lowTile {
+                let style = Self.tileStyles[i % Self.tileStyles.count]
+                BrainSquareDrop(symbol: style.symbol, color: Color(hex: style.color),
+                                targetX: CGFloat(i) * (cell + 6) + cell / 2, targetY: cell / 2,
+                                cell: cell, gone: lowGone)
+                    .id(i)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
     /// The day as 24 squares. Two are phone. The rest is the user's.
     private var dayStrip: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -174,6 +191,7 @@ struct BrainStep: View {
                 }
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dayShown)
+            .overlay(alignment: .topLeading) { lowDrop }
             if finished {
                 Text("Up to 2 hours are phone. The rest is yours.")
                     .font(Cream.rounded(17, .bold))
@@ -214,12 +232,22 @@ struct BrainStep: View {
 
     @MainActor
     private func runLow() async {
-        guard await pause(0.5) else { return }
+        guard await pause(0.7) else { return }
+        // One tile per hour: two tiles land on the first two squares.
+        for i in 0..<2 {
+            lowGone = false
+            lowTile = i
+            guard await pause(0.7) else { return }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { dayShown = i + 1 }
+            lowGone = true
+            guard await pause(0.4) else { return }
+            lowTile = nil
+        }
+        // The rest of the day is the user's.
         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { proud = true }
         squash = 1
         withAnimation(.spring(response: 0.45, dampingFraction: 0.4)) { squash = 0 }
-        guard await pause(0.5) else { return }
-        for k in 1...24 {
+        for k in 3...24 {
             dayShown = k
             guard await pause(0.07) else { return }
         }
@@ -588,6 +616,30 @@ private struct BrainView: View {
 }
 
 // MARK: - Comic bits
+
+/// An app-style tile that drops onto one square of the day strip and shrinks to the square's size.
+private struct BrainSquareDrop: View {
+    let symbol: String
+    let color: Color
+    let targetX: CGFloat
+    let targetY: CGFloat
+    let cell: CGFloat
+    let gone: Bool
+
+    @State private var dropped = false
+
+    var body: some View {
+        SymbolTile(symbol: symbol, color: color, size: 48)
+            .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 4)
+            .scaleEffect(dropped ? cell / 48 : 1)
+            .position(x: targetX, y: dropped ? targetY : -90)
+            .opacity(gone ? 0 : 1)
+            .onAppear {
+                withAnimation(.easeIn(duration: 0.65)) { dropped = true }
+            }
+            .accessibilityHidden(true)
+    }
+}
 
 /// One app-style tile that drops onto the brain. It starts its fall as soon as it appears, and is
 /// shrunk away by the parent after it lands.
