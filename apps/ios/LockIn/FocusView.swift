@@ -32,6 +32,12 @@ struct FocusView: View {
     @State private var showPC = false
     /// Proof Check: Screen Time access was turned off during this session.
     @State private var showProofBroken = false
+    @StateObject private var goals = GoalStore()
+    @State private var showGoals = false
+    /// The Sunday report, opened by itself once a week.
+    @State private var report: ReportWeek?
+    /// Minutes of a session that finished while the app was closed; logged once in `.onAppear`.
+    @State private var expiredMinutes = 0
     /// Short mood after a session ends (finished glow, gray glow for an early end).
     @State private var flash: FocusMood?
     @State private var flashTask: Task<Void, Never>?
@@ -62,8 +68,9 @@ struct FocusView: View {
             hadSession = true
             _timing = State(initialValue: record.timing)
             _sessionID = State(initialValue: record.id)
-        case .expired:
+        case .expired(let record):
             hadSession = true
+            _expiredMinutes = State(initialValue: Int((record.duration / 60).rounded()))
             _justCompleted = State(initialValue: true)
             _completionCount = State(initialValue: 1)
             _expiredOnLaunch = State(initialValue: true)
@@ -159,6 +166,14 @@ struct FocusView: View {
         .overlay(alignment: .topTrailing) {
             if !isLocked {
                 HStack(spacing: 8) {
+                    Button { showGoals = true } label: {
+                        Image(systemName: "target")
+                            .font(.system(size: 17))
+                            .foregroundStyle(Matte.textQuiet)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
+                    }
+                    .accessibilityLabel("Weekly goal")
                     Button { showKeys = true } label: {
                         Image(systemName: "key.fill")
                             .font(.system(size: 16))
@@ -196,6 +211,8 @@ struct FocusView: View {
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
+        .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
         .sheet(isPresented: $showPlusOffer) { PlusOfferStep(plus: plus) { showPlusOffer = false } }
         .fullScreenCover(isPresented: $showQuit) {
@@ -243,9 +260,12 @@ struct FocusView: View {
                 expiredOnLaunch = false
                 store.clear()
                 // The session ended while the app was closed. It counts for the streak,
-                // but the length is unknown here, so the streak screen is not shown.
+                // The streak screen is not shown for it.
                 StreakStore.record()
+                FocusLog.recordFinished(minutes: expiredMinutes)
             }
+            goals.reschedule()
+            checkReport()
             // Repairs shields left by a terminated run (expired, cancelled, or revoked).
             restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
             // A session restored after a relaunch tells the PC again. The PC ignores repeats.
@@ -270,6 +290,7 @@ struct FocusView: View {
             guard phase == .active else { return }
             checkKeyRequests()
             runProofCheck()
+            checkReport()
             if let timing, timing.isFinished(at: .now) {
                 completeSession()
             } else {
@@ -335,6 +356,15 @@ struct FocusView: View {
         if QuitRules.isLocked(sessionID) { showLockedExit = true } else { showQuit = true }
     }
 
+    /// Opens the Sunday report once a week, when nothing else is on screen.
+    private func checkReport() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { return }
+        #endif
+        guard timing == nil, onboardingDone, report == nil, let week = goals.pendingReport() else { return }
+        report = ReportWeek(id: week)
+    }
+
     private var currentRecord: SessionRecord? {
         guard let timing, let sessionID else { return nil }
         return SessionRecord(id: sessionID, timing: timing)
@@ -351,6 +381,7 @@ struct FocusView: View {
         WidgetCenter.shared.reloadTimelines(ofKind: BrainLevel.widgetKind)
         if change == .turnedOff, timing != nil {
             QuitRules.recordEarlyEnd()
+            FocusLog.recordQuit()
             showProofBroken = true
         }
     }
@@ -404,6 +435,7 @@ struct FocusView: View {
 
     private func endSession() {
         QuitRules.recordEarlyEnd()
+        FocusLog.recordQuit()
         QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
@@ -436,6 +468,8 @@ struct FocusView: View {
         LiveCountdown.end()
         if let sessionID { pc.sessionEnded(sessionID) }
         completionCount += 1
+        FocusLog.recordFinished(minutes: Int((session.duration / 60).rounded()))
+        goals.reschedule()
         let firstToday = StreakStore.record()
         if firstToday && streakScreenAllowed {
             streakMinutes = Int((session.duration / 60).rounded())

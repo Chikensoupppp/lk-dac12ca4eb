@@ -14,8 +14,8 @@ Status is checked against `apps/` code by search, not on a device.
 | # | Feature | Brandon's words / source | Plan doc |
 |---|---|---|---|
 | 1 | Plus: real subscription purchase. Code written 11-12 (not compiled); needs the product in App Store Connect | "tell them if they want to buy the subscription" (11-05) | `PRICING_PLAN.md`, `ONBOARDING_V2.md` |
-| 2 | Goal page in the app + reminders ("you're 25% to your goal") | 11-05 | `WEEKLY_REPORT.md` (Goals) |
-| 3 | Sunday weekly report: apps and time, PC data too, "you hit your goal" | 11-05 | `WEEKLY_REPORT.md` |
+| 2 | Goal page in the app + reminders ("you're 25% to your goal"). Built 11-12 (build 26): target button, 2-8 h weekly goal, 5 PM nudges, weekdays-only switch. Counts finished Lock In sessions only. Not tested on device | 11-05 | `WEEKLY_REPORT.md` (Goals) |
+| 3 | Sunday weekly report. Built 11-12 (build 26): receipt report Sunday 6 PM (notification + opens by itself), goal hit/missed, sessions, best day, quits, vs last week, pick next week's goal. No Apple Screen Time numbers or PC data yet | 11-05 | `WEEKLY_REPORT.md` |
 | 4 | The PC opens your work (workspace launch and restore) + Windows tray app | "i love this" (11-04) | `DIFFERENTIATION_PLAN.md` |
 | 5 | PC Lockdown: quit early and the PC locks for a while (Plus) | 11-04 | `COMPETITOR_FEATURES.md` |
 | 6 | Hard-to-cheat early exit ("not just wait 30 sec"). Built 11-12: free watched wait + typed sentence + widget scar; Plus Locked mode with Friend Key (in person + iCloud) and weekly emergency exit. Not tested on devices | 11-04, 11-12 | HANDOFF.md |
