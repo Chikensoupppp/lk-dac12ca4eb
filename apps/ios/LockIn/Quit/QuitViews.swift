@@ -110,18 +110,28 @@ struct QuitSheet: View {
                     Text("Your widget brain keeps a scar until tomorrow morning.")
                         .font(PrintFont.mono(12))
                         .foregroundStyle(QuitInk.cream.opacity(0.6))
-                    Button("END SESSION") { onQuit() }
-                        .buttonStyle(PrintButtonStyle(fill: QuitInk.alarm, text: QuitInk.cream))
-                        .disabled(!QuitRules.matches(typed))
-                        .opacity(QuitRules.matches(typed) ? 1 : 0.35)
                 }
-                Button("Keep going") { onStay() }
-                    .buttonStyle(PrintButtonStyle(fill: QuitInk.green, text: QuitInk.bg))
-                    .padding(.top, 6)
             }
             .padding(24)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // Pinned to the bottom, so the keyboard pushes the buttons up instead of covering them.
+        .safeAreaInset(edge: .bottom) {
+            HStack(spacing: 10) {
+                Button { onStay() } label: { Text("KEEP GOING").lineLimit(1).minimumScaleFactor(0.7) }
+                    .buttonStyle(PrintButtonStyle(fill: QuitInk.green, text: QuitInk.bg))
+                if waited {
+                    Button { onQuit() } label: { Text("END SESSION").lineLimit(1).minimumScaleFactor(0.7) }
+                        .buttonStyle(PrintButtonStyle(fill: QuitInk.alarm, text: QuitInk.cream))
+                        .disabled(!QuitRules.matches(typed))
+                        .opacity(QuitRules.matches(typed) ? 1 : 0.35)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 10)
+            .padding(.bottom, 8)
+            .background(QuitInk.bg)
+        }
         .background(QuitInk.bg.ignoresSafeArea())
         .preferredColorScheme(.dark)
         .onChange(of: waited) { _, now in if now { typing = true } }

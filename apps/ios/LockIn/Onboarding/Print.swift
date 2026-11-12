@@ -47,6 +47,11 @@ struct PrintScaffold<Content: View>: View {
     @ViewBuilder var content: () -> Content
     @Environment(\.obBack) private var back
 
+    /// Small phones (iPhone SE, mini) get a smaller headline so the slide content fits.
+    private var shownTitleSize: CGFloat {
+        UIScreen.main.bounds.height < 700 ? titleSize * 0.8 : titleSize
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 3) {
@@ -77,8 +82,8 @@ struct PrintScaffold<Content: View>: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let title {
                         Text(title.uppercased())
-                            .font(PrintFont.head(titleSize))
-                            .lineSpacing(-titleSize * 0.12)
+                            .font(PrintFont.head(shownTitleSize))
+                            .lineSpacing(-shownTitleSize * 0.12)
                             .foregroundStyle(foreground)
                             .fixedSize(horizontal: false, vertical: true)
                             .accessibilityAddTraits(.isHeader)
@@ -93,6 +98,13 @@ struct PrintScaffold<Content: View>: View {
                 .padding(.bottom, 20)
             }
             .scrollBounceBehavior(.basedOnSize)
+            // A soft fade where the slide meets the buttons, so cut-off content reads as
+            // "scroll for more" instead of slipping under the button.
+            .overlay(alignment: .bottom) {
+                LinearGradient(colors: [background.opacity(0), background], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 28)
+                    .allowsHitTesting(false)
+            }
 
             VStack(spacing: 2) {
                 if let primaryView {
