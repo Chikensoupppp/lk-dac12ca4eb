@@ -622,11 +622,16 @@ struct LockAppsStep: View {
             .fill(Color.white)
             .aspectRatio(1, contentMode: .fit)
             .overlay {
-                icon()
-                    .scaleEffect(4)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .padding(6)
+                // Screen Time draws the icon about 10.4 pt wide (measured on an iPhone at 2.4x it
+                // was 25 pt), so scale it to fill the tile minus a 6 pt margin on any phone.
+                GeometryReader { g in
+                    let target = max(g.size.width - 12, 1)
+                    icon()
+                        .scaleEffect(target / 10.4)
+                        .frame(width: target, height: target)
+                        .clipShape(RoundedRectangle(cornerRadius: target * 0.22, style: .continuous))
+                        .frame(width: g.size.width, height: g.size.height)
+                }
             }
             .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
             .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
