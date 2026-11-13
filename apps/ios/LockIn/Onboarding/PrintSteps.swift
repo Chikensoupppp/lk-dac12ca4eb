@@ -615,20 +615,30 @@ struct LockAppsStep: View {
         .accessibilityLabel(has ? "\(lockedCount) apps chosen" : "No apps chosen yet")
     }
 
+    /// The app's own icon filling most of the tile, like on the home screen, with a lock badge
+    /// that sits on the corner (outside the clip, so it is never cut off).
     private func lockedTile<Icon: View>(@ViewBuilder icon: () -> Icon) -> some View {
         RoundedRectangle(cornerRadius: 15, style: .continuous)
             .fill(Color.white)
             .aspectRatio(1, contentMode: .fit)
-            .overlay { icon().scaleEffect(2.4).clipped() }
+            .overlay {
+                icon()
+                    .scaleEffect(4)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(6)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
             .overlay(alignment: .bottomTrailing) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
+                    .frame(width: 24, height: 24)
                     .background(Circle().fill(Ink.ink))
-                    .offset(x: 4, y: 4)
+                    .overlay(Circle().stroke(Ink.paper, lineWidth: 2))
+                    .offset(x: 6, y: 6)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
     }
 }
 

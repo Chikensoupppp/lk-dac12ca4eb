@@ -233,6 +233,9 @@ final class FocusUITests: XCTestCase {
         // No product in the simulator, so the offer says it is not on sale; "Not now" moves on.
         step("onboarding-12-plus", tap: "Not now")
 
+        // The intro no longer starts a session by itself; it suggests one.
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
+        app.buttons["LOCK IN"].tap()
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))

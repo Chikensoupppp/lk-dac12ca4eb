@@ -32,6 +32,9 @@ struct FocusView: View {
     @State private var showPC = false
     @StateObject private var tasks = WorkTaskStore()
     @State private var showTasks = false
+    /// Right after the intro (promise signed): 25 minutes are picked and a note suggests starting
+    /// now. Nothing starts until the user taps LOCK IN.
+    @State private var firstSessionHint = false
     /// Proof Check: Screen Time access was turned off during this session.
     @State private var showProofBroken = false
     @StateObject private var goals = GoalStore()
@@ -98,6 +101,7 @@ struct FocusView: View {
                 startSession()
                 pc.debugShow(PCActivity(app: "YouTube", onTask: false, nudges: 2))
             case "tasks": showTasks = true
+            case "first": selectedMinutes = 25; firstSessionHint = true
             case "quit", "quit-type": startSession(); showQuit = true
             case "locked": startSession(); QuitRules.markLocked(sessionID); showLockedExit = true
             case "proof": startSession(); showProofBroken = true
@@ -212,6 +216,20 @@ struct FocusView: View {
                     .buttonStyle(MatteButtonStyle(prominent: !isLocked))
                     .overlay { LatchEffect(trigger: startCount, enabled: motion) }
                     .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
+                    .overlay(alignment: .top) {
+                        if firstSessionHint && !isLocked {
+                            Text("YOUR FIRST 25 MINUTES \u{00B7} START NOW?")
+                                .font(Cream.rounded(11, .bold))
+                                .tracking(1.5)
+                                .foregroundStyle(Color(hex: 0xF3F4F0))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Matte.text))
+                                .offset(y: -26)
+                                .transition(.opacity)
+                                .accessibilityLabel("Suggested: start your first 25 minute session now")
+                        }
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
@@ -243,7 +261,7 @@ struct FocusView: View {
                 onboardingDone = true
                 if startNow {
                     selectedMinutes = 25
-                    startSession()
+                    firstSessionHint = true
                 }
             }
         }
@@ -471,6 +489,7 @@ struct FocusView: View {
     }
 
     private func startSession() {
+        firstSessionHint = false
         var duration = TimeInterval(selectedMinutes * 60)
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-short-session") {
