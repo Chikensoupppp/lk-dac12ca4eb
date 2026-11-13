@@ -1,28 +1,32 @@
 import SwiftUI
 
-/// Matte black palette for the Focus screen. Sheets keep the Cream palette.
+/// Focus screen palette. Since 2026-11-13 it is the riso print look of the slides: grey
+/// newsprint, riso black text, a riso Medium Blue ring (`Ink` in Onboarding/Print.swift).
+/// The name stays "Matte" so every screen that uses it changes together.
 enum Matte {
-    static let bgTop = Color(hex: 0x121417)
-    static let bgMid = Color(hex: 0x0A0B0D)
-    static let bgBottom = Color(hex: 0x08090A)
-    static let text = Color(hex: 0xF3F5F8)
-    /// Secondary labels. About 6.5:1 on the matte background.
-    static let textSoft = Color(hex: 0x8E97A3)
-    static let textDim = Color(hex: 0x7E8794)
-    static let textQuiet = Color(hex: 0xC3CAD3)
-    static let faceTop = Color(hex: 0x1D2025)
-    static let faceMid = Color(hex: 0x121417)
-    static let faceLow = Color(hex: 0x0C0D0F)
-    static let track = Color(hex: 0x1B1F24)
-    static let trackShade = Color(hex: 0x050607)
-    static let tick = Color(hex: 0x323841)
-    static let tickMajor = Color(hex: 0x5D6674)
-    static let tray = Color(hex: 0x0B0C0E)
-    static let chipHigh = Color(hex: 0x2E3238)
-    static let chipLow = Color(hex: 0x1F2227)
-    static let edge = Color(hex: 0x2B2F35)
-    static let tip = Color(hex: 0xEAF5FF)
-    static let latch = Color(hex: 0x96C8FF)
+    static let bgTop = Color(hex: 0xEAEBE6)
+    static let bgMid = Color(hex: 0xE7E8E3)
+    static let bgBottom = Color(hex: 0xE2E3DE)
+    static let text = Color(hex: 0x1B1B1B)
+    /// Secondary labels. About 5.5:1 on newsprint.
+    static let textSoft = Color(hex: 0x575A55)
+    static let textDim = Color(hex: 0x5F625C)
+    static let textQuiet = Color(hex: 0x2C2E2A)
+    static let faceTop = Color(hex: 0xF7F7F3)
+    static let faceMid = Color(hex: 0xF0F1EC)
+    static let faceLow = Color(hex: 0xE6E7E1)
+    static let track = Color(hex: 0xD8DAD2)
+    static let trackShade = Color(hex: 0xC8CAC1)
+    static let tick = Color(hex: 0xB8BBB1)
+    static let tickMajor = Color(hex: 0x7A7E75)
+    static let tray = Color(hex: 0xF3F4F0)
+    static let chipHigh = Color(hex: 0x2A2B28)
+    static let chipLow = Color(hex: 0x1B1B1B)
+    static let edge = Color(hex: 0xC4C6BD)
+    static let tip = Color(hex: 0xFFB511)
+    static let latch = Color(hex: 0x3255A4)
+    /// Riso Medium Blue: the ring, the main button, Locked mode on.
+    static let riso = Color(hex: 0x3255A4)
 
     static func rounded(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         Cream.rounded(size, weight)
@@ -53,9 +57,9 @@ enum FocusMood: Equatable {
     private static let warm = [Color(hex: 0xB8742C), Color(hex: 0xA8462F), Color(hex: 0x8A6A2A)]
     private static let gray = [Color(hex: 0x2A2D32), Color(hex: 0x25282C), Color(hex: 0x2A2D32)]
 
-    private static let ice = [Color(hex: 0xB5DCFC), Color(hex: 0x6AAEF0), Color(hex: 0x4C8EE0)]
-    private static let amber = [Color(hex: 0xFFD9A8), Color(hex: 0xF0A860), Color(hex: 0xD9822F)]
-    private static let steel = [Color(hex: 0x9AA3AE), Color(hex: 0x6C7480), Color(hex: 0x565D68)]
+    private static let ice = [Color(hex: 0x5C7DC6), Color(hex: 0x4366B2), Color(hex: 0x3255A4)]
+    private static let amber = [Color(hex: 0xFFD36B), Color(hex: 0xFFC23A), Color(hex: 0xF0A800)]
+    private static let steel = [Color(hex: 0xA9ACA5), Color(hex: 0x8E918A), Color(hex: 0x777A73)]
 
     var glows: [Color] {
         switch self {

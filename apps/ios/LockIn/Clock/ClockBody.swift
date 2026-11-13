@@ -58,24 +58,24 @@ struct ClockBody: View {
         ZStack {
             // The shadow sits outside the drawing group so it is never cut off at a square edge.
             Circle()
-                .fill(Color(hex: 0x101215))
+                .fill(Color(hex: 0xD3D5CC))
                 .frame(width: d, height: d)
-                .shadow(color: .black.opacity(0.7), radius: d * 0.08, x: 0, y: d * 0.07)
+                .shadow(color: .black.opacity(0.16), radius: d * 0.06, x: 0, y: d * 0.05)
 
             ZStack {
                 Circle()
                     .fill(
                         AngularGradient(
                             colors: [
-                                Color(hex: 0x2B2F35), Color(hex: 0x101215), Color(hex: 0x23272C),
-                                Color(hex: 0x0D0F11), Color(hex: 0x2A2E34), Color(hex: 0x2B2F35),
+                                Color(hex: 0xEDEEE9), Color(hex: 0xCBCDC4), Color(hex: 0xE4E5DF),
+                                Color(hex: 0xC2C4BB), Color(hex: 0xE9EAE5), Color(hex: 0xEDEEE9),
                             ],
                             center: .center,
                             angle: .degrees(210)
                         )
                     )
                     .frame(width: d, height: d)
-                    .overlay(Circle().strokeBorder(Color.white.opacity(0.06), lineWidth: 1))
+                    .overlay(Circle().strokeBorder(Color.black.opacity(0.12), lineWidth: 1))
 
                 Circle()
                     .fill(
@@ -89,7 +89,7 @@ struct ClockBody: View {
                     .frame(width: geometry.faceDiameter, height: geometry.faceDiameter)
                     .overlay(
                         Circle().strokeBorder(
-                            LinearGradient(colors: [.black.opacity(0.6), .white.opacity(0.05)], startPoint: .top, endPoint: .bottom),
+                            LinearGradient(colors: [.black.opacity(0.14), .white.opacity(0.6)], startPoint: .top, endPoint: .bottom),
                             lineWidth: 2
                         )
                     )
@@ -144,7 +144,7 @@ struct ClockAmbient: View {
                     let r = u * (0.50 + 0.24 * p)
                     let alpha = p < 0.12 ? p / 0.12 * 0.45 : 0.45 * (1 - p)
                     let rect = CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
-                    ctx.stroke(Path(ellipseIn: rect), with: .color(Color(hex: 0x78AAE6).opacity(alpha)), lineWidth: 1)
+                    ctx.stroke(Path(ellipseIn: rect), with: .color(Color(hex: 0x3255A4).opacity(alpha * 0.6)), lineWidth: 1)
                 }
 
                 // Glint on the bezel rim.
@@ -153,10 +153,9 @@ struct ClockAmbient: View {
                 let gradient = Gradient(stops: [
                     .init(color: .clear, location: 0),
                     .init(color: .clear, location: 0.8),
-                    .init(color: Color(hex: 0xBEDCFF).opacity(0.5), location: 0.9),
+                    .init(color: Color.white.opacity(0.7), location: 0.9),
                     .init(color: .clear, location: 1),
                 ])
-                ctx.blendMode = .screen
                 ctx.stroke(
                     Path(ellipseIn: rect),
                     with: .conicGradient(gradient, center: c, angle: .degrees(t * 45)),

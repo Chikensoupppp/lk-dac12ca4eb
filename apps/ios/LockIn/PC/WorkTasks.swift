@@ -131,7 +131,7 @@ struct WorkTaskSheet: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 
     private func addDraft() {
@@ -147,12 +147,12 @@ struct WorkTaskSheet: View {
             HStack {
                 Text(name ?? "No task")
                     .font(Cream.rounded(17, on ? .semibold : .medium))
-                    .foregroundStyle(name == nil ? Matte.textSoft : Matte.text)
+                    .foregroundStyle(on ? Color.white : (name == nil ? Matte.textSoft : Matte.text))
                 Spacer()
                 if on {
                     Image(systemName: "checkmark")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Matte.text)
+                        .foregroundStyle(Color.white)
                 }
             }
             .padding(.horizontal, 16)

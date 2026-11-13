@@ -164,7 +164,7 @@ struct FocusView: View {
                     if isLocked, let line = sessionWorkLine {
                         Text(line)
                             .font(Cream.rounded(12, .medium))
-                            .foregroundStyle(pc.activity?.onTask == false ? Color(hex: 0xFF8A65) : Matte.textSoft)
+                            .foregroundStyle(pc.activity?.onTask == false ? Color(hex: 0xC2410C) : Matte.textSoft)
                             .lineLimit(1)
                             .padding(.top, 4)
                             .accessibilityIdentifier("pc-activity")
@@ -258,7 +258,7 @@ struct FocusView: View {
             }
             #endif
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         // The brain widget watches the apps picked to lock; keep that watch in step.
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
@@ -383,7 +383,7 @@ struct FocusView: View {
                         .background(Capsule().fill(Matte.edge))
                 }
             }
-            .foregroundStyle(lockedNext ? Color(hex: 0xFF4A1C) : Matte.textSoft)
+            .foregroundStyle(lockedNext ? Matte.riso : Matte.textSoft)
             .frame(minHeight: 44)
         }
         .disabled(plus.hasPlus && !restrictions.hasSelection)
@@ -573,9 +573,9 @@ private struct DurationSelector: View {
                                     .fill(LinearGradient(colors: [Matte.chipHigh, Matte.chipLow], startPoint: .top, endPoint: .bottom))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                                            .strokeBorder(Color.black.opacity(0.1), lineWidth: 1)
                                     )
-                                    .shadow(color: .black.opacity(0.6), radius: 5, x: 0, y: 3)
+                                    .shadow(color: .black.opacity(0.18), radius: 4, x: 0, y: 2)
                             }
                         }
                         .contentShape(Rectangle())
@@ -591,7 +591,7 @@ private struct DurationSelector: View {
                 .fill(Matte.tray)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
+                        .strokeBorder(Matte.edge, lineWidth: 1)
                 )
         )
         .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: selection)

@@ -64,7 +64,7 @@ struct RestrictionsSheet: View {
                 selection: Binding(get: { restrictions.selection }, set: { restrictions.setSelection($0) })
             )
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 
     @ViewBuilder

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Flat matte black backdrop, the same dark gradient as the welcome slides. No glows, dust or vignette.
+/// Flat newsprint backdrop with a light print grain. No glows, dust or vignette.
 /// The ring color on the clock still shows the session mood.
 struct FocusBackdrop: View {
     let timing: SessionTiming?
@@ -16,6 +16,7 @@ struct FocusBackdrop: View {
             startPoint: .top,
             endPoint: .bottom
         )
+        .overlay { Grain(color: Color.black.opacity(0.06)) }
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }

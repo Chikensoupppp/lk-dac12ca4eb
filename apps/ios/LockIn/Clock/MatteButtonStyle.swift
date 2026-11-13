@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Matte button. `prominent` is a pale metal plate; otherwise a quiet dark plate with an edge.
+/// Main buttons. `prominent` is a riso-blue plate with newsprint text; otherwise a quiet paper plate with an edge.
 struct MatteButtonStyle: ButtonStyle {
     var prominent: Bool
 
@@ -24,7 +24,7 @@ private struct MatteButtonBody: View {
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .tracking(2)
-            .foregroundStyle(prominent ? Color(hex: 0x0E1218) : Matte.textQuiet)
+            .foregroundStyle(prominent ? Color(hex: 0xF3F4F0) : Matte.textQuiet)
             .frame(maxWidth: .infinity, minHeight: 60)
             .background { plate(shape) }
             .contentShape(shape)
@@ -37,16 +37,12 @@ private struct MatteButtonBody: View {
     private func plate(_ shape: RoundedRectangle) -> some View {
         if prominent {
             shape
-                .fill(LinearGradient(colors: [Color(hex: 0xF4F6F9), Color(hex: 0xD5DBE2)], startPoint: .top, endPoint: .bottom))
-                .overlay(alignment: .top) {
-                    shape.strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5).mask(
-                        LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .center)
-                    )
-                }
-                .shadow(color: .black.opacity(0.6), radius: 12, x: 0, y: 8)
+                .fill(Matte.riso)
+                // Two-ink riso look: a thin sunflower edge printed slightly off-register.
+                .shadow(color: Matte.tip.opacity(0.9), radius: 0, x: 3, y: 3)
         } else {
             shape
-                .fill(LinearGradient(colors: [Color(hex: 0x1B1E22), Color(hex: 0x131518)], startPoint: .top, endPoint: .bottom))
+                .fill(Matte.tray)
                 .overlay(shape.strokeBorder(Matte.edge, lineWidth: 1.5))
         }
     }

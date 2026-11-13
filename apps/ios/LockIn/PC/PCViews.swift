@@ -93,7 +93,7 @@ struct PCSheet: View {
                                         .foregroundStyle(Matte.textSoft)
                                 }
                             }
-                            .tint(Color(hex: 0x4BFF9A))
+                            .tint(Matte.riso)
                             .frame(minHeight: 44)
                             .accessibilityIdentifier("pc-buddy")
 
@@ -130,6 +130,6 @@ struct PCSheet: View {
                     onCancel: { scanning = false })
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }
