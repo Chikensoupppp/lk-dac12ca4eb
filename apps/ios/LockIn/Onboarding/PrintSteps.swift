@@ -623,9 +623,9 @@ struct LockAppsStep: View {
             .aspectRatio(1, contentMode: .fit)
             .overlay {
                 // Screen Time draws the icon about 10.4 pt wide (measured on an iPhone at 2.4x it
-                // was 25 pt), so scale it to fill the tile minus a 6 pt margin on any phone.
+                // was 25 pt), so scale it to fill the whole tile, edge to edge, on any phone.
                 GeometryReader { g in
-                    let target = max(g.size.width - 12, 1)
+                    let target = max(g.size.width, 1)
                     icon()
                         .scaleEffect(target / 10.4)
                         .frame(width: target, height: target)
