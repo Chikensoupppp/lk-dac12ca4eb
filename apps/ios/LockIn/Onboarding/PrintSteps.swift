@@ -581,7 +581,6 @@ struct LockAppsStep: View {
         }
     }
 
-    @ViewBuilder
     /// Picked apps as their own icons, no box and no shadow, at about 30 pt: the biggest size
     /// that stays sharp (Screen Time only gives a tiny icon, so going bigger blurs it). A small
     /// lock sits on each corner. Before anything is picked, a grid of empty dashed slots.
