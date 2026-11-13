@@ -88,7 +88,7 @@ struct PlusOfferStep: View {
     private var card: some View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(LinearGradient(colors: [Ink.blue, Color(hex: 0x3445B8)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .fill(LinearGradient(colors: [Ink.blue, Color(hex: 0x24407F)], startPoint: .topLeading, endPoint: .bottomTrailing))
             Circle()
                 .stroke(Color.white.opacity(0.13), lineWidth: 18)
                 .frame(width: 180, height: 180)

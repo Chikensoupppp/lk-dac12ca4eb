@@ -17,30 +17,31 @@ struct HookStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        PrintScaffold(step: 1, background: Ink.orange, title: "Where does\nthe time go?", titleSize: 58,
+        PrintScaffold(step: 1, background: Ink.orange, foreground: Ink.paper, title: "Where does\nthe time go?", titleSize: 58, grain: true,
                       primaryTitle: "TAKE A GUESS", primaryAction: next) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number)
                     .font(PrintFont.head(128))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                    .foregroundStyle(Ink.ink)
+                    .foregroundStyle(Ink.paper)
                     .monospacedDigit()
+                    .misprint()
                     .accessibilityLabel("Unknown hours a day")
                 Text("How many hours do you spend on your phone each day?")
                     .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.ink)
+                    .foregroundStyle(Ink.paper)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(alignment: .top) {
                     Spacer()
                     ZStack(alignment: .bottomTrailing) {
                         HookArrow()
                             .trim(from: 0, to: noteShown ? 1 : 0)
-                            .stroke(Ink.ink, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                            .stroke(Ink.sun, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                             .frame(width: 110, height: 84)
                         Text("you?")
                             .font(PrintFont.hand(34))
-                            .foregroundStyle(Ink.ink)
+                            .foregroundStyle(Ink.sun)
                             .rotationEffect(.degrees(-6))
                             .offset(x: 36, y: 34)
                             .scaleEffect(noteShown ? 1 : 0.3)
@@ -107,6 +108,7 @@ struct GuessStep: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("LOST:\nA FEW HOURS")
                 .font(PrintFont.head(76))
+                .misprint()
                 .lineSpacing(-14)
                 .lineLimit(2)
                 .minimumScaleFactor(0.55)
@@ -474,7 +476,7 @@ struct PullsStep: View {
         } label: {
             Text(name.uppercased())
                 .font(PrintFont.head(26))
-                .foregroundStyle(on ? Ink.paper : Ink.ink)
+                .foregroundStyle(Ink.paper)
                 .frame(width: w, height: h)
                 .background(outline.fill(on ? Ink.ink : Ink.orange))
                 .overlay(outline.stroke(Color.white, lineWidth: 6))
@@ -651,6 +653,7 @@ struct YearStep: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(shown) DAYS")
                     .font(PrintFont.head(92))
+                    .misprint()
                     .foregroundStyle(Ink.orange)
                     .monospacedDigit()
                     .lineLimit(1)
@@ -666,7 +669,7 @@ struct YearStep: View {
                     for i in 0..<(cols * rows) {
                         let rect = CGRect(x: CGFloat(i % cols) * (cell + gap), y: CGFloat(i / cols) * (cell + gap),
                                           width: cell, height: cell)
-                        let color: Color = reveal && i < focusDays ? Ink.blue : (i < shown ? Ink.orange : Ink.ink.opacity(0.1))
+                        let color: Color = reveal && i < focusDays ? Ink.sun : (i < shown ? Ink.orange : Ink.ink.opacity(0.1))
                         ctx.fill(Path(rect), with: .color(color))
                     }
                 }
@@ -682,9 +685,9 @@ struct YearStep: View {
                     HStack(spacing: 14) {
                         Text("+\(focusDays)")
                             .font(PrintFont.head(40))
-                            .foregroundStyle(Ink.blue)
+                            .foregroundStyle(Ink.ink)
                             .padding(.horizontal, 16).padding(.vertical, 10)
-                            .overlay(Ellipse().stroke(Ink.blue, lineWidth: 3.5))
+                            .background(Ellipse().fill(Ink.sun))
                             .rotationEffect(.degrees(-4))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("25 MINUTES A DAY.")

@@ -3,18 +3,20 @@ import SwiftUI
 /// The "printed" look of the first-run flow (docs/ONBOARDING_V2.md). Flat inks, and every slide is
 /// a different paper object: a poster, a receipt, stickers, a notebook, a contract, a member card.
 ///
-/// Calm palette (2026-11-13): colors are softened, and only the first slide has a full colored
-/// background. Every other slide sits on paper and keeps its color on the object.
+/// Riso palette (2026-11-13): real risograph inks, Medium Blue and Sunflower, on grey newsprint.
+/// Only the first slide has a full blue background; every other slide sits on newsprint and keeps
+/// its color on the object. Big numbers get a thin sunflower "misprint" edge, like two-ink riso.
 enum Ink {
-    static let paper = Color(hex: 0xF2ECE1)
-    static let receipt = Color(hex: 0xF6F1E7)
-    static let notebook = Color(hex: 0xFBF8F1)
-    static let ink = Color(hex: 0x15120F)
-    static let orange = Color(hex: 0xE8845F)   // soft coral
-    static let blue = Color(hex: 0x4F63D8)
+    static let paper = Color(hex: 0xE7E8E3)      // newsprint
+    static let receipt = Color(hex: 0xF3F4F0)
+    static let notebook = Color(hex: 0xF4F5F1)
+    static let ink = Color(hex: 0x1B1B1B)        // riso black
+    static let orange = Color(hex: 0x3255A4)   // riso Medium Blue (the object color)
+    static let blue = Color(hex: 0x3255A4)     // riso Medium Blue
+    static let sun = Color(hex: 0xFFB511)      // riso Sunflower, small highlights only
     static let navy = Color(hex: 0x0E1640)
     static let red = Color(hex: 0xD25A44)
-    static let soft = Color(hex: 0x6E675E)
+    static let soft = Color(hex: 0x62645E)
     static let night = Color(hex: 0x0A0B0D)
 }
 
@@ -138,6 +140,13 @@ struct PrintScaffold<Content: View>: View {
             }
             .ignoresSafeArea()
         }
+    }
+}
+
+extension View {
+    /// Two-ink riso look: a thin sunflower copy printed slightly off-register behind the shape.
+    func misprint() -> some View {
+        shadow(color: Ink.sun.opacity(0.9), radius: 0, x: 2.5, y: 2)
     }
 }
 
