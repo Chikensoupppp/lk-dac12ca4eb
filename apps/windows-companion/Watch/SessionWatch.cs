@@ -43,6 +43,7 @@ public sealed class SessionWatch : IDisposable
     private string? task;
     private DateTimeOffset startedAt;
     private TimeSpan length;
+    private DateTimeOffset? cheerUntil;
     private HashSet<string> allowed = new(StringComparer.OrdinalIgnoreCase);
     private int nudges;
     private string? app;
@@ -87,6 +88,7 @@ public sealed class SessionWatch : IDisposable
         {
             if (sessionId == id) return;
             sessionId = id;
+            cheerUntil = null;
             buddy = showBuddy;
             task = taskName;
             startedAt = started;
@@ -104,14 +106,14 @@ public sealed class SessionWatch : IDisposable
             work.Clear();
             reminding = false;
             reminders = 0;
+            if (showBuddy && !hooked)
+            {
+                BuddyWindow.Instance.Chosen += OnChosen;
+                hooked = true;
+            }
+            BuddyWindow.Instance.SetMood(MoodFor(0, false, 0), showBuddy);
+            timer.Change(TimeSpan.Zero, Interval);
         }
-        if (showBuddy && !hooked)
-        {
-            BuddyWindow.Instance.Chosen += OnChosen;
-            hooked = true;
-        }
-        timer.Change(TimeSpan.Zero, Interval);
-        BuddyWindow.Instance.SetMood(MoodFor(0, false, 0), showBuddy);
     }
 
     public void End(string? id)
@@ -119,14 +121,23 @@ public sealed class SessionWatch : IDisposable
         lock (gate)
         {
             if (id is not null && sessionId != id) return;
+            if (sessionId is null) return;
+            var natural = clock.GetUtcNow() >= startedAt + length;
             sessionId = null;
             asking = askName = declined = sayText = null;
             guard.Reset(clock.GetUtcNow());
             work.Clear();
             reminding = false;
+            if (natural && buddy)
+            {
+                cheerUntil = clock.GetUtcNow() + CompletionTiming.CheerDuration;
+                BuddyWindow.Instance.SetMood(BuddyMood.Excited, true, "You did it! Great job.");
+                return;
+            }
+            cheerUntil = null;
+            timer.Change(Timeout.Infinite, Timeout.Infinite);
+            BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
         }
-        timer.Change(Timeout.Infinite, Timeout.Infinite);
-        BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
     }
 
     /// <summary>Status for the phone. Null when the id is not the running session.</summary>
@@ -194,7 +205,36 @@ public sealed class SessionWatch : IDisposable
         TimeSpan total;
         lock (gate)
         {
-            if (sessionId is null) return;
+            var observedAt = clock.GetUtcNow();
+            if (sessionId is null)
+            {
+                if (cheerUntil is { } until && observedAt >= until)
+                {
+                    cheerUntil = null;
+                    timer.Change(Timeout.Infinite, Timeout.Infinite);
+                    BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
+                }
+                return;
+            }
+            if (CompletionTiming.Evaluate(observedAt, startedAt + length, null) == CompletionTiming.Phase.StartCheer)
+            {
+                sessionId = null;
+                asking = askName = declined = sayText = null;
+                guard.Reset(observedAt);
+                work.Clear();
+                reminding = false;
+                if (buddy)
+                {
+                    cheerUntil = observedAt + CompletionTiming.CheerDuration;
+                    BuddyWindow.Instance.SetMood(BuddyMood.Excited, true, "You did it! Great job.");
+                }
+                else
+                {
+                    timer.Change(Timeout.Infinite, Timeout.Infinite);
+                    BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
+                }
+                return;
+            }
             id = sessionId;
             showBuddy = buddy;
             started = startedAt;
@@ -320,9 +360,14 @@ public sealed class SessionWatch : IDisposable
         }
 
         show:
-        // Minimize the distraction. Never close it: unsaved work must survive.
-        if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
-        BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling);
+        lock (gate)
+        {
+            // A tick may have read the foreground window while the session ended.
+            if (sessionId != id) return;
+            // Minimize the distraction. Never close it: unsaved work must survive.
+            if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
+            BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling);
+        }
     }
 
     /// <summary>The user said "no" (or did not answer in time). Call with the lock held.</summary>
