@@ -10,6 +10,11 @@ namespace LockIn.Companion.Watch;
 /// "Back to work", or no answer within 12 seconds, minimizes it (never closes it, so nothing the user
 /// typed is lost). The buddy's brain changes with the time left and how often the user was pulled back.
 /// The phone reads the state through /session/status.
+///
+/// Focus Guardian sits on top of that: on sites that are NOT blocked (allowed for this task, say YouTube
+/// for lectures), the browser extension reports scrolling counts and <see cref="ScrollGuard"/> decides
+/// when steady feed scrolling has lasted long enough for a gentle reminder with "Back to work" (brings
+/// the last work window forward) and "Not now". It never minimizes or closes anything.
 /// </summary>
 public sealed class SessionWatch : IDisposable
 {
@@ -27,6 +32,10 @@ public sealed class SessionWatch : IDisposable
     private readonly System.Threading.Timer timer;
     private readonly TimeProvider clock;
     private readonly AllowStore allowStore;
+    private readonly ScrollGuard guard;
+    private readonly BrowserGuard browsers;
+    private readonly WorkWindowMemory work = new();
+    private readonly int ownProcessId = Environment.ProcessId;
     private bool hooked;
 
     private string? sessionId;
@@ -47,15 +56,23 @@ public sealed class SessionWatch : IDisposable
     private IntPtr askHandle;
     private string? declined;     // an app the user already answered "no" for; left alone until they leave it
 
+    // The scrolling reminder, if one is showing.
+    private bool reminding;
+    private DateTimeOffset remindStarted;
+    private int reminders;
+
     // A short line that overrides the clock mood for a few seconds ("Got it. I'll leave YouTube alone.").
     private string? sayText;
     private BuddyMood sayMood;
     private DateTimeOffset sayUntil;
 
-    public SessionWatch(TimeProvider clock, AllowStore allowStore)
+    public SessionWatch(TimeProvider clock, AllowStore allowStore, GuardianOptions? guardianOptions = null,
+        string? stateDir = null)
     {
         this.clock = clock;
         this.allowStore = allowStore;
+        guard = new ScrollGuard(guardianOptions);
+        browsers = new BrowserGuard(TimeSpan.FromSeconds(guard.Options.BrowserGraceSeconds), stateDir);
         timer = new System.Threading.Timer(_ => Tick(), null, Timeout.Infinite, Timeout.Infinite);
     }
 
@@ -64,7 +81,7 @@ public sealed class SessionWatch : IDisposable
     /// apps the phone already knows are fine for this session; the PC adds what this task remembered.
     /// </summary>
     public void Begin(string id, bool showBuddy, DateTimeOffset started, int durationSeconds,
-        string? taskName = null, IEnumerable<string>? allow = null)
+        string? taskName = null, IEnumerable<string>? allow = null, int? remindAfterSeconds = null)
     {
         lock (gate)
         {
@@ -82,6 +99,11 @@ public sealed class SessionWatch : IDisposable
             onTask = true;
             app = null;
             asking = askName = declined = sayText = null;
+            guard.Reset(clock.GetUtcNow(), remindAfterSeconds);
+            browsers.ResetWarnings();
+            work.Clear();
+            reminding = false;
+            reminders = 0;
         }
         if (showBuddy && !hooked)
         {
@@ -99,6 +121,9 @@ public sealed class SessionWatch : IDisposable
             if (id is not null && sessionId != id) return;
             sessionId = null;
             asking = askName = declined = sayText = null;
+            guard.Reset(clock.GetUtcNow());
+            work.Clear();
+            reminding = false;
         }
         timer.Change(Timeout.Infinite, Timeout.Infinite);
         BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
@@ -127,6 +152,40 @@ public sealed class SessionWatch : IDisposable
         return BuddyMood.Excited;
     }
 
+    /// <summary>
+    /// A report from the browser extension. Ignored outside a session and in phone-only mode
+    /// (no buddy on screen, so nobody to remind).
+    /// </summary>
+    public void Report(GuardianSignal signal)
+    {
+        lock (gate)
+        {
+            if (sessionId is null || !buddy) return;
+            guard.Report(clock.GetUtcNow(), signal);
+        }
+    }
+
+    /// <summary>
+    /// A short cheer from the buddy outside a session (after pairing). It shows for a few seconds and
+    /// hides again, unless a session started meanwhile; then the session owns the buddy.
+    /// </summary>
+    public void Greet(string words)
+    {
+        lock (gate) { if (sessionId is not null) return; }
+        BuddyWindow.Instance.SetMood(BuddyMood.Excited, true, words);
+        _ = Task.Delay(TimeSpan.FromSeconds(8)).ContinueWith(_ =>
+        {
+            lock (gate) { if (sessionId is not null) return; }
+            BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
+        });
+    }
+
+    /// <summary>A browser says its Lock In extension is running. Kept between sessions too.</summary>
+    public void Heartbeat(BrowserHeartbeat beat)
+    {
+        lock (gate) browsers.Heartbeat(clock.GetUtcNow(), beat);
+    }
+
     private void Tick()
     {
         string? id;
@@ -151,12 +210,13 @@ public sealed class SessionWatch : IDisposable
         IntPtr minimize = IntPtr.Zero;
         BuddyMood mood;
         string words;
-        bool ask = false;
+        bool ask = false, scrolling = false;
         lock (gate)
         {
             if (sessionId != id) return;
             app = Distractions.NameOf(front);
             var off = isDistraction && key is not null && !allowed.Contains(key);
+            work.Seen(front, ownProcessId);
 
             if (!showBuddy)
             {
@@ -165,6 +225,29 @@ public sealed class SessionWatch : IDisposable
                 if (off && !wasOff) nudges++;
                 wasOff = off;
                 return;
+            }
+
+            // A browser the buddy cannot see into (extension off, or off in private windows): warn, then
+            // keep it minimized while it is in front. Checked first: everything below relies on the extension.
+            var check = Distractions.IsBrowser(front) ? browsers.Check(now, front!.Process.ToLowerInvariant()) : default;
+            if (check.Problem != BrowserGuard.Problem.None)
+            {
+                var name = Distractions.FriendlyName(front!.Process);
+                var privateOff = check.Problem == BrowserGuard.Problem.PrivateOff;
+                onTask = false;
+                if (check.Paused)
+                {
+                    minimize = front.Handle;
+                    mood = BuddyMood.Droopy;
+                    words = BuddyWords.BrowserPaused(name, privateOff);
+                }
+                else
+                {
+                    mood = BuddyMood.Curious;
+                    words = BuddyWords.BrowserWarning(name, privateOff);
+                }
+                if (now < sayUntil && sayText is not null) { mood = sayMood; words = sayText; }
+                goto show;
             }
 
             var stayedHidden = false;
@@ -200,6 +283,18 @@ public sealed class SessionWatch : IDisposable
                 onTask = false;
             }
 
+            // Guardian: only on pages the blocking left open, only while a browser is in front,
+            // and never on top of the "Is it for work?" question.
+            if (reminding && (off || asking is not null || now - remindStarted >= AskTime))
+                reminding = false; // no answer counts as "not now"; the cooldown started when it was shown
+            if (!reminding && !off && asking is null && Distractions.IsBrowser(front) && guard.ShouldRemind(now))
+            {
+                reminding = true;
+                remindStarted = now;
+                guard.Reminded(now);
+                reminders++;
+            }
+
             if (now < sayUntil && sayText is not null)
             {
                 mood = sayMood;
@@ -211,6 +306,12 @@ public sealed class SessionWatch : IDisposable
                 words = BuddyWords.Ask(askName);
                 ask = true;
             }
+            else if (reminding)
+            {
+                mood = BuddyMood.Curious;
+                words = BuddyWords.ScrollReminder(reminders - 1);
+                ask = scrolling = true;
+            }
             else
             {
                 mood = MoodFor(fraction, stayedHidden, nudges);
@@ -218,9 +319,10 @@ public sealed class SessionWatch : IDisposable
             }
         }
 
+        show:
         // Minimize the distraction. Never close it: unsaved work must survive.
         if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
-        BuddyWindow.Instance.SetMood(mood, true, words, ask);
+        BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling);
     }
 
     /// <summary>The user said "no" (or did not answer in time). Call with the lock held.</summary>
@@ -237,6 +339,7 @@ public sealed class SessionWatch : IDisposable
     /// <summary>The user tapped a button on the buddy's question.</summary>
     private void OnChosen(AskChoice choice)
     {
+        if (TryAnswerReminder(choice)) return;
         IntPtr minimize = IntPtr.Zero;
         string? say = null;
         lock (gate)
@@ -261,6 +364,34 @@ public sealed class SessionWatch : IDisposable
         }
         if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
         if (say is not null) BuddyWindow.Instance.SetMood(BuddyMood.Fresh, true, say);
+    }
+
+    /// <summary>
+    /// The answer to the scrolling reminder. Runs on the buddy's thread right after the click, which is
+    /// when Windows lets this program bring another window to the front.
+    /// </summary>
+    private bool TryAnswerReminder(AskChoice choice)
+    {
+        IntPtr? target;
+        lock (gate)
+        {
+            if (sessionId is null || !reminding || choice is not (AskChoice.BackToWork or AskChoice.NotNow)) return false;
+            reminding = false;
+            var now = clock.GetUtcNow();
+            guard.Answered(now, choice == AskChoice.BackToWork);
+            target = choice == AskChoice.BackToWork ? work.TargetFor(FrontWindow.Current()) : null;
+        }
+        var say = choice == AskChoice.NotNow
+            ? BuddyWords.NotNow
+            : BuddyWords.BackFromScrolling(target is { } handle && FrontWindow.BringToFront(handle));
+        lock (gate)
+        {
+            sayText = say;
+            sayMood = BuddyMood.Fresh;
+            sayUntil = clock.GetUtcNow() + SayTime;
+        }
+        BuddyWindow.Instance.SetMood(BuddyMood.Fresh, true, say);
+        return true;
     }
 
     public void Dispose() => timer.Dispose();

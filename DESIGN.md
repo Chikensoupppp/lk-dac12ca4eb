@@ -29,6 +29,28 @@ paragraphs in the app.
 - Haptics: heavy impact on lock, success on finish, warning on early end.
 - The timestamp-driven readout is never animated by its parent.
 
+## Brain mascot (changed 2026-11-13)
+- Brandon picked the soft plush brain made in Figma (`docs/design/brain-mascot-chosen.png`, Figma
+  file "Lock In brain mascot"). Drawn in code to match, in both `apps/ios/BrainArt/BrainDrawing.swift`
+  and `apps/windows-companion/Watch/BrainArt.cs` (keep them in step): oval wider than tall, a smooth
+  round dome on top (Brandon asked for a rounder top; approved) and puffy bumps on the sides and bottom, pastel pink (#F9BAD2) with a darker lower half, soft plum outline (#6B4561), cream
+  sticker edge, swirl folds and a split on top, short glossy marks, smaller eyes set wider, oval
+  blush, tiny smile. All moods (sleepy to rotten) keep their marks and colors.
+- Rejected: realistic dense folds with blue eyes ("too scary"), code-drawn detailed folds ("horrible").
+
+## First-run coach (designed 2026-11-13, not built)
+- Mock `docs/design/tutorial-mock.html`, animated prototype `docs/design/tutorial-proto.html`
+  (poses in `docs/design/tutorial-assets/`, drawn by `LockIn.Companion.exe --draw-poses`).
+- The pink brain coaches the user through a real first session: Working on, minutes, hold to lock
+  in, then a "FIRST LOCK-IN · DAY 1" stamp with confetti. The user taps the real controls; no Next
+  buttons. Everything not being taught fades back. Skip is always there.
+- Brain poses: looks at the target (LookX/LookY), keen brows, charge-up shake while holding, star
+  eyes and a big grin on each win, plus a short "YES!" / "NICE!" sticker and a haptic.
+- Tool buttons (Goal, Keys, Apps) are explained the first time each is opened, not in the tour.
+- Borrowed from: Duolingo (coach mascot, celebrate wins, learn by doing), Slack (real actions),
+  Opal (tips on the real screen, first reward).
+- Reduce Motion: fades only; no travel, squash, shake or confetti.
+
 ## Copy
 - Short labels and one-line status only. No explanatory, legal or how-to paragraphs.
 

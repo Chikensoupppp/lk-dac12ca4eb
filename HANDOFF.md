@@ -88,6 +88,54 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
 - Evidence: CI run 41776976228 (commit ddbd929) passed: 33 unit tests (12 new in `PCLinkTests.swift`) and 10 UI tests, plus compact and large device runs. The idle screenshot shows "PAIR A PC".
 - Not verified: scanning a real QR with the camera, TLS pinning against the real PC certificate, Local Network prompt, Windows Firewall (inbound TCP 47822, private networks), any real phone-to-PC traffic. The PCLink unit tests use fakes, so the network path is untested. Not uploaded to TestFlight.
 
+## PC desk buddy and Focus Guardian (2026-11-13)
+
+- Desk buddy (`apps/windows-companion/Watch/`, committed in 54486fd): see-through always-on-top brain,
+  moods by session time, speech bubble, ask-first blocking ("Is YouTube for your work?"), allows
+  remembered per task, `GET /session/choices`. Protocol: `docs/PC_BUDDY_PROTOCOL.md`. Open design
+  question about blocking vs lying: `docs/PC_BUDDY_BLOCKING_PROBLEM.md`.
+- Focus Guardian (NOT committed): gentle reminder after about 3 minutes of steady Shorts or Reddit
+  feed scrolling on sites the blocking left open. Files: `Watch/ScrollGuard.cs` (rules, settings,
+  report parsing), `Watch/GuardianLink.cs` (native messaging host, named pipe, browser registration),
+  `FrontWindow.BringToFront` + `WorkWindowMemory`, `Distractions.IsWorkWindow/IsBrowser`,
+  `SessionWatch` (Report, reminder state, Back to work / Not now), buddy buttons per prompt
+  (`AskChoice.NotNow`), `BuddyWords` reminder lines, `apps/browser-extension/` (MV3: content.js,
+  background.js, manifest with a fixed public key). Details: `docs/PC_BUDDY_PROTOCOL.md` "Focus Guardian".
+- Security: no new HTTP endpoint. Chrome/Edge native messaging (allowed origin = our extension ID only)
+  then a named pipe for this Windows user only, network SID denied, client checks the pipe owner.
+  Setup: `LockIn.Companion.exe --register-browser` (HKCU keys for Chrome and Edge, host file in the
+  state folder); `--unregister-browser` removes them.
+- Evidence: `dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj` passes all
+  71 checks (32 old, 39 Guardian: thresholds, video never counts, no reports never counts,
+  slow reading, forgiven gaps, cooldowns, session reset, settings file, report parsing and caps,
+  native message frames, work-window choice). Live run on this PC (2026-11-13, threshold set to 40 s
+  via guardian.json): companion + session with YouTube allowed, a stand-in "Word" window, Chrome on a
+  local page titled "Shorts - YouTube", and the real host exe started with the extension origin and
+  fed framed Shorts reports. All 23 reports answered `{"ok":true}` (host to pipe to companion), the
+  reminder appeared, a real mouse click on "Back to work" brought the Word window to the front
+  ("Nice. Back to it!"), and more scrolling right after showed no reminder (cooldown). "Not now" was
+  only checked in unit tests.
+- Full real run (2026-11-13, default 3 minutes, no settings file): the unpacked extension loaded in
+  Playwright's Chromium 153 (Chrome 157 ignores `--load-extension`; a test-only key
+  `HKCU\Software\Chromium\NativeMessagingHosts\com.lockin.guardian` was added for it), real YouTube
+  Shorts, real mouse-wheel swipes about every 3.7 s. Chromium started the host after 23 s; the
+  reminder appeared about 3 minutes into swiping (46 swipes); a real click on "Back to work" brought
+  the stand-in Word window to the front ("Nice. Back to it!"). That run found and fixed a bug: a
+  browser titled "Untitled" while loading was remembered as the work window. Now blank browser pages
+  never count and a window must stay in front 3 s (`WorkWindowMemory.DwellTicks`). 74 checks pass.
+  The owner's BlockP blocker (removed at his request) had blocked Shorts and Reddit in earlier tries.
+  Still not verified: Reddit feeds for real, Edge, branded Chrome with the extension installed by hand.
+- Every-browser rule (`Watch/BrowserGuard.cs`, heartbeat in `background.js`, browser name from the
+  host's parent process): 89 checks pass. Live (grace set to 15 s): Chromium with the extension but
+  private windows off showed "Let Lock In run in private windows in Chrome too." then was minimized;
+  Firefox (Playwright build, no extension) showed "Lock In isn't on in Firefox…" then was minimized.
+  Not verified live: the "all good" case with private windows on (Chromium keeps that switch in
+  protected preferences, so the test could not flip it; unit tests cover it), Edge, Brave, Firefox
+  with the extension installed.
+- Not verified: the extension's own counting on real YouTube Shorts and Reddit pages (DOM and scroll
+  behavior can change), Edge, a packed or store-installed extension (the store assigns a new ID), long
+  sessions, multi-monitor, and whether Windows always allows Back to work to take the front.
+
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.

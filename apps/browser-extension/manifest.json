@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Lock In Focus Buddy",
+  "version": "0.1.0",
+  "description": "Lets your Lock In desk buddy notice long Shorts or Reddit scrolling during a focus session. Sends counts only.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnhAYzBQXwMDSIZ7Djp3uKE1IusFCIro69dZ8TtNt+2gKMJ4Qj4c+CRYznFlAMFUslLgenU6wbaonIylKsxgDeexmxx4sivc8dh3H7LQwmo7pztGnSr3RN4JvM/QaOqvsImyZ1dH+jE8mP3tpdPyb6I7E85odukjOemnukPmlWsMxJx05llmOfzgdBXZmsJ2szeJcI7CGqIN4FwfUcJ8rG7gJGPj6FH92tjs5djyzkROyczKY5lpaBzcTkuov0g05Zx005QUYtFXDzYGNY0hMd6yJU6ED5rgvuzxTKn67wnlTaxJvEqJcNnKqGRhRBFRE/ZJioUFZ4jCo6YFdM+NcnwIDAQAB",
+  "minimum_chrome_version": "110",
+  "permissions": [
+    "nativeMessaging",
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://www.reddit.com/*",
+        "https://old.reddit.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "focus-buddy@lockin.app",
+      "strict_min_version": "128.0"
+    }
+  }
+}

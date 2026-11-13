@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Brain, folds style</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Nunito:wght@700;800&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Inspired by Brandon's reference (a kawaii clipart brain): front view, the whole surface packed with
+   shaded folds, a split down the middle, big glossy eyes with brows, a simple smile. Our own drawing,
+   made in code; nothing traced. */
+body{margin:0;background:#E7E8E3;font-family:Nunito,sans-serif;color:#1B1B1B;padding:30px;width:max-content}
+h1{font:400 40px Anton,sans-serif;text-transform:uppercase;margin:0 0 18px}
+.row{display:flex;gap:22px}
+.card{background:#F3F4F0;border-radius:18px;padding:16px 16px 18px;position:relative;width:400px}
+.tag{position:absolute;right:14px;top:14px;background:#3255A4;color:#fff;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;padding:4px 8px;border-radius:8px}
+.card.pick{box-shadow:0 0 0 4px #3255A4}
+h2{font:400 26px Anton,sans-serif;text-transform:uppercase;margin:6px 0 0}
+p{font:700 14px/1.3 Nunito;color:#575A55;margin:4px 0 0}
+svg{display:block}
+.moods{display:flex;gap:12px;margin-top:22px;background:#F3F4F0;border-radius:18px;padding:14px 16px;width:max-content;align-items:flex-end}
+.moods div{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.08em;color:#575A55;text-align:center}
+</style></head><body>
+<h1>Folds style, after your reference</h1>
+<div class="row" id="row"></div>
+<div class="moods" id="moods"></div>
+<script>
+const INK = '#3A1420', CREAM = '#F2ECE1';
+const GROOVE = '#C4596D', GYRUS = '#F6B1BA', GYRUS2 = '#FBC9CF', SHINE = '#FFF1F2';
+// seeded random, so the folds are the same every time
+let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+// Front-view brain: two hemispheres, each a cluster of puffs.
+const L = [[118,96,58,52],[96,140,52,54],[124,178,54,40],[150,70,40,36]];
+const R = L.map(([x, y, rx, ry]) => [300 - x, y, rx, ry]);
+const ALL = [...L, ...R];
+const puff = (p, e = 0) => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="${p[2] + e}" ry="${p[3] + e}"/>`;
+const inside = (x, y, set) => set.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 0.9);
+
+// Folds: smooth wandering tubes. Dark groove under, light tube on top, a shine line on each.
+function folds(set, n) {
+  const paths = [];
+  for (let i = 0; i < n; i++) {
+    let x, y, tries = 0;
+    do { const p = set[Math.floor(rnd() * set.length)]; x = p[0] + (rnd() - .5) * p[2] * 1.6; y = p[1] + (rnd() - .5) * p[3] * 1.6; } while (!inside(x, y, set) && ++tries < 50);
+    let a = rnd() * Math.PI * 2, d = `M${x.toFixed(1)} ${y.toFixed(1)}`;
+    const steps = 6 + Math.floor(rnd() * 7);
+    for (let k = 0; k < steps; k++) {
+      a += (rnd() - .5) * 1.9;
+      let nx = x + Math.cos(a) * 11, ny = y + Math.sin(a) * 11;
+      if (!inside(nx, ny, set)) { a += Math.PI * .8; nx = x + Math.cos(a) * 11; ny = y + Math.sin(a) * 11; }
+      const cx = x + Math.cos(a) * 6, cy = y + Math.sin(a) * 6;
+      d += ` Q${cx.toFixed(1)} ${cy.toFixed(1)} ${nx.toFixed(1)} ${ny.toFixed(1)}`;
+      x = nx; y = ny;
+    }
+    paths.push(d);
+  }
+  return paths;
+}
+seed = 7; const FL = folds(L, 34); const FR = folds(R, 34);
+
+function brainSVG({ eyes = 'big', limbs = false, size = 400 } = {}) {
+  const w = limbs ? 420 : 300, h = limbs ? 330 : 250, ox = limbs ? 60 : 0;
+  let s = `<svg viewBox="${-ox} 0 ${w} ${h}" width="${size}" height="${size * h / w}"><defs>
+    <clipPath id="cl">${L.map(p => puff(p)).join('')}</clipPath><clipPath id="cr">${R.map(p => puff(p)).join('')}</clipPath>
+    <radialGradient id="iris" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#9FD3F4"/><stop offset=".6" stop-color="#4E8FC4"/><stop offset="1" stop-color="#2D5F92"/></radialGradient>
+    <radialGradient id="shade" gradientUnits="userSpaceOnUse" cx="150" cy="250" r="190"><stop offset="0" stop-color="#9C3D55" stop-opacity=".35"/><stop offset="1" stop-color="#9C3D55" stop-opacity="0"/></radialGradient></defs>`;
+  if (limbs) {
+    // legs and sneakers, then arms behind the body
+    for (const sx of [122, 178]) {
+      s += `<path d="M${sx} 200 L${sx + (sx < 150 ? -6 : 6)} 262" stroke="${INK}" stroke-width="20" stroke-linecap="round"/><path d="M${sx} 200 L${sx + (sx < 150 ? -6 : 6)} 262" stroke="#F4A3AE" stroke-width="12" stroke-linecap="round"/>`;
+      const fx = sx + (sx < 150 ? -18 : 18), fy = 276;
+      s += `<path d="M${fx - 30} ${fy} C ${fx - 30} ${fy - 22}, ${fx + 10} ${fy - 26}, ${fx + 30} ${fy - 6} L ${fx + 32} ${fy + 4} L ${fx - 30} ${fy + 4} Z" fill="#F08EA0" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>`;
+      s += `<rect x="${fx - 34}" y="${fy}" width="70" height="13" rx="6.5" fill="#fff" stroke="${INK}" stroke-width="5"/>`;
+      s += `<path d="M${fx - 12} ${fy - 14} L${fx + 4} ${fy - 10} M${fx - 8} ${fy - 20} L${fx + 8} ${fy - 16}" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
+    }
+    // left arm waving up, right arm down
+    s += `<path d="M58 132 C 30 120, 18 92, 22 66" stroke="${INK}" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M58 132 C 30 120, 18 92, 22 66" stroke="#F4A3AE" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+    s += `<g transform="translate(22,52)"><circle r="20" fill="#fff" stroke="${INK}" stroke-width="5"/><path d="M-6 -16 C -8 -30, 6 -32, 6 -16" fill="#fff" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/><path d="M-10 6 Q0 12 10 6" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`;
+    s += `<path d="M242 140 C 270 150, 282 172, 280 196" stroke="${INK}" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M242 140 C 270 150, 282 172, 280 196" stroke="#F4A3AE" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+    s += `<g transform="translate(282,208)"><circle r="19" fill="#fff" stroke="${INK}" stroke-width="5"/><path d="M-8 -4 Q0 2 8 -4" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`;
+  }
+  // sticker edge, dark outline, groove-colored base
+  s += `<g fill="${CREAM}">${ALL.map(p => puff(p, 12)).join('')}</g>`;
+  s += `<g fill="${INK}">${ALL.map(p => puff(p, 4)).join('')}</g>`;
+  for (const [clip, set, fl] of [['cl', L, FL], ['cr', R, FR]]) {
+    s += `<g clip-path="url(#${clip})"><g fill="${GROOVE}">${set.map(p => puff(p)).join('')}</g>`;
+    s += fl.map(d => `<path d="${d}" stroke="#A8455A" stroke-width="19" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+    s += fl.map((d, i) => `<path d="${d}" stroke="${i % 3 ? GYRUS : GYRUS2}" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+    s += fl.map(d => `<path d="${d}" transform="translate(-2,-3)" stroke="${SHINE}" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".85"/>`).join('');
+    s += `<rect x="0" y="0" width="300" height="250" fill="url(#shade)"/></g>`;
+  }
+  // the split down the middle
+  s += `<path d="M150 40 C 146 80, 154 120, 150 160 C 147 186, 152 200, 150 214" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  // face
+  const ex = [118, 182], ey = 132;
+  if (eyes === 'star') {
+    for (const x of ex) { let d = ''; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 9 : 21; d += `${i ? 'L' : 'M'}${x + Math.cos(a) * r} ${ey + Math.sin(a) * r} `; } s += `<path d="${d}Z" fill="#FFC440" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`; }
+  } else {
+    for (const x of ex) {
+      s += `<ellipse cx="${x}" cy="${ey}" rx="24" ry="27" fill="#fff" stroke="${INK}" stroke-width="5"/>`;
+      s += `<circle cx="${x + 3}" cy="${ey + 4}" r="16" fill="url(#iris)" stroke="${INK}" stroke-width="2.5"/><circle cx="${x + 3}" cy="${ey + 5}" r="8.5" fill="${INK}"/>`;
+      s += `<circle cx="${x - 3}" cy="${ey - 4}" r="7" fill="#fff"/><circle cx="${x + 9}" cy="${ey + 11}" r="2.6" fill="#fff"/>`;
+    }
+  }
+  const brow = eyes === 'keen'
+    ? ex.map((x, i) => `<path d="M${x - 20} ${ey - (i ? 44 : 34)} L${x + 20} ${ey - (i ? 34 : 44)}" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>`).join('')
+    : ex.map(x => `<path d="M${x - 17} ${ey - 38} Q${x} ${ey - 50} ${x + 17} ${ey - 40}" stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"/>`).join('');
+  s += brow;
+  s += `<ellipse cx="88" cy="170" rx="15" ry="8" fill="#FF6E8E" opacity=".7"/><ellipse cx="212" cy="170" rx="15" ry="8" fill="#FF6E8E" opacity=".7"/>`;
+  s += eyes === 'star'
+    ? `<path d="M132 172 L168 172 C 166 196, 134 196, 132 172 Z" fill="${INK}"/><ellipse cx="151" cy="186" rx="9" ry="4.5" fill="#FF7F98"/>`
+    : `<path d="M134 176 Q150 192 166 176" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  return s + `</svg>`;
+}
+const cards = [
+  ['No arms or legs', 'Packed shaded folds, a split down the middle, big shiny eyes with brows. Fits the widget and the PC buddy.', {}, true],
+  ['With arms and shoes', 'Like your reference: waving glove and sneakers. More of a character, but bigger and busier on small screens.', { limbs: true }],
+];
+document.getElementById('row').innerHTML = cards.map(([h, p, o, pick]) =>
+  `<div class="card ${pick ? 'pick' : ''}">${pick ? '<div class="tag">MY PICK</div>' : ''}${brainSVG(o)}<h2>${h}</h2><p>${p}</p></div>`).join('');
+document.getElementById('moods').innerHTML = [['big', 'TALKING'], ['keen', 'KEEN'], ['star', 'CHEERING']]
+  .map(([e, n]) => `<div>${brainSVG({ eyes: e, size: 190 })}${n}</div>`).join('');
+</script>
+</body></html>

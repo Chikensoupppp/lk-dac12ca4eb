@@ -6,7 +6,7 @@ using System.Drawing.Text;
 namespace LockIn.Companion.Watch;
 
 /// <summary>What the user tapped on the buddy's question.</summary>
-public enum AskChoice { None, ForWork, BackToWork }
+public enum AskChoice { None, ForWork, BackToWork, NotNow }
 
 /// <summary>How the buddy moves while it talks. Each line of speech picks one (see <see cref="BuddyWords.GestureFor"/>).</summary>
 public enum BuddyGesture
@@ -15,7 +15,7 @@ public enum BuddyGesture
     Nod,   // "nice work": nods, with a check badge
     Dizzy, // "almost there": wobbles, eyes spin, stars orbit
     Tilt,  // a question: tilts its head, with a "?" badge
-    Sway,  // "it can wait": sways slowly, hearts float up
+    Sway,  // "it can wait": sways slowly
     Sob,   // crying: shakes, tears keep falling
     Cheer, // "almost there": one happy jump and a wiggle, thumbs-up badge, sparkles all around
 }
@@ -40,7 +40,6 @@ public sealed class BuddyScene
     private static readonly Color Ink = Color.FromArgb(0x40, 0x16, 0x2A);
     private static readonly Color Sun = Color.FromArgb(0xFF, 0xB5, 0x11);
     private static readonly Color Gold = Color.FromArgb(0xFF, 0xC4, 0x40);
-    private static readonly Color Heart = Color.FromArgb(0xFF, 0x60, 0x82);
     private static readonly Font BubbleFont = new("Segoe UI", 10f, FontStyle.Bold);
     private static readonly Font BadgeFont = new("Segoe UI", 13f, FontStyle.Bold);
     private static readonly Font ButtonFont = new("Segoe UI", 8.5f, FontStyle.Bold);
@@ -57,22 +56,26 @@ public sealed class BuddyScene
     private double moodStart = double.NegativeInfinity;
     private List<string>? lines;
     private bool asking;
+    private bool scrollAsk; // the question is the scrolling reminder ("Back to work" / "Not now"), not "Is it for work?"
     private double askStart;
     private RectangleF yesRect = RectangleF.Empty, noRect = RectangleF.Empty; // the two buttons, in window pixels
 
     /// <summary>
     /// Call whenever the mood or the words may have changed. Same mood and words: nothing restarts.
     /// <paramref name="ask"/> true shows the two buttons ("It's for work" / "Back to work") and a countdown.
+    /// With <paramref name="scrolling"/> the buttons are "Back to work" / "Not now" instead.
     /// </summary>
-    public void Set(BuddyMood nextMood, string nextText, double now, bool ask = false)
+    public void Set(BuddyMood nextMood, string nextText, double now, bool ask = false, bool scrolling = false)
     {
+        scrolling &= ask;
         if (ask && !asking) askStart = now;
         if (!ask)
         {
             yesRect = noRect = RectangleF.Empty;
         }
-        var askChanged = ask != asking;
+        var askChanged = ask != asking || scrolling != scrollAsk;
         asking = ask;
+        scrollAsk = scrolling;
         if (nextMood == mood && nextText == text && !askChanged && !double.IsNegativeInfinity(speechStart)) return;
         if (double.IsNegativeInfinity(moodStart))
         {
@@ -99,6 +102,7 @@ public sealed class BuddyScene
         fromMood = BuddyMood.Fresh;
         text = "";
         asking = false;
+        scrollAsk = false;
         yesRect = noRect = RectangleF.Empty;
         speechStart = double.NegativeInfinity;
         moodStart = double.NegativeInfinity;
@@ -110,7 +114,9 @@ public sealed class BuddyScene
 
     /// <summary>Which button, if any, is at this point of the window.</summary>
     public AskChoice HitTest(Point p) =>
-        yesRect.Contains(p) ? AskChoice.ForWork : noRect.Contains(p) ? AskChoice.BackToWork : AskChoice.None;
+        yesRect.Contains(p) ? (scrollAsk ? AskChoice.BackToWork : AskChoice.ForWork)
+        : noRect.Contains(p) ? (scrollAsk ? AskChoice.NotNow : AskChoice.BackToWork)
+        : AskChoice.None;
 
     /// <summary>0 at a mood change, easing to 1 when the new look is complete.</summary>
     private float MoodBlend(double now)
@@ -311,17 +317,6 @@ public sealed class BuddyScene
                 Badge(g, c, 0.3f + 0.7f * EaseOutBack(u), alpha, BadgeKind.Question);
                 break;
             }
-            case BuddyGesture.Sway:
-                for (var i = 0; i < 3; i++)
-                {
-                    var phase = (now * 0.45 + i / 3.0) % 1;
-                    var c = At(182 + (i - 1) * 62 + 10 * (float)Math.Sin(phase * 6 + i), 20 - (float)phase * 90);
-                    var alpha = (int)(255 * Math.Sin(Math.PI * phase));
-                    using var path = HeartPath(c.X, c.Y, 5.5f);
-                    using var brush = new SolidBrush(Color.FromArgb(alpha, Heart));
-                    g.FillPath(brush, path);
-                }
-                break;
         }
     }
 
@@ -434,8 +429,8 @@ public sealed class BuddyScene
             var buttonWidth = (w - 26 - 8) / 2;
             yesRect = new RectangleF(x + 13, rowY, buttonWidth, 24);
             noRect = new RectangleF(x + 13 + buttonWidth + 8, rowY, buttonWidth, 24);
-            Button(g, yesRect, "It's for work", filled: true, a);
-            Button(g, noRect, "Back to work", filled: false, a);
+            Button(g, yesRect, scrollAsk ? "Back to work" : "It's for work", filled: true, a);
+            Button(g, noRect, scrollAsk ? "Not now" : "Back to work", filled: false, a);
 
             var left01 = (float)Math.Clamp(1 - (now - askStart) / AskSeconds, 0, 1);
             var barY = rowY + 24 + 9;
@@ -529,15 +524,6 @@ public sealed class BuddyScene
         p.CloseFigure();
         return p;
     }
-
-    private static GraphicsPath HeartPath(float cx, float cy, float size)
-    {
-        var p = new GraphicsPath();
-        p.AddBezier(cx, cy + size, cx - size * 1.3f, cy + size * 0.1f, cx - size * 0.7f, cy - size * 0.9f, cx, cy - size * 0.35f);
-        p.AddBezier(cx, cy - size * 0.35f, cx + size * 0.7f, cy - size * 0.9f, cx + size * 1.3f, cy + size * 0.1f, cx, cy + size);
-        p.CloseFigure();
-        return p;
-    }
 }
 
 /// <summary>Writes pictures and frame sequences of the buddy to disk, to check the look without waiting for a real session.</summary>
@@ -556,6 +542,39 @@ public static class BuddyPictures
     public const int FramesPerSecond = 20;
     public const double Seconds = 5;
 
+    /// <summary>
+    /// Still poses for the iPhone first-run coach mock: looking at things, keen, cheering, charging up.
+    /// Transparent PNGs, 480 by 400.
+    /// </summary>
+    public static void WritePoses(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        BrainPose P(Action<BrainPose[]> set) { var a = new[] { BrainPose.Rest }; set(a); return a[0]; }
+        var poses = new (string Name, BrainPose Pose)[]
+        {
+            ("talk", P(a => a[0].Grin = 0.6f)),
+            ("look-down", P(a => { a[0].LookY = 12; a[0].Grin = 0.5f; })),
+            ("look-down-right", P(a => { a[0].LookX = 12; a[0].LookY = 10; a[0].Grin = 0.5f; })),
+            ("look-down-left", P(a => { a[0].LookX = -12; a[0].LookY = 10; a[0].Grin = 0.5f; })),
+            ("look-up-right", P(a => { a[0].LookX = 12; a[0].LookY = -10; a[0].Grin = 0.5f; })),
+            ("keen", P(a => { a[0].Brows = 1; a[0].LookY = 8; a[0].Grin = 0.3f; })),
+            ("charge", P(a => { a[0].Brows = 1; a[0].LookY = 12; a[0].Sx = 1.07f; a[0].Sy = 0.93f; a[0].Grin = 0.15f; })),
+            ("cheer", P(a => { a[0].StarEyes = true; a[0].Grin = 1f; })),
+        };
+        foreach (var (name, pose) in poses)
+        {
+            using var bmp = new Bitmap(480, 400, PixelFormat.Format32bppPArgb);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.Transparent);
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                BrainArt.Draw(g, 0, new RectangleF(30, 20, 420, 360), pose);
+            }
+            bmp.Save(Path.Combine(dir, $"pose-{name}.png"), ImageFormat.Png);
+        }
+        Console.WriteLine(dir);
+    }
+
     public static void Write(string dir)
     {
         Directory.CreateDirectory(dir);
@@ -570,6 +589,14 @@ public static class BuddyPictures
             for (var f = 0; f < FramesPerSecond * Seconds; f++)
                 Save(scene, Path.Combine(frames, $"f{f:D4}.png"), f / (double)FramesPerSecond, quiet: true);
             Console.WriteLine(frames);
+        }
+
+        // The scrolling reminder, with its "Back to work" / "Not now" buttons.
+        for (var i = 0; i < 3; i++)
+        {
+            var scroll = new BuddyScene();
+            scroll.Set(BuddyMood.Curious, BuddyWords.ScrollReminder(i), 0, ask: true, scrolling: true);
+            Save(scroll, Path.Combine(dir, $"buddy-scrolling-{i}.png"), 4);
         }
 
         // One buddy through a whole session, to check that each mood blends into the next.

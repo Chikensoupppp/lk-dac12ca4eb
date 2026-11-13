@@ -48,6 +48,57 @@ Nobody should have to name every app up front. So:
    The buddy then leaves it alone until the user comes back to it.
 5. Allowing is per site, not per browser: YouTube allowed does not allow TikTok.
 
+## Focus Guardian: gentle scrolling reminders (built 2026-11-13, not committed)
+Blocking stays as above. Guardian adds a reminder on pages the blocking left open (for example
+YouTube allowed for "Studying"): having the site open is never enough, only steady feed scrolling.
+- Browser side: `apps/browser-extension/` (Chrome/Edge, Manifest V3). Only YouTube Shorts and Reddit
+  feeds. Sends counts every 15 s (see its README). No URLs, titles, text or screenshots.
+- Link: Chrome native messaging to `LockIn.Companion.exe` (host `com.lockin.guardian`, only extension
+  ID `aeamejjnehidcalejbnkpgkfkalefeda`), then a named pipe `LockIn.Guardian.<user SID>` to the
+  running companion. The pipe allows only this Windows user and denies network logons. Neither HTTP
+  door changed; there is no new endpoint. One-time setup: `LockIn.Companion.exe --register-browser`.
+- Rules (`Watch/ScrollGuard.cs`): 30 s buckets. Busy bucket: on Shorts a new Short; on a Reddit feed
+  two new pages or 3 screens of scrolling. One video playing never counts. A run allows single quiet
+  buckets, two in a row end it. Run of 3 minutes, while a browser is in front and no blocking
+  question is open: the buddy says "You've been scrolling for a bit. Back to your project?" with
+  "Back to work" / "Not now" (12 s, no answer = Not now). Quiet for 10 minutes after a reminder or
+  Not now, 5 minutes after Back to work. Session start and end reset everything. Phone-only mode
+  (no buddy) ignores reports.
+- Settings: optional `guardian.json` in the state folder:
+  `{"thresholdSeconds":180,"bucketSeconds":30,"cooldownMinutes":10,"cooldownAfterBackMinutes":5}`.
+- Back to work brings the last work window to the front (`WorkWindowMemory`: last front window that
+  is not a distraction, not the shell, not untitled, not Lock In). If that is the same browser window
+  (work in another tab), nothing moves and the buddy says "Switch to your work when you're ready."
+  Never closes or minimizes anything.
+
+## Every browser must have the extension (built 2026-11-13, not committed)
+- The extension sends `{"v":1,"kind":"alive","incognito":<allowed in private windows>}` every 15 s
+  (alarm every 30 s restarts it). The host adds the browser's process name from its parent process
+  (past cmd.exe), so the extension cannot claim to be another browser.
+- `Watch/BrowserGuard.cs`: once any heartbeat was ever seen on this PC (`browser-extension-seen` in
+  the state folder), every browser in front during a buddy session must have had a heartbeat in the
+  last 45 s AND private windows allowed. Otherwise: warning ("Lock In isn't on in Firefox. Turn it on
+  to keep using it." / "Let Lock In run in private windows in Chrome too."), then after the grace time
+  (`browserGraceSeconds`, default 60) the browser is minimized whenever it comes to the front ("…is
+  paused until Lock In is back on"). Never closed. Unknown browsers (no extension possible) are paused
+  the same way. Chrome's incognito window title has no marker, so private windows are covered by
+  requiring the "Allow in Incognito" switch, like Cold Turkey does.
+- Registration now also writes keys for Chromium, Brave, Vivaldi, and Firefox (Firefox uses
+  `native-host-firefox.json` with `allowed_extensions: ["focus-buddy@lockin.app"]`).
+- Limits: coverage is per browser program, not per profile (a second Chrome profile without the
+  extension counts as covered while another Chrome profile has it); ending the companion process or
+  deleting the state folder turns it off; Firefox needs a signed add-on to install permanently.
+
+## Scroll reminder slider (built 2026-11-13, iPhone part not compiled)
+- iPhone: PC sheet, under "Desk buddy": "Scroll reminder · after N min", 1 to 10 minutes, default 3
+  (`PCSheet.remindKey`, sent as `PCSessionExtras.remindAfterMinutes`).
+- `/session/start` takes optional `guardianSeconds`; the PC uses it for that session only (kept
+  between 60 s and 1 hour), otherwise `thresholdSeconds` from `guardian.json` (default 180).
+- Firefox: the add-on is signed by Mozilla (unlisted channel):
+  `apps/browser-extension-builds/lockin-focus-buddy-firefox-0.1.0.xpi`. Re-sign after any change
+  with `npx web-ext@8 sign --source-dir apps/browser-extension --channel unlisted` (needs the owner's
+  `WEB_EXT_API_KEY` / `WEB_EXT_API_SECRET`; the version in manifest.json must go up).
+
 ## Windows side to build
 1. Tray app (starts with Windows) around the existing companion.
 2. Workspaces: name, list of apps / files / URLs; "Save what is open now" button.

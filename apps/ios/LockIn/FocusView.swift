@@ -431,7 +431,7 @@ struct FocusView: View {
 
     /// What the PC gets with a session start: the task (its workspace opens) and the buddy switch.
     private var pcExtras: PCSessionExtras {
-        PCSessionExtras(task: tasks.selected, buddy: PCSheet.buddyOn)
+        PCSessionExtras(task: tasks.selected, buddy: PCSheet.buddyOn, remindAfterMinutes: PCSheet.remindAfter)
     }
 
     /// "STUDYING · PC: DOCS" or "STUDYING · PC: YOUTUBE · NUDGED 2×".

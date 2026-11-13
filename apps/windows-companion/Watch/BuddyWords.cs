@@ -45,6 +45,34 @@ public static class BuddyWords
     /// <summary>What the buddy says after the user taps "It's for work".</summary>
     public static string Allowed(string? friendly) => $"Got it. I'll leave {friendly ?? "that"} alone.";
 
+    /// <summary>The scrolling reminder. Gentle, and about the project, not about the site.</summary>
+    private static readonly string[] Scrolling =
+    {
+        "You've been scrolling for a bit. Back to your project?",
+        "That's a lot of scrolling. Ready to pick your work back up?",
+        "Still scrolling? Your project is waiting for you.",
+    };
+
+    public static string ScrollReminder(int count) => Scrolling[Math.Max(count, 0) % Scrolling.Length];
+
+    /// <summary>After "Back to work" on the reminder. <paramref name="moved"/>: the work window came to the front.</summary>
+    public static string BackFromScrolling(bool moved) =>
+        moved ? "Nice. Back to it!" : "Nice. Switch to your work when you're ready.";
+
+    public const string NotNow = "Okay. I'll check in later.";
+
+    /// <summary>The first hello on the PC, right after the phone pairs: the same coach as on the phone.</summary>
+    public const string Paired = "We're a team now! Let's lock in.";
+
+    /// <summary>A browser without the Lock In extension (or without it in private windows), before and after the grace time.</summary>
+    public static string BrowserWarning(string browser, bool privateOff) => privateOff
+        ? $"Let Lock In run in private windows in {browser} too."
+        : $"Lock In isn't on in {browser}. Turn it on to keep using it.";
+
+    public static string BrowserPaused(string browser, bool privateOff) => privateOff
+        ? $"{browser} is paused until Lock In works in private windows."
+        : $"{browser} is paused until Lock In is back on.";
+
     /// <summary>How the buddy moves while it says this line: a question tilts its head, a cheer hops.</summary>
     public static BuddyGesture GestureFor(BuddyMood mood, string text) => mood switch
     {

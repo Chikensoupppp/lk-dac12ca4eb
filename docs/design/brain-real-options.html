@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Brain options</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Nunito:wght@700;800&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Same face and colors as the current brain (BrainArt / BrainDrawing); only the body gets more real.
+   Reference: the iPhone brain emoji (two halves, deep folds, shine); kawaii rule: big round head, no body. */
+body{margin:0;background:#E7E8E3;font-family:Nunito,sans-serif;color:#1B1B1B;padding:30px 30px 36px;width:max-content}
+h1{font:400 40px Anton,sans-serif;text-transform:uppercase;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(3,330px);gap:22px}
+.card{background:#F3F4F0;border-radius:18px;padding:16px 16px 18px;position:relative}
+.card.pick{box-shadow:0 0 0 4px #3255A4}
+.card .tag{position:absolute;right:14px;top:14px;background:#3255A4;color:#fff;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;padding:4px 8px;border-radius:8px}
+.card h2{font:400 26px Anton,sans-serif;text-transform:uppercase;margin:4px 0 0}
+.card p{font:700 14px/1.3 Nunito;color:#575A55;margin:4px 0 0}
+.card .n{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;color:#575A55}
+svg{display:block;width:298px;height:250px}
+</style></head><body>
+<h1>More real, still cute</h1>
+<div class="grid" id="grid"></div>
+<script>
+const INK = '#40162A', BODY = '#FF8DAA', DEEP = '#E2648C', LITE = '#FFC2D2', CREAM = '#F2ECE1';
+// A round, bumpy brain outline: a circle with soft scallops.
+function blob(cx, cy, rx, ry, bumps = 14, amp = 0.16, phase = 0.2) {
+  const P = (a, k) => [cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k];
+  const step = (Math.PI * 2) / bumps;
+  let [x0, y0] = P(phase, 1);
+  let d = `M${x0} ${y0}`;
+  for (let i = 0; i < bumps; i++) {
+    const a0 = phase + i * step, a1 = a0 + step;
+    const c1 = P(a0 + step * 0.18, 1 + amp), c2 = P(a1 - step * 0.18, 1 + amp), e = P(a1, 1);
+    d += ` C${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${e[0]} ${e[1]}`;
+  }
+  return d + 'Z';
+}
+const face = `
+  <ellipse cx="124" cy="160" rx="13" ry="15" fill="${INK}"/><ellipse cx="174" cy="160" rx="13" ry="15" fill="${INK}"/>
+  <circle cx="119" cy="154" r="5" fill="#fff"/><circle cx="169" cy="154" r="5" fill="#fff"/>
+  <circle cx="129" cy="167" r="2.4" fill="#fff"/><circle cx="179" cy="167" r="2.4" fill="#fff"/>
+  <ellipse cx="102" cy="182" rx="15" ry="8" fill="#FF6E8E" opacity=".75"/><ellipse cx="196" cy="182" rx="15" ry="8" fill="#FF6E8E" opacity=".75"/>
+  <path d="M138 182 Q149 194 160 182 Z" fill="${INK}"/><path d="M143 188 Q149 192 155 188" stroke="#FF7F98" stroke-width="3" fill="none"/>`;
+const sparkle = (x, y, s) => `<path d="M${x} ${y - s} L${x + s * .28} ${y - s * .28} L${x + s} ${y} L${x + s * .28} ${y + s * .28} L${x} ${y + s} L${x - s * .28} ${y + s * .28} L${x - s} ${y} L${x - s * .28} ${y - s * .28} Z" fill="#FFC440"/>`;
+// Fold strokes: a darker groove with a light rim above it, so the fold looks carved, not drawn on.
+const fold = (d, w = 6) => `<path d="${d}" stroke="${DEEP}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" transform="translate(-1.6,-2.2)" stroke="${LITE}" stroke-width="${w * .38}" fill="none" stroke-linecap="round" opacity=".9"/>`;
+const simpleWaves = [
+  'M86 92 q10 -10 20 0 t20 0', 'M150 70 q10 -9 20 0 t20 0', 'M196 104 q8 -9 16 0 t16 0',
+  'M74 132 q8 -8 16 0', 'M218 140 q8 -8 16 0', 'M110 118 q9 -8 18 0 t18 0',
+].map(d => `<path d="${d}" stroke="${DEEP}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`).join('');
+const realFolds = [
+  'M70 120 C 66 104, 80 96, 88 104 C 96 112, 106 104, 102 92 C 98 80, 110 72, 120 78 C 130 84, 128 96, 138 96',
+  'M58 156 C 52 142, 64 132, 74 138 C 84 144, 92 134, 86 124',
+  'M96 66 C 104 56, 118 56, 122 64',
+  'M112 112 C 118 104, 130 106, 132 116 C 134 124, 142 124, 144 116',
+  'M66 196 C 58 188, 58 176, 66 170',
+  'M240 120 C 244 104, 230 96, 222 104 C 214 112, 204 104, 208 92 C 212 80, 200 72, 190 78 C 180 84, 182 96, 172 96',
+  'M252 156 C 258 142, 246 132, 236 138 C 226 144, 218 134, 224 124',
+  'M214 66 C 206 56, 192 56, 188 64',
+  'M198 112 C 192 104, 180 106, 178 116 C 176 124, 168 124, 166 116',
+  'M244 196 C 252 188, 252 176, 244 170',
+].map(d => fold(d)).join('');
+const centerGroove = `<path d="M149 52 C 146 70, 152 86, 148 104 C 145 118, 150 126, 149 132" stroke="${DEEP}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M147 54 C 144 72, 150 88, 146 104" stroke="${LITE}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/>`;
+const shine = `<path d="M84 84 C 96 66, 118 56, 136 56" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none" opacity=".75"/><circle cx="76" cy="100" r="5" fill="#fff" opacity=".75"/><path d="M190 62 C 200 64, 210 70, 216 78" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".5"/>`;
+
+function brain({ halves = false, folds = 'simple', lobes = false, bun = false, glossy = false } = {}) {
+  const outline = halves
+    ? blob(149, 138, 100, 88, 14) // the notch is drawn on top
+    : blob(149, 138, 100, 88, 14);
+  let s = `<svg viewBox="0 0 298 250"><defs>
+    <clipPath id="c${uid}"><path d="${outline}"/></clipPath>
+    <radialGradient id="g${uid}" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#FFA5BF"/><stop offset=".6" stop-color="${BODY}"/><stop offset="1" stop-color="#F17A9C"/></radialGradient></defs>`;
+  s += sparkle(40, 50, 11) + sparkle(258, 64, 8) + sparkle(250, 214, 6);
+  if (bun) {
+    const b = blob(214, 200, 52, 36, 9, 0.18, 0.1);
+    s += `<path d="${b}" fill="${CREAM}" stroke="${CREAM}" stroke-width="16" stroke-linejoin="round"/><path d="${b}" fill="#F27C9E" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>`;
+    s += [0, 1, 2].map(i => `<path d="M${232 - i * 2} ${190 + i * 10} q8 3 16 0 t16 -2" stroke="${DEEP}" stroke-width="4" fill="none" stroke-linecap="round"/>`).join('');
+  }
+  s += `<path d="${outline}" fill="${CREAM}" stroke="${CREAM}" stroke-width="18" stroke-linejoin="round"/>`;
+  s += `<path d="${outline}" fill="url(#g${uid})"/>`;
+  s += `<g clip-path="url(#c${uid})">`;
+  if (lobes) {
+    s += `<path d="M30 30 L150 30 L150 128 C 120 120, 70 130, 30 150 Z" fill="#FFB08F" opacity=".45"/>`;  // front
+    s += `<path d="M150 30 L270 30 L270 150 C 230 130, 180 120, 150 128 Z" fill="#C79BFF" opacity=".28"/>`; // top back
+    s += `<path d="M30 150 C 70 130, 120 140, 150 210 L30 260 Z" fill="#7FC8FF" opacity=".22"/>`;          // sides
+    s += `<path d="M270 150 C 230 130, 180 140, 150 210 L270 260 Z" fill="#7FE0C0" opacity=".22"/>`;
+  }
+  s += folds === 'real' ? realFolds : simpleWaves;
+  if (halves) s += centerGroove;
+  if (glossy) s += shine;
+  s += `</g>`;
+  s += `<path d="${outline}" fill="none" stroke="${INK}" stroke-width="6.5" stroke-linejoin="round"/>`;
+  if (halves) s += `<path d="M138 50 Q149 62 160 50" fill="${CREAM}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>`;
+  s += face + `</svg>`;
+  uid++;
+  return s;
+}
+let uid = 0;
+const cards = [
+  ['A', 'Now', 'Squiggles on a round body. Cute, but it could be any pink blob.', {}],
+  ['1', 'Two halves', 'A groove down the middle and a dip on top. Reads "brain" at once.', { halves: true }],
+  ['2', 'Real folds', 'Carved folds that wrap around the head, with light rims.', { folds: 'real' }],
+  ['3', 'Lobe colors', 'Soft pastel areas like a school diagram. Busy, less calm.', { folds: 'real', lobes: true }],
+  ['4', 'Back bump', 'The wrinkly cerebellum peeks out behind, like a bun.', { folds: 'real', bun: true }],
+  ['1+2+5', 'Halves, folds, shine', 'My pick: clearly a real brain, still round and cute, and squishy-shiny.', { halves: true, folds: 'real', glossy: true }, true],
+];
+document.getElementById('grid').innerHTML = cards.map(([n, h, p, o, pick], i) =>
+  `<div class="card ${pick ? 'pick' : ''}">${pick ? '<div class="tag">MY PICK</div>' : ''}${i === 0 ? '<img src="tutorial-assets/pose-talk.png" style="display:block;width:298px;height:250px;object-fit:contain">' : brain(o)}<div class="n">${n}</div><h2>${h}</h2><p>${p}</p></div>`).join('');
+</script>
+</body></html>

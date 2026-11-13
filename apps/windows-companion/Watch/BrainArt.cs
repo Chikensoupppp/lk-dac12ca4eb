@@ -22,6 +22,12 @@ public struct BrainPose
     public float Blend;
     /// <summary>Star eyes (the excited buddy) on the old face and on the new face. Only stage 0 has them.</summary>
     public bool FromStarEyes, StarEyes;
+    /// <summary>Where the pupils look, in drawing units (about -12 to 12). 0,0 = at you.</summary>
+    public float LookX, LookY;
+    /// <summary>0 to 1: determined eyebrows ("let's go"), only on the fresh face.</summary>
+    public float Brows;
+    /// <summary>0 to 1: a big open smile, only on the fresh face (cheering).</summary>
+    public float Grin;
 
     public static BrainPose Rest => new() { Sx = 1, Sy = 1, MouthOpen = -1, FromStage = -1, Blend = 1 };
 }
@@ -37,8 +43,10 @@ public static class BrainArt
 
     private static readonly Color Cream = Hex(0xF2ECE1);
     private static readonly Color Ink = Hex(0x40162A);
+    /// <summary>The body outline: a softer plum than the eyes (the 2026-11-13 plush look).</summary>
+    private static readonly Color Edge = Hex(0x6B4561);
     private static readonly Color Gold = Hex(0xFFC440);
-    private static readonly Color Blush = Hex(0xFF6082);
+    private static readonly Color Blush = Hex(0xF08DB0);
     private static readonly Color Tongue = Hex(0xFF6E8C);
     private static readonly Color Tear = Hex(0x7FD8FF);
     private static readonly Color Stink = Hex(0x8C9670);
@@ -46,7 +54,7 @@ public static class BrainArt
     /// <summary>Body, bottom shade and fold color for each stage, 0 fresh to 5 rotten.</summary>
     private static readonly (uint Body, uint Shade, uint Fold)[] Palette =
     {
-        (0xFF92B2, 0xEE6894, 0xE45E88), (0xFF9EB2, 0xEC7492, 0xE06684), (0xF0A0AA, 0xDA7888, 0xCE6C7C),
+        (0xF9BAD2, 0xF1A2C1, 0xE597B8), (0xF7B4C8, 0xEC9DB6, 0xDF8FAA), (0xF0A0AA, 0xDA7888, 0xCE6C7C),
         (0xD6A696, 0xBC8476, 0xB2786C), (0xBAAA82, 0xA08E68, 0x968260), (0x989E76, 0x7E845E, 0x747A58),
     };
 
@@ -106,7 +114,7 @@ public static class BrainArt
         g.SetClip(outlinePath, CombineMode.Replace);
         using (var shifted = Outline())
         {
-            shifted.Transform(new Matrix(1, 0, 0, 1, -4, -11));
+            shifted.Transform(new Matrix(1, 0, 0, 1, -3, -40));
             shifted.Transform(brain);
             g.FillPath(bodyBrush, shifted);
         }
@@ -114,21 +122,27 @@ public static class BrainArt
         var alpha = Lerp(ShineOf(from), ShineOf(stage), w);
         if (alpha > 0)
         {
+            // Short glossy marks on the top bumps, like a soft plush toy catching the light.
             using var shinePath = new GraphicsPath();
-            AddQuad(shinePath, new PointF(92, 96), new PointF(104, 64), new PointF(138, 50));
+            AddQuad(shinePath, new PointF(86, 120), new PointF(88, 104), new PointF(100, 94));
+            shinePath.StartFigure();
+            AddQuad(shinePath, new PointF(134, 76), new PointF(144, 70), new PointF(156, 70));
+            shinePath.StartFigure();
+            AddQuad(shinePath, new PointF(208, 70), new PointF(220, 70), new PointF(230, 76));
+            shinePath.StartFigure();
+            AddQuad(shinePath, new PointF(266, 94), new PointF(278, 102), new PointF(280, 118));
             shinePath.Transform(brain);
-            using var shinePen = new Pen(Color.FromArgb((int)(alpha * 255), 255, 255, 255), 11 * k2)
+            using var shinePen = new Pen(Color.FromArgb((int)(alpha * 255), 255, 255, 255), 9 * k2)
             { StartCap = LineCap.Round, EndCap = LineCap.Round };
             g.DrawPath(shinePen, shinePath);
-            using var dot = Ellipse(150, 44, 7, 6);
-            dot.Transform(brain);
-            using var dotBrush = new SolidBrush(Color.FromArgb((int)(alpha * 255), 255, 255, 255));
-            g.FillPath(dotBrush, dot);
         }
         g.Restore(saved);
 
         using var foldPen = new Pen(foldColor, 4.5f * k2) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+        var foldClip = g.Save();
+        g.SetClip(outlinePath, CombineMode.Replace);
         g.DrawPath(foldPen, foldsPath);
+        g.Restore(foldClip);
 
         // Damage that stays. Between two moods each mark fades in or out.
         var bandage = Has(st => st >= 2);
@@ -185,7 +199,7 @@ public static class BrainArt
             }
         }
 
-        using (var inkPen = new Pen(Ink, 6 * k2) { LineJoin = LineJoin.Round })
+        using (var inkPen = new Pen(Edge, 6 * k2) { LineJoin = LineJoin.Round })
             g.DrawPath(inkPen, outlinePath);
 
         // The face. Between two moods both faces are drawn: the old one fades out as the new one fades in.
@@ -226,11 +240,11 @@ public static class BrainArt
     private static void DrawFace(Graphics g, int stage, Matrix brain, float k2, Color bodyColor, BrainPose p, bool starEyes)
     {
         // Eyes: big and set low, like a baby face.
-        const float ey = 162;
+        const float ey = 168;
         using var inkBrush = new SolidBrush(Ink);
         using var whiteBrush = new SolidBrush(Color.White);
         using var roundPen = new Pen(Ink, 4.5f * k2) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
-        foreach (var (x, i) in new[] { (148f, 0), (216f, 1) })
+        foreach (var (x, i) in new[] { (140f, 0), (224f, 1) })
         {
             switch (stage)
             {
@@ -253,18 +267,32 @@ public static class BrainArt
                         }
                         break;
                     }
-                    // A blink squashes the eye flat and hides the sparkle in it.
-                    using var pupil = Ellipse(x, ey, 15, 17 * (1 - 0.9f * p.Blink));
+                    // A blink squashes the eye flat and hides the sparkle in it. LookX/LookY turn the gaze.
+                    var px = x + p.LookX;
+                    var py = ey + p.LookY;
+                    using var pupil = Ellipse(px, py, 13, 15 * (1 - 0.9f * p.Blink));
                     pupil.Transform(brain);
                     g.FillPath(inkBrush, pupil);
                     if (p.Blink < 0.5f)
                     {
-                        using var hi1 = Ellipse(x - 5, ey - 7, 6, 6);
+                        using var hi1 = Ellipse(px - 4, py - 6, 5.5f, 5.5f);
                         hi1.Transform(brain);
                         g.FillPath(whiteBrush, hi1);
-                        using var hi2 = Ellipse(x + 6, ey + 8, 3, 3);
+                        using var hi2 = Ellipse(px + 5, py + 7, 2.6f, 2.6f);
                         hi2.Transform(brain);
                         g.FillPath(whiteBrush, hi2);
+                    }
+                    if (p.Brows > 0.01f)
+                    {
+                        // Short brows tilted toward the middle: keen, not angry.
+                        var lift = 30 - 4 * p.Brows;
+                        using var brow = new GraphicsPath();
+                        if (i == 0) brow.AddLine(x - 15, ey - lift - 6 * p.Brows, x + 12, ey - lift + 2);
+                        else brow.AddLine(x - 12, ey - lift + 2, x + 15, ey - lift - 6 * p.Brows);
+                        brow.Transform(brain);
+                        using var browPen = new Pen(Color.FromArgb((int)(255 * Math.Clamp(p.Brows, 0, 1)), Ink), 5.5f * k2)
+                            { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                        g.DrawPath(browPen, brow);
                     }
                     break;
                 }
@@ -364,9 +392,9 @@ public static class BrainArt
         if (stage <= 2)
         {
             using var blush = new SolidBrush(Blush);
-            foreach (var bx in new[] { 116f, 248f })
+            foreach (var bx in new[] { 110f, 254f })
             {
-                using var cheek = Ellipse(bx, 190, 17, 9);
+                using var cheek = Ellipse(bx, 196, 16, 8.5f);
                 cheek.Transform(brain);
                 g.FillPath(blush, cheek);
             }
@@ -386,8 +414,25 @@ public static class BrainArt
         }
 
         // Mouth. While the buddy speaks it opens and closes (not when crying or rotten: their mouths are the point).
-        const float mx = 182, my = 194;
-        if (p.MouthOpen >= 0 && stage < 4)
+        const float mx = 182, my = 196;
+        if (p.Grin > 0.01f && stage == 0)
+        {
+            // A big open "D" smile with a tongue: the coach cheering.
+            var grin = Math.Clamp(p.Grin, 0f, 1f);
+            var w = 15 + 11 * grin;
+            var depth = 10 + 20 * grin;
+            using var smile = new GraphicsPath();
+            smile.AddLine(mx - w, my + 1, mx + w, my + 1);
+            smile.AddBezier(mx + w, my + 1, mx + w * 0.9f, my + 1 + depth * 1.3f, mx - w * 0.9f, my + 1 + depth * 1.3f, mx - w, my + 1);
+            smile.CloseFigure();
+            smile.Transform(brain);
+            g.FillPath(inkBrush, smile);
+            using var tongue = Ellipse(mx + 2, my + 1 + depth * 0.78f, w * 0.52f, depth * 0.24f);
+            tongue.Transform(brain);
+            using var tongueBrush = new SolidBrush(Tongue);
+            g.FillPath(tongueBrush, tongue);
+        }
+        else if (p.MouthOpen >= 0 && stage < 4)
         {
             var open = Math.Clamp(p.MouthOpen, 0f, 1f);
             using var talk = Ellipse(mx, my + 6, 9 + 2 * open, 2.5f + 10 * open);
@@ -406,13 +451,13 @@ public static class BrainArt
             case 0:
             {
                 using var mouth = new GraphicsPath();
-                AddQuad(mouth, new PointF(mx - 16, my), new PointF(mx, my + 26), new PointF(mx + 16, my));
+                AddQuad(mouth, new PointF(mx - 11, my), new PointF(mx, my + 20), new PointF(mx + 11, my));
                 mouth.CloseFigure();
                 mouth.Transform(brain);
                 g.FillPath(inkBrush, mouth);
                 using var mouthPen = new Pen(Ink, 4 * k2) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
                 g.DrawPath(mouthPen, mouth);
-                using var tongue = Ellipse(mx, my + 10, 8, 5);
+                using var tongue = Ellipse(mx, my + 8, 5.5f, 3.5f);
                 tongue.Transform(brain);
                 using var tongueBrush = new SolidBrush(Tongue);
                 g.FillPath(tongueBrush, tongue);
@@ -512,20 +557,28 @@ public static class BrainArt
     /// <summary>16 even points on a squashed circle; each stretch between two bulges outward.</summary>
     private static GraphicsPath Outline()
     {
-        float[] bumps = { 17, 19, 18, 20, 18, 19, 17, 19, 18, 20, 17, 19, 18, 20, 18, 19 };
-        var pts = new PointF[16];
-        for (var i = 0; i < 16; i++)
+        // Wider than tall, a smooth round dome on top and puffy bumps around the sides and bottom:
+        // a squishy plush brain.
+        const int n = 15;
+        var pts = new PointF[n];
+        var bumps = new float[n];
+        for (var i = 0; i < n; i++)
         {
-            var a = 2 * Math.PI * i / 16 - Math.PI / 2 + 0.1;
+            var a = 2 * Math.PI * i / n - Math.PI / 2;
+            var up = Math.Sin(a) < 0;
             pts[i] = new PointF(
-                (float)Math.Round(182 + 116 * Math.Cos(a), MidpointRounding.AwayFromZero),
-                (float)Math.Round(150 + 116 * 0.96 * Math.Sin(a), MidpointRounding.AwayFromZero));
+                (float)Math.Round(182 + 120 * Math.Cos(a), MidpointRounding.AwayFromZero),
+                (float)Math.Round(160 + (up ? 112 : 94) * Math.Sin(a), MidpointRounding.AwayFromZero));
+            // How far the stretch from this point to the next bulges: low over the dome, full lower down.
+            var mid = a + Math.PI / n;
+            var top = Math.Max(0, -Math.Sin(mid));
+            bumps[i] = (float)(20 - 13 * top * top);
         }
         var p = new GraphicsPath();
-        for (var i = 0; i < 16; i++)
+        for (var i = 0; i < n; i++)
         {
             var a = pts[i];
-            var b = pts[(i + 1) % 16];
+            var b = pts[(i + 1) % n];
             var dx = b.X - a.X;
             var dy = b.Y - a.Y;
             var len = Math.Max((float)Math.Sqrt(dx * dx + dy * dy), 1);
@@ -536,28 +589,37 @@ public static class BrainArt
         return p;
     }
 
-    /// <summary>Two-bump squiggles plus a few single curves.</summary>
     private static GraphicsPath Folds()
     {
+        // Soft curls (like a "6" lying down) on each side, mirrored, and a split down the top middle.
         var p = new GraphicsPath();
-        void Squiggle(float x, float y, float w, float up = 1, float h = 7)
+        void Curl(float cx, float cy, float r, bool right, float start)
         {
+            // A three-quarter loop with a tail running off it.
             p.StartFigure();
-            p.AddBezier(x, y, x + w * 0.15f, y - h * up, x + w * 0.35f, y - h * up, x + w * 0.5f, y);
-            p.AddBezier(x + w * 0.5f, y, x + w * 0.65f, y + h * up, x + w * 0.85f, y + h * up, x + w, y);
+            var sweep = right ? -270f : 270f;
+            p.AddArc(cx - r, cy - r, r * 2, r * 2, start, sweep);
+            var end = (start + sweep) * Math.PI / 180;
+            var ex = cx + r * (float)Math.Cos(end);
+            var ey = cy + r * (float)Math.Sin(end);
+            var tail = right ? -1f : 1f;
+            AddQuad(p, new PointF(ex, ey), new PointF(ex + tail * r * 0.2f, ey + r * 0.9f), new PointF(ex - tail * r * 0.5f, ey + r * 1.5f));
         }
-        void Curve(PointF a, PointF c, PointF b)
+        void Pair(float x, float y, float r, float start)
         {
-            p.StartFigure();
-            AddQuad(p, a, c, b);
+            Curl(x, y, r, false, start);
+            Curl(364 - x, y, r, true, 180 - start);
         }
-        Squiggle(112, 72, 52); Squiggle(196, 64, 56, -1); Squiggle(150, 98, 60);
-        Squiggle(84, 116, 44, -1); Squiggle(240, 108, 46);
-        Curve(new PointF(120, 70), new PointF(110, 86), new PointF(120, 100));
-        Curve(new PointF(252, 64), new PointF(262, 80), new PointF(252, 96));
-        Squiggle(74, 160, 36); Squiggle(258, 154, 38, -1);
-        Squiggle(104, 220, 44, -1); Squiggle(214, 222, 46);
-        Curve(new PointF(170, 250), new PointF(182, 240), new PointF(194, 250));
+        Pair(142, 78, 19, 180);   // top
+        Pair(92, 112, 15, 200);   // upper sides
+        Pair(140, 136, 13, 190);  // inner
+        Pair(80, 168, 14, 210);   // lower sides
+        Pair(96, 222, 13, 230);   // bottom sides
+        p.StartFigure();
+        p.AddBezier(182, 52, 176, 78, 188, 100, 182, 124);
+        p.AddBezier(182, 124, 178, 136, 184, 146, 182, 152);
+        p.StartFigure();
+        p.AddLine(182, 244, 182, 262);
         return p;
     }
 

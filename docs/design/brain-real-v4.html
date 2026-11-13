@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Brain, grown folds</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Nunito:wght@700;800&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Folds grown with reaction-diffusion (Gray-Scott, maze settings): the same math behind brain coral,
+   so the folds wind like a real brain's. Then lit from the top-left so each fold looks round.
+   Face, outline and sticker edge as in the current Lock In brain. Reference: Brandon's kawaii brain. */
+body{margin:0;background:#E7E8E3;font-family:Nunito,sans-serif;color:#1B1B1B;padding:30px;width:max-content}
+h1{font:400 40px Anton,sans-serif;text-transform:uppercase;margin:0 0 18px}
+.row{display:flex;gap:22px;align-items:flex-start}
+.card{background:#F3F4F0;border-radius:18px;padding:16px;position:relative}
+.big{position:relative;width:420px;height:350px}
+.big canvas,.big svg{position:absolute;left:0;top:0;width:420px;height:350px}
+.small{position:relative;width:200px;height:167px;display:inline-block;margin-right:8px}
+.small canvas,.small svg{position:absolute;left:0;top:0;width:200px;height:167px}
+.cap{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.08em;color:#575A55;text-align:center}
+h2{font:400 26px Anton,sans-serif;text-transform:uppercase;margin:6px 0 0}
+p{font:700 14px/1.3 Nunito;color:#575A55;margin:4px 0 0;max-width:420px}
+#status{font:600 12px "IBM Plex Mono",monospace;color:#575A55}
+</style></head><body>
+<h1>Real folds, grown</h1>
+<div id="status">growing folds…</div>
+<div class="row">
+  <div class="card"><div class="big" id="hero"></div><h2>Grown folds</h2><p>Winding folds like a real brain, each one lit so it looks squishy. Split down the middle. Big shiny eyes and brows.</p></div>
+  <div class="card"><div id="moods"></div></div>
+</div>
+<script>
+const W = 300, H = 250;            // drawing units (same frame as the other mocks)
+const G = 2;                        // grid cell size in drawing units for the simulation
+const gw = W / G, gh = H / G;
+// Brain silhouette (front view): two hemispheres made of puffs; a gap down the middle.
+const L = [[112,98,62,56],[92,144,54,54],[122,180,56,40],[146,70,36,34]];
+const R = L.map(([x, y, rx, ry]) => [W - x, y, rx, ry]);
+const inPuffs = (x, y, set, k = 1) => set.some(([cx, cy, rx, ry]) => ((x - cx) / (rx * k)) ** 2 + ((y - cy) / (ry * k)) ** 2 < 1);
+const inBrain = (x, y) => (inPuffs(x, y, L) && x < W / 2 - 2) || (inPuffs(x, y, R) && x > W / 2 + 2);
+
+// Gray-Scott reaction-diffusion, maze regime.
+function grow() {
+  const n = gw * gh;
+  let A = new Float32Array(n).fill(1), B = new Float32Array(n), A2 = new Float32Array(n), B2 = new Float32Array(n);
+  const mask = new Uint8Array(n);
+  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) mask[y * gw + x] = inBrain(x * G + 1, y * G + 1) ? 1 : 0;
+  let s = 11; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < n; i++) if (mask[i] && r() < 0.012) { for (const d of [0, 1, gw, gw + 1, -1, -gw]) if (i + d >= 0 && i + d < n) { B[i + d] = 1; A[i + d] = 0.5; } }
+  const Da = 1.0, Db = 0.5, f = 0.0545, k = 0.062;
+  for (let it = 0; it < 9000; it++) {
+    for (let y = 1; y < gh - 1; y++) for (let x = 1; x < gw - 1; x++) {
+      const i = y * gw + x;
+      if (!mask[i]) { A2[i] = 1; B2[i] = 0; continue; }
+      const a = A[i], b = B[i];
+      const la = A[i - 1] * .2 + A[i + 1] * .2 + A[i - gw] * .2 + A[i + gw] * .2 + A[i - gw - 1] * .05 + A[i - gw + 1] * .05 + A[i + gw - 1] * .05 + A[i + gw + 1] * .05 - a;
+      const lb = B[i - 1] * .2 + B[i + 1] * .2 + B[i - gw] * .2 + B[i + gw] * .2 + B[i - gw - 1] * .05 + B[i - gw + 1] * .05 + B[i + gw - 1] * .05 + B[i + gw + 1] * .05 - b;
+      const abb = a * b * b;
+      A2[i] = Math.min(1, Math.max(0, a + Da * la - abb + f * (1 - a)));
+      B2[i] = Math.min(1, Math.max(0, b + Db * lb + abb - (k + f) * b));
+    }
+    [A, A2] = [A2, A]; [B, B2] = [B2, B];
+  }
+  return { B, mask };
+}
+
+// Paint the folds: B high = fold (gyrus), low = groove. Light from the top-left gives the round look.
+function paintFolds(canvas, field, scale) {
+  const { B, mask } = field;
+  const cw = W * scale, ch = H * scale;
+  canvas.width = cw; canvas.height = ch;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(cw, ch);
+  const sample = (x, y) => { // bilinear sample of B in drawing units
+    const gx = Math.max(0, Math.min(gw - 1.001, x / G)), gy = Math.max(0, Math.min(gh - 1.001, y / G));
+    const x0 = Math.floor(gx), y0 = Math.floor(gy), tx = gx - x0, ty = gy - y0, i = y0 * gw + x0;
+    return (B[i] * (1 - tx) + B[i + 1] * tx) * (1 - ty) + (B[i + gw] * (1 - tx) + B[i + gw + 1] * tx) * ty;
+  };
+  const smooth = (e0, e1, v) => { const t = Math.min(1, Math.max(0, (v - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  for (let py = 0; py < ch; py++) for (let px = 0; px < cw; px++) {
+    const x = px / scale, y = py / scale, o = (py * cw + px) * 4;
+    if (!inBrain(x, y)) { img.data[o + 3] = 0; continue; }
+    const v = smooth(0.12, 0.32, sample(x, y));             // 0 groove .. 1 fold
+    const dx = smooth(0.12, 0.32, sample(x + 1, y)) - smooth(0.12, 0.32, sample(x - 1, y));
+    const dy = smooth(0.12, 0.32, sample(x, y + 1)) - smooth(0.12, 0.32, sample(x, y - 1));
+    const light = Math.max(-1, Math.min(1, (-dx - dy) * 1.6));  // light from the top-left
+    // whole-brain shading: a little darker at the bottom and the edges
+    const edge = Math.min(1, Math.hypot((x - W / 2) / 150, (y - 120) / 125));
+    const shade = 1 - 0.18 * Math.max(0, (y - 110) / 140) - 0.12 * edge * edge;
+    // colors: groove deep rose -> fold soft pink, plus highlight
+    const groove = [196, 86, 110], fold = [250, 178, 190], hi = [255, 236, 240];
+    let c = groove.map((g, j) => g + (fold[j] - g) * v);
+    const h = Math.max(0, light) * v;
+    c = c.map((cc, j) => cc + (hi[j] - cc) * h * 0.85);
+    const sh = Math.max(0, -light) * v * 0.22;
+    img.data[o] = Math.min(255, c[0] * shade * (1 - sh)); img.data[o + 1] = Math.min(255, c[1] * shade * (1 - sh));
+    img.data[o + 2] = Math.min(255, c[2] * shade * (1 - sh)); img.data[o + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+// Outline, sticker edge, split and face as SVG on top.
+const INK = '#3A1420', CREAM = '#F2ECE1';
+const puff = (p, e = 0) => `<ellipse cx="${p[0]}" cy="${p[1]}" rx="${p[2] + e}" ry="${p[3] + e}"/>`;
+function under() { // behind the canvas: sticker edge and outline
+  return `<svg viewBox="0 0 ${W} ${H}"><g fill="${CREAM}">${[...L, ...R].map(p => puff(p, 12)).join('')}</g><g fill="${INK}">${[...L, ...R].map(p => puff(p, 4)).join('')}</g><rect x="${W / 2 - 3}" y="30" width="6" height="200" fill="${INK}"/></svg>`;
+}
+function over(eyes) {
+  const ex = [116, 184], ey = 134;
+  let s = `<svg viewBox="0 0 ${W} ${H}"><defs><radialGradient id="iris${eyes}" cx="50%" cy="38%" r="62%"><stop offset="0" stop-color="#A6D8F6"/><stop offset=".6" stop-color="#4E8FC4"/><stop offset="1" stop-color="#2B5A8C"/></radialGradient></defs>`;
+  // soft gloss across the top of each half
+  s += `<path d="M70 88 C 84 58, 112 44, 138 42" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none" opacity=".55"/><path d="M168 46 C 196 46, 220 58, 232 76" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".4"/>`;
+  // a soft pale patch behind the face so the eyes read cleanly on the folds
+  if (eyes === 'star') {
+    for (const x of ex) { let d = ''; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 9 : 22; d += `${i ? 'L' : 'M'}${x + Math.cos(a) * r} ${ey + Math.sin(a) * r} `; } s += `<path d="${d}Z" fill="#FFC440" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`; }
+  } else {
+    for (const x of ex) {
+      s += `<ellipse cx="${x}" cy="${ey}" rx="23" ry="26" fill="#fff" stroke="${INK}" stroke-width="5"/>`;
+      s += `<circle cx="${x + 2}" cy="${ey + 4}" r="15.5" fill="url(#iris${eyes})" stroke="${INK}" stroke-width="2.4"/><circle cx="${x + 2}" cy="${ey + 5}" r="8" fill="${INK}"/>`;
+      s += `<circle cx="${x - 4}" cy="${ey - 4}" r="6.8" fill="#fff"/><circle cx="${x + 8}" cy="${ey + 11}" r="2.6" fill="#fff"/>`;
+    }
+  }
+  s += eyes === 'keen'
+    ? ex.map((x, i) => `<path d="M${x - 19} ${ey - (i ? 42 : 33)} L${x + 19} ${ey - (i ? 33 : 42)}" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>`).join('')
+    : ex.map(x => `<path d="M${x - 16} ${ey - 37} Q${x} ${ey - 48} ${x + 16} ${ey - 39}" stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"/>`).join('');
+  s += `<ellipse cx="86" cy="172" rx="15" ry="8" fill="#FF6E8E" opacity=".75"/><ellipse cx="214" cy="172" rx="15" ry="8" fill="#FF6E8E" opacity=".75"/>`;
+  s += eyes === 'star'
+    ? `<path d="M132 174 L168 174 C 166 198, 134 198, 132 174 Z" fill="${INK}"/><ellipse cx="151" cy="188" rx="9" ry="4.5" fill="#FF7F98"/>`
+    : `<path d="M135 178 Q150 193 165 178" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  return s + `</svg>`;
+}
+function mount(el, eyes, scale) {
+  el.innerHTML = under();
+  const c = document.createElement('canvas'); el.appendChild(c);
+  paintFolds(c, field, scale);
+  el.insertAdjacentHTML('beforeend', over(eyes));
+}
+let field;
+setTimeout(() => {
+  field = grow();
+  mount(document.getElementById('hero'), 'big', 2.8);
+  const moods = document.getElementById('moods');
+  moods.innerHTML = [['big', 'TALKING'], ['keen', 'KEEN'], ['star', 'CHEERING']].map(([e, n]) => `<div style="display:inline-block;text-align:center"><div class="small" data-e="${e}"></div><div class="cap">${n}</div></div>`).join('');
+  moods.querySelectorAll('.small').forEach(el => mount(el, el.dataset.e, 1.4));
+  document.getElementById('status').textContent = 'done';
+}, 50);
+</script>
+</body></html>

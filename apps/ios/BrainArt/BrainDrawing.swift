@@ -73,27 +73,37 @@ enum BrainDrawing {
 
     // MARK: The brain, in a 364 by 300 drawing space
 
-    // The mascot: a round, bumpy, cartoon brain (Brandon picked it 2026-11-12, mock in
-    // docs/design/qa/brain-round-mock.png). Soft pink with a darker shade along the bottom, a
-    // glossy shine, curvy folds, a dark outline inside a cream sticker border. As phone time adds
+    // The mascot: a soft plush cartoon brain (Brandon picked it 2026-11-13, made in Figma:
+    // docs/design/brain-mascot-chosen.png). Pastel pink, a darker pink lower half, short glossy
+    // marks, swirl folds and a split on top, a soft plum outline inside a cream sticker border. As phone time adds
     // up it fades from pink to grey-green, loses its shine and sparkles, and gets bandages,
     // cracks and a sadder face. Drawn in a 364 by 300 space.
 
     static let outlineInk = rgb(0x40162A)
+    /// The body outline: a softer plum than the eyes.
+    static let edgeInk = rgb(0x6B4561)
     static let gold = rgb(0xFFC440)
-    static let blush = rgb(0xFF6082)
+    static let blush = rgb(0xF08DB0)
     /// Body, bottom shade and fold color for each stage, 0 fresh to 5 rotten.
     static let palette: [(body: Color, shade: Color, fold: Color)] = ([
-        (0xFF92B2, 0xEE6894, 0xE45E88), (0xFF9EB2, 0xEC7492, 0xE06684), (0xF0A0AA, 0xDA7888, 0xCE6C7C),
+        (0xF9BAD2, 0xF1A2C1, 0xE597B8), (0xF7B4C8, 0xEC9DB6, 0xDF8FAA), (0xF0A0AA, 0xDA7888, 0xCE6C7C),
         (0xD6A696, 0xBC8476, 0xB2786C), (0xBAAA82, 0xA08E68, 0x968260), (0x989E76, 0x7E845E, 0x747A58)
     ] as [(UInt32, UInt32, UInt32)]).map { (rgb($0.0), rgb($0.1), rgb($0.2)) }
 
-    /// 16 even points on a slightly squashed circle; each stretch between two bulges outward.
+    /// 15 even points on an oval wider than tall; each stretch between two bulges outward: a squishy
+    /// plush brain. Keep in step with Outline() in apps/windows-companion/Watch/BrainArt.cs.
     static let outline: Path = {
-        let bumps: [CGFloat] = [17, 19, 18, 20, 18, 19, 17, 19, 18, 20, 17, 19, 18, 20, 18, 19]
-        let pts: [CGPoint] = (0..<16).map { i in
-            let a = 2 * Double.pi * Double(i) / 16 - Double.pi / 2 + 0.1
-            return CGPoint(x: (182 + 116 * cos(a)).rounded(), y: (150 + 116 * 0.96 * sin(a)).rounded())
+        // A smooth round dome on top (small bumps), puffy bumps around the sides and bottom.
+        let n = 15
+        let pts: [CGPoint] = (0..<n).map { i in
+            let a = 2 * Double.pi * Double(i) / Double(n) - Double.pi / 2
+            let up = sin(a) < 0
+            return CGPoint(x: (182 + 120 * cos(a)).rounded(), y: (160 + (up ? 112 : 94) * sin(a)).rounded())
+        }
+        let bumps: [CGFloat] = (0..<n).map { i in
+            let mid = 2 * Double.pi * Double(i) / Double(n) - Double.pi / 2 + Double.pi / Double(n)
+            let top = max(0, -sin(mid))
+            return CGFloat(20 - 13 * top * top)
         }
         var p = Path()
         p.move(to: pts[0])
@@ -108,26 +118,34 @@ enum BrainDrawing {
         return p
     }()
 
-    /// Two-bump squiggles plus a few single curves.
+    /// Soft curls, mirrored left and right, and a split down the top middle.
     static let folds: Path = {
         var p = Path()
-        func squiggle(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, up: CGFloat = 1, h: CGFloat = 7) {
-            p.move(to: CGPoint(x: x, y: y))
-            p.addCurve(to: CGPoint(x: x + w * 0.5, y: y), control1: CGPoint(x: x + w * 0.15, y: y - h * up),
-                       control2: CGPoint(x: x + w * 0.35, y: y - h * up))
-            p.addCurve(to: CGPoint(x: x + w, y: y), control1: CGPoint(x: x + w * 0.65, y: y + h * up),
-                       control2: CGPoint(x: x + w * 0.85, y: y + h * up))
+        // A three-quarter loop (angles in degrees, y down, like GDI+ AddArc) with a tail off its end.
+        func curl(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat, right: Bool, start: CGFloat) {
+            let sweep: CGFloat = right ? -270 : 270
+            let steps = 28
+            for k in 0...steps {
+                let a = Double(start + sweep * CGFloat(k) / CGFloat(steps)) * Double.pi / 180
+                let pt = CGPoint(x: cx + r * CGFloat(cos(a)), y: cy + r * CGFloat(sin(a)))
+                if k == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+            }
+            let end = Double(start + sweep) * Double.pi / 180
+            let ex = cx + r * CGFloat(cos(end)), ey = cy + r * CGFloat(sin(end))
+            let tail: CGFloat = right ? -1 : 1
+            p.addQuadCurve(to: CGPoint(x: ex - tail * r * 0.5, y: ey + r * 1.5),
+                           control: CGPoint(x: ex + tail * r * 0.2, y: ey + r * 0.9))
         }
-        func curve(_ a: CGPoint, _ c: CGPoint, _ b: CGPoint) {
-            p.move(to: a); p.addQuadCurve(to: b, control: c)
+        func pair(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat, _ start: CGFloat) {
+            curl(x, y, r, right: false, start: start)
+            curl(364 - x, y, r, right: true, start: 180 - start)
         }
-        squiggle(112, 72, 52); squiggle(196, 64, 56, up: -1); squiggle(150, 98, 60)
-        squiggle(84, 116, 44, up: -1); squiggle(240, 108, 46)
-        curve(CGPoint(x: 120, y: 70), CGPoint(x: 110, y: 86), CGPoint(x: 120, y: 100))
-        curve(CGPoint(x: 252, y: 64), CGPoint(x: 262, y: 80), CGPoint(x: 252, y: 96))
-        squiggle(74, 160, 36); squiggle(258, 154, 38, up: -1)
-        squiggle(104, 220, 44, up: -1); squiggle(214, 222, 46)
-        curve(CGPoint(x: 170, y: 250), CGPoint(x: 182, y: 240), CGPoint(x: 194, y: 250))
+        pair(142, 78, 19, 180); pair(92, 112, 15, 200); pair(140, 136, 13, 190)
+        pair(80, 168, 14, 210); pair(96, 222, 13, 230)
+        p.move(to: CGPoint(x: 182, y: 52))
+        p.addCurve(to: CGPoint(x: 182, y: 124), control1: CGPoint(x: 176, y: 78), control2: CGPoint(x: 188, y: 100))
+        p.addCurve(to: CGPoint(x: 182, y: 152), control1: CGPoint(x: 178, y: 136), control2: CGPoint(x: 184, y: 146))
+        p.move(to: CGPoint(x: 182, y: 244)); p.addLine(to: CGPoint(x: 182, y: 262))
         return p
     }()
 
@@ -206,16 +224,19 @@ enum BrainDrawing {
         c.fill(outline, with: .color(colors.shade))
         var inside = c
         inside.clip(to: outline)
-        inside.fill(outline.applying(CGAffineTransform(translationX: -4, y: -11)), with: .color(colors.body))
+        inside.fill(outline.applying(CGAffineTransform(translationX: -3, y: -40)), with: .color(colors.body))
         if st <= 2 {
+            // Short glossy marks on the top bumps.
             var shine = Path()
-            shine.move(to: CGPoint(x: 92, y: 96))
-            shine.addQuadCurve(to: CGPoint(x: 138, y: 50), control: CGPoint(x: 104, y: 64))
+            for (a, ctl, b) in [((86.0, 120.0), (88.0, 104.0), (100.0, 94.0)), ((134.0, 76.0), (144.0, 70.0), (156.0, 70.0)),
+                                ((208.0, 70.0), (220.0, 70.0), (230.0, 76.0)), ((266.0, 94.0), (278.0, 102.0), (280.0, 118.0))] {
+                shine.move(to: CGPoint(x: a.0, y: a.1))
+                shine.addQuadCurve(to: CGPoint(x: b.0, y: b.1), control: CGPoint(x: ctl.0, y: ctl.1))
+            }
             let a = (200 - Double(st) * 50) / 255
-            inside.stroke(shine, with: .color(.white.opacity(a)), style: StrokeStyle(lineWidth: 11, lineCap: .round))
-            inside.fill(oval(150, 44, 7, 6), with: .color(.white.opacity(a)))
+            inside.stroke(shine, with: .color(.white.opacity(a)), style: StrokeStyle(lineWidth: 9, lineCap: .round))
         }
-        c.stroke(folds, with: .color(colors.fold), style: round)
+        inside.stroke(folds, with: .color(colors.fold), style: round)
 
         // Damage that stays.
         if st >= 2 { bandage(&c) }
@@ -244,17 +265,17 @@ enum BrainDrawing {
                 c.fill(Path(ellipseIn: CGRect(x: fx - 9, y: fy - 8, width: 10, height: 6)), with: .color(cream.opacity(0.5)))
             }
         }
-        c.stroke(outline, with: .color(ink), style: StrokeStyle(lineWidth: 6, lineJoin: .round))
+        c.stroke(outline, with: .color(edgeInk), style: StrokeStyle(lineWidth: 6, lineJoin: .round))
 
         // Eyes: big and set low, like a baby face.
-        let ey: CGFloat = 162
-        for (i, x) in [CGFloat(148), CGFloat(216)].enumerated() {
+        let ey: CGFloat = 168
+        for (i, x) in [CGFloat(140), CGFloat(224)].enumerated() {
             let side: CGFloat = i == 1 ? 1 : -1
             switch st {
             case 0:
-                c.fill(oval(x, ey, 15, 17), with: .color(ink))
-                c.fill(circle(x - 5, ey - 7, 6), with: .color(.white))
-                c.fill(circle(x + 6, ey + 8, 3), with: .color(.white))
+                c.fill(oval(x, ey, 13, 15), with: .color(ink))
+                c.fill(circle(x - 4, ey - 6, 5.5), with: .color(.white))
+                c.fill(circle(x + 5, ey + 7, 2.6), with: .color(.white))
             case 1:
                 // Sleepy: the lid covers the top half.
                 c.fill(circle(x, ey + 3, 14), with: .color(ink))
@@ -296,8 +317,8 @@ enum BrainDrawing {
             }
         }
         if st <= 2 {
-            c.fill(oval(116, 190, 17, 9), with: .color(blush))
-            c.fill(oval(248, 190, 17, 9), with: .color(blush))
+            c.fill(oval(110, 196, 16, 8.5), with: .color(blush))
+            c.fill(oval(254, 196, 16, 8.5), with: .color(blush))
         }
         if st == 1 {
             var drop = Path()
@@ -309,16 +330,16 @@ enum BrainDrawing {
         }
 
         // Mouth.
-        let mx: CGFloat = 182, my: CGFloat = 194
+        let mx: CGFloat = 182, my: CGFloat = 196
         switch st {
         case 0:
             var m = Path()
-            m.move(to: CGPoint(x: mx - 16, y: my))
-            m.addQuadCurve(to: CGPoint(x: mx + 16, y: my), control: CGPoint(x: mx, y: my + 26))
+            m.move(to: CGPoint(x: mx - 11, y: my))
+            m.addQuadCurve(to: CGPoint(x: mx + 11, y: my), control: CGPoint(x: mx, y: my + 20))
             m.closeSubpath()
             c.fill(m, with: .color(ink))
             c.stroke(m, with: .color(ink), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-            c.fill(oval(mx, my + 10, 8, 5), with: .color(tongueColor))
+            c.fill(oval(mx, my + 8, 5.5, 3.5), with: .color(tongueColor))
         case 1:
             var m = Path()
             m.move(to: CGPoint(x: mx - 14, y: my + 4))

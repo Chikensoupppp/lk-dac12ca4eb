@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Coach walkthrough prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Nunito:wght@600;700;800;900&family=IBM+Plex+Mono:wght@500;600&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+/* Animated prototype of the first-run coach. Borrowed: Duolingo (coach mascot, celebrate each win,
+   never a static mascot), Slack (learn by doing the real action), Opal (tips on the real screen,
+   "first gem" reward). Tools are explained the first time they are opened, not here. */
+:root{--paper:#E7E8E3;--paper2:#EAEBE6;--panel:#F3F4F0;--ink:#1B1B1B;--soft:#575A55;--edge:#C4C6BD;--blue:#3255A4;--blue2:#24407F;--sun:#FFB511;--face:#F7F7F3;--cream:#F7F3E8;--plum:#40162A;--red:#D25A44;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);--ease-in-out:cubic-bezier(0.77,0,0.175,1);--ease-drawer:cubic-bezier(0.32,0.72,0,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#BFC1BA;font-family:Nunito,system-ui,sans-serif;color:var(--ink);display:grid;place-items:center}
+.phone{position:relative;width:390px;height:844px;border-radius:52px;overflow:hidden;background:linear-gradient(var(--paper2),var(--paper) 50%,#E2E3DE);box-shadow:0 0 0 10px #1B1B1B,0 18px 40px rgba(0,0,0,.25)}
+.phone::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(27,27,27,.06) .7px,transparent .8px);background-size:5px 5px;pointer-events:none;z-index:40}
+.island{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:41}
+.time{position:absolute;left:44px;top:20px;font:700 17px Nunito}
+.part{transition:opacity .35s ease,filter .35s ease}
+.dim .part:not(.lit){opacity:.2;filter:grayscale(1)}
+.test{position:absolute;left:22px;top:66px;height:36px;padding:0 14px;border-radius:18px;border:1.5px solid var(--edge);background:var(--panel);font:800 12px Nunito;letter-spacing:.12em;display:flex;align-items:center}
+.icons{position:absolute;right:20px;top:64px;display:flex;gap:11px}
+.ic{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--edge);background:var(--panel);display:grid;place-items:center}
+.ic svg{width:18px;height:18px}
+.brand{position:absolute;top:116px;width:100%;text-align:center;font:800 13px Nunito;letter-spacing:.32em}
+.pair{position:absolute;top:142px;width:100%;text-align:center;font:800 11px Nunito;letter-spacing:.28em;color:var(--soft)}
+.clock{position:absolute;left:33px;top:192px;width:324px;height:324px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,var(--face) 55%,#E9EAE4);box-shadow:inset 0 0 0 16px #DDDED7,inset 0 0 0 17px #cfd0c9,0 6px 18px rgba(0,0,0,.08)}
+.ring{position:absolute;inset:6px;border-radius:50%;transform:rotate(200deg)}
+.ring svg{width:100%;height:100%}
+.digits{position:absolute;inset:0;display:grid;place-items:center;font:800 70px Nunito;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.ready{position:absolute;top:196px;width:100%;text-align:center;font:800 12px Nunito;letter-spacing:.3em}
+.working{position:absolute;left:75px;top:538px;width:240px;height:42px;border-radius:21px;border:1.5px solid var(--edge);background:var(--panel);display:flex;align-items:center;justify-content:center;gap:8px;font:800 11px Nunito;letter-spacing:.14em}
+.mlab{position:absolute;top:594px;width:100%;text-align:center;font:800 11px Nunito;letter-spacing:.28em;color:var(--soft)}
+.mins{position:absolute;left:24px;top:618px;width:342px;height:50px;border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);display:flex;align-items:center;justify-content:space-around;font:700 16px Nunito;color:var(--soft)}
+.mins span{padding:10px 16px;border-radius:10px;transition:background-color .2s ease,color .2s ease}
+.mins span.on{background:var(--ink);color:#fff}
+.locked{position:absolute;top:688px;width:100%;text-align:center;font:800 11px Nunito;letter-spacing:.2em;color:var(--soft)}
+.go{position:absolute;left:24px;top:752px;width:342px;height:58px;border-radius:29px;background:var(--blue);color:#fff;display:grid;place-items:center;font:800 15px Nunito;letter-spacing:.3em;box-shadow:3px 4px 0 var(--sun);overflow:hidden}
+.go .fill{position:absolute;inset:0;background:var(--blue2);transform:scaleX(0);transform-origin:left}
+.go span{position:relative}
+.home{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--ink);z-index:41}
+/* coach */
+.guide{position:absolute;left:0;top:0;z-index:30;display:flex;align-items:flex-end;opacity:0;will-change:transform}
+.who{position:relative;width:200px;height:167px}
+.who img{position:absolute;inset:0;width:200px;transform-origin:50% 92%}
+.who .lines{position:absolute;left:4px;top:58px;opacity:0}
+.bubble{position:relative;background:var(--cream);border:2.5px solid var(--plum);border-radius:16px;padding:11px 15px 12px;color:var(--plum);width:178px;margin-bottom:96px;margin-left:-26px;transform-origin:0% 80%}
+.bubble::after{content:"";position:absolute;left:-11px;bottom:18px;width:18px;height:18px;background:var(--cream);border-left:2.5px solid var(--plum);border-bottom:2.5px solid var(--plum);transform:rotate(45deg)}
+.bubble small{display:block;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.08em;color:#8a6d78;margin-bottom:2px;min-height:13px}
+.bubble b{display:block;font:400 30px/1 Anton,sans-serif;text-transform:uppercase;min-height:30px}
+.bubble p{font:800 17px/1.25 Nunito;min-height:21px}
+/* marks */
+.loop{position:absolute;z-index:25;overflow:visible;pointer-events:none}
+.loop path{fill:none;stroke:var(--blue);stroke-width:4;stroke-linecap:round}
+.finger{position:absolute;z-index:35;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(255,181,17,.9);border:3px solid var(--ink);opacity:0;pointer-events:none}
+.cheer{position:absolute;z-index:33;font:400 40px/1 Anton,sans-serif;color:var(--ink);background:var(--sun);border:3px solid var(--ink);padding:8px 16px 6px;box-shadow:3px 3px 0 var(--ink);opacity:0;clip-path:polygon(0 12%,8% 0,30% 8%,52% 0,74% 7%,94% 0,100% 30%,96% 58%,100% 88%,78% 100%,54% 92%,30% 100%,6% 92%,0 64%)}
+.scrim{position:absolute;inset:0;background:rgba(27,27,27,.28);z-index:20;opacity:0;pointer-events:none}
+.sheet{position:absolute;z-index:21;left:0;right:0;bottom:0;height:400px;background:var(--panel);border-radius:28px 28px 0 0;padding:26px 22px;transform:translateY(100%)}
+.sheet h4{font:400 34px Anton,sans-serif;text-transform:uppercase}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.chip{height:46px;padding:0 18px;border-radius:23px;border:2px solid var(--ink);display:flex;align-items:center;font:800 16px Nunito;background:var(--panel);transition:background-color .15s ease,box-shadow .15s ease}
+.chip.on{background:var(--sun);box-shadow:3px 3px 0 var(--ink)}
+.chip.new{border-style:dashed;color:var(--soft)}
+.hello{position:absolute;inset:0;z-index:28;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(var(--paper2),var(--paper));padding:0 30px}
+.hello img{width:230px}
+.hello h1{font:400 64px/0.95 Anton,sans-serif;text-transform:uppercase;text-align:center}
+.hello h1 em{font-style:normal;color:var(--blue)}
+.hello p{font:700 18px/1.35 Nunito;color:var(--soft);text-align:center;margin-top:16px}
+.cta{margin-top:28px;height:58px;width:100%;border-radius:29px;background:var(--blue);color:#fff;display:grid;place-items:center;font:800 15px Nunito;letter-spacing:.3em;box-shadow:3px 4px 0 var(--sun)}
+.stamp{position:absolute;z-index:34;left:50%;top:300px;border:5px solid var(--blue);border-radius:10px;padding:10px 18px 12px;color:var(--blue);text-align:center;background:rgba(243,244,240,.95);opacity:0;transform:translateX(-50%) rotate(-8deg)}
+.stamp b{display:block;font:400 44px/1 Anton,sans-serif;white-space:nowrap}
+.stamp i{display:block;font:600 13px "IBM Plex Mono",monospace;font-style:normal;letter-spacing:.14em;margin-top:4px}
+.confetti{position:absolute;z-index:32;left:195px;top:330px;width:9px;height:14px;pointer-events:none}
+.buzz{position:absolute;z-index:36;right:16px;top:58px;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.08em;background:var(--ink);color:var(--sun);padding:5px 9px;border-radius:12px;opacity:0}
+.skip{position:absolute;z-index:31;left:24px;top:62px;font:800 12px Nunito;letter-spacing:.22em;color:var(--soft);padding:14px 4px;opacity:0}
+</style></head><body>
+<div class="phone" id="phone">
+  <div class="island"></div><div class="time">9:41</div>
+  <div class="test part">TEST</div>
+  <div class="icons part">
+    <div class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#1B1B1B" stroke-width="1.8"/><circle cx="10" cy="10" r="3" fill="#1B1B1B"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.6" fill="none" stroke="#1B1B1B" stroke-width="1.8"/><path d="M10 10v8M10 14.5h3M10 17h2.4" stroke="#1B1B1B" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 20 20"><path d="M10 2.5l6 2.3v5c0 4-2.6 6.4-6 7.7-3.4-1.3-6-3.7-6-7.7v-5z" fill="none" stroke="#1B1B1B" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+  </div>
+  <div class="brand part">LOCK IN</div><div class="pair part">PAIR A PC</div>
+  <div class="clock part" id="clock">
+    <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="43.6" fill="none" stroke="#3255A4" stroke-width="2.6" stroke-linecap="round" pathLength="100" stroke-dasharray="50 100" id="ring"/></svg></div>
+    <div class="digits" id="digits">45:00</div><div class="ready" id="ready">READY</div>
+  </div>
+  <div class="working part" id="working"><svg width="14" height="14" viewBox="0 0 20 20"><rect x="3" y="6" width="14" height="10" rx="2" fill="#1B1B1B"/><rect x="7" y="3.5" width="6" height="3.5" rx="1" fill="none" stroke="#1B1B1B" stroke-width="1.8"/></svg>WORKING ON <b id="task">PICK ONE</b> ▾</div>
+  <div class="mlab part" id="mlab">MINUTES</div>
+  <div class="mins part" id="mins"><span>15</span><span data-m="25">25</span><span class="on">45</span><span>60</span><span>90</span></div>
+  <div class="locked part" id="locked">LOCKED MODE</div>
+  <div class="go part" id="go"><div class="fill" id="fill"></div><span id="goText">LOCK IN</span></div>
+
+  <div class="skip" id="skip">SKIP</div>
+  <svg class="loop" id="loop" width="390" height="844" viewBox="0 0 390 844" style="left:0;top:0"><path id="loopPath" d=""/></svg>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet"><h4>Working on</h4><div class="chips"><div class="chip" id="chipStudy">Studying</div><div class="chip">Homework</div><div class="chip">Coding</div><div class="chip">Reading</div><div class="chip">Art</div><div class="chip new">+ New</div></div></div>
+  <div class="cheer" id="cheer">YES!</div>
+  <div class="stamp" id="stamp"><b>FIRST LOCK-IN</b><i>DAY 1 · STUDYING</i></div>
+  <div class="buzz" id="buzz">· buzz ·</div>
+
+  <div class="guide" id="guide">
+    <div class="who" id="who"><img id="brain" src="tutorial-assets/pose-talk.png" alt="">
+      <svg class="lines" id="lines" width="30" height="70"><path d="M24 6 L6 2 M26 30 L2 30 M24 54 L6 60" stroke="#1B1B1B" stroke-width="3.5" stroke-linecap="round" fill="none"/></svg></div>
+    <div class="bubble" id="bubble"><small id="bStep"></small><b id="bHead"></b><p id="bText"></p></div>
+  </div>
+
+  <div class="hello" id="hello">
+    <img src="tutorial-assets/pose-cheer.png" id="helloBrain" alt="">
+    <h1 id="helloH">Hey! I'm<br>your <em>brain.</em><br>Let's train.</h1>
+    <p id="helloP">One real session. I'll coach you the whole way.</p>
+    <div class="cta" id="cta">LET'S GO!</div>
+  </div>
+  <div class="finger" id="finger"></div>
+  <div class="home"></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EO = 'cubic-bezier(0.23,1,0.32,1)', EIO = 'cubic-bezier(0.77,0,0.175,1)', DRAWER = 'cubic-bezier(0.32,0.72,0,1)';
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+const anim = (el, frames, opt) => el.animate(frames, { fill: 'forwards', ...opt }).finished;
+// Reduced motion keeps fades and color, drops travel, squash, shake and confetti.
+const move = (el, frames, opt) => reduce ? anim(el, frames.map(f => ({ opacity: f.opacity ?? 1 })), { ...opt, duration: 200 }) : anim(el, frames, opt);
+
+const poses = {};
+['talk','look-down','look-down-right','look-down-left','look-up-right','keen','charge','cheer'].forEach(n => { const i = new Image(); i.src = `tutorial-assets/pose-${n}.png`; poses[n] = i.src; });
+
+let gx = 0, gy = 0;
+async function coachTo(x, y, ms = 520) {
+  const from = `translate(${gx}px,${gy}px)`, to = `translate(${x}px,${y}px)`;
+  gx = x; gy = y;
+  await move($('guide'), [{ transform: from, opacity: 1 }, { transform: to, opacity: 1 }], { duration: ms, easing: EIO });
+}
+async function pose(name, pop = true) {
+  $('brain').src = poses[name];
+  if (pop && !reduce) await anim($('brain'), [{ transform: 'scale(1.1,0.9)' }, { transform: 'scale(0.96,1.05)' }, { transform: 'scale(1,1)' }], { duration: 320, easing: EO });
+}
+async function say(step, head, text) {
+  $('bStep').textContent = step; $('bHead').textContent = ''; $('bText').textContent = '';
+  move($('bubble'), [{ transform: 'scale(0.92)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 220, easing: EO });
+  for (const [el, t] of [[$('bHead'), head], [$('bText'), text]]) {
+    if (reduce) { el.textContent = t; continue; }
+    for (let i = 1; i <= t.length; i++) { el.textContent = t.slice(0, i); await wait(1000 / 38); }
+  }
+}
+function focus(...ids) {
+  $('phone').classList.add('dim');
+  document.querySelectorAll('.part').forEach(p => p.classList.toggle('lit', ids.includes(p.id)));
+}
+async function circle(cx, cy, rx, ry) {
+  const p = $('loopPath');
+  p.setAttribute('d', `M${cx + rx * 0.1} ${cy - ry} C ${cx + rx * 1.15} ${cy - ry * 1.05}, ${cx + rx * 1.12} ${cy + ry * 1.1}, ${cx} ${cy + ry} C ${cx - rx * 1.12} ${cy + ry * 1.05}, ${cx - rx * 1.1} ${cy - ry * 1.08}, ${cx - rx * 0.05} ${cy - ry * 1.02} C ${cx + rx * 0.25} ${cy - ry}, ${cx + rx * 0.4} ${cy - ry * 0.9}, ${cx + rx * 0.5} ${cy - ry * 0.75}`);
+  const len = p.getTotalLength();
+  p.style.strokeDasharray = len;
+  await anim(p, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: reduce ? 1 : 650, easing: EO });
+}
+const uncircle = () => anim($('loopPath'), [{ opacity: 1 }, { opacity: 0 }], { duration: 150 }).then(() => { $('loopPath').style.opacity = ''; $('loopPath').setAttribute('d', ''); });
+// The demo finger (only in this prototype, so a viewer can see the taps)
+async function tap(x, y, hold = 0) {
+  const f = $('finger'); f.style.left = x + 'px'; f.style.top = y + 'px';
+  await anim(f, [{ opacity: 0, transform: 'scale(1.3)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 200, easing: EO });
+  await anim(f, [{ transform: 'scale(1)' }, { transform: 'scale(0.82)' }], { duration: 120, easing: EO });
+  if (hold) await wait(hold);
+  anim(f, [{ opacity: 1, transform: 'scale(0.82)' }, { opacity: 0, transform: 'scale(1)' }], { duration: 160, easing: EO });
+}
+function buzz() { anim($('buzz'), [{ opacity: 0 }, { opacity: 1, offset: .2 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: 700 }); }
+async function cheer(text, x, y, r = -10) {
+  const c = $('cheer'); c.textContent = text; c.style.left = x + 'px'; c.style.top = y + 'px';
+  buzz();
+  await move(c, [{ opacity: 0, transform: `rotate(${r}deg) scale(0.6)` }, { opacity: 1, transform: `rotate(${r}deg) scale(1.12)`, offset: .6 }, { opacity: 1, transform: `rotate(${r}deg) scale(1)` }], { duration: 300, easing: EO });
+}
+const uncheer = () => anim($('cheer'), [{ opacity: 1 }, { opacity: 0 }], { duration: 180 });
+function confetti() {
+  if (reduce) return;
+  const colors = ['#3255A4', '#FFB511', '#1B1B1B', '#D25A44'];
+  for (let i = 0; i < 70; i++) {
+    const d = document.createElement('div'); d.className = 'confetti';
+    d.style.background = colors[i % 4]; if (i % 3 === 0) { d.style.borderRadius = '50%'; d.style.height = '9px'; }
+    $('phone').appendChild(d);
+    const a = (Math.PI * 2 * i) / 70 + Math.random() * .3, v = 140 + Math.random() * 190;
+    const dx = Math.cos(a) * v, dy = Math.sin(a) * v - 120;
+    d.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dx}px,${dy + 520}px) rotate(${(Math.random() - .5) * 900}deg)`, opacity: 1, offset: .85 }, { transform: `translate(${dx}px,${dy + 600}px) rotate(${(Math.random() - .5) * 900}deg)`, opacity: 0 }], { duration: 1900 + Math.random() * 700, easing: 'cubic-bezier(0.2,0.6,0.35,1)', fill: 'forwards' }).finished.then(() => d.remove());
+  }
+}
+function setMinutes(m) {
+  [...$('mins').children].forEach(s => s.classList.toggle('on', s.textContent === String(m)));
+  $('digits').textContent = `${m}:00`;
+  anim($('ring'), [{ strokeDasharray: `${45 / 90 * 100} 100` }, { strokeDasharray: `${m / 90 * 100} 100` }], { duration: reduce ? 1 : 450, easing: EIO });
+}
+
+async function run() {
+  // reset
+  gx = 0; gy = 0; $('phone').classList.remove('dim');
+  $('task').textContent = 'PICK ONE'; $('chipStudy').classList.remove('on'); setMinutes(45); $('ready').textContent = 'READY'; $('goText').textContent = 'LOCK IN';
+  for (const id of ['guide','stamp','cheer','scrim','skip']) $(id).getAnimations().forEach(a => a.cancel());
+  $('fill').getAnimations().forEach(a => a.cancel()); $('sheet').getAnimations().forEach(a => a.cancel());
+  $('hello').style.display = 'flex'; $('hello').getAnimations().forEach(a => a.cancel());
+  await wait(300);
+
+  // 1 Hello: the coach bounces in, the words follow
+  move($('helloBrain'), [{ transform: 'translateY(-260px) scale(0.95)', opacity: 0 }, { transform: 'translateY(12px) scale(1.06,0.92)', opacity: 1, offset: .62 }, { transform: 'translateY(-10px) scale(0.97,1.04)', offset: .82 }, { transform: 'translateY(0) scale(1)', opacity: 1 }], { duration: 760, easing: EO });
+  for (const [id, d] of [['helloH', 260], ['helloP', 340], ['cta', 420]]) move($(id), [{ transform: 'translateY(14px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 420, delay: d, easing: EO });
+  await wait(1900);
+  await tap(195, 547);
+  await anim($('hello'), [{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: EO }); $('hello').style.display = 'none';
+  anim($('skip'), [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+
+  // 2 Working on: coach slides in, looks at the pill, circles it
+  focus('working');
+  gx = -230; gy = 300;
+  await pose('look-down-right', false);
+  await coachTo(-6, 300, 560);
+  if (!reduce) anim($('lines'), [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 700 });
+  await say('1 / 3', 'First up!', 'What are we crushing today?');
+  await circle(195, 559, 130, 34);
+  await wait(500);
+  await tap(195, 559);
+  uncircle();
+  anim($('scrim'), [{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+  await anim($('sheet'), [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }], { duration: 420, easing: DRAWER });
+  pose('look-down');
+  await coachTo(-6, 190, 380);
+  await say('', 'Pick one!', 'I’ll remember it.');
+  await wait(400);
+  await tap(118, 554);
+  $('chipStudy').classList.add('on');
+  await Promise.all([pose('cheer'), cheer('YES!', 30, 150)]);
+  await say('', 'Studying!', 'I love it.');
+  await wait(900);
+  uncheer();
+  anim($('scrim'), [{ opacity: 1 }, { opacity: 0 }], { duration: 250 });
+  await anim($('sheet'), [{ transform: 'translateY(0)' }, { transform: 'translateY(100%)' }], { duration: 280, easing: EO });
+  $('task').textContent = 'STUDYING';
+
+  // 3 Minutes
+  focus('mins', 'mlab');
+  await Promise.all([pose('look-down'), coachTo(-6, 380, 520)]);
+  await say('2 / 3', 'Try 25.', 'Short and strong!');
+  await circle(112, 643, 34, 30);
+  await wait(400);
+  await tap(112, 643);
+  uncircle();
+  setMinutes(25);
+  await Promise.all([pose('cheer'), cheer('NICE!', 240, 520, 8)]);
+  await wait(800);
+  uncheer();
+
+  // 4 Hold to start: the coach charges up while the button fills
+  focus('go', 'locked');
+  await Promise.all([pose('keen'), coachTo(-6, 500, 520)]);
+  await say('3 / 3', 'Hold it…', '…and LOCK IN!');
+  await circle(195, 781, 182, 40);
+  $('goText').textContent = 'HOLD…';
+  const holdMs = 2000;
+  tap(195, 781, holdMs);
+  await wait(320);
+  pose('charge', false);
+  anim($('fill'), [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: holdMs, easing: 'linear' });
+  if (!reduce) anim($('who'), Array.from({ length: 21 }, (_, i) => ({ transform: `translate(${(i % 2 ? 1 : -1) * i * 0.35}px, ${(i % 2 ? -1 : 1) * i * 0.2}px)` })), { duration: holdMs, easing: 'linear' });
+  await wait(holdMs);
+  uncircle();
+
+  // 5 First win
+  $('goText').textContent = 'END SESSION'; $('ready').textContent = 'LOCKED'; $('digits').textContent = '24:59';
+  $('who').getAnimations().forEach(a => a.cancel());
+  focus('clock', 'working');
+  buzz();
+  confetti();
+  move($('stamp'), [{ opacity: 0, transform: 'translateX(-50%) rotate(-8deg) scale(1.6)' }, { opacity: 1, transform: 'translateX(-50%) rotate(-8deg) scale(0.96)', offset: .7 }, { opacity: 1, transform: 'translateX(-50%) rotate(-8deg) scale(1)' }], { duration: 340, easing: EO });
+  await Promise.all([pose('cheer'), coachTo(-6, 556, 420)]);
+  if (!reduce) anim($('who'), [{ transform: 'translateY(0)' }, { transform: 'translateY(-34px)', offset: .4 }, { transform: 'translateY(0)', offset: .7 }, { transform: 'translateY(-10px)', offset: .85 }, { transform: 'translateY(0)' }], { duration: 760, easing: EO });
+  await say('', 'We did it!', 'Day 1. Same time tomorrow?');
+  await wait(3600);
+  run();
+}
+run();
+</script>
+</body></html>

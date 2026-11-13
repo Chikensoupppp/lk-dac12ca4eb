@@ -15,6 +15,25 @@ const int LanPort = 47822;
 
 var stateDir = Environment.GetEnvironmentVariable("LOCKIN_STATE_DIR")
     ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockIn");
+
+// Chrome or Edge started this program for the Lock In extension: pass its reports on, nothing else.
+if (NativeHost.IsLaunch(args))
+{
+    Environment.ExitCode = NativeHost.Run(args);
+    return;
+}
+if (args.Contains("--register-browser"))
+{
+    Console.WriteLine("Chrome and Edge can now reach Lock In. Host file: "
+        + BrowserRegistration.Register(stateDir, Environment.ProcessPath!));
+    return;
+}
+if (args.Contains("--unregister-browser"))
+{
+    BrowserRegistration.Unregister();
+    Console.WriteLine("Removed the Chrome and Edge link.");
+    return;
+}
 var stateStore = new CompanionStateStore(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
 var fingerprint = CompanionStateStore.Fingerprint(certificate);
@@ -29,7 +48,8 @@ builder.WebHost.ConfigureKestrel(kestrel =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SessionStore>();
 builder.Services.AddSingleton(new AllowStore(stateDir));
-builder.Services.AddSingleton(sp => new SessionWatch(sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<AllowStore>()));
+builder.Services.AddSingleton(sp => new SessionWatch(sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<AllowStore>(),
+    GuardianOptions.Load(stateDir), stateDir));
 builder.Services.AddSingleton(pairing);
 var app = builder.Build();
 
@@ -80,9 +100,10 @@ app.MapGet("/health", (HttpContext ctx, SessionStore store, TimeProvider time) =
 app.MapGet("/session", (SessionStore store, TimeProvider time) =>
     Results.Ok(new { session = store.Current, serverTime = time.GetUtcNow() }));
 
-app.MapPost("/pair", (PairRequest request, PairingService service, TimeProvider time) =>
+app.MapPost("/pair", (PairRequest request, PairingService service, SessionWatch watch, TimeProvider time) =>
 {
     var result = service.TryPair(request.Code, request.DeviceName);
+    if (result.Ok) watch.Greet(BuddyWords.Paired);
     if (result.Ok)
         return Results.Ok(new
         {
@@ -114,7 +135,7 @@ app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, 
 
     var outcome = store.TryStart(id, request.DurationSeconds, startedAt, out var session);
     if (outcome is StartOutcome.Started or StartOutcome.Existing)
-        watch.Begin(session.Id, request.Buddy, session.StartedAt ?? time.GetUtcNow(), session.DurationSeconds, request.Task, request.Allow);
+        watch.Begin(session.Id, request.Buddy, session.StartedAt ?? time.GetUtcNow(), session.DurationSeconds, request.Task, request.Allow, request.GuardianSeconds);
     return outcome switch
     {
         StartOutcome.Started or StartOutcome.Existing => Results.Ok(session),
@@ -157,6 +178,13 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
     });
 });
 
+if (args.Contains("--draw-poses"))
+{
+    // Test helper: writes still brain poses (look, keen, cheer) and exits.
+    BuddyPictures.WritePoses(Path.Combine(stateDir, "poses"));
+    return;
+}
+
 if (args.Contains("--draw-buddy"))
 {
     // Test helper: writes the buddy pictures and exits. Nothing else runs.
@@ -168,6 +196,10 @@ if (args.Contains("--pair"))
 {
     app.Lifetime.ApplicationStarted.Register(() => ShowPairingQr(OpenPairing(), stateDir));
 }
+
+// Browser activity arrives through a private pipe, not through either HTTP door.
+var sessionWatch = app.Services.GetRequiredService<SessionWatch>();
+using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat);
 
 app.Run();
 
@@ -190,8 +222,9 @@ static void ShowPairingQr(PairingOffer offer, string dir)
 
 // Task, Buddy and Allow come from the phone (all optional; old phones send none of them).
 // Allow: apps or sites already known to be fine for this session, e.g. ["youtube", "discord"].
+// GuardianSeconds: the phone's "remind me after" slider, how long steady scrolling lasts before the buddy speaks.
 public sealed record StartSessionRequest(int DurationSeconds, string? Id = null, DateTimeOffset? StartedAt = null,
-    string? Task = null, bool Buddy = false, string[]? Allow = null);
+    string? Task = null, bool Buddy = false, string[]? Allow = null, int? GuardianSeconds = null);
 
 public sealed record StopSessionRequest(string? Id);
 

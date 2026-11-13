@@ -33,12 +33,14 @@ final class PCClient: PCTransport {
         struct Body: Encodable {
             let id: String; let durationSeconds: Int; let startedAt: String
             let task: String?; let buddy: Bool
+            let guardianSeconds: Int? // left out when nil, so older PC apps see nothing new
         }
         let body = Body(
             id: record.id.uuidString,
             durationSeconds: Int(record.duration.rounded()),
             startedAt: ISO8601DateFormatter().string(from: record.startedAt),
-            task: extras.task, buddy: extras.buddy)
+            task: extras.task, buddy: extras.buddy,
+            guardianSeconds: extras.remindAfterMinutes.map { $0 * 60 })
         let (_, status) = try await send(
             hosts: link.hosts, port: link.port, fingerprint: link.fingerprint,
             path: "/session/start", token: link.token, body: body)
