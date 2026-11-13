@@ -141,7 +141,7 @@ struct FocusView: View {
             FocusBackdrop(timing: timing, flash: flash)
 
             GeometryReader { geo in
-                let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : 0.45)), 140)
+                let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : (geo.size.height < 700 ? 0.36 : 0.45))), 140)
 
                 VStack(spacing: 0) {
                     // Its own row, so the buttons can never sit on the title. Hidden (but still
