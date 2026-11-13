@@ -52,9 +52,40 @@ enum PCError: Error, Equatable {
     case badResponse
 }
 
+/// Extra things the phone tells the PC when a session starts. Older PC apps ignore them.
+struct PCSessionExtras: Equatable {
+    /// What the user is working on ("Studying"). The PC opens the workspace saved under this name.
+    var task: String?
+    /// Show the desk buddy (the brain in the corner of the PC screen) during the session.
+    var buddy: Bool
+
+    static let none = PCSessionExtras(task: nil, buddy: false)
+}
+
+/// What the PC sees during a session, for the line under the clock.
+struct PCActivity: Codable, Equatable {
+    /// The app in front on the PC, by its plain name ("Docs", "YouTube").
+    let app: String?
+    /// The front app belongs to the task's workspace (or is not on the distraction list).
+    let onTask: Bool
+    /// Times the buddy nudged the user back this session.
+    let nudges: Int
+}
+
 @MainActor
 protocol PCTransport {
     func pair(offer: PCPairingOffer, deviceName: String) async throws -> PCLinkRecord
     func startSession(_ record: SessionRecord, link: PCLinkRecord) async throws
+    func startSession(_ record: SessionRecord, extras: PCSessionExtras, link: PCLinkRecord) async throws
     func stopSession(id: UUID, link: PCLinkRecord) async throws
+    /// Nil when the PC has nothing to report yet.
+    func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity?
+}
+
+extension PCTransport {
+    func startSession(_ record: SessionRecord, extras: PCSessionExtras, link: PCLinkRecord) async throws {
+        try await startSession(record, link: link)
+    }
+
+    func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity? { nil }
 }

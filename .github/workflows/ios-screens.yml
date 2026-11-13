@@ -32,7 +32,7 @@ jobs:
           set -uo pipefail
           APP="$RUNNER_TEMP/D/Build/Products/Debug-iphonesimulator/LockIn.app"
           OUT="$RUNNER_TEMP/screens"; mkdir -p "$OUT"
-          SHOTS="moods ob-1 ob-2 ob-3 ob-5 ob-6 ob-7 ob-8 ob-9 ob-10 ob-11 ob-12 idle active quit quit-type locked proof keys goals report streak plus restrictions"
+          SHOTS="moods tasks ob-1 ob-2 ob-3 ob-5 ob-6 ob-7 ob-8 ob-9 ob-10 ob-11 ob-12 idle active quit quit-type locked proof keys goals report streak plus restrictions"
           pick() { xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin); n=sys.argv[1:]; print(next(x['udid'] for name in n for g in d['devices'].values() for x in g if x['name']==name))" "$@"; }
           shoot() { # device-id label shot [extra]
             xcrun simctl uninstall "$1" com.brandon132199.lockin >/dev/null 2>&1

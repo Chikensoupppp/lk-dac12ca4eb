@@ -62,6 +62,8 @@ final class PCLink: ObservableObject {
     /// Plain-language reason for the last problem, or nil.
     @Published private(set) var problem: String?
     @Published private(set) var isPairing = false
+    /// What the PC reports during a session (front app, nudges), or nil.
+    @Published private(set) var activity: PCActivity?
 
     private let store: PCLinkStoring
     private let transport: PCTransport
@@ -69,18 +71,22 @@ final class PCLink: ObservableObject {
     private var link: PCLinkRecord?
     private var activeSession: UUID?
     private var chain: Task<Void, Never>?
+    private var poll: Task<Void, Never>?
+    private let pollDelay: Duration
 
     /// Pass nothing for the real Keychain and the real PC client. Tests pass fakes. The real
     /// ones are built inside, on the main actor, as `RestrictionController` does.
     init(
         store: PCLinkStoring? = nil,
         transport: PCTransport? = nil,
-        retryDelay: Duration = .seconds(5)
+        retryDelay: Duration = .seconds(5),
+        pollDelay: Duration = .seconds(15)
     ) {
         let store = store ?? KeychainPCLinkStore()
         self.store = store
         self.transport = transport ?? PCClient()
         self.retryDelay = retryDelay
+        self.pollDelay = pollDelay
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-state") { store.clear() }
         #endif
@@ -117,6 +123,7 @@ final class PCLink: ObservableObject {
     }
 
     func forget() {
+        stopPolling()
         store.clear()
         link = nil
         activeSession = nil
@@ -125,16 +132,17 @@ final class PCLink: ObservableObject {
     }
 
     /// Call when a session starts, and again after a relaunch that restores a running session.
-    func sessionStarted(_ record: SessionRecord) {
+    func sessionStarted(_ record: SessionRecord, extras: PCSessionExtras = .none) {
         guard let link else { return }
         activeSession = record.id
-        enqueue { [self] in await runStart(record, link: link) }
+        enqueue { [self] in await runStart(record, extras: extras, link: link) }
     }
 
     /// Call when a session ends early or finishes. Safe to call more than once.
     func sessionEnded(_ id: UUID) {
         guard let link else { return }
         if activeSession == id { activeSession = nil }
+        stopPolling()
         enqueue { [self] in await runStop(id, link: link) }
     }
 
@@ -146,12 +154,13 @@ final class PCLink: ObservableObject {
         }
     }
 
-    private func runStart(_ record: SessionRecord, link: PCLinkRecord) async {
+    private func runStart(_ record: SessionRecord, extras: PCSessionExtras, link: PCLinkRecord) async {
         while activeSession == record.id, !record.timing.isFinished(at: .now) {
             do {
-                try await transport.startSession(record, link: link)
+                try await transport.startSession(record, extras: extras, link: link)
                 status = .connected
                 problem = nil
+                startPolling(record, link: link)
                 return
             } catch PCError.rejected(401) {
                 forget()
@@ -170,6 +179,35 @@ final class PCLink: ObservableObject {
                 try? await Task.sleep(for: retryDelay)
             }
         }
+    }
+
+    /// Asks the PC what it sees every so often during the session. A PC app too old to know
+    /// `/session/status` answers 404, and polling stops quietly.
+    private func startPolling(_ record: SessionRecord, link: PCLinkRecord) {
+        poll?.cancel()
+        poll = Task { @MainActor [weak self] in
+            while let self, !Task.isCancelled, self.activeSession == record.id, !record.timing.isFinished(at: .now) {
+                do {
+                    self.activity = try await self.transport.sessionStatus(id: record.id, link: link)
+                } catch PCError.rejected {
+                    return
+                } catch {
+                    // Offline for a moment; keep the last answer and try again.
+                }
+                try? await Task.sleep(for: self.pollDelay)
+            }
+        }
+    }
+
+    #if DEBUG
+    /// Screenshot runs only: show a PC report without a PC.
+    func debugShow(_ sample: PCActivity) { activity = sample }
+    #endif
+
+    private func stopPolling() {
+        poll?.cancel()
+        poll = nil
+        activity = nil
     }
 
     private func runStop(_ id: UUID, link: PCLinkRecord) async {

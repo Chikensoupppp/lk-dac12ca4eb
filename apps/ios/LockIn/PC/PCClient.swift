@@ -26,15 +26,32 @@ final class PCClient: PCTransport {
     }
 
     func startSession(_ record: SessionRecord, link: PCLinkRecord) async throws {
-        struct Body: Encodable { let id: String; let durationSeconds: Int; let startedAt: String }
+        try await startSession(record, extras: .none, link: link)
+    }
+
+    func startSession(_ record: SessionRecord, extras: PCSessionExtras, link: PCLinkRecord) async throws {
+        struct Body: Encodable {
+            let id: String; let durationSeconds: Int; let startedAt: String
+            let task: String?; let buddy: Bool
+        }
         let body = Body(
             id: record.id.uuidString,
             durationSeconds: Int(record.duration.rounded()),
-            startedAt: ISO8601DateFormatter().string(from: record.startedAt))
+            startedAt: ISO8601DateFormatter().string(from: record.startedAt),
+            task: extras.task, buddy: extras.buddy)
         let (_, status) = try await send(
             hosts: link.hosts, port: link.port, fingerprint: link.fingerprint,
             path: "/session/start", token: link.token, body: body)
         guard status == 200 else { throw PCError.rejected(status) }
+    }
+
+    func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity? {
+        struct Body: Encodable { let id: String }
+        let (data, status) = try await send(
+            hosts: link.hosts, port: link.port, fingerprint: link.fingerprint,
+            path: "/session/status", token: link.token, body: Body(id: id.uuidString))
+        guard status == 200 else { throw PCError.rejected(status) }
+        return try? JSONDecoder().decode(PCActivity.self, from: data)
     }
 
     func stopSession(id: UUID, link: PCLinkRecord) async throws {

@@ -42,6 +42,11 @@ struct PCSheet: View {
     @ObservedObject var pc: PCLink
     @Environment(\.dismiss) private var dismiss
     @State private var scanning = false
+    @AppStorage(PCSheet.buddyKey) private var buddy = true
+
+    static let buddyKey = "lockin.pc.buddy.v1"
+    /// The desk buddy is on unless the user turned it off.
+    static var buddyOn: Bool { UserDefaults.standard.object(forKey: buddyKey) as? Bool ?? true }
 
     private var headline: String {
         if pc.isPairing { return "Pairing with your PC..." }
@@ -78,6 +83,20 @@ struct PCSheet: View {
                             .accessibilityLabel("Scan the pairing QR code")
 
                         if pc.isPaired {
+                            Toggle(isOn: $buddy) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Desk buddy")
+                                        .font(Cream.rounded(17, .semibold))
+                                        .foregroundStyle(Matte.text)
+                                    Text("Your brain sits in the corner of the PC screen.")
+                                        .font(Cream.rounded(14, .medium))
+                                        .foregroundStyle(Matte.textSoft)
+                                }
+                            }
+                            .tint(Color(hex: 0x4BFF9A))
+                            .frame(minHeight: 44)
+                            .accessibilityIdentifier("pc-buddy")
+
                             Button { pc.forget() } label: { Text("FORGET THIS PC") }
                                 .buttonStyle(MatteButtonStyle(prominent: false))
                                 .accessibilityLabel("Forget this PC")

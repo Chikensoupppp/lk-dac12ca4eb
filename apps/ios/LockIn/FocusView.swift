@@ -30,6 +30,8 @@ struct FocusView: View {
     @State private var showKeys = false
     @State private var showPlusOffer = false
     @State private var showPC = false
+    @StateObject private var tasks = WorkTaskStore()
+    @State private var showTasks = false
     /// Proof Check: Screen Time access was turned off during this session.
     @State private var showProofBroken = false
     @StateObject private var goals = GoalStore()
@@ -91,7 +93,11 @@ struct FocusView: View {
         Task {
             try? await Task.sleep(for: .milliseconds(600))
             switch name {
-            case "active": startSession()
+            case "active":
+                tasks.add("Studying")
+                startSession()
+                pc.debugShow(PCActivity(app: "YouTube", onTask: false, nudges: 2))
+            case "tasks": showTasks = true
             case "quit", "quit-type": startSession(); showQuit = true
             case "locked": startSession(); QuitRules.markLocked(sessionID); showLockedExit = true
             case "proof": startSession(); showProofBroken = true
@@ -154,6 +160,16 @@ struct FocusView: View {
 
                     PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
 
+                    // In a session: the task, and what the PC sees (front app, buddy nudges).
+                    if isLocked, let line = sessionWorkLine {
+                        Text(line)
+                            .font(Cream.rounded(12, .medium))
+                            .foregroundStyle(pc.activity?.onTask == false ? Color(hex: 0xFF8A65) : Matte.textSoft)
+                            .lineLimit(1)
+                            .padding(.top, 4)
+                            .accessibilityIdentifier("pc-activity")
+                    }
+
                     if isLocked, let line = restrictions.statusLine {
                         Text(line)
                             .font(Cream.rounded(12, .medium))
@@ -177,6 +193,7 @@ struct FocusView: View {
                     Spacer(minLength: 16)
 
                     VStack(spacing: 10) {
+                        WorkTaskPill(tasks: tasks) { showTasks = true }
                         Text("MINUTES")
                             .font(Cream.rounded(11, .semibold))
                             .tracking(3)
@@ -203,6 +220,7 @@ struct FocusView: View {
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .sheet(isPresented: $showTasks) { WorkTaskSheet(tasks: tasks) { showTasks = false } }
         .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
@@ -264,7 +282,7 @@ struct FocusView: View {
             // Repairs shields left by a terminated run (expired, cancelled, or revoked).
             restrictions.reconcile(activeSessionID: timing == nil ? nil : sessionID)
             // A session restored after a relaunch tells the PC again. The PC ignores repeats.
-            if let timing, let sessionID { pc.sessionStarted(SessionRecord(id: sessionID, timing: timing)) }
+            if let timing, let sessionID { pc.sessionStarted(SessionRecord(id: sessionID, timing: timing), extras: pcExtras) }
             LiveCountdown.reconcile(currentRecord, locked: QuitRules.isLocked(sessionID))
         }
         .sensoryFeedback(.impact(weight: .heavy), trigger: startCount)
@@ -391,6 +409,22 @@ struct FocusView: View {
         report = ReportWeek(id: week)
     }
 
+    /// What the PC gets with a session start: the task (its workspace opens) and the buddy switch.
+    private var pcExtras: PCSessionExtras {
+        PCSessionExtras(task: tasks.selected, buddy: PCSheet.buddyOn)
+    }
+
+    /// "STUDYING · PC: DOCS" or "STUDYING · PC: YOUTUBE · NUDGED 2×".
+    private var sessionWorkLine: String? {
+        var parts: [String] = []
+        if let task = tasks.selected { parts.append(task.uppercased()) }
+        if let a = pc.activity {
+            if let app = a.app { parts.append("PC: " + app.uppercased()) }
+            if a.nudges > 0 { parts.append("NUDGED \(a.nudges)\u{00D7}") }
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " \u{00B7} ")
+    }
+
     private var currentRecord: SessionRecord? {
         guard let timing, let sessionID else { return nil }
         return SessionRecord(id: sessionID, timing: timing)
@@ -448,7 +482,7 @@ struct FocusView: View {
         QuitRules.markLocked(locked ? record.id : nil)
         restrictions.begin(record, locked: locked)
         LiveCountdown.start(record, locked: locked)
-        pc.sessionStarted(record)
+        pc.sessionStarted(record, extras: pcExtras)
         flashTask?.cancel()
         flash = nil
         startCount += 1
