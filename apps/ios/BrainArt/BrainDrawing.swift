@@ -75,26 +75,74 @@ enum BrainDrawing {
 
     // MARK: The brain, in a 364 by 300 drawing space
 
-    static let outline: Path = {
+    // A side view, like a real brain but cartoon: big round frontal lobe on the left, a narrower
+    // back, the temporal lobe hanging under the middle, the cerebellum tucked underneath, and the
+    // brainstem. The edge is lumpy (each stretch bulges out a little) so it reads as folds.
+
+    /// Clockwise points around the cerebrum, from the forehead, and how far each stretch bulges.
+    private static let cerebrumPoints: [(CGFloat, CGFloat)] = [
+        (46, 140), (50, 98), (80, 58), (124, 32), (176, 22), (228, 26), (274, 44), (308, 76), (326, 114),
+        (318, 150), (290, 176), (246, 198), (198, 218), (152, 222), (114, 208), (96, 190), (112, 176), (78, 176)
+    ]
+    private static let cerebrumBumps: [CGFloat] = [12, 12, 11, 10, 10, 10, 9, 8, 7, 7, 6, 6, 6, 7, 6, 3, -4, 8]
+    private static let cerebellumPoints: [(CGFloat, CGFloat)] = [
+        (244, 184), (278, 166), (312, 158), (332, 178), (326, 208), (294, 224), (256, 216)
+    ]
+    private static let cerebellumBumps: [CGFloat] = [5, 5, 6, 6, 6, 5, 4]
+
+    /// A closed outline whose stretches bulge outward (points go clockwise on screen).
+    private static func lumpy(_ pts: [(CGFloat, CGFloat)], _ bumps: [CGFloat]) -> Path {
         var p = Path()
-        p.move(to: CGPoint(x: 70, y: 132))
-        p.addCurve(to: CGPoint(x: 132, y: 48), control1: CGPoint(x: 36, y: 88), control2: CGPoint(x: 80, y: 32))
-        p.addCurve(to: CGPoint(x: 232, y: 48), control1: CGPoint(x: 150, y: 10), control2: CGPoint(x: 216, y: 10))
-        p.addCurve(to: CGPoint(x: 298, y: 126), control1: CGPoint(x: 282, y: 32), control2: CGPoint(x: 322, y: 82))
-        p.addCurve(to: CGPoint(x: 264, y: 216), control1: CGPoint(x: 332, y: 154), control2: CGPoint(x: 314, y: 216))
-        p.addCurve(to: CGPoint(x: 170, y: 232), control1: CGPoint(x: 252, y: 250), control2: CGPoint(x: 198, y: 260))
-        p.addCurve(to: CGPoint(x: 74, y: 204), control1: CGPoint(x: 136, y: 260), control2: CGPoint(x: 74, y: 242))
-        p.addCurve(to: CGPoint(x: 70, y: 132), control1: CGPoint(x: 34, y: 192), control2: CGPoint(x: 30, y: 142))
+        p.move(to: CGPoint(x: pts[0].0, y: pts[0].1))
+        for i in pts.indices {
+            let a = pts[i], b = pts[(i + 1) % pts.count]
+            let dx = b.0 - a.0, dy = b.1 - a.1
+            let len = max(sqrt(dx * dx + dy * dy), 1)
+            let k = bumps[i]
+            p.addQuadCurve(to: CGPoint(x: b.0, y: b.1),
+                           control: CGPoint(x: (a.0 + b.0) / 2 + dy / len * k, y: (a.1 + b.1) / 2 - dx / len * k))
+        }
         p.closeSubpath()
         return p
-    }()
+    }
+
+    static let outline: Path = lumpy(cerebrumPoints, cerebrumBumps)
+    static let cerebellum: Path = lumpy(cerebellumPoints, cerebellumBumps)
 
     static let wrinkles: Path = {
         var p = Path()
-        p.move(to: CGPoint(x: 132, y: 50)); p.addCurve(to: CGPoint(x: 164, y: 98), control1: CGPoint(x: 126, y: 76), control2: CGPoint(x: 142, y: 92))
-        p.move(to: CGPoint(x: 232, y: 50)); p.addCurve(to: CGPoint(x: 200, y: 98), control1: CGPoint(x: 238, y: 76), control2: CGPoint(x: 222, y: 92))
-        p.move(to: CGPoint(x: 100, y: 176)); p.addCurve(to: CGPoint(x: 154, y: 192), control1: CGPoint(x: 122, y: 166), control2: CGPoint(x: 144, y: 176))
-        p.move(to: CGPoint(x: 264, y: 168)); p.addCurve(to: CGPoint(x: 220, y: 188), control1: CGPoint(x: 248, y: 162), control2: CGPoint(x: 226, y: 172))
+        func c(_ a: (CGFloat, CGFloat), _ c1: (CGFloat, CGFloat), _ c2: (CGFloat, CGFloat), _ b: (CGFloat, CGFloat)) {
+            p.move(to: CGPoint(x: a.0, y: a.1))
+            p.addCurve(to: CGPoint(x: b.0, y: b.1), control1: CGPoint(x: c1.0, y: c1.1), control2: CGPoint(x: c2.0, y: c2.1))
+        }
+        func q(_ a: (CGFloat, CGFloat), _ ctl: (CGFloat, CGFloat), _ b: (CGFloat, CGFloat)) {
+            p.move(to: CGPoint(x: a.0, y: a.1))
+            p.addQuadCurve(to: CGPoint(x: b.0, y: b.1), control: CGPoint(x: ctl.0, y: ctl.1))
+        }
+        // Lateral fissure, kept clear of the face, with its short upward branch.
+        c((112, 180), (150, 188), (204, 184), (252, 166))
+        q((252, 166), (262, 150), (280, 146))
+        // Central sulcus.
+        c((200, 24), (184, 46), (210, 66), (186, 104))
+        // Frontal folds.
+        c((80, 72), (100, 60), (112, 86), (136, 74))
+        c((56, 112), (74, 100), (90, 126), (114, 110))
+        c((142, 40), (156, 56), (130, 70), (148, 92))
+        q((70, 152), (88, 140), (108, 150))
+        // Parietal and occipital folds.
+        c((236, 38), (222, 60), (256, 70), (238, 102))
+        c((270, 60), (286, 78), (262, 92), (282, 112))
+        c((304, 92), (290, 110), (316, 120), (300, 138))
+        // Temporal fold, right of the mouth.
+        q((222, 206), (240, 192), (268, 188))
+        return p
+    }()
+
+    /// The cerebellum's stripes.
+    static let folia: Path = {
+        var p = Path()
+        p.move(to: CGPoint(x: 258, y: 194)); p.addQuadCurve(to: CGPoint(x: 326, y: 184), control: CGPoint(x: 292, y: 182))
+        p.move(to: CGPoint(x: 262, y: 208)); p.addQuadCurve(to: CGPoint(x: 324, y: 200), control: CGPoint(x: 294, y: 198))
         return p
     }()
 
@@ -155,8 +203,20 @@ enum BrainDrawing {
         c.rotate(by: .degrees(sway + Double(droop) * 0.4))
         c.translateBy(x: -182, y: -150)
 
-        // Body: soft offset shadow, halftone dots, cream outline, folds.
-        c.fill(outline.applying(CGAffineTransform(translationX: 7, y: 6)), with: .color(color.opacity(0.35)))
+        // Brainstem first, so it comes out from under the brain.
+        c.stroke(line([CGPoint(x: 226, y: 196), CGPoint(x: 220, y: 292)]), with: .color(cream), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+
+        // Body: soft offset shadow, halftone dots, cream outline, folds. The cerebellum sits
+        // behind the cerebrum in a slightly deeper shade.
+        let shadow = CGAffineTransform(translationX: 7, y: 6)
+        c.fill(cerebellum.applying(shadow), with: .color(color.opacity(0.35)))
+        c.fill(outline.applying(shadow), with: .color(color.opacity(0.35)))
+        var back = c
+        back.clip(to: cerebellum)
+        back.fill(dots, with: .color(color.opacity(0.85)))
+        c.stroke(cerebellum, with: .color(cream), style: StrokeStyle(lineWidth: 7, lineJoin: .round))
+        c.stroke(folia, with: .color(cream.opacity(0.7)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+        c.fill(outline, with: .color(bg))
         var dotted = c
         dotted.clip(to: outline)
         dotted.fill(dots, with: .color(color))
@@ -178,7 +238,7 @@ enum BrainDrawing {
                      with: .color(ink), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
         }
         if st >= 4 {
-            c.stroke(line([CGPoint(x: 86, y: 196), CGPoint(x: 104, y: 202), CGPoint(x: 98, y: 216), CGPoint(x: 114, y: 226)]),
+            c.stroke(line([CGPoint(x: 62, y: 120), CGPoint(x: 80, y: 128), CGPoint(x: 72, y: 140), CGPoint(x: 90, y: 150)]),
                      with: .color(ink), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
             bandage(&c, x: 244, y: 160, w: 56, h: 20, angle: 20, pivot: CGPoint(x: 270, y: 170), slits: false)
         }
@@ -293,8 +353,6 @@ enum BrainDrawing {
             c.stroke(tongue, with: .color(ink), lineWidth: 5)
         }
 
-        // Stem.
-        c.stroke(line([CGPoint(x: 182, y: 268), CGPoint(x: 182, y: 294)]), with: .color(cream), style: StrokeStyle(lineWidth: 12, lineCap: .round))
     }
 }
 
