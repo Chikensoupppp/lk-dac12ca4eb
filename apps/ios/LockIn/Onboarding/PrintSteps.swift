@@ -582,32 +582,30 @@ struct LockAppsStep: View {
     }
 
     @ViewBuilder
-    /// Picked apps as chips: the real icon at a small size (Screen Time only gives a tiny icon,
-    /// so blowing it up makes it blurry), the app's name, and a lock. Before anything is picked,
-    /// a grid of empty dashed slots.
+    /// Picked apps as their own icons, no box and no shadow, at about 30 pt: the biggest size
+    /// that stays sharp (Screen Time only gives a tiny icon, so going bigger blurs it). A small
+    /// lock sits on each corner. Before anything is picked, a grid of empty dashed slots.
     @ViewBuilder
     private func tiles(_ has: Bool) -> some View {
         let apps = Array(restrictions.selection.applicationTokens)
         let cats = Array(restrictions.selection.categoryTokens)
         if has {
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(Array(apps.prefix(9).enumerated()), id: \.offset) { _, token in
-                    lockedChip(icon: { Label(token).labelStyle(.iconOnly) },
-                               name: { Label(token).labelStyle(.titleOnly) })
+            let columns = [GridItem(.adaptive(minimum: 44, maximum: 56), spacing: 18)]
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 18) {
+                ForEach(Array(apps.prefix(15).enumerated()), id: \.offset) { _, token in
+                    lockedIcon { Label(token).labelStyle(.iconOnly) }
                 }
-                if apps.count < 9 {
-                    ForEach(Array(cats.prefix(9 - apps.count).enumerated()), id: \.offset) { _, token in
-                        lockedChip(icon: { Label(token).labelStyle(.iconOnly) },
-                                   name: { Label(token).labelStyle(.titleOnly) })
+                if apps.count < 15 {
+                    ForEach(Array(cats.prefix(15 - apps.count).enumerated()), id: \.offset) { _, token in
+                        lockedIcon { Label(token).labelStyle(.iconOnly) }
                     }
                 }
-                if lockedCount > 9 {
-                    Text("+\(lockedCount - 9) MORE")
-                        .font(PrintFont.bold(17))
+                if lockedCount > 15 {
+                    Text("+\(lockedCount - 15)")
+                        .font(PrintFont.bold(16))
                         .foregroundStyle(Ink.paper)
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Ink.ink))
+                        .frame(width: 30, height: 30)
+                        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Ink.ink))
                 }
             }
             .accessibilityElement(children: .ignore)
@@ -627,27 +625,21 @@ struct LockAppsStep: View {
         }
     }
 
-    private func lockedChip<Icon: View, Name: View>(@ViewBuilder icon: () -> Icon, @ViewBuilder name: () -> Name) -> some View {
-        HStack(spacing: 10) {
-            // About 2x the size Screen Time draws it: still sharp enough at this size.
-            icon()
-                .scaleEffect(2.2)
-                .frame(width: 26, height: 26)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            name()
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "lock.fill")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(Ink.paper)
-                .frame(width: 22, height: 22)
-                .background(Circle().fill(Ink.ink))
-        }
-        .padding(.horizontal, 12)
-        .frame(minHeight: 52)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white))
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+    private func lockedIcon<Icon: View>(@ViewBuilder icon: () -> Icon) -> some View {
+        icon()
+            .scaleEffect(2.8)
+            .frame(width: 30, height: 30)
+            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .overlay(alignment: .bottomTrailing) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 15, height: 15)
+                    .background(Circle().fill(Ink.ink))
+                    .overlay(Circle().stroke(Ink.paper, lineWidth: 1.5))
+                    .offset(x: 5, y: 5)
+            }
+            .frame(width: 44, height: 44)
     }
 }
 
