@@ -21,7 +21,8 @@ struct PlusOfferStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.openURL) private var openURL
 
-    private static let cream = Ink.paper
+    /// Text color. Was cream on navy; the slide is on paper now.
+    private static let cream = Ink.ink
 
     private var buttonTitle: String {
         if plus.isPlus { return "CONTINUE" }
@@ -37,7 +38,7 @@ struct PlusOfferStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 12, background: Ink.navy, foreground: Self.cream, title: "Ready to\nlock in?",
+        PrintScaffold(step: 12, grain: true, title: "Ready to\nlock in?",
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
                       secondaryTitle: plus.isPlus ? nil : "Not now", secondaryAction: next,
                       footer: AnyView(footer)) {
@@ -87,7 +88,7 @@ struct PlusOfferStep: View {
     private var card: some View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(LinearGradient(colors: [Ink.blue, Color(hex: 0x1A2BB0)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .fill(LinearGradient(colors: [Ink.blue, Color(hex: 0x3445B8)], startPoint: .topLeading, endPoint: .bottomTrailing))
             Circle()
                 .stroke(Color.white.opacity(0.13), lineWidth: 18)
                 .frame(width: 180, height: 180)

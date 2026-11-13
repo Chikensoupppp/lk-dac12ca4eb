@@ -40,12 +40,12 @@ struct HeartBrainStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 5, background: HeartArt.bg, foreground: HeartArt.cream, title: Self.titles[index],
+        PrintScaffold(step: 5, grain: true, title: Self.titles[index],
                       titleSize: 46, primaryTitle: "CONTINUE", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
                 Text(Self.lines[index])
                     .font(PrintFont.bold(18))
-                    .foregroundStyle(HeartArt.cream.opacity(0.88))
+                    .foregroundStyle(Ink.ink.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
                 monitor
                 chips
@@ -53,7 +53,7 @@ struct HeartBrainStep: View {
                 if !notesShown {
                     Text(status.uppercased())
                         .font(PrintFont.head(30))
-                        .foregroundStyle(HeartArt.cream)
+                        .foregroundStyle(Ink.ink)
                         .contentTransition(.opacity)
                         .accessibilityLabel(status)
                 } else {
@@ -134,10 +134,10 @@ struct HeartBrainStep: View {
                 let on = i < hitCount
                 Image(systemName: HeartArt.tiles[i].symbol)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(on ? Color.white : Color(hex: 0x4E7A6D))
+                    .foregroundStyle(on ? Color.white : Ink.ink.opacity(0.35))
                     .frame(width: 34, height: 34)
                     .background(RoundedRectangle(cornerRadius: 9).fill(on ? HeartArt.tiles[i].color : Color.clear))
-                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(on ? Color.clear : Color(hex: 0x2A4A41), lineWidth: 2))
+                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(on ? Color.clear : Ink.ink.opacity(0.2), lineWidth: 2))
             }
         }
         .accessibilityHidden(true)
@@ -333,7 +333,7 @@ private struct StudyCard: View {
                 .padding(.top, 8)
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(HeartArt.cream))
+        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color.white).shadow(color: .black.opacity(0.15), radius: 10, y: 6))
     }
 }
 
@@ -347,9 +347,9 @@ private struct SpeechBubble: View {
             .font(PrintFont.bold(21))
             .foregroundStyle(HeartArt.bg)
             .padding(.horizontal, 15).padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(HeartArt.cream))
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white).shadow(color: .black.opacity(0.15), radius: 6, y: 4))
             .overlay(alignment: .bottomLeading) {
-                Triangle().fill(HeartArt.cream).frame(width: 16, height: 12).offset(x: 22, y: 11)
+                Triangle().fill(Color.white).frame(width: 16, height: 12).offset(x: 22, y: 11)
             }
             .fixedSize()
     }

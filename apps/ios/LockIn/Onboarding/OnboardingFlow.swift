@@ -12,8 +12,8 @@ struct OnboardingFlow: View {
     enum Step: Int {
         case hook = 1, guess, check, reveal, brain, pulls, lock, year, goals, plan, promise, plus
 
-        /// Dark slides get light status bar text.
-        var isDark: Bool { self == .brain || self == .plan || self == .plus }
+        /// Every slide is light now (calm palette), so the status bar text stays dark.
+        var isDark: Bool { false }
     }
 
     @ObservedObject var restrictions: RestrictionController

@@ -371,7 +371,7 @@ struct RevealStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 4, background: Ink.orange,
+        PrintScaffold(step: 4, grain: true,
                       primaryTitle: "NEXT", primaryEnabled: realIndex != nil, primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
                 DeviceActivityReport(.reveal(guess: guessIndex), filter: filter)
@@ -431,7 +431,7 @@ struct PullsStep: View {
     private static let canvas = CGSize(width: 345, height: 430)
 
     var body: some View {
-        PrintScaffold(step: 6, background: Ink.orange, title: "What pulls\nyou in?",
+        PrintScaffold(step: 6, grain: true, title: "What pulls\nyou in?",
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("Which apps tend to keep you longer than you planned?")
@@ -476,7 +476,7 @@ struct PullsStep: View {
                 .font(PrintFont.head(26))
                 .foregroundStyle(on ? Ink.paper : Ink.ink)
                 .frame(width: w, height: h)
-                .background(outline.fill(on ? Ink.ink : Ink.paper))
+                .background(outline.fill(on ? Ink.ink : Ink.orange))
                 .overlay(outline.stroke(Color.white, lineWidth: 6))
                 .shadow(color: .black.opacity(0.3), radius: 8, y: 8)
                 .overlay(alignment: .topTrailing) {
@@ -809,7 +809,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 10, background: Ink.night, foreground: Ink.paper, title: "Your first\nsession.") {
+        PrintScaffold(step: 10, grain: true, title: "Your first\nsession.") {
             VStack(spacing: 0) {
                 Capsule().fill(Color.black).frame(height: 14)
                     .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
@@ -828,7 +828,7 @@ struct PlanStep: View {
                 .padding(18)
                 .padding(.bottom, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(ReceiptEdge().fill(Ink.receipt))
+                .background(ReceiptEdge().fill(Color.white).shadow(color: .black.opacity(0.18), radius: 10, y: 8))
                 .padding(.horizontal, 36)
                 .offset(y: -6)
             }
@@ -838,12 +838,12 @@ struct PlanStep: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("25 MINUTES. ONE THING.")
                     .font(PrintFont.head(34))
-                    .foregroundStyle(Ink.paper)
+                    .foregroundStyle(Ink.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Text("A small start is still a start.")
                     .font(PrintFont.body(16))
-                    .foregroundStyle(Ink.paper.opacity(0.8))
+                    .foregroundStyle(Ink.ink.opacity(0.75))
             }
             .padding(.top, 12)
             .opacity(lines >= printout.count ? 1 : 0)

@@ -2,15 +2,18 @@ import SwiftUI
 
 /// The "printed" look of the first-run flow (docs/ONBOARDING_V2.md). Flat inks, and every slide is
 /// a different paper object: a poster, a receipt, stickers, a notebook, a contract, a member card.
+///
+/// Calm palette (2026-11-13): colors are softened, and only the first slide has a full colored
+/// background. Every other slide sits on paper and keeps its color on the object.
 enum Ink {
     static let paper = Color(hex: 0xF2ECE1)
     static let receipt = Color(hex: 0xF6F1E7)
     static let notebook = Color(hex: 0xFBF8F1)
     static let ink = Color(hex: 0x15120F)
-    static let orange = Color(hex: 0xFF4A1C)
-    static let blue = Color(hex: 0x2E4BFF)
+    static let orange = Color(hex: 0xE8845F)   // soft coral
+    static let blue = Color(hex: 0x4F63D8)
     static let navy = Color(hex: 0x0E1640)
-    static let red = Color(hex: 0xD9381E)
+    static let red = Color(hex: 0xD25A44)
     static let soft = Color(hex: 0x6E675E)
     static let night = Color(hex: 0x0A0B0D)
 }

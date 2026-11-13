@@ -7,10 +7,11 @@ import SwiftUI
 struct RevealView: View {
     let data: RevealData
 
-    private static let orange = Color(red: 1, green: 0.29, blue: 0.11)
+    /// Paper, to match the app slides (the calm palette keeps color off full backgrounds).
+    private static let paper = Color(red: 0.949, green: 0.925, blue: 0.882)
     private static let ink = Color(red: 0.08, green: 0.07, blue: 0.06)
     private static let receipt = Color(red: 0.965, green: 0.945, blue: 0.906)
-    private static let red = Color(red: 0.85, green: 0.22, blue: 0.12)
+    private static let red = Color(red: 0.82, green: 0.35, blue: 0.27)
     private static let bands = ["1\u{2013}2 HRS", "3\u{2013}4 HRS", "5\u{2013}6 HRS", "7+ HRS"]
     /// Top of each guess band, in hours; 7+ has no top.
     private static let bandTop: [Double] = [2, 4, 6, .infinity]
@@ -28,7 +29,7 @@ struct RevealView: View {
 
     var body: some View {
         ZStack {
-            Self.orange.ignoresSafeArea()
+            Self.paper.ignoresSafeArea()
             if data.daysWithData == 0 {
                 empty
             } else {
