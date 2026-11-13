@@ -17,8 +17,8 @@ struct HookStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        PrintScaffold(step: 1, background: Ink.orange, title: "You lose hours\nto your phone.", titleSize: 58,
-                      primaryTitle: "GUESS", primaryAction: next) {
+        PrintScaffold(step: 1, background: Ink.orange, title: "Where does\nthe time go?", titleSize: 58,
+                      primaryTitle: "TAKE A GUESS", primaryAction: next) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number)
                     .font(PrintFont.head(128))
@@ -27,9 +27,10 @@ struct HookStep: View {
                     .foregroundStyle(Ink.ink)
                     .monospacedDigit()
                     .accessibilityLabel("Unknown hours a day")
-                Text("a day. but how many?")
+                Text("How many hours do you spend on your phone each day?")
                     .font(PrintFont.mono(14))
                     .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 HStack(alignment: .top) {
                     Spacer()
                     ZStack(alignment: .bottomTrailing) {
@@ -49,10 +50,6 @@ struct HookStep: View {
                 }
                 .frame(height: 120)
                 .accessibilityHidden(true)
-                Text("TAKE A GUESS.")
-                    .font(PrintFont.head(30))
-                    .foregroundStyle(Ink.ink)
-                    .opacity(noteShown ? 1 : 0)
             }
         }
         .task {
@@ -92,8 +89,8 @@ struct GuessStep: View {
     let next: () -> Void
 
     var body: some View {
-        PrintScaffold(step: 2, title: "Your guess:\nhow long a day?", titleSize: 46, grain: true,
-                      primaryTitle: "NEXT", primaryEnabled: guessIndex != nil, primaryAction: next,
+        PrintScaffold(step: 2, title: "What\u{2019}s your\nguess?", titleSize: 46, grain: true,
+                      primaryTitle: "SEE MY ACTUAL TIME", primaryEnabled: guessIndex != nil, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: { guessIndex = nil; next() }) {
             VStack(alignment: .leading, spacing: 18) {
                 poster
@@ -108,13 +105,15 @@ struct GuessStep: View {
 
     private var poster: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("LOST:\nMY DAY")
+            Text("LOST:\nA FEW HOURS")
                 .font(PrintFont.head(76))
                 .lineSpacing(-14)
+                .lineLimit(2)
+                .minimumScaleFactor(0.55)
                 .foregroundStyle(Ink.orange)
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
-            Text("Last seen in my phone.\nAnswers to \u{201C}one more video\u{201D}.")
+            Text("Last seen: \u{201C}Just one more video.\u{201D}")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
                 .padding(.horizontal, 18)
@@ -210,9 +209,9 @@ struct CheckStep: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private static let reasons = [
-        "Reads Screen Time on this phone.",
-        "Stays on your phone. We never see it.",
-        "Also lets Lock In lock your apps."
+        "See your screen-time report.",
+        "Choose your distracting apps.",
+        "Block them during focus sessions."
     ]
 
     /// iOS shows its Screen Time box only once. After that the answer sticks until the app is
@@ -231,17 +230,22 @@ struct CheckStep: View {
         if asking { return "ASKING..." }
         switch access {
         // Apple's guidance: the screen before a system permission box says "Continue", not "Allow".
-        case .ask: return "CONTINUE"
+        // This button opens Apple's Screen Time permission box.
+        case .ask: return "ENABLE SCREEN TIME"
         case .on: return "NEXT"
         case .off: return "OPEN SETTINGS"
         }
     }
 
     var body: some View {
-        PrintScaffold(step: 3, title: "Now let\u{2019}s\ncheck.", grain: true,
+        PrintScaffold(step: 3, title: "Let\u{2019}s\ncheck.", grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
                       secondaryTitle: access == .on ? nil : "Not now (keep my guess)", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {
+                Text("See how much time you spend on your phone and choose which apps Lock In can pause.")
+                    .font(PrintFont.body(16))
+                    .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 printer
                 if access == .on {
                     Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
@@ -265,6 +269,11 @@ struct CheckStep: View {
                         .opacity(rows > i ? 1 : 0)
                         .offset(x: rows > i ? 0 : -12)
                     }
+                    // Kept from before: the privacy promise.
+                    Text("Your screen-time data stays on this iPhone.")
+                        .font(PrintFont.mono(12))
+                        .foregroundStyle(Ink.ink.opacity(0.65))
+                        .opacity(rows >= 3 ? 1 : 0)
                 }
             }
         }
@@ -423,6 +432,10 @@ struct PullsStep: View {
         PrintScaffold(step: 6, background: Ink.orange, title: "What pulls\nyou in?",
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
+            Text("Which apps tend to keep you longer than you planned?")
+                .font(PrintFont.mono(14))
+                .foregroundStyle(Ink.ink)
+                .fixedSize(horizontal: false, vertical: true)
             GeometryReader { g in
                 let scale = min(1, g.size.width / Self.canvas.width)
                 ZStack(alignment: .topLeading) {
@@ -515,14 +528,18 @@ struct LockAppsStep: View {
 
     var body: some View {
         let has = restrictions.hasSelection
-        PrintScaffold(step: 7, title: has ? "Locked." : "Now pick\nwhat to lock.", grain: true,
+        PrintScaffold(step: 7, title: has ? "Locked." : "Pick what\nto pause.", grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
             VStack(alignment: .leading, spacing: 18) {
-                Text(has ? "They lock when your timer runs." : "Pick them once. Change them any time.")
+                Text(has ? "They\u{2019}re blocked while your timer runs." : "Choose the apps you want to block while you\u{2019}re focusing.")
                     .font(PrintFont.mono(14))
                     .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("You can change your selection anytime.")
+                    .font(PrintFont.mono(12))
+                    .foregroundStyle(Ink.ink.opacity(0.65))
                 tiles(has)
                 if has {
                     Stamp(text: "\(lockedCount) locked", color: Ink.blue, size: 22, tilt: -5)
@@ -623,7 +640,8 @@ struct YearStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private var days: Int { OnboardingMath.daysPerYear(hoursIndex: hoursIndex) }
-    private var back: Int { OnboardingMath.daysBackIfHalved(hoursIndex: hoursIndex) }
+    /// Full days a 25-minute daily session adds up to in a 365-day year (6 at 25 minutes).
+    private var focusDays: Int { OnboardingMath.focusDaysPerYear(minutesPerDay: 25) }
 
     var body: some View {
         PrintScaffold(step: 8, title: "Your next\nyear.", grain: true,
@@ -636,16 +654,17 @@ struct YearStep: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .accessibilityLabel("\(days) days")
-                Text("on your phone, at this pace")
+                Text("That\u{2019}s how much time your current daily average would add up to over a year.")
                     .font(PrintFont.mono(15))
                     .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 Canvas { ctx, size in
                     let cols = 26, rows = 14, gap: CGFloat = 2
                     let cell = (size.width - gap * CGFloat(cols - 1)) / CGFloat(cols)
                     for i in 0..<(cols * rows) {
                         let rect = CGRect(x: CGFloat(i % cols) * (cell + gap), y: CGFloat(i / cols) * (cell + gap),
                                           width: cell, height: cell)
-                        let color: Color = reveal && i < back ? Ink.blue : (i < shown ? Ink.orange : Ink.ink.opacity(0.1))
+                        let color: Color = reveal && i < focusDays ? Ink.blue : (i < shown ? Ink.orange : Ink.ink.opacity(0.1))
                         ctx.fill(Path(rect), with: .color(color))
                     }
                 }
@@ -654,16 +673,29 @@ struct YearStep: View {
                 .background(Color.white)
                 .shadow(color: .black.opacity(0.2), radius: 10, y: 8)
                 .accessibilityHidden(true)
-                HStack(spacing: 14) {
-                    Text("+\(back)")
-                        .font(PrintFont.head(40))
-                        .foregroundStyle(Ink.blue)
-                        .padding(.horizontal, 16).padding(.vertical, 10)
-                        .overlay(Ellipse().stroke(Ink.blue, lineWidth: 3.5))
-                        .rotationEffect(.degrees(-4))
-                    Text("Cut it in half.\nGet \(back) days back.")
-                        .font(PrintFont.bold(24))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("But here\u{2019}s another number.")
+                        .font(PrintFont.mono(15))
                         .foregroundStyle(Ink.ink)
+                    HStack(spacing: 14) {
+                        Text("+\(focusDays)")
+                            .font(PrintFont.head(40))
+                            .foregroundStyle(Ink.blue)
+                            .padding(.horizontal, 16).padding(.vertical, 10)
+                            .overlay(Ellipse().stroke(Ink.blue, lineWidth: 3.5))
+                            .rotationEffect(.degrees(-4))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("25 MINUTES A DAY.")
+                                .font(PrintFont.head(30))
+                                .foregroundStyle(Ink.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                            Text("That\u{2019}s more than \(OnboardingMath.spelled(focusDays)) full days of focused time over a year.")
+                                .font(PrintFont.bold(17))
+                                .foregroundStyle(Ink.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                 }
                 .padding(.top, 10)
                 .opacity(reveal ? 1 : 0)
@@ -695,14 +727,18 @@ struct GoalsStep: View {
     let next: () -> Void
 
     private static let items: [(key: String, text: String)] = [
-        ("Study", "Study for real"), ("Train", "Train"), ("Create", "Build something"),
-        ("Sleep", "Sleep before 1"), ("Read", "Read"), ("People", "Time with people")
+        ("Study", "Studying"), ("Train", "Working out"), ("Create", "Creating something"),
+        ("Sleep", "Getting more rest"), ("Read", "Reading"), ("People", "Spending time with people")
     ]
 
     var body: some View {
-        PrintScaffold(step: 9, background: Ink.notebook, title: "What will you\ndo with them?",
+        PrintScaffold(step: 9, background: Ink.notebook, title: "What\u{2019}s worth\nyour time?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
+            Text("What would you like to make more room for?")
+                .font(PrintFont.mono(14))
+                .foregroundStyle(Ink.ink)
+                .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Self.items, id: \.key) { item in
                     let on = goals.contains(item.key)
@@ -725,6 +761,8 @@ struct GoalsStep: View {
                             Text(item.text)
                                 .font(PrintFont.hand(30))
                                 .foregroundStyle(Ink.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
                             Spacer(minLength: 0)
                         }
                         .padding(.leading, 34)
@@ -769,7 +807,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 10, background: Ink.night, foreground: Ink.paper, title: "Making\nyour plan.") {
+        PrintScaffold(step: 10, background: Ink.night, foreground: Ink.paper, title: "Your first\nsession.") {
             VStack(spacing: 0) {
                 Capsule().fill(Color.black).frame(height: 14)
                     .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
@@ -795,6 +833,19 @@ struct PlanStep: View {
             .padding(.top, 20)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Making your plan")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("25 MINUTES. ONE THING.")
+                    .font(PrintFont.head(34))
+                    .foregroundStyle(Ink.paper)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text("A small start is still a start.")
+                    .font(PrintFont.body(16))
+                    .foregroundStyle(Ink.paper.opacity(0.8))
+            }
+            .padding(.top, 12)
+            .opacity(lines >= printout.count ? 1 : 0)
+            .animation(.easeOut(duration: 0.4), value: lines)
         }
         .task {
             let reduce = effectiveReduceMotion(systemReduceMotion)
@@ -815,6 +866,8 @@ struct PlanStep: View {
 /// A contract. Hold the button for 2 seconds to sign it. VoiceOver gets a plain "Sign" action.
 struct PromiseStep: View {
     @Binding var signed: Bool
+    /// The goals picked on slide 9; the first one names what the 25 minutes are for.
+    var goals: Set<String> = []
     let next: () -> Void
     @State private var ink: CGFloat = 0
     @State private var holding = false
@@ -823,20 +876,35 @@ struct PromiseStep: View {
 
     private static let holdSeconds = 2.0
 
+    /// In slide 9's order, so the choice does not depend on set order.
+    private static let activities: [(key: String, phrase: String)] = [
+        ("Study", "my studies"), ("Train", "my workout"), ("Create", "my project"),
+        ("Sleep", "my rest"), ("Read", "my reading"), ("People", "the people around me")
+    ]
+
+    private var activity: String {
+        Self.activities.first { goals.contains($0.key) }?.phrase ?? "one thing"
+    }
+
     var body: some View {
-        PrintScaffold(step: 11, title: "Make a\npromise.", grain: true,
+        PrintScaffold(step: 11, title: "One small\ncommitment.", grain: true,
                       primaryView: AnyView(holdButton),
                       secondaryTitle: "Not now", secondaryAction: { signed = false; next() }) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("AGREEMENT").font(PrintFont.mono(12)).tracking(2).foregroundStyle(Ink.ink.opacity(0.6))
-                (Text("I will put my phone down for ")
+                (Text("I\u{2019}ll give \(activity) my attention for ")
                  + Text("25 minutes").bold().foregroundColor(Ink.ink)
-                 + Text(" today."))
+                 + Text("."))
                     .font(PrintFont.bold(24))
                     .foregroundStyle(Ink.ink)
-                Text("No \u{201C}just one more.\u{201D}")
-                    .font(PrintFont.bold(24))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("If I get distracted, I\u{2019}ll come back to it.")
+                    .font(PrintFont.bold(20))
                     .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("No need to be perfect.")
+                    .font(PrintFont.mono(12))
+                    .foregroundStyle(Ink.ink.opacity(0.6))
                 ZStack(alignment: .bottomLeading) {
                     Signature()
                         .trim(from: 0, to: ink)
@@ -864,9 +932,12 @@ struct PromiseStep: View {
             GeometryReader { g in
                 Rectangle().fill(Ink.orange).frame(width: g.size.width * ink)
             }
-            Text(done ? "SIGNED" : holding ? "KEEP HOLDING" : "HOLD TO SIGN")
+            Text(done ? "INTENTION SET" : holding ? "KEEP HOLDING" : "HOLD TO SET MY INTENTION")
                 .font(PrintFont.bold(19)).tracking(2)
                 .foregroundStyle(Ink.paper)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, 12)
                 .frame(maxWidth: .infinity)
         }
         .frame(height: 60)
@@ -882,7 +953,7 @@ struct PromiseStep: View {
         }
         .sensoryFeedback(.success, trigger: done)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Hold to sign the promise")
+        .accessibilityLabel("Hold to set your intention")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: "Sign") { commit() }
         .accessibilityIdentifier("hold-to-sign")

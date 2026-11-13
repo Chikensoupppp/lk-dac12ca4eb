@@ -210,10 +210,10 @@ final class FocusUITests: XCTestCase {
             button.tap()
         }
 
-        step("onboarding-1-hook", tap: "GUESS")
-        step("onboarding-2-guess", tap: "NEXT", pre: { app.buttons["5\u{2013}6 hours"].tap() })
-        // In UI tests "Continue" skips the Screen Time box; there is no access, so no reveal slide.
-        step("onboarding-3-check", tap: "CONTINUE")
+        step("onboarding-1-hook", tap: "TAKE A GUESS")
+        step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
+        // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
+        step("onboarding-3-check", tap: "ENABLE SCREEN TIME")
         step("onboarding-5-brain", tap: "CONTINUE")
         step("onboarding-6-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
         // Back returns to the previous slide with the choice kept.
@@ -223,8 +223,8 @@ final class FocusUITests: XCTestCase {
         app.buttons["NEXT"].tap()
         step("onboarding-7-lock", tap: "Skip for now")
         step("onboarding-8-year", tap: "LET\u{2019}S DO IT")
-        step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Study for real"].tap() })
-        // "Making your plan" moves on by itself.
+        step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
+        // "Your first session" moves on by itself.
         let hold = app.buttons["hold-to-sign"]
         XCTAssertTrue(hold.waitForExistence(timeout: 15))
         sleep(1)
@@ -249,7 +249,7 @@ final class FocusUITests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label)")
             button.tap()
         }
-        tap("GUESS")
+        tap("TAKE A GUESS")
         tap("Skip")                      // guess
         tap("Not now (keep my guess)")   // Screen Time
         tap("Skip")                      // what pulls you in
@@ -274,6 +274,6 @@ final class FocusUITests: XCTestCase {
         let replay = app.buttons["Replay intro"]
         XCTAssertTrue(replay.waitForExistence(timeout: 5))
         replay.tap()
-        XCTAssertTrue(app.buttons["GUESS"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["TAKE A GUESS"].waitForExistence(timeout: 10))
     }
 }

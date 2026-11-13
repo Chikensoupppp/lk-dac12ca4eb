@@ -13,6 +13,8 @@ enum PlusLinks {
 /// from the App Store, an easy "Not now", and Restore / Terms / Privacy.
 struct PlusOfferStep: View {
     @ObservedObject var plus: PlusStore
+    /// Last slide of the first run (true) or the sheet behind the Locked mode switch (false).
+    var intro = true
     let next: () -> Void
     @State private var cardIn = false
     @State private var rows = 0
@@ -35,16 +37,27 @@ struct PlusOfferStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 12, background: Ink.navy, foreground: Self.cream, title: "Your plan\nis ready.",
+        PrintScaffold(step: 12, background: Ink.navy, foreground: Self.cream, title: "Ready to\nlock in?",
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
                       secondaryTitle: plus.isPlus ? nil : "Not now", secondaryAction: next,
                       footer: AnyView(footer)) {
             VStack(alignment: .leading, spacing: 22) {
+                if intro {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Your first focus session is ready.")
+                            .font(PrintFont.bold(20))
+                            .foregroundStyle(Self.cream)
+                        Text("One button. One thing to focus on.")
+                            .font(PrintFont.body(15, .medium))
+                            .foregroundStyle(Self.cream.opacity(0.8))
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                }
                 card
                     .rotationEffect(.degrees(cardIn ? -4 : -14))
                     .scaleEffect(cardIn ? 1 : 0.6)
                     .opacity(cardIn ? 1 : 0)
-                Text("Plus links your PC to your phone, so one tap starts both. More PC tools come to Plus as they ship.")
+                Text("Plus adds Locked mode: no quit button. Only your Key Holder, or one emergency exit a week, can end a session early.")
                     .font(PrintFont.body(15, .medium))
                     .foregroundStyle(Self.cream.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
@@ -109,7 +122,7 @@ struct PlusOfferStep: View {
                 .fixedSize(horizontal: false, vertical: true)
         } else if let days = plus.trialDays, let price = plus.priceLine {
             VStack(alignment: .leading, spacing: 16) {
-                stop(0, filled: true, title: "Today", line: "Everything unlocked. $0.")
+                stop(0, filled: true, title: "Today", line: "Plus unlocked. $0.")
                 stop(1, filled: false, title: dayTitle(max(days - 2, 1)), line: "We remind you.")
                 stop(2, filled: false, title: dayTitle(days), line: "\(price). Cancel any time.")
             }

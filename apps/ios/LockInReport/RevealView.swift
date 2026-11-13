@@ -2,7 +2,7 @@ import FamilyControls
 import ManagedSettings
 import SwiftUI
 
-/// "Oh wow." The guess crossed out, the real daily average, and a printed receipt of the top apps.
+/// "Here's your number." The guess (crossed out when it was off), the real daily average, and a printed receipt of the top apps.
 /// Same inks as the app's printed onboarding (copied here; the extension cannot share app code).
 struct RevealView: View {
     let data: RevealData
@@ -18,11 +18,12 @@ struct RevealView: View {
 
     private var hours: Double { data.perDay / 3600 }
 
-    private var headline: String {
-        guard let g = data.guess else { return hours >= 3 ? "Oh wow." : "Not bad." }
-        if hours > Self.bandTop[g] { return "Oh wow." }
-        if hours < Self.bandBottom[g] { return "Not bad." }
-        return "Spot on."
+    /// How the real average compares with the band the user guessed.
+    private var verdict: String? {
+        guard let g = data.guess else { return nil }
+        if hours > Self.bandTop[g] { return "That\u{2019}s more than you guessed." }
+        if hours < Self.bandBottom[g] { return "That\u{2019}s less than you guessed." }
+        return "You were close."
     }
 
     var body: some View {
@@ -50,12 +51,15 @@ struct RevealView: View {
 
     private var filled: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(headline.uppercased())
+            Text("HERE\u{2019}S YOUR NUMBER.")
                 .font(.system(size: 56, weight: .black).width(.compressed))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             if let g = data.guess {
                 HStack(spacing: 6) {
-                    Text("YOU GUESSED")
-                    Text(Self.bands[g]).strikethrough(true, color: Self.ink)
+                    Text("YOU GUESSED:")
+                    // Crossed out only when the guess was off.
+                    Text(Self.bands[g]).strikethrough(verdict != "You were close.", color: Self.ink)
                 }
                 .font(.system(size: 14, weight: .heavy, design: .monospaced))
             }
@@ -63,8 +67,12 @@ struct RevealView: View {
                 .font(.system(size: 110, weight: .black).width(.compressed))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-            Text("a day, on average this week")
+            Text("That\u{2019}s your average daily screen time.")
                 .font(.system(size: 14, weight: .semibold, design: .monospaced))
+            if let verdict {
+                Text(verdict)
+                    .font(.system(size: 20, weight: .heavy).width(.condensed))
+            }
             receipt
                 .padding(.top, 10)
             Text("THAT\u{2019}S \(Int((hours * 365 / 24).rounded())) DAYS A YEAR.")

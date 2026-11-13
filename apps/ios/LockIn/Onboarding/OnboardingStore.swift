@@ -41,6 +41,18 @@ enum OnboardingMath {
         return Int((hoursMidpoints[hoursIndex] * 365 / 24).rounded())
     }
 
+    /// Full 24-hour days a daily habit adds up to over a 365-day year, rounded down so
+    /// "more than N days" stays true (25 minutes a day is 6.3 days).
+    static func focusDaysPerYear(minutesPerDay: Int) -> Int {
+        Int(Double(minutesPerDay * 365) / (24 * 60))
+    }
+
+    /// Small numbers as words ("six"); larger ones stay digits.
+    static func spelled(_ n: Int) -> String {
+        let words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+        return words.indices.contains(n) ? words[n] : "\(n)"
+    }
+
     /// Days won back if the time were cut in half.
     static func daysBackIfHalved(hoursIndex: Int) -> Int {
         daysPerYear(hoursIndex: hoursIndex) / 2

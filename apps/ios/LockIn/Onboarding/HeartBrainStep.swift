@@ -31,12 +31,19 @@ struct HeartBrainStep: View {
     private var maxStage: Int { [1, 2, 4, 5][index] }
     private var hours: Double { [1.5, 3.5, 5.5, 7.5][index] }
     private static let titles = ["1\u{2013}2 hours\na day.", "3\u{2013}4 hours\na day.", "5\u{2013}6 hours\na day.", "7+ hours\na day."]
+    /// One line per hours band, under the headline.
+    private static let lines = [
+        "A little more intentional time can go a long way.",
+        "What would you do with a little of that time back?",
+        "That\u{2019}s a lot of time. How much of it is really yours to choose?",
+        "You don\u{2019}t have to change everything today. Start with 25 minutes."
+    ]
 
     var body: some View {
         PrintScaffold(step: 5, background: HeartArt.bg, foreground: HeartArt.cream, title: Self.titles[index],
                       titleSize: 46, primaryTitle: "CONTINUE", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
-                Text("This is your brain over one day.\nEach hit = more time on your phone.")
+                Text(Self.lines[index])
                     .font(PrintFont.bold(18))
                     .foregroundStyle(HeartArt.cream.opacity(0.88))
                     .fixedSize(horizontal: false, vertical: true)
@@ -205,7 +212,7 @@ struct HeartBrainStep: View {
             stage = hits == 1 ? 0 : maxStage
             hitCount = hits
             minutes = hours * 60
-            status = hits == 1 ? "Well done. Keep it like that." : HeartArt.status[maxStage]
+            status = hits == 1 ? HeartArt.lightDay : HeartArt.status[maxStage]
             notesShown = true
             return
         }
@@ -247,7 +254,7 @@ struct HeartBrainStep: View {
             stage = 0
             squash = 1
             withAnimation(.spring(response: 0.45, dampingFraction: 0.4)) { squash = 0 }
-            status = "Well done. Keep it like that."
+            status = HeartArt.lightDay
             withAnimation(.spring(response: 0.36, dampingFraction: 0.6)) { bubble = "I feel great!" }
         } else if stage == 5 {
             withAnimation(.easeOut(duration: 0.2)) { bubble = nil }
@@ -271,12 +278,12 @@ private struct StudyCard: View {
         let source: String
     }
 
-    private static let m30 = Note(tag: "30 MIN", text: "Students who cut social media to 30 min a day felt less lonely and less depressed in 3 weeks.", source: "U. of Pennsylvania, 2018")
-    private static let mod = Note(tag: "1\u{2013}2H", text: "Up to about 2 hours a day was not linked to harm in 120,000 teens.", source: "Oxford, Psychological Science, 2017")
-    private static let h3 = Note(tag: "3H+", text: "Teens on social media over 3 hours a day had 1.6\u{00D7} the risk of anxiety and depression signs.", source: "Johns Hopkins, JAMA Psychiatry, 2019")
-    private static let h6 = Note(tag: "6H+", text: "Over 6 hours a day, that risk went up to 1.8\u{00D7}.", source: "Johns Hopkins, JAMA Psychiatry, 2019")
-    private static let h7 = Note(tag: "7H+", text: "Teens on screens 7+ hours a day were over 2\u{00D7} as likely to be diagnosed with depression or anxiety.", source: "Twenge & Campbell, 2018")
-    private static let sleep = Note(tag: "SLEEP", text: "More screen time meant worse sleep in 9 of 10 studies.", source: "Sleep Medicine Reviews, 2015")
+    private static let m30 = Note(tag: "30 MIN", text: "In a small study, students who limited social media to 30 minutes a day for 3 weeks reported feeling less lonely and less depressed.", source: "Hunt et al., U. of Pennsylvania, 2018")
+    private static let mod = Note(tag: "1\u{2013}2H", text: "In a study of 120,000 UK teens, moderate use, around 1\u{2013}2 hours on weekdays, was not linked to lower well-being.", source: "Przybylski & Weinstein, Psychological Science, 2017")
+    private static let h3 = Note(tag: "3H+", text: "Teens who used social media more than 3 hours a day were more likely to report anxiety or depression symptoms.", source: "Riehm et al., JAMA Psychiatry, 2019")
+    private static let h6 = Note(tag: "6H+", text: "In the same study, the link was stronger for teens using social media more than 6 hours a day.", source: "Riehm et al., JAMA Psychiatry, 2019")
+    private static let h7 = Note(tag: "7H+", text: "Teens with 7+ hours of daily screen time were about twice as likely as light users to have been diagnosed with anxiety or depression.", source: "Twenge & Campbell, Preventive Medicine Reports, 2018")
+    private static let sleep = Note(tag: "SLEEP", text: "Most of the 67 studies in one review linked more screen time to later bedtimes or less sleep in kids and teens.", source: "Hale & Guan, Sleep Medicine Reviews, 2015")
 
     /// (note, is good news, is "you")
     private var rows: (head: String, items: [(Note, Bool, Bool)]) {
@@ -320,7 +327,7 @@ private struct StudyCard: View {
                 }
                 .accessibilityElement(children: .combine)
             }
-            Text("Studies show links, not proof. Not medical advice.")
+            Text("These studies show links, not cause and effect. Not medical advice.")
                 .font(PrintFont.mono(10, .regular))
                 .foregroundStyle(HeartArt.bg.opacity(0.55))
                 .padding(.top, 8)
@@ -386,8 +393,10 @@ private enum HeartArt {
     static let alarm = BrainDrawing.alarm
     static let cream = BrainDrawing.cream
     static let bpmBase = BrainDrawing.bpmBase
-    static let lines: [String?] = [nil, "just 1 more\u{2026}", "ok, 1 more\u{2026}", "12 more minutes\u{2026}", "no more brain rot plsss\u{2026}", nil]
-    static let status = ["Your brain feels fine.", "Your brain is tired.", "Your brain is dizzy.", "Your brain is fading.", "Your brain is begging.", "Your brain is gone."]
+    static let lines: [String?] = [nil, "just 1 more\u{2026}", "ok, 1 more\u{2026}", "12 more minutes\u{2026}", "wait, what was I doing?", nil]
+    /// What the day feels like as the hours pile up. About attention and time, not health.
+    static let status = ["Still in control.", "A little distracted.", "Pulled in a few directions.", "Hard to get back on track.", "Running on autopilot.", "Where did the day go?"]
+    static let lightDay = "Nice. Keep it that way."
     static let pows = ["BONK!", "POW!", "WHAM!", "SMACK!", "K.O."]
     /// Generic app tiles, no real logos.
     static let tiles: [(symbol: String, color: Color)] = [

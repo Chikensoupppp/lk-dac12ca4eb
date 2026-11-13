@@ -206,7 +206,7 @@ struct FocusView: View {
         .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
-        .sheet(isPresented: $showPlusOffer) { PlusOfferStep(plus: plus) { showPlusOffer = false } }
+        .sheet(isPresented: $showPlusOffer) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
         .fullScreenCover(isPresented: $showQuit) {
             QuitSheet(onQuit: { showQuit = false; endSession() }, onStay: { showQuit = false })
         }
