@@ -316,8 +316,9 @@ struct FocusView: View {
     /// Top row: the test menu on the left, goal / keys / restrictions on the right.
     private var topBar: some View {
         HStack(spacing: 8) {
-            // TEST MENU: replays the first-run slides or shows the streak screen. Remove before a
-            // public release.
+            #if DEBUG
+            // TEST MENU, debug builds only (never in TestFlight or the App Store): replays the
+            // first-run slides or shows the streak screen.
             Menu {
                 Button("Replay intro") { onboardingDone = false }
                     .accessibilityIdentifier("replay-intro")
@@ -338,6 +339,7 @@ struct FocusView: View {
                     .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
             }
             .accessibilityIdentifier("test-menu")
+            #endif
             Spacer(minLength: 8)
             roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
             roundButton("key.fill", size: 16, label: "Keys") { showKeys = true }
