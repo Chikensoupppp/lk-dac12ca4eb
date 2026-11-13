@@ -582,27 +582,39 @@ struct LockAppsStep: View {
     }
 
     @ViewBuilder
+    /// Picked apps as chips: the real icon at a small size (Screen Time only gives a tiny icon,
+    /// so blowing it up makes it blurry), the app's name, and a lock. Before anything is picked,
+    /// a grid of empty dashed slots.
+    @ViewBuilder
     private func tiles(_ has: Bool) -> some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 4)
         let apps = Array(restrictions.selection.applicationTokens)
         let cats = Array(restrictions.selection.categoryTokens)
-        LazyVGrid(columns: columns, spacing: 14) {
-            if has {
-                ForEach(Array(apps.prefix(11).enumerated()), id: \.offset) { _, token in
-                    lockedTile { Label(token).labelStyle(.iconOnly) }
+        if has {
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(Array(apps.prefix(9).enumerated()), id: \.offset) { _, token in
+                    lockedChip(icon: { Label(token).labelStyle(.iconOnly) },
+                               name: { Label(token).labelStyle(.titleOnly) })
                 }
-                if apps.count < 11 {
-                    ForEach(Array(cats.prefix(11 - apps.count).enumerated()), id: \.offset) { _, token in
-                        lockedTile { Label(token).labelStyle(.iconOnly) }
+                if apps.count < 9 {
+                    ForEach(Array(cats.prefix(9 - apps.count).enumerated()), id: \.offset) { _, token in
+                        lockedChip(icon: { Label(token).labelStyle(.iconOnly) },
+                                   name: { Label(token).labelStyle(.titleOnly) })
                     }
                 }
-                if lockedCount > 11 {
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .fill(Ink.ink)
-                        .aspectRatio(1, contentMode: .fit)
-                        .overlay(Text("+\(lockedCount - 11)").font(PrintFont.head(24)).foregroundStyle(Ink.paper))
+                if lockedCount > 9 {
+                    Text("+\(lockedCount - 9) MORE")
+                        .font(PrintFont.bold(17))
+                        .foregroundStyle(Ink.paper)
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Ink.ink))
                 }
-            } else {
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(lockedCount) apps chosen")
+        } else {
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 4)
+            LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(0..<12, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
                         .strokeBorder(Ink.ink.opacity(0.4), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
@@ -610,40 +622,32 @@ struct LockAppsStep: View {
                         .overlay(Image(systemName: "plus").foregroundStyle(Ink.ink.opacity(0.5)))
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("No apps chosen yet")
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(has ? "\(lockedCount) apps chosen" : "No apps chosen yet")
     }
 
-    /// The app's own icon filling most of the tile, like on the home screen, with a lock badge
-    /// that sits on the corner (outside the clip, so it is never cut off).
-    private func lockedTile<Icon: View>(@ViewBuilder icon: () -> Icon) -> some View {
-        RoundedRectangle(cornerRadius: 15, style: .continuous)
-            .fill(Color.white)
-            .aspectRatio(1, contentMode: .fit)
-            .overlay {
-                // Screen Time draws the icon about 10.4 pt wide (measured on an iPhone at 2.4x it
-                // was 25 pt), so scale it to fill the whole tile, edge to edge, on any phone.
-                GeometryReader { g in
-                    let target = max(g.size.width, 1)
-                    icon()
-                        .scaleEffect(target / 10.4)
-                        .frame(width: target, height: target)
-                        .clipShape(RoundedRectangle(cornerRadius: target * 0.22, style: .continuous))
-                        .frame(width: g.size.width, height: g.size.height)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-            .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
-            .overlay(alignment: .bottomTrailing) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 24, height: 24)
-                    .background(Circle().fill(Ink.ink))
-                    .overlay(Circle().stroke(Ink.paper, lineWidth: 2))
-                    .offset(x: 6, y: 6)
-            }
+    private func lockedChip<Icon: View, Name: View>(@ViewBuilder icon: () -> Icon, @ViewBuilder name: () -> Name) -> some View {
+        HStack(spacing: 10) {
+            // About 2x the size Screen Time draws it: still sharp enough at this size.
+            icon()
+                .scaleEffect(2.2)
+                .frame(width: 26, height: 26)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            name()
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "lock.fill")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Ink.paper)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(Ink.ink))
+        }
+        .padding(.horizontal, 12)
+        .frame(minHeight: 52)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white))
+        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
     }
 }
 
