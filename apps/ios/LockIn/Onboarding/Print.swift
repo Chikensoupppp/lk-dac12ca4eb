@@ -3,20 +3,20 @@ import SwiftUI
 /// The "printed" look of the first-run flow (docs/ONBOARDING_V2.md). Flat inks, and every slide is
 /// a different paper object: a poster, a receipt, stickers, a notebook, a contract, a member card.
 ///
-/// Riso palette (2026-11-13): real risograph inks, Medium Blue and Sunflower, on blue-grey newsprint.
+/// Riso palette (2026-11-13): real risograph inks, Medium Blue and Sunflower, on grey newsprint.
 /// Only the first slide has a full blue background; every other slide sits on newsprint and keeps
 /// its color on the object. Big numbers get a thin sunflower "misprint" edge, like two-ink riso.
 enum Ink {
-    static let paper = Color(hex: 0xE1E6EB)      // blue-grey newsprint
-    static let receipt = Color(hex: 0xEDF2F8)
-    static let notebook = Color(hex: 0xEEF3F9)
-    static let ink = Color(hex: 0x1B1D22)        // riso black
+    static let paper = Color(hex: 0xE7E8E3)      // newsprint
+    static let receipt = Color(hex: 0xF3F4F0)
+    static let notebook = Color(hex: 0xF4F5F1)
+    static let ink = Color(hex: 0x1B1B1B)        // riso black
     static let orange = Color(hex: 0x3255A4)   // riso Medium Blue (the object color)
     static let blue = Color(hex: 0x3255A4)     // riso Medium Blue
     static let sun = Color(hex: 0xFFB511)      // riso Sunflower, small highlights only
     static let navy = Color(hex: 0x0E1640)
     static let red = Color(hex: 0xD25A44)
-    static let soft = Color(hex: 0x5C6266)
+    static let soft = Color(hex: 0x62645E)
     static let night = Color(hex: 0x0A0B0D)
 }
 

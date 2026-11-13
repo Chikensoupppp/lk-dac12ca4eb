@@ -8,7 +8,7 @@ struct RevealView: View {
     let data: RevealData
 
     /// Paper, to match the app slides (the calm palette keeps color off full backgrounds).
-    private static let paper = Color(red: 0.882, green: 0.902, blue: 0.922)
+    private static let paper = Color(red: 0.906, green: 0.910, blue: 0.890)
     private static let ink = Color(red: 0.08, green: 0.07, blue: 0.06)
     private static let receipt = Color(red: 0.965, green: 0.945, blue: 0.906)
     private static let red = Color(red: 0.82, green: 0.35, blue: 0.27)

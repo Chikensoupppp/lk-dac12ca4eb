@@ -1,28 +1,28 @@
 import SwiftUI
 
-/// Focus screen palette. Since 2026-11-13 it is the riso print look of the slides: blue-grey
+/// Focus screen palette. Since 2026-11-13 it is the riso print look of the slides: grey
 /// newsprint, riso black text, a riso Medium Blue ring (`Ink` in Onboarding/Print.swift).
 /// The name stays "Matte" so every screen that uses it changes together.
 enum Matte {
-    static let bgTop = Color(hex: 0xE4E9EE)
-    static let bgMid = Color(hex: 0xE1E6EB)
-    static let bgBottom = Color(hex: 0xDCE1E6)
-    static let text = Color(hex: 0x1B1D22)
+    static let bgTop = Color(hex: 0xEAEBE6)
+    static let bgMid = Color(hex: 0xE7E8E3)
+    static let bgBottom = Color(hex: 0xE2E3DE)
+    static let text = Color(hex: 0x1B1B1B)
     /// Secondary labels. About 5.5:1 on newsprint.
-    static let textSoft = Color(hex: 0x51585D)
-    static let textDim = Color(hex: 0x596064)
-    static let textQuiet = Color(hex: 0x262C32)
-    static let faceTop = Color(hex: 0xF1F5FB)
-    static let faceMid = Color(hex: 0xEAEFF4)
-    static let faceLow = Color(hex: 0xE0E5E9)
-    static let track = Color(hex: 0xD2D8DA)
-    static let trackShade = Color(hex: 0xC2C8C9)
-    static let tick = Color(hex: 0xB2B9B9)
-    static let tickMajor = Color(hex: 0x747C7D)
-    static let tray = Color(hex: 0xEDF2F8)
+    static let textSoft = Color(hex: 0x575A55)
+    static let textDim = Color(hex: 0x5F625C)
+    static let textQuiet = Color(hex: 0x2C2E2A)
+    static let faceTop = Color(hex: 0xF7F7F3)
+    static let faceMid = Color(hex: 0xF0F1EC)
+    static let faceLow = Color(hex: 0xE6E7E1)
+    static let track = Color(hex: 0xD8DAD2)
+    static let trackShade = Color(hex: 0xC8CAC1)
+    static let tick = Color(hex: 0xB8BBB1)
+    static let tickMajor = Color(hex: 0x7A7E75)
+    static let tray = Color(hex: 0xF3F4F0)
     static let chipHigh = Color(hex: 0x2A2B28)
     static let chipLow = Color(hex: 0x1B1B1B)
-    static let edge = Color(hex: 0xBEC4C5)
+    static let edge = Color(hex: 0xC4C6BD)
     static let tip = Color(hex: 0xFFB511)
     static let latch = Color(hex: 0x3255A4)
     /// Riso Medium Blue: the ring, the main button, Locked mode on.
