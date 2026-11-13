@@ -1,5 +1,22 @@
 #if DEBUG
-import Foundation
+import SwiftUI
+
+/// `-shot moods`: all six brain stages on one screen, for checking the drawing.
+struct BrainMoodsSheet: View {
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+            ForEach(0..<6, id: \.self) { stage in
+                VStack(spacing: 2) {
+                    BrainCanvas(stage: stage).frame(height: 150)
+                    Text("\(stage)").font(.caption.monospaced()).foregroundStyle(BrainDrawing.cream)
+                }
+            }
+        }
+        .padding(12)
+        .frame(maxHeight: .infinity)
+        .background(BrainDrawing.bg.ignoresSafeArea())
+    }
+}
 
 /// Debug builds only: `-shot <name>` opens one screen straight away, with sample data, so the
 /// CI screenshot run (.github/workflows/ios-screens.yml) can photograph every screen.

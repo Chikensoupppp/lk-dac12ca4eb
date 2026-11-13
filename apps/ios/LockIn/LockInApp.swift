@@ -9,7 +9,13 @@ struct LockInApp: App {
     }
 
     var body: some Scene {
-        WindowGroup { FocusView() }
+        WindowGroup {
+            #if DEBUG
+            if DebugShot.name == "moods" { BrainMoodsSheet() } else { FocusView() }
+            #else
+            FocusView()
+            #endif
+        }
     }
 }
 

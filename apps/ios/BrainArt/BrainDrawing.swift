@@ -15,10 +15,8 @@ enum BrainDrawing {
     static let yellow = rgb(0xFFC233)
     static let cream = rgb(0xF2ECE1)
     static let tear = rgb(0x7FD8FF)
-    static let tongueColor = rgb(0xFF8FB8)
+    static let tongueColor = rgb(0xFF6E8C)
     static let stink = rgb(0x8C9670)
-    /// Body color per stage: hot pink drains to a sick grey-green.
-    static let body: [Color] = ([0xFF5FA2, 0xFF7AA6, 0xEE93A0, 0xCFA08C, 0xADA37A, 0x8C9670] as [UInt32]).map { rgb($0) }
     static let bpmBase = [72, 98, 126, 154, 188, 0]
 
     // MARK: Heart trace
@@ -75,94 +73,70 @@ enum BrainDrawing {
 
     // MARK: The brain, in a 364 by 300 drawing space
 
-    // A side view, like a real brain but cartoon: big round frontal lobe on the left, a narrower
-    // back, the temporal lobe hanging under the middle, the cerebellum tucked underneath, and the
-    // brainstem. The edge is lumpy (each stretch bulges out a little) so it reads as folds.
+    // The mascot: a round, bumpy, cartoon brain (Brandon picked it 2026-11-12, mock in
+    // docs/design/qa/brain-round-mock.png). Soft pink with a darker shade along the bottom, a
+    // glossy shine, curvy folds, a dark outline inside a cream sticker border. As phone time adds
+    // up it fades from pink to grey-green, loses its shine and sparkles, and gets bandages,
+    // cracks and a sadder face. Drawn in a 364 by 300 space.
 
-    /// Clockwise points around the cerebrum, from the forehead, and how far each stretch bulges.
-    private static let cerebrumPoints: [(CGFloat, CGFloat)] = [
-        (46, 140), (50, 98), (80, 58), (124, 32), (176, 22), (228, 26), (274, 44), (308, 76), (326, 114),
-        (318, 150), (290, 176), (246, 198), (198, 218), (152, 222), (114, 208), (96, 190), (112, 176), (78, 176)
-    ]
-    private static let cerebrumBumps: [CGFloat] = [12, 12, 11, 10, 10, 10, 9, 8, 7, 7, 6, 6, 6, 7, 6, 3, -4, 8]
-    private static let cerebellumPoints: [(CGFloat, CGFloat)] = [
-        (244, 184), (278, 166), (312, 158), (332, 178), (326, 208), (294, 224), (256, 216)
-    ]
-    private static let cerebellumBumps: [CGFloat] = [5, 5, 6, 6, 6, 5, 4]
+    static let outlineInk = rgb(0x40162A)
+    static let gold = rgb(0xFFC440)
+    static let blush = rgb(0xFF6082)
+    /// Body, bottom shade and fold color for each stage, 0 fresh to 5 rotten.
+    static let palette: [(body: Color, shade: Color, fold: Color)] = ([
+        (0xFF92B2, 0xEE6894, 0xE45E88), (0xFF9EB2, 0xEC7492, 0xE06684), (0xF0A0AA, 0xDA7888, 0xCE6C7C),
+        (0xD6A696, 0xBC8476, 0xB2786C), (0xBAAA82, 0xA08E68, 0x968260), (0x989E76, 0x7E845E, 0x747A58)
+    ] as [(UInt32, UInt32, UInt32)]).map { (rgb($0.0), rgb($0.1), rgb($0.2)) }
 
-    /// A closed outline whose stretches bulge outward (points go clockwise on screen).
-    private static func lumpy(_ pts: [(CGFloat, CGFloat)], _ bumps: [CGFloat]) -> Path {
+    /// 16 even points on a slightly squashed circle; each stretch between two bulges outward.
+    static let outline: Path = {
+        let bumps: [CGFloat] = [17, 19, 18, 20, 18, 19, 17, 19, 18, 20, 17, 19, 18, 20, 18, 19]
+        let pts: [CGPoint] = (0..<16).map { i in
+            let a = 2 * Double.pi * Double(i) / 16 - Double.pi / 2 + 0.1
+            return CGPoint(x: (182 + 116 * cos(a)).rounded(), y: (150 + 116 * 0.96 * sin(a)).rounded())
+        }
         var p = Path()
-        p.move(to: CGPoint(x: pts[0].0, y: pts[0].1))
+        p.move(to: pts[0])
         for i in pts.indices {
             let a = pts[i], b = pts[(i + 1) % pts.count]
-            let dx = b.0 - a.0, dy = b.1 - a.1
+            let dx = b.x - a.x, dy = b.y - a.y
             let len = max(sqrt(dx * dx + dy * dy), 1)
-            let k = bumps[i]
-            p.addQuadCurve(to: CGPoint(x: b.0, y: b.1),
-                           control: CGPoint(x: (a.0 + b.0) / 2 + dy / len * k, y: (a.1 + b.1) / 2 - dx / len * k))
+            p.addQuadCurve(to: b, control: CGPoint(x: (a.x + b.x) / 2 + dy / len * bumps[i],
+                                                   y: (a.y + b.y) / 2 - dx / len * bumps[i]))
         }
         p.closeSubpath()
         return p
-    }
-
-    static let outline: Path = lumpy(cerebrumPoints, cerebrumBumps)
-    static let cerebellum: Path = lumpy(cerebellumPoints, cerebellumBumps)
-
-    static let wrinkles: Path = {
-        var p = Path()
-        func c(_ a: (CGFloat, CGFloat), _ c1: (CGFloat, CGFloat), _ c2: (CGFloat, CGFloat), _ b: (CGFloat, CGFloat)) {
-            p.move(to: CGPoint(x: a.0, y: a.1))
-            p.addCurve(to: CGPoint(x: b.0, y: b.1), control1: CGPoint(x: c1.0, y: c1.1), control2: CGPoint(x: c2.0, y: c2.1))
-        }
-        func q(_ a: (CGFloat, CGFloat), _ ctl: (CGFloat, CGFloat), _ b: (CGFloat, CGFloat)) {
-            p.move(to: CGPoint(x: a.0, y: a.1))
-            p.addQuadCurve(to: CGPoint(x: b.0, y: b.1), control: CGPoint(x: ctl.0, y: ctl.1))
-        }
-        // Lateral fissure, kept clear of the face, with its short upward branch.
-        c((112, 180), (150, 188), (204, 184), (252, 166))
-        q((252, 166), (262, 150), (280, 146))
-        // Central sulcus.
-        c((200, 24), (184, 46), (210, 66), (186, 104))
-        // Frontal folds.
-        c((80, 72), (100, 60), (112, 86), (136, 74))
-        c((56, 112), (74, 100), (90, 126), (114, 110))
-        c((142, 40), (156, 56), (130, 70), (148, 92))
-        q((70, 152), (88, 140), (108, 150))
-        // Parietal and occipital folds.
-        c((236, 38), (222, 60), (256, 70), (238, 102))
-        c((270, 60), (286, 78), (262, 92), (282, 112))
-        c((304, 92), (290, 110), (316, 120), (300, 138))
-        // Temporal fold, right of the mouth.
-        q((222, 206), (240, 192), (268, 188))
-        return p
     }()
 
-    /// The cerebellum's stripes.
-    static let folia: Path = {
+    /// Two-bump squiggles plus a few single curves.
+    static let folds: Path = {
         var p = Path()
-        p.move(to: CGPoint(x: 258, y: 194)); p.addQuadCurve(to: CGPoint(x: 326, y: 184), control: CGPoint(x: 292, y: 182))
-        p.move(to: CGPoint(x: 262, y: 208)); p.addQuadCurve(to: CGPoint(x: 324, y: 200), control: CGPoint(x: 294, y: 198))
-        return p
-    }()
-
-    /// The halftone dots, built once.
-    static let dots: Path = {
-        var p = Path()
-        var y: CGFloat = 0
-        while y < 300 {
-            var x: CGFloat = 0
-            while x < 364 {
-                p.addEllipse(in: CGRect(x: x + 0.8, y: y + 0.8, width: 5.4, height: 5.4))
-                x += 7
-            }
-            y += 7
+        func squiggle(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, up: CGFloat = 1, h: CGFloat = 7) {
+            p.move(to: CGPoint(x: x, y: y))
+            p.addCurve(to: CGPoint(x: x + w * 0.5, y: y), control1: CGPoint(x: x + w * 0.15, y: y - h * up),
+                       control2: CGPoint(x: x + w * 0.35, y: y - h * up))
+            p.addCurve(to: CGPoint(x: x + w, y: y), control1: CGPoint(x: x + w * 0.65, y: y + h * up),
+                       control2: CGPoint(x: x + w * 0.85, y: y + h * up))
         }
+        func curve(_ a: CGPoint, _ c: CGPoint, _ b: CGPoint) {
+            p.move(to: a); p.addQuadCurve(to: b, control: c)
+        }
+        squiggle(112, 72, 52); squiggle(196, 64, 56, up: -1); squiggle(150, 98, 60)
+        squiggle(84, 116, 44, up: -1); squiggle(240, 108, 46)
+        curve(CGPoint(x: 120, y: 70), CGPoint(x: 110, y: 86), CGPoint(x: 120, y: 100))
+        curve(CGPoint(x: 252, y: 64), CGPoint(x: 262, y: 80), CGPoint(x: 252, y: 96))
+        squiggle(74, 160, 36); squiggle(258, 154, 38, up: -1)
+        squiggle(104, 220, 44, up: -1); squiggle(214, 222, 46)
+        curve(CGPoint(x: 170, y: 250), CGPoint(x: 182, y: 240), CGPoint(x: 194, y: 250))
         return p
     }()
 
     private static func circle(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat) -> Path {
         Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+    }
+
+    private static func oval(_ x: CGFloat, _ y: CGFloat, _ rx: CGFloat, _ ry: CGFloat) -> Path {
+        Path(ellipseIn: CGRect(x: x - rx, y: y - ry, width: rx * 2, height: ry * 2))
     }
 
     private static func line(_ pts: [CGPoint]) -> Path {
@@ -172,30 +146,49 @@ enum BrainDrawing {
         return p
     }
 
-    private static func bandage(_ ctx: inout GraphicsContext, x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat,
-                                angle: Double, pivot: CGPoint, slits: Bool) {
+    /// A four-point twinkle star.
+    private static func star(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat) -> Path {
+        var p = Path()
+        for i in 0..<8 {
+            let a = Double.pi / 4 * Double(i) - Double.pi / 2
+            let rr = i % 2 == 0 ? r : r * 0.28
+            let pt = CGPoint(x: x + rr * CGFloat(cos(a)), y: y + rr * CGFloat(sin(a)))
+            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+        }
+        p.closeSubpath()
+        return p
+    }
+
+    private static func bandage(_ ctx: inout GraphicsContext) {
+        let x: CGFloat = 98, y: CGFloat = 92, w: CGFloat = 58, h: CGFloat = 20
         var c = ctx
-        c.translateBy(x: pivot.x, y: pivot.y)
-        c.rotate(by: .degrees(angle))
-        c.translateBy(x: -pivot.x, y: -pivot.y)
+        c.translateBy(x: x + w / 2, y: y + h / 2)
+        c.rotate(by: .degrees(-24))
+        c.translateBy(x: -(x + w / 2), y: -(y + h / 2))
         let rect = Path(roundedRect: CGRect(x: x, y: y, width: w, height: h), cornerRadius: 6)
         c.fill(rect, with: .color(cream))
-        c.stroke(rect, with: .color(bg), lineWidth: 4)
-        if slits {
-            var s = Path()
-            for sx in [x + 22, x + 30, x + 38] { s.move(to: CGPoint(x: sx, y: y + 4)); s.addLine(to: CGPoint(x: sx, y: y + 18)) }
-            c.stroke(s, with: .color(bg), lineWidth: 2.5)
-        }
+        c.stroke(rect, with: .color(outlineInk), lineWidth: 4)
+        var s = Path()
+        for sx in [x + 22, x + 29, x + 36] { s.move(to: CGPoint(x: sx, y: y + 5)); s.addLine(to: CGPoint(x: sx, y: y + 15)) }
+        c.stroke(s, with: .color(outlineInk), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
     }
 
     /// Draws the brain for `stage` at time `t` (0 for a still picture) into a 364 by 300 space.
     static func drawBrain(in ctx: inout GraphicsContext, stage st: Int, t: Double) {
-        let color = body[st]
-        let ink = bg
-        let round = StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round)
+        let colors = palette[st]
+        let ink = outlineInk
+        let round = StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round)
         let sway = st >= 3 ? sin(t * 1.4) * Double(st - 2) * 1.6 : sin(t * 2) * 1.2
         let droop: CGFloat = ([0, 0, 0, 6, 10, 18] as [CGFloat])[st]
         let shake: CGFloat = st == 4 ? CGFloat(sin(t * 40) * 1.4) : 0
+
+        // Sparkles while it is still doing well; they twinkle.
+        if st <= 1 {
+            for (i, s) in [(56.0, 50.0, 16.0), (320.0, 66.0, 11.0), (322.0, 236.0, 9.0)].enumerated() {
+                let k = 1 + 0.15 * sin(t * 3 + Double(i) * 2)
+                ctx.fill(star(s.0, s.1, s.2 * k), with: .color(gold))
+            }
+        }
 
         var c = ctx
         c.translateBy(x: shake, y: droop)
@@ -203,49 +196,37 @@ enum BrainDrawing {
         c.rotate(by: .degrees(sway + Double(droop) * 0.4))
         c.translateBy(x: -182, y: -150)
 
-        // Brainstem first, so it comes out from under the brain.
-        c.stroke(line([CGPoint(x: 226, y: 196), CGPoint(x: 220, y: 292)]), with: .color(cream), style: StrokeStyle(lineWidth: 12, lineCap: .round))
-
-        // Body: soft offset shadow, halftone dots, cream outline, folds. The cerebellum sits
-        // behind the cerebrum in a slightly deeper shade.
-        let shadow = CGAffineTransform(translationX: 7, y: 6)
-        c.fill(cerebellum.applying(shadow), with: .color(color.opacity(0.35)))
-        c.fill(outline.applying(shadow), with: .color(color.opacity(0.35)))
-        var back = c
-        back.clip(to: cerebellum)
-        back.fill(dots, with: .color(color.opacity(0.85)))
-        c.stroke(cerebellum, with: .color(cream), style: StrokeStyle(lineWidth: 7, lineJoin: .round))
-        c.stroke(folia, with: .color(cream.opacity(0.7)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-        c.fill(outline, with: .color(bg))
-        var dotted = c
-        dotted.clip(to: outline)
-        dotted.fill(dots, with: .color(color))
-        c.stroke(outline, with: .color(cream), style: StrokeStyle(lineWidth: 7, lineJoin: .round))
-        c.stroke(wrinkles, with: .color(cream.opacity(0.7)), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+        // Body: cream sticker border, bottom shade, pink body lifted up-left so the shade shows,
+        // shine, folds, outline.
+        c.stroke(outline, with: .color(cream), style: StrokeStyle(lineWidth: 18, lineJoin: .round))
+        c.fill(outline, with: .color(colors.shade))
+        var inside = c
+        inside.clip(to: outline)
+        inside.fill(outline.applying(CGAffineTransform(translationX: -4, y: -11)), with: .color(colors.body))
+        if st <= 2 {
+            var shine = Path()
+            shine.move(to: CGPoint(x: 92, y: 96))
+            shine.addQuadCurve(to: CGPoint(x: 138, y: 50), control: CGPoint(x: 104, y: 64))
+            let a = (200 - Double(st) * 50) / 255
+            inside.stroke(shine, with: .color(.white.opacity(a)), style: StrokeStyle(lineWidth: 11, lineCap: .round))
+            inside.fill(oval(150, 44, 7, 6), with: .color(.white.opacity(a)))
+        }
+        c.stroke(folds, with: .color(colors.fold), style: round)
 
         // Damage that stays.
-        if st == 1 {
-            var drop = Path()
-            drop.move(to: CGPoint(x: 262, y: 96))
-            drop.addQuadCurve(to: CGPoint(x: 262, y: 118), control: CGPoint(x: 270, y: 110))
-            drop.addQuadCurve(to: CGPoint(x: 262, y: 96), control: CGPoint(x: 254, y: 110))
-            c.fill(drop, with: .color(tear))
-            c.stroke(drop, with: .color(ink), lineWidth: 3)
-        }
-        if st >= 2 { bandage(&c, x: 92, y: 78, w: 60, h: 22, angle: -24, pivot: CGPoint(x: 120, y: 90), slits: true) }
+        if st >= 2 { bandage(&c) }
         if st >= 3 {
-            c.stroke(line([CGPoint(x: 232, y: 60), CGPoint(x: 222, y: 82), CGPoint(x: 236, y: 90), CGPoint(x: 224, y: 114)]),
+            c.stroke(line([CGPoint(x: 236, y: 60), CGPoint(x: 226, y: 80), CGPoint(x: 240, y: 88), CGPoint(x: 230, y: 110)]),
                      with: .color(ink), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
         }
         if st >= 4 {
-            c.stroke(line([CGPoint(x: 62, y: 120), CGPoint(x: 80, y: 128), CGPoint(x: 72, y: 140), CGPoint(x: 90, y: 150)]),
+            c.stroke(line([CGPoint(x: 84, y: 128), CGPoint(x: 100, y: 136), CGPoint(x: 92, y: 150), CGPoint(x: 108, y: 158)]),
                      with: .color(ink), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
-            bandage(&c, x: 244, y: 160, w: 56, h: 20, angle: 20, pivot: CGPoint(x: 270, y: 170), slits: false)
         }
         if st == 5 {
             for i in 0..<3 {
                 let x = CGFloat(130 + i * 50)
-                let y0 = CGFloat(40 - (t * 30 + Double(i) * 10).truncatingRemainder(dividingBy: 30))
+                let y0 = CGFloat(34 - (t * 30 + Double(i) * 10).truncatingRemainder(dividingBy: 30))
                 var s = Path()
                 s.move(to: CGPoint(x: x, y: y0))
                 s.addQuadCurve(to: CGPoint(x: x, y: y0 - 20), control: CGPoint(x: x - 8, y: y0 - 10))
@@ -254,105 +235,113 @@ enum BrainDrawing {
             }
             for i in 0..<2 {
                 let a = t * 3 + Double(i) * 3
-                let fx = CGFloat(182 + cos(a) * 130), fy = CGFloat(120 + sin(a * 1.3) * 60)
+                let fx = CGFloat(182 + cos(a) * 140), fy = CGFloat(120 + sin(a * 1.3) * 60)
                 c.fill(circle(fx, fy, 4), with: .color(cream))
                 c.fill(Path(ellipseIn: CGRect(x: fx - 9, y: fy - 8, width: 10, height: 6)), with: .color(cream.opacity(0.5)))
             }
         }
+        c.stroke(outline, with: .color(ink), style: StrokeStyle(lineWidth: 6, lineJoin: .round))
 
-        // Eyes.
-        let ey: CGFloat = 150
-        for (i, x) in [CGFloat(150), CGFloat(214)].enumerated() {
+        // Eyes: big and set low, like a baby face.
+        let ey: CGFloat = 162
+        for (i, x) in [CGFloat(148), CGFloat(216)].enumerated() {
+            let side: CGFloat = i == 1 ? 1 : -1
             switch st {
             case 0:
-                c.fill(circle(x, ey, 17), with: .color(cream)); c.stroke(circle(x, ey, 17), with: .color(ink), lineWidth: 5)
-                c.fill(circle(x + 3, ey + 2, 8), with: .color(ink)); c.fill(circle(x + 6, ey - 2, 3), with: .color(cream))
+                c.fill(oval(x, ey, 15, 17), with: .color(ink))
+                c.fill(circle(x - 5, ey - 7, 6), with: .color(.white))
+                c.fill(circle(x + 6, ey + 8, 3), with: .color(.white))
             case 1:
-                c.fill(circle(x, ey, 16), with: .color(cream)); c.stroke(circle(x, ey, 16), with: .color(ink), lineWidth: 5)
-                c.fill(circle(x, ey + 3, 7), with: .color(ink))
-                let tilt: CGFloat = i == 1 ? 6 : -6
-                c.stroke(line([CGPoint(x: x - 16, y: ey - 26 - tilt), CGPoint(x: x + 16, y: ey - 26 + tilt)]), with: .color(ink), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                // Sleepy: the lid covers the top half.
+                c.fill(circle(x, ey + 3, 14), with: .color(ink))
+                c.fill(circle(x - 4, ey + 2, 4), with: .color(.white))
+                c.fill(Path(CGRect(x: x - 17, y: ey - 16, width: 34, height: 15)), with: .color(colors.body))
+                c.stroke(line([CGPoint(x: x - 15, y: ey - 1), CGPoint(x: x + 15, y: ey - 1)]), with: .color(ink), style: round)
             case 2:
-                c.fill(circle(x, ey, 17), with: .color(cream)); c.stroke(circle(x, ey, 17), with: .color(ink), lineWidth: 5)
                 var spiral = Path()
-                let spin = t * 300 * .pi / 180
+                let spin = t * 300 * .pi / 180 + Double(i)
                 for k in 0...60 {
                     let f = Double(k) / 60
                     let ang = f * 5 * .pi + spin
-                    let r = 1 + f * 10
+                    let r = 1 + f * 12
                     let pt = CGPoint(x: x + CGFloat(cos(ang) * r), y: ey + CGFloat(sin(ang) * r))
                     if k == 0 { spiral.move(to: pt) } else { spiral.addLine(to: pt) }
                 }
-                c.stroke(spiral, with: .color(ink), lineWidth: 3.2)
+                c.stroke(spiral, with: .color(ink), style: StrokeStyle(lineWidth: 4, lineCap: .round))
             case 3:
-                c.fill(circle(x, ey + 4, 15), with: .color(cream)); c.stroke(circle(x, ey + 4, 15), with: .color(ink), lineWidth: 5)
-                c.fill(circle(x, ey + 9, 6), with: .color(ink))
-                var lid = Path()
-                lid.move(to: CGPoint(x: x - 16, y: ey + 1))
-                lid.addQuadCurve(to: CGPoint(x: x + 16, y: ey + 1), control: CGPoint(x: x, y: ey - 20))
-                lid.closeSubpath()
-                c.fill(lid, with: .color(color))
-                c.stroke(line([CGPoint(x: x - 17, y: ey + 2), CGPoint(x: x + 17, y: ey + 2)]), with: .color(ink), style: round)
+                // Drooping, half shut, a little uneven.
+                c.fill(oval(x, ey + 5, 13, 12), with: .color(ink))
+                c.fill(Path(CGRect(x: x - 16, y: ey - 12, width: 32, height: 16)), with: .color(colors.body))
+                c.stroke(line([CGPoint(x: x - 14, y: ey + 3 + (i == 1 ? 0 : 3)), CGPoint(x: x + 14, y: ey + 3 + (i == 1 ? 3 : 0))]),
+                         with: .color(ink), style: round)
             case 4:
                 var shut = Path()
-                shut.move(to: CGPoint(x: x - 15, y: ey + 2))
-                shut.addQuadCurve(to: CGPoint(x: x + 15, y: ey + 2), control: CGPoint(x: x, y: ey - 12))
-                c.stroke(shut, with: .color(ink), style: round)
-                let k = CGFloat((t * 60).truncatingRemainder(dividingBy: 20))
-                let dx: CGFloat = i == 1 ? 8 : -8
+                shut.move(to: CGPoint(x: x - 13, y: ey + 4))
+                shut.addQuadCurve(to: CGPoint(x: x + 13, y: ey + 4), control: CGPoint(x: x, y: ey - 10))
+                c.stroke(shut, with: .color(ink), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                let k = CGFloat((t * 60).truncatingRemainder(dividingBy: 16))
                 var tearPath = Path()
-                tearPath.move(to: CGPoint(x: x + dx, y: ey + 8))
-                tearPath.addQuadCurve(to: CGPoint(x: x + dx, y: ey + 38 + k), control: CGPoint(x: x + dx + (i == 1 ? 4 : -4), y: ey + 26 + k))
+                tearPath.move(to: CGPoint(x: x + 8 * side, y: ey + 10))
+                tearPath.addQuadCurve(to: CGPoint(x: x + 8 * side, y: ey + 40 + k), control: CGPoint(x: x + 12 * side, y: ey + 26 + k))
                 c.stroke(tearPath, with: .color(tear.opacity(0.9)), style: StrokeStyle(lineWidth: 7, lineCap: .round))
             default:
                 var xs = Path()
-                xs.move(to: CGPoint(x: x - 12, y: ey - 12)); xs.addLine(to: CGPoint(x: x + 12, y: ey + 12))
-                xs.move(to: CGPoint(x: x + 12, y: ey - 12)); xs.addLine(to: CGPoint(x: x - 12, y: ey + 12))
-                c.stroke(xs, with: .color(ink), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                xs.move(to: CGPoint(x: x - 11, y: ey - 11)); xs.addLine(to: CGPoint(x: x + 11, y: ey + 11))
+                xs.move(to: CGPoint(x: x + 11, y: ey - 11)); xs.addLine(to: CGPoint(x: x - 11, y: ey + 11))
+                c.stroke(xs, with: .color(ink), style: StrokeStyle(lineWidth: 6, lineCap: .round))
             }
+        }
+        if st <= 2 {
+            c.fill(oval(116, 190, 17, 9), with: .color(blush))
+            c.fill(oval(248, 190, 17, 9), with: .color(blush))
+        }
+        if st == 1 {
+            var drop = Path()
+            drop.move(to: CGPoint(x: 266, y: 74))
+            drop.addQuadCurve(to: CGPoint(x: 266, y: 98), control: CGPoint(x: 276, y: 94))
+            drop.addQuadCurve(to: CGPoint(x: 266, y: 74), control: CGPoint(x: 256, y: 94))
+            c.fill(drop, with: .color(tear))
+            c.stroke(drop, with: .color(ink), lineWidth: 3)
         }
 
         // Mouth.
-        let mx: CGFloat = 182, my: CGFloat = 200
+        let mx: CGFloat = 182, my: CGFloat = 194
         switch st {
         case 0:
             var m = Path()
-            m.move(to: CGPoint(x: mx - 26, y: my - 6))
-            m.addQuadCurve(to: CGPoint(x: mx + 26, y: my - 6), control: CGPoint(x: mx, y: my + 20))
+            m.move(to: CGPoint(x: mx - 16, y: my))
+            m.addQuadCurve(to: CGPoint(x: mx + 16, y: my), control: CGPoint(x: mx, y: my + 26))
             m.closeSubpath()
-            c.fill(m, with: .color(ink)); c.stroke(m, with: .color(ink), style: round)
-            var tongue = Path()
-            tongue.move(to: CGPoint(x: mx - 12, y: my + 5))
-            tongue.addQuadCurve(to: CGPoint(x: mx + 12, y: my + 5), control: CGPoint(x: mx, y: my + 13))
-            c.fill(tongue, with: .color(tongueColor))
+            c.fill(m, with: .color(ink))
+            c.stroke(m, with: .color(ink), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+            c.fill(oval(mx, my + 10, 8, 5), with: .color(tongueColor))
         case 1:
             var m = Path()
-            m.move(to: CGPoint(x: mx - 24, y: my))
-            m.addQuadCurve(to: CGPoint(x: mx - 8, y: my), control: CGPoint(x: mx - 16, y: my - 8))
-            m.addQuadCurve(to: CGPoint(x: mx + 8, y: my), control: CGPoint(x: mx, y: my + 8))
-            m.addQuadCurve(to: CGPoint(x: mx + 24, y: my), control: CGPoint(x: mx + 16, y: my - 8))
+            m.move(to: CGPoint(x: mx - 14, y: my + 4))
+            m.addQuadCurve(to: CGPoint(x: mx, y: my + 4), control: CGPoint(x: mx - 7, y: my - 2))
+            m.addQuadCurve(to: CGPoint(x: mx + 14, y: my + 4), control: CGPoint(x: mx + 7, y: my + 10))
             c.stroke(m, with: .color(ink), style: round)
         case 2:
-            c.fill(Path(ellipseIn: CGRect(x: mx - 11, y: my - 14, width: 22, height: 28)), with: .color(ink))
+            c.fill(oval(mx, my + 6, 9, 12), with: .color(ink))
         case 3:
-            c.stroke(line([CGPoint(x: mx - 22, y: my + 2), CGPoint(x: mx + 22, y: my + 2)]), with: .color(ink), style: round)
+            c.stroke(line([CGPoint(x: mx - 16, y: my + 6), CGPoint(x: mx + 16, y: my + 6)]), with: .color(ink), style: round)
         case 4:
             var m = Path()
-            m.move(to: CGPoint(x: mx - 26, y: my + 12))
-            m.addQuadCurve(to: CGPoint(x: mx + 26, y: my + 12), control: CGPoint(x: mx, y: my - 14))
+            m.move(to: CGPoint(x: mx - 18, y: my + 16))
+            m.addQuadCurve(to: CGPoint(x: mx + 18, y: my + 16), control: CGPoint(x: mx, y: my - 8))
             m.closeSubpath()
-            c.fill(m, with: .color(ink)); c.stroke(m, with: .color(ink), style: StrokeStyle(lineWidth: 5, lineJoin: .round))
+            c.fill(m, with: .color(ink))
         default:
-            c.stroke(line([CGPoint(x: mx - 24, y: my), CGPoint(x: mx + 24, y: my)]), with: .color(ink), style: round)
+            c.stroke(line([CGPoint(x: mx - 18, y: my + 4), CGPoint(x: mx + 18, y: my + 4)]), with: .color(ink), style: round)
             var tongue = Path()
-            tongue.move(to: CGPoint(x: mx + 2, y: my))
-            tongue.addLine(to: CGPoint(x: mx + 2, y: my + 16))
-            tongue.addQuadCurve(to: CGPoint(x: mx + 20, y: my + 16), control: CGPoint(x: mx + 11, y: my + 34))
-            tongue.addLine(to: CGPoint(x: mx + 20, y: my))
+            tongue.move(to: CGPoint(x: mx + 2, y: my + 4))
+            tongue.addLine(to: CGPoint(x: mx + 2, y: my + 18))
+            tongue.addQuadCurve(to: CGPoint(x: mx + 20, y: my + 18), control: CGPoint(x: mx + 11, y: my + 32))
+            tongue.addLine(to: CGPoint(x: mx + 20, y: my + 4))
+            tongue.closeSubpath()
             c.fill(tongue, with: .color(tongueColor))
-            c.stroke(tongue, with: .color(ink), lineWidth: 5)
+            c.stroke(tongue, with: .color(ink), lineWidth: 3)
         }
-
     }
 }
 

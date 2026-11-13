@@ -110,6 +110,8 @@ struct GuessStep: View {
                 .lineSpacing(-14)
                 .lineLimit(2)
                 .minimumScaleFactor(0.55)
+                // Room on the right for the torn-off tab, which sits over the poster's corner.
+                .padding(.trailing, 64)
                 .foregroundStyle(Ink.orange)
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
