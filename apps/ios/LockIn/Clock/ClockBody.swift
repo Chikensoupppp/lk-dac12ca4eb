@@ -58,7 +58,7 @@ struct ClockBody: View {
         ZStack {
             // The shadow sits outside the drawing group so it is never cut off at a square edge.
             Circle()
-                .fill(Color(hex: 0xD3D5CC))
+                .fill(Color(hex: 0xCDD3D4))
                 .frame(width: d, height: d)
                 .shadow(color: .black.opacity(0.16), radius: d * 0.06, x: 0, y: d * 0.05)
 
@@ -67,8 +67,8 @@ struct ClockBody: View {
                     .fill(
                         AngularGradient(
                             colors: [
-                                Color(hex: 0xEDEEE9), Color(hex: 0xCBCDC4), Color(hex: 0xE4E5DF),
-                                Color(hex: 0xC2C4BB), Color(hex: 0xE9EAE5), Color(hex: 0xEDEEE9),
+                                Color(hex: 0xE7ECF1), Color(hex: 0xC5CBCC), Color(hex: 0xDEE3E7),
+                                Color(hex: 0xBCC2C3), Color(hex: 0xE3E8ED), Color(hex: 0xE7ECF1),
                             ],
                             center: .center,
                             angle: .degrees(210)
