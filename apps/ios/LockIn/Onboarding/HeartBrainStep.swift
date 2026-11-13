@@ -40,8 +40,8 @@ struct HeartBrainStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 5, grain: true, title: Self.titles[index],
-                      titleSize: 46, primaryTitle: "CONTINUE", primaryAction: next) {
+        PrintScaffold(step: 5, title: Self.titles[index],
+                      titleSize: 46, grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
                 Text(Self.lines[index])
                     .font(PrintFont.bold(18))

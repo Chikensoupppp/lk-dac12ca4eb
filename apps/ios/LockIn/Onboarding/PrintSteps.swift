@@ -431,7 +431,7 @@ struct PullsStep: View {
     private static let canvas = CGSize(width: 345, height: 430)
 
     var body: some View {
-        PrintScaffold(step: 6, grain: true, title: "What pulls\nyou in?",
+        PrintScaffold(step: 6, title: "What pulls\nyou in?", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("Which apps tend to keep you longer than you planned?")
@@ -809,7 +809,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 10, grain: true, title: "Your first\nsession.") {
+        PrintScaffold(step: 10, title: "Your first\nsession.", grain: true) {
             VStack(spacing: 0) {
                 Capsule().fill(Color.black).frame(height: 14)
                     .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))

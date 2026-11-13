@@ -38,7 +38,7 @@ struct PlusOfferStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 12, grain: true, title: "Ready to\nlock in?",
+        PrintScaffold(step: 12, title: "Ready to\nlock in?", grain: true,
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
                       secondaryTitle: plus.isPlus ? nil : "Not now", secondaryAction: next,
                       footer: AnyView(footer)) {
