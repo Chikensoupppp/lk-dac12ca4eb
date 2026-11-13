@@ -22,3 +22,7 @@ Thumbs.db
 *.suo
 .local/
 logs/
+
+# Mozilla web-ext signing leftovers
+.amo-upload-uuid
+web-ext-artifacts/
