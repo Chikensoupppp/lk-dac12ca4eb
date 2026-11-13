@@ -1,5 +1,11 @@
 # Project status
 
+## 2026-11-13 work in progress
+
+- PC buddy detects natural session expiry and displays a six-second cheer; four deterministic timing checks and the existing Windows checks passed locally. Actual desktop behavior has not yet been observed.
+- First-run Focus coach and iPhone session-start allow-list payload are implemented in source; iOS compilation, simulator behavior, screenshots, and physical-device behavior are pending.
+- Save for Later is not implemented yet. No TestFlight build has been uploaded for these changes.
+
 Updated: 2026-11-02 (branch ios/native-clock-ci)
 
 ## Implemented

@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// The coach uses the same mascot, with a few expressions for pointing and celebrating.
+enum CoachExpression { case normal, lookDown, keen, cheer }
+
 /// The printed pink brain and its heart trace. Shared by the onboarding brain slide (app) and the
 /// home screen widget, so both draw the same brain. Stages: 0 fresh ... 5 rotten.
 enum BrainDrawing {
@@ -192,7 +195,7 @@ enum BrainDrawing {
     }
 
     /// Draws the brain for `stage` at time `t` (0 for a still picture) into a 364 by 300 space.
-    static func drawBrain(in ctx: inout GraphicsContext, stage st: Int, t: Double) {
+    static func drawBrain(in ctx: inout GraphicsContext, stage st: Int, t: Double, expression: CoachExpression = .normal) {
         let colors = palette[st]
         let ink = outlineInk
         let round = StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round)
@@ -273,9 +276,10 @@ enum BrainDrawing {
             let side: CGFloat = i == 1 ? 1 : -1
             switch st {
             case 0:
-                c.fill(oval(x, ey, 13, 15), with: .color(ink))
-                c.fill(circle(x - 4, ey - 6, 5.5), with: .color(.white))
-                c.fill(circle(x + 5, ey + 7, 2.6), with: .color(.white))
+                let look: CGFloat = expression == .lookDown ? 5 : 0
+                c.fill(oval(x, ey + look, 13, 15), with: .color(ink))
+                c.fill(circle(x - 4, ey - 6 + look, 5.5), with: .color(.white))
+                c.fill(circle(x + 5, ey + 7 + look, 2.6), with: .color(.white))
             case 1:
                 // Sleepy: the lid covers the top half.
                 c.fill(circle(x, ey + 3, 14), with: .color(ink))
@@ -316,6 +320,14 @@ enum BrainDrawing {
                 c.stroke(xs, with: .color(ink), style: StrokeStyle(lineWidth: 6, lineCap: .round))
             }
         }
+        if st == 0 && expression == .keen {
+            for x in [CGFloat(140), CGFloat(224)] {
+                var brow = Path()
+                brow.move(to: CGPoint(x: x - 15, y: ey - 21))
+                brow.addQuadCurve(to: CGPoint(x: x + 15, y: ey - 21), control: CGPoint(x: x, y: ey - 32))
+                c.stroke(brow, with: .color(ink), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            }
+        }
         if st <= 2 {
             c.fill(oval(110, 196, 16, 8.5), with: .color(blush))
             c.fill(oval(254, 196, 16, 8.5), with: .color(blush))
@@ -334,8 +346,9 @@ enum BrainDrawing {
         switch st {
         case 0:
             var m = Path()
-            m.move(to: CGPoint(x: mx - 11, y: my))
-            m.addQuadCurve(to: CGPoint(x: mx + 11, y: my), control: CGPoint(x: mx, y: my + 20))
+            let half: CGFloat = expression == .cheer ? 19 : 11
+            m.move(to: CGPoint(x: mx - half, y: my))
+            m.addQuadCurve(to: CGPoint(x: mx + half, y: my), control: CGPoint(x: mx, y: my + (expression == .cheer ? 27 : 20)))
             m.closeSubpath()
             c.fill(m, with: .color(ink))
             c.stroke(m, with: .color(ink), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
@@ -374,13 +387,14 @@ enum BrainDrawing {
 struct BrainCanvas: View {
     let stage: Int
     var t: Double = 0
+    var expression: CoachExpression = .normal
 
     var body: some View {
         Canvas { ctx, size in
             let s = min(size.width / 364, size.height / 300)
             ctx.translateBy(x: (size.width - 364 * s) / 2, y: (size.height - 300 * s) / 2)
             ctx.scaleBy(x: s, y: s)
-            BrainDrawing.drawBrain(in: &ctx, stage: min(max(stage, 0), 5), t: t)
+            BrainDrawing.drawBrain(in: &ctx, stage: min(max(stage, 0), 5), t: t, expression: expression)
         }
     }
 }

@@ -38,6 +38,18 @@ final class PCLinkTests: XCTestCase {
         hosts: ["192.168.1.5"], port: 47822,
         fingerprint: String(repeating: "A", count: 64), token: "token", deviceId: "device")
 
+    func testSessionStartPayloadContainsBuddySettings() throws {
+        let record = session()
+        let extras = PCSessionExtras(task: "Studying", buddy: true, allow: ["youtube"], remindAfterMinutes: 5)
+        let data = try JSONEncoder().encode(PCStartRequest(record: record, extras: extras))
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(json["id"] as? String, record.id.uuidString)
+        XCTAssertEqual(json["task"] as? String, "Studying")
+        XCTAssertEqual(json["buddy"] as? Bool, true)
+        XCTAssertEqual(json["allow"] as? [String], ["youtube"])
+        XCTAssertEqual(json["guardianSeconds"] as? Int, 300)
+    }
+
     private func session(minutes: Double = 15) -> SessionRecord {
         SessionRecord(timing: SessionTiming(startedAt: .now, duration: minutes * 60))
     }

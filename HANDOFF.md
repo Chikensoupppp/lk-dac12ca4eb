@@ -1,5 +1,11 @@
 # Handoff
 
+## Current work — 2026-11-13
+
+- `SessionWatch` detects expiry without requiring a phone message, celebrates for six seconds only when the buddy is enabled, and avoids a late tick showing after a session ends. `CompletionTiming` has boundary checks. Windows checks passed locally; the on-screen transition still needs live verification.
+- The first-run Focus coach and session payload's `allow` array were added to Swift source. The coach uses real task, duration, and hold controls; skip is available, and the pending coach state survives relaunch. These changes have not yet passed iOS CI or been rendered. The phone currently sends an empty allow list unless an explicit caller supplies one; the PC merges remembered task allowances.
+- Save for Later remains to be implemented. Do not claim URL privacy or a working list before testing the browser-to-companion path. The signed Firefox XPI is an older build and must not be represented as containing future extension changes.
+
 ## Current state
 
 The repository is bootstrapped with a Windows companion vertical slice and an iPhone SwiftUI shell. The companion intentionally binds to loopback and has no unauthenticated LAN mode.

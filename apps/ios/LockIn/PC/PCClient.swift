@@ -2,6 +2,27 @@ import CryptoKit
 import Foundation
 import Security
 
+/// The exact session-start contract shared with the PC companion.
+struct PCStartRequest: Encodable {
+    let id: String
+    let durationSeconds: Int
+    let startedAt: String
+    let task: String?
+    let buddy: Bool
+    let allow: [String]
+    let guardianSeconds: Int?
+
+    init(record: SessionRecord, extras: PCSessionExtras) {
+        id = record.id.uuidString
+        durationSeconds = Int(record.duration.rounded())
+        startedAt = ISO8601DateFormatter().string(from: record.startedAt)
+        task = extras.task
+        buddy = extras.buddy
+        allow = extras.allow
+        guardianSeconds = extras.remindAfterMinutes.map { $0 * 60 }
+    }
+}
+
 /// Talks to the Lock In companion on the PC over HTTPS. The PC's certificate is self-made,
 /// so normal trust checks would fail. Instead the connection is accepted only when the
 /// certificate's SHA-256 matches the fingerprint from the QR code.
@@ -30,17 +51,7 @@ final class PCClient: PCTransport {
     }
 
     func startSession(_ record: SessionRecord, extras: PCSessionExtras, link: PCLinkRecord) async throws {
-        struct Body: Encodable {
-            let id: String; let durationSeconds: Int; let startedAt: String
-            let task: String?; let buddy: Bool
-            let guardianSeconds: Int? // left out when nil, so older PC apps see nothing new
-        }
-        let body = Body(
-            id: record.id.uuidString,
-            durationSeconds: Int(record.duration.rounded()),
-            startedAt: ISO8601DateFormatter().string(from: record.startedAt),
-            task: extras.task, buddy: extras.buddy,
-            guardianSeconds: extras.remindAfterMinutes.map { $0 * 60 })
+        let body = PCStartRequest(record: record, extras: extras)
         let (_, status) = try await send(
             hosts: link.hosts, port: link.port, fingerprint: link.fingerprint,
             path: "/session/start", token: link.token, body: body)

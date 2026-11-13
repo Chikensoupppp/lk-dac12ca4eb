@@ -58,6 +58,8 @@ struct PCSessionExtras: Equatable {
     var task: String?
     /// Show the desk buddy (the brain in the corner of the PC screen) during the session.
     var buddy: Bool
+    /// Explicit app/site allowances for this session; no apps are allowed by default.
+    var allow: [String] = []
     /// Minutes of steady Shorts or Reddit scrolling before the buddy gives a gentle reminder (nil: the PC's default).
     var remindAfterMinutes: Int? = nil
 

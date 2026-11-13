@@ -1,5 +1,6 @@
 import SwiftUI
 import WidgetKit
+import UIKit
 
 /// Focus screen. `timing` is the single source of truth for the session:
 /// nil means idle, non-nil means a session is running until `timing.endsAt`.
@@ -35,6 +36,9 @@ struct FocusView: View {
     /// Right after the intro (promise signed): 25 minutes are picked and a note suggests starting
     /// now. Nothing starts until the user taps LOCK IN.
     @State private var firstSessionHint = false
+    @AppStorage("lockin.coach.pending.v1") private var coachPending = false
+    @State private var coachStep: FocusCoachStep?
+    @State private var coachPressing = false
     /// Proof Check: Screen Time access was turned off during this session.
     @State private var showProofBroken = false
     @StateObject private var goals = GoalStore()
@@ -63,7 +67,10 @@ struct FocusView: View {
     init(store: SessionStoring = UserDefaultsSessionStore()) {
         self.store = store
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-state") { store.clear() }
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-state") {
+            store.clear()
+            UserDefaults.standard.removeObject(forKey: "lockin.coach.pending.v1")
+        }
         #endif
         var hadSession = false
         switch SessionRecovery.resolve(store.load(), now: .now) {
@@ -151,9 +158,9 @@ struct FocusView: View {
                     // Its own row, so the buttons can never sit on the title. Hidden (but still
                     // taking its space) during a session, so nothing jumps.
                     topBar
-                        .opacity(isLocked ? 0 : 1)
-                        .allowsHitTesting(!isLocked)
-                        .accessibilityHidden(isLocked)
+                        .opacity(isLocked || coachStep != nil ? 0 : 1)
+                        .allowsHitTesting(!isLocked && coachStep == nil)
+                        .accessibilityHidden(isLocked || coachStep != nil)
                         .padding(.top, 4)
 
                     Text("LOCK IN")
@@ -198,11 +205,15 @@ struct FocusView: View {
 
                     VStack(spacing: 10) {
                         WorkTaskPill(tasks: tasks) { showTasks = true }
+                            .overlay(Capsule().strokeBorder(coachStep == .task ? Ink.blue : .clear, lineWidth: 3))
                         Text("MINUTES")
                             .font(Cream.rounded(11, .semibold))
                             .tracking(3)
                             .foregroundStyle(Matte.textSoft)
-                        DurationSelector(options: Self.durationOptions, selection: $selectedMinutes)
+                        DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
+                            if coachStep == .minutes { coachStep = .hold }
+                        }
+                        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(coachStep == .minutes ? Ink.blue : .clear, lineWidth: 3))
                         lockedToggle
                     }
                     .opacity(isLocked ? 0 : 1)
@@ -210,26 +221,7 @@ struct FocusView: View {
                     .accessibilityHidden(isLocked)
                     .padding(.bottom, 24)
 
-                    Button(action: isLocked ? askToEnd : startSession) {
-                        Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
-                    }
-                    .buttonStyle(MatteButtonStyle(prominent: !isLocked))
-                    .overlay { LatchEffect(trigger: startCount, enabled: motion) }
-                    .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
-                    .overlay(alignment: .top) {
-                        if firstSessionHint && !isLocked {
-                            Text("YOUR FIRST 25 MINUTES \u{00B7} START NOW?")
-                                .font(Cream.rounded(11, .bold))
-                                .tracking(1.5)
-                                .foregroundStyle(Color(hex: 0xF3F4F0))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Capsule().fill(Matte.text))
-                                .offset(y: -26)
-                                .transition(.opacity)
-                                .accessibilityLabel("Suggested: start your first 25 minute session now")
-                        }
-                    }
+                    focusButton
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
@@ -238,7 +230,11 @@ struct FocusView: View {
         }
         .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
-        .sheet(isPresented: $showTasks) { WorkTaskSheet(tasks: tasks) { showTasks = false } }
+        .sheet(isPresented: $showTasks) {
+            WorkTaskSheet(tasks: tasks, done: { showTasks = false }, onSelection: {
+                if coachStep == .task { showTasks = false; coachStep = .minutes }
+            }, skipCoach: coachStep == .task ? { skipCoach() } : nil)
+        }
         .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
@@ -261,8 +257,9 @@ struct FocusView: View {
                 onboardingDone = true
                 if startNow {
                     selectedMinutes = 25
-                    firstSessionHint = true
                 }
+                coachPending = true
+                coachStep = .task
             }
         }
         .fullScreenCover(isPresented: $showStreak) {
@@ -276,11 +273,27 @@ struct FocusView: View {
             }
             #endif
         }
+        .overlay(alignment: .topLeading) {
+            if let coachStep {
+                VStack(alignment: .leading, spacing: 2) {
+                    Button("Skip") { skipCoach() }
+                        .font(.headline)
+                        .foregroundStyle(Ink.ink)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .accessibilityIdentifier("skip-focus-coach")
+                    FocusCoach(step: coachStep, reduceMotion: reduceMotion)
+                        .allowsHitTesting(false)
+                }
+                .padding(.horizontal, 16)
+                .transition(.opacity)
+            }
+        }
         .preferredColorScheme(.light)
         // The brain widget watches the apps picked to lock; keep that watch in step.
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
         .onAppear {
+            if onboardingDone && coachPending && timing == nil { coachStep = .task }
             updateBrainWatch()
             runProofCheck()
             checkKeyRequests()
@@ -377,6 +390,63 @@ struct FocusView: View {
     }
 
     // MARK: Session transitions
+
+    @ViewBuilder private var focusButton: some View {
+        if coachStep == .hold {
+            Button {
+                if UIAccessibility.isVoiceOverRunning { startCoachedSession() }
+            } label: { Text("HOLD TO LOCK IN") }
+            .buttonStyle(MatteButtonStyle(prominent: true))
+            .overlay(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(Ink.blue.opacity(0.25))
+                    .scaleEffect(x: coachPressing ? 1 : 0, anchor: .leading)
+                    .animation(reduceMotion ? nil : .linear(duration: 1.5), value: coachPressing)
+                    .allowsHitTesting(false)
+            }
+            .onLongPressGesture(minimumDuration: 1.5, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
+            .accessibilityHint("Hold to start. VoiceOver: double tap to start.")
+            .accessibilityIdentifier("coach-hold-to-start")
+        } else {
+            Button(action: isLocked ? askToEnd : startSession) {
+                Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
+            }
+            .buttonStyle(MatteButtonStyle(prominent: !isLocked))
+            .disabled(coachStep != nil && !isLocked)
+            .overlay { LatchEffect(trigger: startCount, enabled: motion) }
+            .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
+            .overlay(alignment: .top) {
+                if firstSessionHint && !isLocked && coachStep == nil {
+                    Text("YOUR FIRST 25 MINUTES · START NOW?")
+                        .font(Cream.rounded(11, .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(Color(hex: 0xF3F4F0))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(Matte.text))
+                        .offset(y: -26)
+                        .accessibilityLabel("Suggested: start your first 25 minute session now")
+                }
+            }
+        }
+    }
+
+    private func skipCoach() {
+        coachPending = false
+        coachStep = nil
+        coachPressing = false
+    }
+
+    private func startCoachedSession() {
+        guard coachStep == .hold, !isLocked else { return }
+        coachPending = false
+        coachStep = .celebrate
+        startSession()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            if coachStep == .celebrate { coachStep = nil }
+        }
+    }
 
     private func updateBrainWatch() {
         let approved: Bool
@@ -572,6 +642,7 @@ struct FocusView: View {
 private struct DurationSelector: View {
     let options: [Int]
     @Binding var selection: Int
+    var onSelection: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -583,6 +654,7 @@ private struct DurationSelector: View {
                 let selected = minutes == selection
                 Button {
                     selection = minutes
+                    onSelection()
                 } label: {
                     Text("\(minutes)")
                         .font(Cream.rounded(optionFontSize, selected ? .bold : .medium).monospacedDigit())

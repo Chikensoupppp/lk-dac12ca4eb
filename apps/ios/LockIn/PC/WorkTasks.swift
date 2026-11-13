@@ -78,6 +78,8 @@ struct WorkTaskPill: View {
 struct WorkTaskSheet: View {
     @ObservedObject var tasks: WorkTaskStore
     let done: () -> Void
+    var onSelection: () -> Void = {}
+    var skipCoach: (() -> Void)? = nil
     @State private var draft = ""
     @FocusState private var typing: Bool
 
@@ -124,6 +126,11 @@ struct WorkTaskSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
+                if let skipCoach {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Skip") { done(); skipCoach() }
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", action: done)
                         .font(Cream.rounded(17, .semibold))
@@ -138,12 +145,13 @@ struct WorkTaskSheet: View {
         tasks.add(draft)
         draft = ""
         typing = false
+        onSelection()
     }
 
     /// One task row; nil is "No task".
     private func row(_ name: String?) -> some View {
         let on = tasks.selected == name
-        return Button { tasks.selected = name } label: {
+        return Button { tasks.selected = name; onSelection() } label: {
             HStack {
                 Text(name ?? "No task")
                     .font(Cream.rounded(17, on ? .semibold : .medium))

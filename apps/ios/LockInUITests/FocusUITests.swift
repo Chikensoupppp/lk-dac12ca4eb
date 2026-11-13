@@ -233,10 +233,18 @@ final class FocusUITests: XCTestCase {
         // No product in the simulator, so the offer says it is not on sale; "Not now" moves on.
         step("onboarding-12-plus", tap: "Not now")
 
-        // The intro no longer starts a session by itself; it suggests one.
-        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
-        app.buttons["LOCK IN"].tap()
+        // The coach uses the real task, duration, and hold controls.
+        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
+        app.buttons["work-task"].tap()
+        XCTAssertTrue(app.buttons["Studying"].waitForExistence(timeout: 5))
+        app.buttons["Studying"].tap()
+        XCTAssertTrue(app.buttons["25 minutes"].waitForExistence(timeout: 5))
+        app.buttons["25 minutes"].tap()
+        let start = app.buttons["coach-hold-to-start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        start.press(forDuration: 2)
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["first-lock-in-stamp"].waitForExistence(timeout: 2))
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
     }
@@ -264,6 +272,8 @@ final class FocusUITests: XCTestCase {
         notNow.tap()
         capture("onboarding-skip-plus")
         tap("Not now")                   // offer
+        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
+        app.buttons["skip-focus-coach"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
     }
 
