@@ -194,6 +194,10 @@ enum BrainDrawing {
         c.translateBy(x: shake, y: droop)
         c.translateBy(x: 182, y: 150)
         c.rotate(by: .degrees(sway + Double(droop) * 0.4))
+        // The round brain is narrower than the space; scale it up so it fills about as much as
+        // the old brain did.
+        c.translateBy(x: 0, y: 2)
+        c.scaleBy(x: 1.08, y: 1.08)
         c.translateBy(x: -182, y: -150)
 
         // Body: cream sticker border, bottom shade, pink body lifted up-left so the shade shows,
