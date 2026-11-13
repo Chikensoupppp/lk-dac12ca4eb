@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>All slides, skill version</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+/* Redesign of the 10 first-run slides after the iOS review (Mobile App Design plugin, ios-review + ios-flows).
+   Rules applied: one accent (ice), no tilted controls, no stickers, equal margins, Back + Skip in the header,
+   one Continue before each system box, nothing claimed that is not built, nothing shown that the app cannot draw. */
+*{box-sizing:border-box;margin:0;user-select:none}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A;--bg:#0A0B0D}
+body{background:#cfcfd2;padding:22px;font-family:Onest,system-ui,sans-serif}
+.row{display:flex;gap:22px}
+.cap{font:600 14px system-ui;color:#333;margin:0 0 6px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%);flex:none}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:9}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:9}
+.bars{position:absolute;left:24px;right:24px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i.on{background:var(--ink)}
+.hdr{position:absolute;left:12px;right:24px;top:68px;height:44px;display:flex;align-items:center;justify-content:space-between}
+.back{width:44px;height:44px;display:grid;place-items:center}.back svg{width:22px;height:22px}
+.step{font-weight:600;font-size:14px;color:var(--soft)}
+.skip{min-width:44px;height:44px;display:grid;place-items:center;font-weight:600;font-size:16px;color:var(--soft)}
+h1{position:absolute;left:24px;right:24px;top:128px;font:800 40px/1.05 Onest;letter-spacing:-1.3px}
+.sub{position:absolute;left:24px;right:24px;font-size:20px;line-height:1.3;font-weight:500;color:#D2D4D9}
+.btn{position:absolute;left:24px;right:24px;bottom:56px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:var(--bg)}
+.link{position:absolute;left:24px;right:24px;bottom:12px;height:44px;display:grid;place-items:center;font-weight:500;font-size:16px;color:var(--soft)}
+.abs{position:absolute}
+.chip{display:flex;align-items:center;gap:12px;height:66px;padding:0 20px;border-radius:33px;background:var(--panel);border:1.5px solid var(--edge);font-weight:700;font-size:20px}
+.chip.on{background:var(--ice);color:var(--bg);border-color:var(--ice)}
+.chk{margin-left:auto;width:26px;height:26px}
+.tile{height:104px;border-radius:22px;background:var(--panel);border:1.5px solid var(--edge);padding:16px;position:relative;font-weight:700;font-size:19px}
+.tile.on{border-color:var(--ice);background:#1B2430}
+.tile .ic{width:32px;height:32px}
+.tile .t{position:absolute;left:16px;bottom:14px}
+.tile .ck{position:absolute;right:14px;top:14px;width:24px;height:24px}
+.card{display:flex;gap:16px;align-items:center;padding:18px;border-radius:20px;background:var(--panel)}
+.badge{width:44px;height:44px;border-radius:14px;background:#232830;display:grid;place-items:center;flex:none}
+.badge svg{width:24px;height:24px}
+</style></head><body>
+<div class="row" id="r"></div>
+<script>
+const q=new URLSearchParams(location.search),from=+(q.get('from')||1),cnt=+(q.get('n')||3);
+const g=(p,c='#fff',w=2.2)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICE='#9CC9F5',BG='#0A0B0D';
+const G={x:'<path d="M5 5l14 14M19 5L5 19"/>',play:'<path d="M8 5l11 7-11 7z"/>',chat:'<path d="M4 6h16v10H10l-4 3v-3H4z"/>',game:'<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4"/>',news:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',bag:'<path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',book:'<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>',moon:'<path d="M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z"/>',bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',pen:'<path d="M4 20l4-1L19 8l-3-3L5 16z"/>',brief:'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3"/>',pc:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',people:'<circle cx="9" cy="9" r="3"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5M16 6a3 3 0 0 1 0 6M18 14c2 .5 3 2 3 5"/>',shield:'<path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/>',hand:'<path d="M8 12V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v8c0 4-2 6-6 6-3 0-4-2-6-5l-1-2a1.5 1.5 0 0 1 2.5-1.5L8 14"/>',check:'<circle cx="12" cy="12" r="10" fill="#0A0B0D" stroke="none"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#9CC9F5" stroke-width="2.4"/>',chev:'<path d="M15 5l-7 7 7 7"/>',grid:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>',bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>'};
+const bars=n=>`<div class="bars">${Array.from({length:10},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>`;
+const hdr=(n,skip)=>`<div class="hdr"><div class="back">${n>1?g(G.chev,'#EDEBE6',2.4):''}</div><div class="step">${n} of 10</div><div class="skip">${skip?'Skip':''}</div></div>`;
+const slide=(n,skip,body)=>`<div><div class="cap">Slide ${n}</div><div class="phone"><div class="island"></div><div class="sb">9:41</div>${bars(n)}${hdr(n,skip)}${body}</div></div>`;
+const S={},K={};
+// 1  Hero: plain tiles, no brand look-alikes, no sticker
+const nt=(l,t,s,gl)=>`<div class="abs" style="left:${l}px;top:${t}px;width:${s}px;height:${s}px;border-radius:${s*.26}px;background:#20242A;border:1.5px solid var(--edge);display:grid;place-items:center"><div style="width:44%;height:44%">${g(gl,'#9A9DA3',2.2)}</div></div>`;
+S[1]=`<h1 style="font-size:46px">You lose hours<br>to your phone.</h1>
+<div class="sub" style="top:268px;font-size:34px;font-weight:800;letter-spacing:-1px;color:var(--ice)">Let’s get them back.</div>
+<svg class="abs" style="left:66px;top:400px" width="260" height="260" viewBox="0 0 260 260"><circle cx="130" cy="130" r="118" fill="#141619" stroke="#2A2D33" stroke-width="10"/><path d="M130 130 L130 52" stroke="#EDEBE6" stroke-width="10" stroke-linecap="round"/><path d="M130 130 L196 168" stroke="#9CC9F5" stroke-width="8" stroke-linecap="round"/><circle cx="130" cy="130" r="10" fill="#EDEBE6"/></svg>
+${nt(30,590,64,G.chat)}${nt(298,380,64,G.bell)}${nt(292,600,56,G.grid)}
+<div class="btn">Show me</div>`;
+// 2  Hours: no tilt, no "about average" claim, Skip in header
+const hrs=['1 to 2 hours','3 to 4 hours','5 to 6 hours','7 hours or more'];
+S[2]=`<h1>How long are you on your phone each day?</h1>
+<div class="abs" style="left:24px;right:24px;top:300px;display:grid;gap:12px">${hrs.map((h,i)=>`<div class="chip ${i==2?'on':''}">${h}${i==2?'<span class="chk">'+g(G.check)+'</span>':''}</div>`).join('')}</div>
+<div class="btn">Next</div>`;
+// 3  Categories: one accent, neutral tiles, no brand colours
+const cats=[['Social',G.people,1],['Video',G.play,1],['Games',G.game,0],['News',G.news,0],['Shopping',G.bag,0],['Chat',G.chat,0]];
+S[3]=`<h1>Which apps pull you in the most?</h1>
+<div class="abs" style="left:24px;right:24px;top:300px;display:grid;grid-template-columns:1fr 1fr;gap:14px">${cats.map(c=>`<div class="tile ${c[2]?'on':''}"><div class="ic">${g(c[1],c[2]?ICE:'#EDEBE6')}</div><div class="t">${c[0]}</div>${c[2]?'<div class="ck">'+g(G.check)+'</div>':''}</div>`).join('')}</div>
+<div class="btn">Next</div>`;
+// 4  Permission: one Continue, no fake system box
+S[4]=`<h1>Now we lock them.</h1>
+<div class="sub" style="top:230px">Your iPhone asks next.</div>
+<div class="abs" style="left:24px;right:24px;top:290px;display:grid;gap:12px">
+ <div class="card"><div class="badge">${g(G.lock,ICE,2.4)}</div><div style="font-weight:600;font-size:18px;line-height:1.25">You stay in control. You can end a session any time.</div></div>
+ <div class="card"><div class="badge">${g(G.shield,ICE,2.4)}</div><div style="font-weight:600;font-size:18px;line-height:1.25">We never see which apps you pick.</div></div></div>
+<div class="abs" style="left:116px;top:520px;width:160px;height:160px;border-radius:50%;background:#141619;border:8px solid #2A2D33;display:grid;place-items:center"><div style="width:64px;height:64px">${g(G.lock,'#EDEBE6',1.8)}</div></div>
+<div class="btn">Continue</div>`;
+// 5  Picker: tiles without names (iOS draws them), count pill, Change apps
+const tones=['#2A2F38','#2F2A38','#2A3835','#38332A','#2A2F38','#33302A','#2A3238','#352A33'];
+S[5]=`<h1>These apps are locked.</h1>
+<div class="sub" style="top:230px">They lock when your timer runs.</div>
+<div class="abs" style="left:24px;right:24px;top:300px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px 16px">${tones.map((t,i)=>`<div style="aspect-ratio:1;border-radius:15px;background:${t};display:grid;place-items:center;position:relative;overflow:hidden"><div style="position:absolute;inset:0;background:rgba(10,11,13,.55)"></div><div style="width:26px;height:26px;position:relative">${g(G.lock,'#fff',2.4)}</div></div>`).join('')}</div>
+<div class="abs" style="left:0;right:0;top:530px;display:flex;justify-content:center"><div style="background:var(--ink);color:var(--bg);font-weight:800;font-size:20px;padding:11px 22px;border-radius:30px">8 apps locked</div></div>
+<div class="btn">Looks right</div><div class="link">Change apps</div>`;
+// 6  Goals: equal grid like the code, one accent
+const foc=[['Study',G.book,1],['Work',G.brief,1],['Sleep',G.moon,0],['Training',G.bolt,0],['Create',G.pen,0],['Read',G.news,0]];
+S[6]=`<h1>What do you want to focus on?</h1>
+<div class="abs" style="left:24px;right:24px;top:300px;display:grid;grid-template-columns:1fr 1fr;gap:12px">${foc.map(f=>`<div class="tile ${f[2]?'on':''}" style="height:96px"><div class="ic">${g(f[1],f[2]?ICE:'#EDEBE6')}</div><div class="t">${f[0]}</div>${f[2]?'<div class="ck">'+g(G.check)+'</div>':''}</div>`).join('')}</div>
+<div class="btn">Next</div>`;
+// 7  Year: number matches the 5-6 hours answer (84 days, 42 back), estimate note kept
+const sq=Array.from({length:365},(_,i)=>`<i style="background:${i<84?(i>=42?'var(--sage)':'var(--warm)'):'#23262B'}"></i>`).join('');
+S[7]=`<h1>Look at your year.</h1>
+<div class="abs" style="left:24px;top:200px"><div style="font:800 88px/1 Onest;letter-spacing:-3.5px;color:var(--warm)">84 days</div><div style="font-size:20px;color:var(--soft);margin-top:8px;font-weight:500">on your phone each year.</div></div>
+<div class="abs" style="left:24px;right:24px;top:370px;display:grid;grid-template-columns:repeat(26,1fr);gap:3px">${sq}</div>
+<style>.phone .abs i{aspect-ratio:1;border-radius:1.5px;display:block}</style>
+<div class="abs" style="left:24px;right:24px;top:600px;font-weight:800;font-size:22px;line-height:1.2;color:var(--sage)">Cut it in half. Get 42 days back.</div>
+<div class="abs" style="left:24px;right:24px;top:640px;font-size:14px;font-weight:500;color:#8B8F96">An estimate from your answer, in full 24-hour days.</div>
+<div class="btn">Let’s do it</div>`;
+// 8  PC: the phone does the scanning, so no QR is drawn on it; one Continue before the camera box
+const br=(x,y,rx,ry)=>`<path d="M${x} ${y+rx*0}" />`;
+S[8]=`<h1>Do you have a PC?</h1>
+<div class="sub" style="top:204px">Open Lock In on it, then scan the code it shows.</div>
+<div class="abs" style="left:96px;top:330px;width:200px;height:200px">
+ <svg width="200" height="200" viewBox="0 0 200 200" fill="none" stroke="#9CC9F5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 52V24a14 14 0 0 1 14-14h28M148 10h28a14 14 0 0 1 14 14v28M190 148v28a14 14 0 0 1-14 14h-28M52 190H24a14 14 0 0 1-14-14v-28"/></svg>
+ <div style="position:absolute;inset:0;display:grid;place-items:center"><div style="width:64px;height:64px">${g(G.pc,'#EDEBE6',1.8)}</div></div></div>
+<div class="abs" style="left:24px;right:24px;top:590px;display:flex;align-items:center;gap:10px;justify-content:center"><div class="badge" style="width:64px;height:64px;border-radius:18px;background:var(--panel)"><div style="width:32px;height:32px">${g(G.phone,'#fff')}</div></div><div style="flex:1;border-top:3px dashed var(--ice);opacity:.7"></div><div class="badge" style="width:64px;height:64px;border-radius:18px;background:var(--panel)"><div style="width:32px;height:32px">${g(G.pc,'#fff')}</div></div></div>
+<div class="btn">Continue</div><div class="link">I only have a phone</div>`;
+// 9  Plus: preview only, says coming soon, no "Try Plus", no sub-lines
+const plus=['It saves your work.','It locks your PC too.','It brings your work back.'];
+S[9]=`<h1>Plus works on your PC.</h1>
+<div class="abs" style="left:24px;top:236px;padding:7px 14px;border-radius:14px;background:#232830;color:var(--warm);font-weight:700;font-size:15px;letter-spacing:.2px">Coming soon</div>
+<div class="abs" style="left:24px;right:24px;top:296px;display:grid;gap:12px">${plus.map((p,i)=>`<div class="card" style="padding:22px 20px"><div style="font:800 32px/1 Onest;color:var(--ice);width:30px">${i+1}</div><div style="font-weight:700;font-size:20px">${p}</div></div>`).join('')}</div>
+<div class="btn">Not now</div>`;
+// 10 Ready: full ring, Not now, no sticker
+S[10]=`<h1 style="font-size:46px">Ready to focus?</h1>
+<div class="sub" style="top:200px">25 minutes. Phone down.</div>
+<svg class="abs" style="left:56px;top:290px" width="280" height="280" viewBox="0 0 280 280"><circle cx="140" cy="140" r="124" fill="none" stroke="#23262B" stroke-width="14"/><circle cx="140" cy="140" r="124" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round"/><text x="140" y="156" text-anchor="middle" font-family="Onest" font-weight="800" font-size="62" fill="#EDEBE6" letter-spacing="-2">25:00</text><text x="140" y="188" text-anchor="middle" font-family="Onest" font-weight="500" font-size="16" fill="#9A9DA3">minutes</text></svg>
+<div class="btn">Start 25 minutes</div><div class="link">Not now</div>`;
+const SKIP={2:1,3:1,6:1};
+let out='';for(let i=from;i<from+cnt&&i<=10;i++)out+=slide(i,SKIP[i],S[i]);
+document.getElementById('r').innerHTML=out;
+</script></body></html>

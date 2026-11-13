@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>New flow video</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;user-select:none}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A}
+body{background:#cfcfd2;display:grid;place-items:center;min-height:100vh;font-family:Onest,system-ui,sans-serif;align-content:center;gap:14px}
+#cap{font:700 20px Onest,system-ui;color:#222;height:28px;text-align:center}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:90}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:90}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px;z-index:5}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge);transition:background .4s}.bars i.on{background:var(--ink)}
+.hdr{position:absolute;left:12px;right:12px;top:68px;height:44px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px;color:#B9BBC0}
+.hdr .bk{width:44px;height:44px;display:grid;place-items:center}
+.pane{position:absolute;inset:0;display:none}
+h1{position:absolute;left:26px;right:26px;top:128px;font:800 40px/1.03 Onest;letter-spacing:-1.4px}
+.p{position:absolute;left:26px;right:30px;font-size:20px;line-height:1.3;font-weight:500;color:#D2D4D9}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D;letter-spacing:.5px}
+.btn.ghost{background:none;color:var(--soft);bottom:20px;height:34px;font-weight:500;font-size:15px;letter-spacing:0}
+.abs{position:absolute}
+.chip{display:flex;align-items:center;gap:10px;height:62px;padding:0 18px;border-radius:31px;background:var(--panel);border:1.5px solid var(--edge);font-weight:700;font-size:20px;transition:background .3s,color .3s,border-color .3s}
+.chip.picked{background:var(--ice);color:#0A0B0D;border-color:var(--ice)}
+.chk{margin-left:auto;width:24px;height:24px;border-radius:50%;background:#0A0B0D;color:var(--ice);display:grid;place-items:center;font-size:14px;opacity:0;transform:scale(0);transition:opacity .2s,transform .4s cubic-bezier(.3,1.8,.5,1)}
+.picked .chk{opacity:1;transform:scale(1)}
+.tile{height:104px;border-radius:22px;background:var(--panel);border:1.5px solid var(--edge);position:relative;font-weight:700;font-size:19px;transition:background .3s,border-color .3s,color .3s}
+.tile.picked{background:var(--ice);border-color:var(--ice);color:#0A0B0D}
+.tile span{position:absolute;left:16px;bottom:14px}
+.note{position:absolute;font-weight:700;font-size:16px;padding:7px 13px;border-radius:12px;background:var(--warm);color:#1A1208;opacity:0}
+#sq i{aspect-ratio:1;border-radius:2px;display:block;background:#23262B}
+.tap{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;background:#ffffff33;z-index:95;pointer-events:none;opacity:0}
+.dot{position:absolute;width:9px;height:9px;border-radius:50%;z-index:75;pointer-events:none}
+.row3{display:flex;gap:14px;align-items:center;padding:18px 20px;border-radius:22px;background:var(--panel);font-weight:700;font-size:20px}
+.ck{width:24px;height:24px;border-radius:50%;border:3px solid var(--ice);border-top-color:transparent;display:block;flex:none}
+</style></head><body>
+<div id="cap"></div>
+<div class="phone" id="ph"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars" id="bars"></div><div id="stack"></div><div class="tap" id="tap"></div></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],sleep=ms=>new Promise(r=>setTimeout(r,ms)),ph=$('#ph');
+const A=(el,kf,o)=>el.animate(kf,Object.assign({fill:'forwards'},o)).finished;
+const spring='cubic-bezier(.3,1.7,.5,1)';
+const BK='<div class="bk"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#EDEBE6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg></div>';
+const hdr=(n,back=true)=>`<div class="hdr">${back?BK:'<div class="bk"></div>'}<div>${n} of 9</div></div>`;
+const ico=(p)=>`<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:16px;top:16px">${p}</svg>`;
+const S={};
+const hrs=['1 to 2 hours','3 to 4 hours','5 to 6 hours','7 hours or more'];
+S.hours=`${hdr(2)}<h1 style="font-size:36px">How long are you on your phone each day?</h1>
+<div class="abs" style="left:26px;right:26px;top:290px;display:grid;gap:12px">${hrs.map(h=>`<div class="chip" style="height:62px">${h}<span class="chk">&#10003;</span></div>`).join('')}</div>
+<div class="note" id="nh" style="left:26px;top:630px;transform:rotate(-2deg);background:var(--sage)">That is a lot. Let&rsquo;s fix it.</div>
+<div class="btn">NEXT</div><div class="btn ghost">Skip</div>`;
+const foc=[['Study','<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>'],['Work','<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3"/>'],['Sleep','<path d="M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z"/>'],['Training','<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'],['Create','<path d="M4 20l4-1L19 8l-3-3L5 16z"/>'],['Read','<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8"/>']];
+S.goals=`${hdr(6)}<h1>What do you want to focus on?</h1>
+<div class="abs" style="left:26px;right:26px;top:290px;display:grid;grid-template-columns:1fr 1fr;gap:12px">${foc.map(f=>`<div class="tile" style="height:100px">${ico(f[1])}<span>${f[0]}</span></div>`).join('')}</div>
+<div class="note" id="ng" style="left:26px;top:640px;transform:rotate(-3deg);background:var(--sage)">pick as many as you like</div>
+<div class="btn">NEXT</div><div class="btn ghost">Skip</div>`;
+S.work=`${hdr(6)}<h1>Working it out.</h1>
+<div class="abs" style="left:26px;right:26px;top:260px;height:14px;border-radius:7px;background:#23262B"><div id="bar" style="width:0;height:100%;border-radius:7px;background:var(--ice)"></div></div>
+<div class="abs" style="left:26px;right:26px;top:330px;display:grid;gap:14px">
+<div class="row3" id="w1"><span class="ck"></span>Your hours a day</div>
+<div class="row3" id="w2"><span class="ck"></span>Your apps</div>
+<div class="row3" id="w3"><span class="ck"></span>Your year</div></div>`;
+S.year=`${hdr(7)}<h1>Look at your year.</h1>
+<div class="abs" style="left:26px;top:200px"><div id="num" style="font:800 96px/1 Onest;letter-spacing:-4px;color:var(--warm)">0 days</div><div style="font-size:20px;font-weight:500;color:#D2D4D9;margin-top:6px">on your phone each year.</div></div>
+<div class="abs" id="sq" style="left:26px;right:26px;top:410px;display:grid;grid-template-columns:repeat(26,1fr);gap:4px">${Array.from({length:365},()=>'<i></i>').join('')}</div>
+<div class="abs" id="back" style="left:26px;top:650px;font-weight:800;font-size:24px;color:var(--sage);opacity:0">Cut it in half. Get 42 days back.</div>
+<div class="btn">LET&rsquo;S DO IT</div>`;
+S.plus=`${hdr(8)}<h1>Plus works on your PC.</h1>
+<p class="p" style="top:210px">You link your PC after you get Plus.</p>
+<div class="note" id="nc" style="left:26px;top:290px;transform:rotate(-3deg);opacity:1">coming soon</div>
+<div class="abs" style="left:26px;right:26px;top:350px;display:grid;gap:14px">${[['1','It saves your work.','It remembers your tabs and files.'],['2','It locks your PC too.','Phone and PC lock together.'],['3','It brings your work back.','One tap, and it is all open again.']].map(s=>`<div style="display:flex;gap:16px;align-items:flex-start;padding:20px;border-radius:22px;background:var(--panel)"><div style="font:800 34px/1 Onest;color:var(--ice)">${s[0]}</div><div><div style="font-weight:700;font-size:20px">${s[1]}</div><div style="font-size:15px;color:var(--soft);margin-top:4px">${s[2]}</div></div></div>`).join('')}</div>
+<div class="btn">NOT NOW</div>`;
+S.commit=`${hdr(9)}<h1>Make a promise.</h1>
+<p class="p" style="top:182px">25 minutes. Phone down.</p>
+<svg class="abs" style="left:56px;top:280px" width="280" height="280" viewBox="0 0 280 280"><circle cx="140" cy="140" r="124" fill="none" stroke="#23262B" stroke-width="14"/><circle id="ring" cx="140" cy="140" r="124" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" stroke-dasharray="779" stroke-dashoffset="779" transform="rotate(-90 140 140)"/><circle cx="140" cy="140" r="96" fill="#181A1E"/></svg>
+<div class="abs" style="left:56px;top:280px;width:280px;height:280px;display:grid;place-items:center;text-align:center"><div><div style="font:800 54px/1 Onest;letter-spacing:-2px">25:00</div><div id="hint" style="font-size:16px;color:var(--soft);margin-top:4px">hold the button</div></div></div>
+<div class="btn" id="hold" style="background:var(--ice)">HOLD TO START</div><div class="btn ghost">Not now</div>`;
+S.run=`<div class="abs" style="left:0;right:0;top:100px;text-align:center;font:700 13px Onest;letter-spacing:4px;color:var(--soft)">LOCK IN</div>
+<svg class="abs" style="left:56px;top:230px" width="280" height="280" viewBox="0 0 280 280"><circle cx="140" cy="140" r="124" fill="none" stroke="#23262B" stroke-width="14"/><circle cx="140" cy="140" r="124" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" stroke-dasharray="779" stroke-dashoffset="12" transform="rotate(-90 140 140)"/></svg>
+<div class="abs" style="left:56px;top:230px;width:280px;height:280px;display:grid;place-items:center;text-align:center"><div><div style="font:800 54px/1 Onest;letter-spacing:-2px">24:59</div><div style="font-size:16px;color:var(--soft);margin-top:4px">Ends 10:06 AM</div></div></div>
+<div class="btn" style="background:var(--panel);color:var(--ink);border:1.5px solid var(--edge)">END SESSION</div>`;
+const days=['Thu','Fri','Sat','Sun','Mon'];
+S.done=`<h1 style="top:110px;font-size:44px">Session done.</h1>
+<div class="abs" style="left:26px;right:26px;top:230px;display:flex;align-items:flex-end;gap:14px"><div id="one" style="font:800 150px/0.85 Onest;letter-spacing:-8px;color:var(--warm)">1</div><div style="padding-bottom:12px"><div style="font:800 30px/1 Onest;letter-spacing:-1px">day streak</div><div style="font-size:18px;color:var(--soft);margin-top:6px">25 minutes in a row</div></div></div>
+<div class="abs" style="left:26px;right:26px;top:470px;display:flex;justify-content:space-between">${days.map((d,i)=>`<div style="text-align:center;width:44px"><div class="dayc" id="d${i}" style="width:44px;height:44px;border-radius:50%;${i?'border:2px dashed #3A3E45':'border:2px dashed #3A3E45'};display:grid;place-items:center;color:#1A1208;font-weight:800"></div><div style="margin-top:8px;font-size:14px;color:${i?'var(--soft)':'var(--ink)'};font-weight:${i?400:600}">${d}</div></div>`).join('')}</div>
+<div class="note" id="nd" style="left:26px;top:600px;transform:rotate(-3deg);background:var(--sage)">come back tomorrow</div>
+<div class="btn">DONE</div>`;
+$('#bars').innerHTML=Array.from({length:9},()=>'<i></i>').join('');
+for(const k in S){const d=document.createElement('div');d.className='pane';d.id='s-'+k;d.innerHTML=S[k];$('#stack').appendChild(d)}
+const cap=t=>{$('#cap').textContent=t};
+async function tapAt(el){const pr=ph.getBoundingClientRect(),r=el.getBoundingClientRect(),t=$('#tap');
+ t.style.left=(r.left-pr.left+r.width/2)+'px';t.style.top=(r.top-pr.top+r.height/2)+'px';
+ await A(t,[{opacity:0,transform:'scale(1.5)'},{opacity:1,transform:'scale(1)'}],{duration:240});
+ await A(el,[{transform:'scale(1)'},{transform:'scale(.95)'},{transform:'scale(1)'}],{duration:200,fill:'none'});
+ await A(t,[{opacity:1},{opacity:0}],{duration:160})}
+let cur=null;
+async function go(k,n){
+ $$('#bars i').forEach((b,i)=>b.classList.toggle('on',n!=null&&i<n));
+ if(cur){const o=$('#s-'+cur);await A(o,[{transform:'none',opacity:1},{transform:'translateX(-50px)',opacity:0}],{duration:280,easing:'ease-in'});o.style.display='none'}
+ cur=k;const p=$('#s-'+k);p.style.display='block';
+ await Promise.all($$(':scope > *',p).map((c,i)=>{const op=c.style.opacity,tr=c.style.transform||'';return A(c,[{transform:tr+' translateY(28px)',opacity:0},{transform:tr||'none',opacity:op===''?1:+op}],{duration:520,delay:i*70,easing:spring,fill:'both'})}));
+}
+const B=k=>$('.btn:not(.ghost)',$('#s-'+k));
+function pick(el){el.classList.add('picked')}
+function pop(el,rot){return A(el,[{opacity:0,transform:`rotate(${rot}deg) scale(.5)`},{opacity:1,transform:`rotate(${rot}deg) scale(1)`}],{duration:450,easing:spring})}
+function burst(x,y){const cs=['#fff','#9CC9F5','#8FD3B0','#EDEBE6','#F2B27A'];for(let k=0;k<18;k++){const d=document.createElement('div');d.className='dot';d.style.background=cs[k%5];d.style.left=x-4+'px';d.style.top=y-4+'px';ph.appendChild(d);const a=k/18*6.28,dist=70+Math.random()*50;A(d,[{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*dist}px,${Math.sin(a)*dist}px) scale(.3)`,opacity:0}],{duration:800,easing:'ease-out'}).then(()=>d.remove())}}
+async function play(){
+ window.__done=false;
+ cap('Step 2: you answer, the app reacts');
+ await go('hours',2);await sleep(1000);
+ const c=$$('.chip',$('#s-hours'))[2];await tapAt(c);pick(c);await A(c,[{transform:'rotate(0) scale(1)'},{transform:'rotate(-1.5deg) scale(1.04)'}],{duration:350,easing:spring});
+ await pop($('#nh'),-2);await sleep(1400);await tapAt(B('hours'));
+ cap('Steps 3 to 5 stay the same');await sleep(1500);
+ cap('Step 6: you pick what to focus on');
+ await go('goals',6);await sleep(900);
+ for(const t of $$('.tile',$('#s-goals')).slice(0,2)){await tapAt(t);pick(t);await sleep(300)}
+ await pop($('#ng'),-3);await sleep(1100);await tapAt(B('goals'));
+ cap('NEW: a short pause, then your year');
+ await go('work',6);await sleep(500);
+ const ws=['#w1','#w2','#w3'];
+ A($('#bar'),[{width:'0%'},{width:'100%'}],{duration:4000,easing:'linear'});
+ for(let i=0;i<3;i++){await sleep(1300);const r=$(ws[i]);const k=$('.ck',r);k.style.cssText='border:none;background:var(--sage);display:grid;place-items:center;color:#0A0B0D;font-weight:800;font-size:14px;border-radius:50%';k.textContent='✓';A(k,[{transform:'scale(.4)'},{transform:'scale(1.25)',offset:.6},{transform:'scale(1)'}],{duration:400,easing:'ease-out'})}
+ await sleep(1100);
+ cap('Step 7: your year');
+ await go('year',7);
+ const sq=$$('#sq i'),t0=performance.now();
+ await new Promise(res=>{const step=()=>{const k=Math.min(1,(performance.now()-t0)/1800),e=1-Math.pow(1-k,3),v=Math.round(84*e);$('#num').textContent=v+' days';for(let i=0;i<v;i++)sq[i].style.background='var(--warm)';k<1?requestAnimationFrame(step):res()};step()});
+ await sleep(700);A($('#back'),[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:450});
+ for(let i=42;i<84;i++){sq[i].style.background='var(--sage)';await sleep(25)}
+ await sleep(1300);await tapAt(B('year'));
+ cap('Step 8: Plus, one button');
+ await go('plus',8);await sleep(2200);await tapAt(B('plus'));
+ cap('NEW, step 9: hold to commit');
+ await go('commit',9);await sleep(1300);
+ const hb=$('#hold'),pr=ph.getBoundingClientRect(),br=hb.getBoundingClientRect(),t=$('#tap');
+ t.style.left=(br.left-pr.left+br.width/2)+'px';t.style.top=(br.top-pr.top+br.height/2)+'px';
+ await A(t,[{opacity:0,transform:'scale(1.5)'},{opacity:1,transform:'scale(.9)'}],{duration:240});
+ $('#hint').textContent='keep holding';
+ await A($('#ring'),[{strokeDashoffset:779},{strokeDashoffset:0}],{duration:3000,easing:'linear'});
+ burst(196,420);$('#hint').textContent='locked in';
+ await A(t,[{opacity:1},{opacity:0}],{duration:200});await sleep(900);
+ cap('The session starts');
+ await go('run',null);await sleep(1800);
+ cap('25 minutes later');
+ await go('done',null);await sleep(300);
+ await A($('#one'),[{transform:'scale(.2)',opacity:0},{transform:'scale(1.2)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],{duration:700,easing:'ease-out'});
+ const d0=$('#d0');d0.style.cssText+=';border:none;background:var(--warm)';d0.textContent='✓';A(d0,[{transform:'scale(.3)'},{transform:'scale(1.25)',offset:.6},{transform:'scale(1)'}],{duration:450,easing:'ease-out'});
+ await sleep(500);await pop($('#nd'),-3);await sleep(2200);
+ cap('');
+ window.__done=true;
+}
+window.play=play;
+</script></body></html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Hero v4</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A;--line:#2A1620;--cream:#F4EFE8}
+body{background:#cfcfd2;display:grid;place-items:center;min-height:100vh;font-family:Onest,system-ui,sans-serif}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:90}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i:first-child{background:var(--ink)}
+h1{position:absolute;left:26px;right:26px;top:128px;font:800 44px/1.02 Onest;letter-spacing:-1.6px}
+.sub{position:absolute;left:26px;top:238px;font:600 22px Onest;color:var(--ice)}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D;letter-spacing:.5px}
+.abs{position:absolute}
+/* the phone drawing: same comic language as the brain (thick dark outline, cream rim, flat fills) */
+.ph{left:66px;top:360px;width:176px;height:312px;transform:rotate(-8deg);border-radius:40px;background:var(--cream);border:6px solid var(--line);box-shadow:0 14px 0 -2px #00000055}
+.scr{position:absolute;inset:9px;border-radius:30px;background:#2B2E36;border:5px solid var(--line);overflow:hidden}
+.scr .feed{position:absolute;left:14px;right:14px;height:62px;border-radius:14px;background:#3A3E48}
+.scr .dot{position:absolute;width:30px;height:30px;border-radius:50%;background:#e9453a;border:4px solid var(--line)}
+.eyes{position:absolute;left:50%;top:104px;margin-left:-44px;width:88px;height:46px}
+.eyes i{position:absolute;top:0;width:34px;height:40px;border-radius:50%;background:var(--cream);border:4px solid var(--line)}
+.eyes i:before{content:"";position:absolute;left:9px;top:12px;width:13px;height:16px;border-radius:50%;background:var(--line)}
+.mouth{position:absolute;left:50%;top:170px;margin-left:-22px;width:44px;height:24px;border-radius:0 0 44px 44px;background:var(--line);border-top:4px solid var(--line)}
+.t{position:absolute;border-radius:14px;background:var(--warm);border:4px solid var(--line);display:grid;place-items:center;font:800 22px Onest;color:var(--line);box-shadow:0 5px 0 #00000066}
+.trail{position:absolute;left:0;top:0;pointer-events:none}
+.note{position:absolute;font-weight:700;font-size:17px;padding:7px 13px;border-radius:12px;color:#1A1208}
+</style></head><body>
+<div class="phone">
+ <div class="island"></div><div class="sb">9:41</div>
+ <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <h1>You lose hours<br>to your phone.</h1>
+ <div class="sub">Let&rsquo;s get them back.</div>
+
+ <!-- dotted path the hours take out of the phone -->
+ <svg class="trail" width="393" height="852" viewBox="0 0 393 852" fill="none">
+  <path d="M168 372 C 230 300, 330 330, 318 470 S 330 640, 346 720" stroke="#EDEBE6" stroke-opacity=".28" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>
+ </svg>
+
+ <div class="abs ph">
+  <div class="scr">
+   <div class="feed" style="top:16px;height:44px"></div>
+   <div class="eyes" style="top:96px"><i style="left:0"></i><i style="right:0"></i></div>
+   <div class="mouth" style="top:158px"></div>
+   <div class="dot" style="right:16px;top:214px;width:26px;height:26px"></div>
+  </div>
+ </div>
+
+ <!-- hours leaking out of the screen, getting smaller and fainter as they fall away -->
+ <div class="t" style="left:132px;top:330px;width:62px;height:62px;transform:rotate(-14deg)">1h</div>
+ <div class="t" style="left:222px;top:312px;width:58px;height:58px;transform:rotate(12deg)">1h</div>
+ <div class="t" style="left:290px;top:392px;width:52px;height:52px;transform:rotate(-9deg);opacity:.95">1h</div>
+ <div class="t" style="left:296px;top:490px;width:44px;height:44px;transform:rotate(16deg);opacity:.8;font-size:19px">1h</div>
+ <div class="t" style="left:312px;top:578px;width:36px;height:36px;transform:rotate(-12deg);opacity:.55;font-size:16px;border-width:3px">1h</div>
+ <div class="t" style="left:326px;top:652px;width:28px;height:28px;transform:rotate(10deg);opacity:.32;font-size:13px;border-width:3px;border-radius:9px">1h</div>
+
+ <div class="note" style="left:40px;top:650px;background:var(--ice);transform:rotate(-6deg)">just one look</div>
+
+ <div class="btn">SHOW ME</div>
+</div>
+</body></html>

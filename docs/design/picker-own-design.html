@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Own-design app picker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Caveat:wght@600&display=swap">
+<style>
+  * { box-sizing:border-box; margin:0; }
+  :root { --ink:#EDEBE6; --soft:#8D9096; --panel:#1A1C20; --edge:#2B2E34; --ice:#9CC9F5; --sage:#8FD3B0; }
+  body { background:#cfcfd2; padding:22px; font-family:Onest,system-ui,sans-serif; }
+  .row { display:flex; gap:22px; }
+  .cap { font:600 13px system-ui; color:#444; margin:0 0 6px 6px; }
+  .phone { width:393px; height:852px; border-radius:52px; overflow:hidden; position:relative; color:var(--ink); background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%); }
+  .island { position:absolute; top:11px; left:50%; width:120px; height:34px; margin-left:-60px; border-radius:20px; background:#000; }
+  .sb { position:absolute; top:18px; left:34px; font-weight:600; font-size:16px; }
+  .bars { position:absolute; left:26px; right:26px; top:54px; display:flex; gap:3px; }
+  .bars i { flex:1; height:4px; border-radius:2px; background:var(--edge); } .bars i.on { background:var(--ink); }
+  .scr { position:absolute; inset:0; padding:100px 26px 0; }
+  h1 { font-weight:500; font-size:46px; line-height:1.02; letter-spacing:-1.2px; margin-top:30px; }
+  .lead { font-size:19px; line-height:1.35; margin-top:14px; max-width:320px; }
+  .chip { display:inline-flex; align-items:center; gap:8px; height:32px; padding:0 14px; border-radius:16px; background:#1d2733; border:1.5px solid var(--ice); color:var(--ice); font-weight:600; font-size:14px; margin-top:18px; }
+  .chip.zero { background:var(--panel); border-color:var(--edge); color:var(--soft); }
+  .panel { position:absolute; left:26px; right:26px; top:300px; bottom:140px; border-radius:22px; background:#141619; border:1px solid var(--edge); overflow:hidden; }
+  .sys { font-family:-apple-system,"Inter",system-ui,sans-serif; color:#fff; }
+  .sys .s-search { margin:12px 12px 6px; height:34px; border-radius:10px; background:#2c2c2e; color:#8e8e93; display:flex; align-items:center; padding:0 12px; font-size:15px; }
+  .sys .s-h { padding:10px 16px 4px; font-size:12px; color:#8e8e93; text-transform:uppercase; }
+  .sys .s-row { display:flex; align-items:center; gap:12px; padding:0 16px; height:50px; border-bottom:1px solid #ffffff12; font-size:16px; }
+  .s-ic { width:30px; height:30px; border-radius:7px; flex:none; }
+  .s-rad { margin-left:auto; width:22px; height:22px; border-radius:50%; border:2px solid #636366; display:grid; place-items:center; font-size:13px; color:#fff; }
+  .s-row.sel .s-rad { background:#0A84FF; border-color:#0A84FF; }
+  .btn { position:absolute; left:26px; right:26px; bottom:60px; height:58px; border-radius:14px; display:flex; gap:10px; align-items:center; justify-content:center; font-weight:650; font-size:17px; background:var(--ink); color:#0A0B0D; }
+  .btn.off { background:#23262B; color:var(--soft); }
+  .later { position:absolute; left:0; right:0; bottom:26px; text-align:center; font-size:15px; color:var(--soft); }
+  .item { display:flex; align-items:center; gap:14px; height:62px; border-radius:16px; background:var(--panel); padding:0 14px; margin-top:12px; font-size:18px; font-weight:500; }
+  .item .ic { width:34px; height:34px; border-radius:8px; flex:none; }
+  .pill { margin-left:auto; display:flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:14px; background:#16251d; color:var(--sage); font-size:13px; font-weight:600; }
+  .ghost { margin-top:16px; height:52px; border-radius:14px; border:1.5px dashed #3a3e45; display:grid; place-items:center; color:var(--soft); font-size:16px; font-weight:500; }
+  .big { font-size:84px; font-weight:500; letter-spacing:-3px; line-height:1; color:var(--sage); margin-top:26px; }
+  .note { font-family:Caveat,cursive; font-weight:600; font-size:25px; color:var(--ice); transform:rotate(-4deg); }
+</style>
+</head>
+<body>
+<div class="row" id="r"></div>
+<script>
+const lock = (c, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
+const rows = (sel) => `
+  <div class="s-h">Social</div>
+  <div class="s-row ${sel?'sel':''}"><div class="s-ic" style="background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)"></div>Instagram<div class="s-rad">${sel?'✓':''}</div></div>
+  <div class="s-row ${sel?'sel':''}"><div class="s-ic" style="background:#000;border:1px solid #444"></div>X<div class="s-rad">${sel?'✓':''}</div></div>
+  <div class="s-row"><div class="s-ic" style="background:#3a7bd5"></div>Messages<div class="s-rad"></div></div>
+  <div class="s-h">Entertainment</div>
+  <div class="s-row ${sel?'sel':''}"><div class="s-ic" style="background:#e53935"></div>YouTube<div class="s-rad">${sel?'✓':''}</div></div>
+  <div class="s-row"><div class="s-ic" style="background:#43a047"></div>Podcasts<div class="s-rad"></div></div>`;
+const frame = (cap, inner, n) => `<div><div class="cap">${cap}</div><div class="phone"><div class="island"></div><div class="sb">9:41</div><div class="bars">${[0,1,2,3,4,5,6,7,8,9].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>${inner}</div></div>`;
+const A = frame('A. Pick apps (the list inside is Apple’s)', `<div class="scr"><h1>Shield<br>your apps.</h1><span class="chip zero">0 chosen</span>
+  <div class="panel sys"><div class="s-search">⌕&nbsp; Search</div>${rows(false)}</div></div><div class="btn off">${lock('#8D9096',20)} Block apps</div>`, 4);
+const B = frame('B. Three chosen', `<div class="scr"><h1>Shield<br>your apps.</h1><span class="chip">✓ 3 chosen</span>
+  <div class="panel sys"><div class="s-search">⌕&nbsp; Search</div>${rows(true)}</div></div><div class="btn">${lock('#0A0B0D',20)} Block 3 apps</div>`, 4);
+const C = frame('C. Your shield (our design; icon and name drawn by iOS)', `<div class="scr"><h1>Your shield<br>is ready.</h1>
+  <div class="big">3 apps</div><p class="lead" style="margin-top:8px">will shut when your timer runs.</p>
+  <div style="margin-top:14px">
+   <div class="item"><div class="ic" style="background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)"></div>Instagram<span class="pill">${lock('#8FD3B0',13)} Blocked</span></div>
+   <div class="item"><div class="ic" style="background:#000;border:1px solid #444"></div>X<span class="pill">${lock('#8FD3B0',13)} Blocked</span></div>
+   <div class="item"><div class="ic" style="background:#e53935"></div>YouTube<span class="pill">${lock('#8FD3B0',13)} Blocked</span></div>
+   <div class="ghost">+ Add more apps</div></div></div><div class="btn">Next</div>`, 4);
+document.getElementById('r').innerHTML = A + B + C;
+</script>
+</body>
+</html>

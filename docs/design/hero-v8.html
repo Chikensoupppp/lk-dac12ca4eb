@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Hero v8</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--edge:#2A2D33;--ice:#9CC9F5;--warm:#F2B27A;--panel:#15171B}
+body{background:#cfcfd2;display:grid;place-items:center;min-height:100vh;font-family:Onest,system-ui,sans-serif}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:#0A0B0D}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:90}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:5}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px;z-index:5}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i:first-child{background:var(--ink)}
+h1{position:absolute;left:26px;right:26px;top:128px;font:800 44px/1.02 Onest;letter-spacing:-1.6px;z-index:5}
+.sub{position:absolute;left:26px;top:238px;font:600 22px Onest;color:var(--ice);z-index:5}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D;letter-spacing:.5px;z-index:6}
+
+/* the feed: the slide itself is an endless scroll that runs late into the night */
+.feedwrap{position:absolute;left:0;right:0;top:296px;bottom:110px;overflow:hidden;
+ -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 70px,#000 72%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 70px,#000 72%,transparent 100%)}
+.feed{position:absolute;left:26px;width:236px;top:-40px}
+.post{border-radius:20px;background:var(--panel);border:1px solid #23262C;padding:12px;margin-bottom:12px}
+.who{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.av{width:26px;height:26px;border-radius:50%}
+.nm{height:8px;width:86px;border-radius:4px;background:#2C3037}
+.med{height:150px;border-radius:13px;position:relative;overflow:hidden}
+.med.play:after{content:"";position:absolute;left:50%;top:50%;margin:-12px 0 0 -8px;border-left:20px solid #ffffff66;border-top:12px solid transparent;border-bottom:12px solid transparent}
+.ln{height:8px;border-radius:4px;background:#24272D;margin-top:10px}
+.act{display:flex;gap:14px;margin-top:10px}.act i{width:16px;height:16px;border-radius:5px;background:#23262C}
+/* time running down the right edge, like a timeline */
+.time{position:absolute;right:20px;text-align:right;font:600 14px Onest;color:#5C6068;letter-spacing:.2px}
+.time:before{content:"";position:absolute;right:-12px;top:7px;width:5px;height:5px;border-radius:50%;background:currentColor}
+.rail{position:absolute;right:10px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,#2A2D33 20%,#2A2D33 80%,transparent)}
+.now{color:var(--warm);font-size:22px;font-weight:800;letter-spacing:-.5px}
+.now:before{width:9px;height:9px;right:-14px;top:9px;box-shadow:0 0 12px var(--warm)}
+.note{position:absolute;font-weight:700;font-size:16px;padding:7px 13px;border-radius:12px;color:#1A1208;background:var(--warm);z-index:4}
+</style></head><body>
+<div class="phone">
+ <div class="island"></div><div class="sb">9:41</div>
+ <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <h1>You lose hours<br>to your phone.</h1>
+ <div class="sub">Let&rsquo;s get them back.</div>
+
+ <div class="feedwrap">
+  <div class="rail"></div>
+  <div class="feed">
+   <div class="post"><div class="who"><div class="av" style="background:#3E5A7A"></div><div class="nm"></div></div><div class="med play" style="background:linear-gradient(150deg,#2B3B52,#1A2130)"></div></div>
+   <div class="post"><div class="who"><div class="av" style="background:#6A4A6E"></div><div class="nm" style="width:64px"></div></div><div class="ln"></div><div class="ln" style="width:70%"></div><div class="act"><i></i><i></i><i></i></div></div>
+   <div class="post"><div class="who"><div class="av" style="background:#7A5A3E"></div><div class="nm"></div></div><div class="med" style="background:linear-gradient(150deg,#4A3A2C,#251E19)"></div></div>
+   <div class="post"><div class="who"><div class="av" style="background:#3E6A5A"></div><div class="nm" style="width:70px"></div></div><div class="med play" style="height:120px;background:linear-gradient(150deg,#2A4440,#18221F)"></div></div>
+  </div>
+  <div class="time" style="top:44px">11:04 PM</div>
+  <div class="time" style="top:150px;color:#6E727A">11:52 PM</div>
+  <div class="time" style="top:236px;color:#868A92">12:40 AM</div>
+  <div class="time now" style="top:338px">2:47 AM</div>
+ </div>
+
+ <div class="note" style="left:40px;top:668px;transform:rotate(-5deg)">just one more</div>
+ <div class="btn">SHOW ME</div>
+</div>
+</body></html>

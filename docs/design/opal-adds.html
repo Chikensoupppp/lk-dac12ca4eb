@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Opal-style adds</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;user-select:none}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A}
+body{background:#cfcfd2;padding:22px;font-family:Onest,system-ui,sans-serif}
+.row{display:flex;gap:22px;flex-wrap:wrap;width:850px}
+.cap{font:600 14px system-ui;color:#333;margin:0 0 6px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%);flex:none}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:9}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:9}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i.on{background:var(--ink)}
+.hdr{position:absolute;left:12px;right:12px;top:68px;height:44px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px;color:#B9BBC0}
+.hdr .bk{width:44px;height:44px;display:grid;place-items:center}
+h1{position:absolute;left:26px;right:26px;top:128px;font:800 40px/1.03 Onest;letter-spacing:-1.4px}
+.p{position:absolute;left:26px;right:30px;font-size:20px;line-height:1.3;font-weight:500;color:#D2D4D9}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D}
+.btn.ghost{background:none;color:var(--soft);bottom:20px;height:34px;font-weight:500;font-size:15px}
+.abs{position:absolute}
+.chip{display:flex;align-items:center;gap:10px;height:56px;padding:0 18px;border-radius:28px;background:var(--panel);border:1.5px solid var(--edge);font-weight:600;font-size:18px}
+.chip.on{background:var(--ice);color:#0A0B0D;border-color:var(--ice);transform:rotate(-1.5deg) scale(1.03)}
+.chk{margin-left:auto;width:24px;height:24px;border-radius:50%;background:#0A0B0D;color:var(--ice);display:grid;place-items:center;font-size:14px}
+.note{position:absolute;font-weight:700;font-size:16px;padding:7px 13px;border-radius:12px;background:var(--warm);color:#1A1208}
+</style></head><body>
+<div class="row">
+
+<!-- A. Reaction after an answer -->
+<div><div class="cap">A. A reaction after you answer (step 2)</div>
+<div class="phone"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="hdr"><div class="bk"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#EDEBE6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg></div><div>2 of 9</div></div>
+<h1 style="font-size:36px">How long are you on your phone each day?</h1>
+<div class="abs" style="left:26px;right:26px;top:290px;display:grid;gap:12px">
+<div class="chip" style="height:62px">1 to 2 hours</div>
+<div class="chip" style="height:62px">3 to 4 hours</div>
+<div class="chip on" style="height:62px">5 to 6 hours<span class="chk">&#10003;</span></div>
+<div class="chip" style="height:62px">7 hours or more</div></div>
+<div class="note" style="left:26px;top:630px;transform:rotate(-2deg);background:var(--sage)">That is a lot. Let&rsquo;s fix it.</div>
+<div class="btn">NEXT</div><div class="btn ghost">Skip</div></div></div>
+
+<!-- B. Building your plan -->
+<div><div class="cap">B. A short &ldquo;working it out&rdquo; screen (before the year)</div>
+<div class="phone"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+<div class="hdr"><div class="bk"></div><div>6 of 9</div></div>
+<h1>Working it out.</h1>
+<div class="abs" style="left:26px;right:26px;top:260px;height:14px;border-radius:7px;background:#23262B"><div style="width:66%;height:100%;border-radius:7px;background:var(--ice)"></div></div>
+<div class="abs" style="left:26px;right:26px;top:330px;display:grid;gap:14px;font-weight:700;font-size:20px">
+<div style="display:flex;gap:14px;align-items:center;padding:18px 20px;border-radius:22px;background:var(--panel)"><span class="chk" style="margin:0;background:var(--sage);color:#0A0B0D">&#10003;</span>Your hours a day</div>
+<div style="display:flex;gap:14px;align-items:center;padding:18px 20px;border-radius:22px;background:var(--panel)"><span class="chk" style="margin:0;background:var(--sage);color:#0A0B0D">&#10003;</span>Your apps</div>
+<div style="display:flex;gap:14px;align-items:center;padding:18px 20px;border-radius:22px;background:var(--panel);color:var(--soft)"><span style="width:24px;height:24px;border-radius:50%;border:3px solid var(--ice);border-top-color:transparent;display:block"></span>Your year</div></div>
+<div class="note" style="right:34px;top:600px;transform:rotate(4deg)">one second</div></div></div>
+
+<!-- C. Hold to commit -->
+<div><div class="cap">C. Hold to commit (last step, replaces the plain button)</div>
+<div class="phone"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+<div class="hdr"><div class="bk"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#EDEBE6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg></div><div>9 of 9</div></div>
+<h1>Make a promise.</h1>
+<p class="p" style="top:182px">25 minutes. Phone down.</p>
+<svg class="abs" style="left:56px;top:280px" width="280" height="280" viewBox="0 0 280 280"><circle cx="140" cy="140" r="124" fill="none" stroke="#23262B" stroke-width="14"/><circle cx="140" cy="140" r="124" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" stroke-dasharray="779" stroke-dashoffset="272" transform="rotate(-90 140 140)"/><circle cx="140" cy="140" r="96" fill="#181A1E"/></svg>
+<div class="abs" style="left:56px;top:280px;width:280px;height:280px;display:grid;place-items:center;text-align:center"><div><div style="font:800 54px/1 Onest;letter-spacing:-2px">25:00</div><div style="font-size:16px;color:var(--soft);margin-top:4px">keep holding</div></div></div>
+<div class="note" style="right:30px;top:262px;transform:rotate(5deg);background:var(--sage)">you got this</div>
+<div class="btn" style="background:var(--ice)">HOLD TO START</div><div class="btn ghost">Not now</div></div></div>
+
+<!-- D. Streak after first session -->
+<div><div class="cap">D. Streak, shown after the first finished session</div>
+<div class="phone"><div class="island"></div><div class="sb">9:41</div>
+<h1 style="top:110px;font-size:44px">Session done.</h1>
+<div class="abs" style="left:26px;right:26px;top:230px;display:flex;align-items:flex-end;gap:14px">
+<div style="font:800 150px/0.85 Onest;letter-spacing:-8px;color:var(--warm)">1</div>
+<div style="padding-bottom:12px"><div style="font:800 30px/1 Onest;letter-spacing:-1px">day streak</div><div style="font-size:18px;color:var(--soft);margin-top:6px">25 minutes in a row</div></div></div>
+<div class="abs" style="left:26px;right:26px;top:470px;display:flex;justify-content:space-between">
+<div style="text-align:center;width:44px"><div style="width:44px;height:44px;border-radius:50%;background:var(--warm);display:grid;place-items:center;color:#1A1208;font-weight:800">&#10003;</div><div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--ink)">Thu</div></div>
+<div style="text-align:center;width:44px"><div style="width:44px;height:44px;border-radius:50%;border:2px dashed #3A3E45"></div><div style="margin-top:8px;font-size:14px;color:var(--soft)">Fri</div></div>
+<div style="text-align:center;width:44px"><div style="width:44px;height:44px;border-radius:50%;border:2px dashed #3A3E45"></div><div style="margin-top:8px;font-size:14px;color:var(--soft)">Sat</div></div>
+<div style="text-align:center;width:44px"><div style="width:44px;height:44px;border-radius:50%;border:2px dashed #3A3E45"></div><div style="margin-top:8px;font-size:14px;color:var(--soft)">Sun</div></div>
+<div style="text-align:center;width:44px"><div style="width:44px;height:44px;border-radius:50%;border:2px dashed #3A3E45"></div><div style="margin-top:8px;font-size:14px;color:var(--soft)">Mon</div></div></div>
+<div class="note" style="left:26px;top:600px;transform:rotate(-3deg);background:var(--sage)">come back tomorrow</div>
+<div class="btn">DONE</div></div></div>
+
+</div></body></html>

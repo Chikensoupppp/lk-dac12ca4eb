@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Shield C demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;user-select:none}
+body{background:#cfcfd2;display:grid;place-items:center;min-height:100vh;font-family:Onest,system-ui,sans-serif}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:#fff;background:linear-gradient(170deg,#2a3550,#0f1320 70%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:60}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:60}
+h1{position:absolute;left:28px;top:104px;font:600 38px/1.05 Onest;letter-spacing:-1px;width:340px;transition:opacity .3s}
+.p{position:absolute;left:28px;top:200px;font-size:17px;color:#b9c0d4;transition:opacity .3s}
+.grid{position:absolute;left:30px;right:30px;top:268px;display:grid;grid-template-columns:repeat(4,1fr);gap:26px 18px}
+.cell{display:grid;justify-items:center;gap:7px;font-size:12px;color:#e5e8f2;position:relative;transition:color .4s}
+.cell i{width:64px;height:64px;border-radius:15px;display:block;position:relative;overflow:hidden}
+.cell i::after{content:"";position:absolute;inset:0;background:rgba(18,22,36,.62);backdrop-filter:blur(6px);opacity:0;transition:opacity .45s}
+.cell b{position:absolute;top:21px;width:22px;height:22px;z-index:2;opacity:0;transform:scale(.4);transition:all .4s cubic-bezier(.3,1.6,.5,1)}
+.cell.lk i::after{opacity:1}.cell.lk b{opacity:1;transform:none}.cell.lk{color:#8d94aa}
+.tag{position:absolute;left:28px;right:28px;top:628px;font-size:16px;color:#b9c0d4;opacity:0;transition:opacity .4s}
+.tag.on{opacity:1}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:600;font-size:17px;background:#fff;color:#0f1320;transition:transform .12s}
+.btn.press{transform:scale(.97)}
+.sheet{position:absolute;left:0;right:0;top:120px;bottom:0;z-index:40;border-radius:22px 22px 0 0;background:#1c1c1e;transform:translateY(105%);transition:transform .5s cubic-bezier(.3,.8,.2,1);font-family:-apple-system,Inter,system-ui,sans-serif}
+.sheet.on{transform:none}
+.sh-top{display:flex;justify-content:space-between;padding:18px 20px 8px;font-size:17px;color:#0A84FF}.sh-top b{color:#fff;font-weight:600}
+.sh-s{margin:6px 16px 8px;height:36px;border-radius:10px;background:#2c2c2e;color:#8e8e93;display:flex;align-items:center;padding:0 12px;font-size:16px}
+.sh-h{padding:10px 20px 6px;font-size:13px;color:#8e8e93;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:12px;padding:0 20px;height:54px;border-bottom:1px solid #ffffff12;font-size:17px}
+.row u{width:34px;height:34px;border-radius:8px;flex:none}
+.rad{margin-left:auto;width:26px;height:26px;border-radius:50%;border:2px solid #636366;display:grid;place-items:center;color:#fff;font-size:15px;transition:all .18s;transform:scale(1)}
+.row.sel .rad{background:#34C759;border-color:#34C759;transform:scale(1.12)}
+.cnt{position:absolute;left:0;right:0;bottom:34px;text-align:center;color:#8e8e93;font-size:14px}
+.dim{position:absolute;inset:0;background:#0007;z-index:30;opacity:0;transition:opacity .4s;pointer-events:none}.dim.on{opacity:1}
+.tap{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;background:#ffffff33;z-index:90;pointer-events:none;opacity:0;transform:scale(1.4);transition:opacity .2s,transform .2s}
+.tap.on{opacity:1;transform:scale(1)}
+</style></head><body>
+<div class="phone" id="ph"><div class="island"></div><div class="sb">9:41</div>
+<h1 id="h">Lock the apps that pull you in.</h1>
+<p class="p" id="p">Pick them once. They stay locked while your timer runs.</p>
+<div class="grid" id="g"></div>
+<div class="tag" id="tag"></div>
+<div class="btn" id="btn">Choose apps</div>
+<div class="dim" id="dim"></div>
+<div class="sheet" id="sheet">
+ <div class="sh-top"><span>Cancel</span><b>Select Apps</b><span id="done">Done</span></div>
+ <div class="sh-s">&#8981;&nbsp; Search</div>
+ <div class="sh-h">Social</div>
+ <div class="row" data-i="0"><u style="background:#E4573D"></u>Instagram<div class="rad"></div></div>
+ <div class="row" data-i="1"><u style="background:#17181B;box-shadow:0 0 0 1px #444 inset"></u>X<div class="rad"></div></div>
+ <div class="row"><u style="background:#3E7BD6"></u>Messages<div class="rad"></div></div>
+ <div class="sh-h">Entertainment</div>
+ <div class="row" data-i="2"><u style="background:#D93636"></u>YouTube<div class="rad"></div></div>
+ <div class="row"><u style="background:#3E9A4E"></u>Podcasts<div class="rad"></div></div>
+ <div class="cnt" id="cnt">0 selected</div>
+</div>
+<div class="tap" id="tap"></div></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms)),ph=$('#ph');
+const cols=['#E4573D','#17181B','#D93636','#3E7BD6','#3E9A4E','#E2B53A','#8A3FA0','#1F8C7E','#C46A2B','#4B5563','#D6407A','#2D7FE0'];
+const names=['Instagram','X','YouTube','Messages','Podcasts','Reddit','Camera','Maps','Mail','Notes','Photos','Music'];
+const lk=`<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" fill="#fff3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
+$('#g').innerHTML=names.map((n,i)=>`<div class="cell" id="c${i}"><i style="background:${cols[i]}"></i><b>${lk}</b>${n}</div>`).join('');
+async function tapAt(el,press){const pr=ph.getBoundingClientRect(),r=el.getBoundingClientRect(),t=$('#tap');
+ t.style.left=(r.left-pr.left+r.width/2)+'px';t.style.top=(r.top-pr.top+r.height/2)+'px';t.classList.add('on');await sleep(380);
+ if(press){el.classList.add('press');await sleep(120);el.classList.remove('press')}await sleep(160);t.classList.remove('on')}
+async function play(){
+ window.__done=false;await sleep(2200);
+ await tapAt($('#btn'),1);$('#dim').classList.add('on');$('#sheet').classList.add('on');await sleep(1200);
+ let n=0;
+ for(const r of ph.querySelectorAll('.row[data-i]')){await tapAt($('.rad',r));r.classList.add('sel');$('.rad',r).textContent='✓';n++;$('#cnt').textContent=n+' selected';await sleep(650)}
+ await sleep(500);await tapAt($('#done'));$('#sheet').classList.remove('on');$('#dim').classList.remove('on');await sleep(800);
+ $('#h').textContent='This is your phone while you focus.';$('#p').textContent='Locked apps go dim. Nothing opens.';
+ for(const i of [0,1,2]){$('#c'+i).classList.add('lk');await sleep(450)}
+ $('#tag').textContent='3 apps are locked. Tap an app to change it.';$('#tag').classList.add('on');$('#btn').textContent='Looks right';
+ await sleep(3200);window.__done=true}
+window.play=play;
+if(location.search.includes('final')){[0,1,2].forEach(i=>$('#c'+i).classList.add('lk'));$('#h').textContent='This is your phone while you focus.';$('#p').textContent='Locked apps go dim. Nothing opens.';$('#tag').textContent='3 apps are locked. Tap an app to change it.';$('#tag').classList.add('on');$('#btn').textContent='Looks right'}
+</script></body></html>

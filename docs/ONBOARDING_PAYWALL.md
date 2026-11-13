@@ -63,3 +63,16 @@ Why this order: the research favours showing value before the offer, and a paywa
 - https://developer.apple.com/forums/thread/768364
 - https://community.revenuecat.com/general-questions-7/app-review-rejection-guideline-3-1-2-ongoing-value-6617
 - https://growth-dives.kit.com/posts/growth-dives-what-do-duolingo-blinkist-strava-get-right-about-paywalls
+
+## Update 2026-11-05: what Opal and Freedom actually do (ScreensDesign video chapter lists)
+Source: https://screensdesign.com/apps/opal-screen-time-control/ and https://screensdesign.com/apps/freedom-screen-time-control/ (chapter titles only; I did not run the apps).
+- **Opal** (24 steps listed before and around the paywall): welcome, social proof, 4 quiz questions (screen time, habit to change, age, occupation), "Building your plan", personalized report (bad news, then good news), rating prompt, Screen Time permission, data-driven goals, commitment screen, THEN the paywall. After it: streak intro, account, friends, pick distracting apps, notification permission.
+- **Freedom**: 3 value slides, "Momentum unlocked", 4 quiz questions, each followed by a one-line "reinforcement" screen (for example "Games are irresistible"), account creation, premium benefits, trial timeline, notification warm-up, paywall, then device setup and Screen Time permission.
+- **Pattern:** about 12 to 14 steps before the paywall. One question per screen. A short "we understand you" screen between questions. A report or plan screen that feels personal. Permission only after the user has been given a reason. Commitment screen before the offer.
+- **Our 6 slides are much shorter.** Not proven better or worse. Rule: do not copy the length, copy the pacing (one question at a time, a reaction after each answer).
+
+## Update 2026-11-05: wording and icon research (secondary sources, check originals before citing)
+- Apple HIG, onboarding: https://developer.apple.com/design/human-interface-guidelines/onboarding.md . As quoted on a mirror page: a custom screen before a permission request should offer one action only, and that action must open the system alert. Do not label it "Allow" (people may think they already granted access). Use "Continue". NEEDS CHECK against Apple's live page. Our slide 9 button says "Allow Screen Time": change it.
+- Keep onboarding brief and about the app, not about how to use the phone.
+- Icons: NN/g summary via https://uxdesign.cc/do-icons-need-labels-6cb4f4282c00 and https://cxl.com/icon-usability-testing/ : only home, print and search are widely understood alone. Pair icons with text. 5-second rule: if finding an icon takes longer than 5 seconds, use words.
+- Copy: plain language, benefits not feature lists (https://www.parallelhq.com/blog/ux-writing-best-practices). Weak source; no primary study found.

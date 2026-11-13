@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Desk buddy mock</title>
+<style>
+:root{--paper:#E7E8E3;--panel:#F3F4F0;--ink:#1B1B1B;--blue:#3255A4;--sun:#FFB511;--alarm:#D25A44;}
+*{box-sizing:border-box;margin:0}
+body{background:var(--paper);font-family:"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:28px;width:1680px}
+h2{font:800 22px/1 "Segoe UI";letter-spacing:.5px;margin:0 0 12px}
+.row{display:flex;gap:28px;align-items:flex-start}
+.cap{font:600 15px/1.35 "Segoe UI";margin-top:10px;max-width:600px}
+/* desktop */
+.pc{width:620px;height:390px;border:3px solid var(--ink);border-radius:10px;position:relative;overflow:hidden;background:#cfd6e4}
+.task{position:absolute;bottom:0;left:0;right:0;height:30px;background:#202020;display:flex;align-items:center;gap:10px;padding:0 12px}
+.task i{width:16px;height:16px;border-radius:3px;background:#555;display:block}
+.task i.on{background:#7aa0e8}
+.win{position:absolute;background:#fff;border:1px solid #999;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden}
+.bar{height:26px;background:#eee;font:600 12px/26px "Segoe UI";padding-left:10px;color:#333}
+.doc p{height:8px;background:#d8d8d8;margin:10px 18px;border-radius:2px}
+.yt{background:#0f0f0f}
+.yt .bar{background:#202020;color:#ddd}
+.vid{margin:14px;height:170px;background:linear-gradient(135deg,#444,#222);border-radius:8px;display:grid;place-items:center}
+.play{width:0;height:0;border-left:30px solid #fff;border-top:18px solid transparent;border-bottom:18px solid transparent;opacity:.8}
+.thumbs{display:flex;gap:10px;margin:0 14px}.thumbs b{flex:1;height:50px;background:#333;border-radius:6px}
+/* buddy */
+.buddy{position:absolute;right:14px;bottom:44px;width:150px;background:var(--panel);border:2.5px solid var(--ink);border-radius:14px;padding:8px 10px 10px;text-align:center;box-shadow:2.5px 2px 0 var(--sun)}
+.buddy .t{font:800 11px/1 "Segoe UI";letter-spacing:1.2px;margin-top:2px}
+.buddy .s{font:600 10px/1.2 "Segoe UI";opacity:.65;margin-top:3px}
+.buddy.wide{width:190px}
+.ask{font:800 15px/1.1 "Segoe UI";margin-top:4px}
+.btn{display:block;margin-top:8px;background:var(--blue);color:var(--panel);font:800 11px/1 "Segoe UI";letter-spacing:1px;padding:9px 0;border-radius:9px;box-shadow:2.5px 2px 0 var(--sun)}
+.later{font:600 10px/1 "Segoe UI";opacity:.55;margin-top:7px}
+/* phone */
+.phone{width:300px;height:620px;border:3px solid var(--ink);border-radius:42px;background:var(--paper);position:relative;overflow:hidden;padding:56px 22px 0}
+.island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:96px;height:28px;background:#000;border-radius:16px}
+.title{text-align:center;font:800 12px/1 "Segoe UI";letter-spacing:3px;opacity:.7}
+.line{text-align:center;font:800 10px/1.3 "Segoe UI";letter-spacing:1.2px;color:var(--alarm);margin-top:12px}
+.line.ok{color:var(--blue)}
+.ring{width:230px;height:230px;margin:22px auto 0;border-radius:50%;border:14px solid #c9d2e6;border-top-color:var(--blue);border-right-color:var(--blue);display:grid;place-items:center;background:var(--panel)}
+.ring b{font:800 50px/1 "Segoe UI";letter-spacing:-1px}
+.ring small{display:block;text-align:center;font:700 10px/1 "Segoe UI";letter-spacing:2px;opacity:.6;margin-top:6px}
+.end{position:absolute;left:22px;right:22px;bottom:36px;text-align:center;background:var(--panel);border:2px solid var(--ink);border-radius:16px;padding:15px 0;font:800 13px/1 "Segoe UI";letter-spacing:2px}
+.sheet{padding:56px 20px 0}
+.sheet h3{font:400 22px/1.2 "Segoe UI";margin:10px 0 18px}
+.pill{background:var(--panel);border:2px solid var(--ink);border-radius:16px;padding:14px;text-align:center;font:800 12px/1 "Segoe UI";letter-spacing:2px;margin-bottom:14px}
+.tog{display:flex;align-items:center;gap:10px;margin:6px 0 18px}
+.tog div{flex:1}.tog b{font:700 15px/1.2 "Segoe UI"}.tog p{font:500 11px/1.3 "Segoe UI";opacity:.65}
+.sw{width:50px;height:30px;border-radius:15px;background:var(--blue);position:relative}.sw:after{content:"";position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff}
+.num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);font:800 13px/1 "Segoe UI";margin-right:8px;vertical-align:middle}
+</style></head><body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <path id="blob" d="M0,-52 C14,-62 30,-56 36,-44 C50,-46 60,-32 56,-18 C68,-8 66,10 54,18 C60,32 48,48 32,46 C24,58 6,60 -4,52 C-18,62 -36,54 -38,40 C-54,40 -64,24 -56,10 C-68,-2 -62,-22 -48,-26 C-50,-44 -32,-56 -18,-50 C-12,-58 -4,-58 0,-52Z"/>
+  </defs>
+</svg>
+
+<div class="row">
+  <div>
+    <h2><span class="num">1</span>You are on task</h2>
+    <div class="pc">
+      <div class="win doc" style="left:30px;top:24px;width:430px;height:300px"><div class="bar">Docs — History essay</div>
+        <p style="width:60%;height:14px;background:#bbb"></p><p></p><p></p><p style="width:80%"></p><p></p><p></p><p style="width:70%"></p><p></p><p style="width:50%"></p></div>
+      <div class="buddy">
+        <svg viewBox="-80 -75 160 145" width="74" height="68">
+          <use href="#blob" fill="#FF92B2" stroke="#40162A" stroke-width="5" transform="scale(1.05)"/>
+          <path d="M-30,-20 C-18,-34 0,-30 4,-18 M14,-28 C26,-34 40,-26 40,-12 M-40,8 C-30,2 -20,6 -16,14" fill="none" stroke="#E45E88" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="-16" cy="16" rx="8" ry="10" fill="#1B1B1B"/><ellipse cx="18" cy="16" rx="8" ry="10" fill="#1B1B1B"/>
+          <circle cx="-13" cy="12" r="3" fill="#fff"/><circle cx="21" cy="12" r="3" fill="#fff"/>
+          <path d="M-6,32 Q1,40 8,32" fill="none" stroke="#1B1B1B" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="-34" cy="28" rx="7" ry="4" fill="#FF6082" opacity=".6"/><ellipse cx="36" cy="28" rx="7" ry="4" fill="#FF6082" opacity=".6"/>
+        </svg>
+        <div class="t">LOCKED IN</div>
+        <div class="s">31 min left</div>
+      </div>
+      <div class="task"><i class="on"></i><i></i><i></i></div>
+    </div>
+    <p class="cap">You start a session on your phone. Your PC opens your "Studying" stuff. A small brain sits in the corner. It is happy while you work.</p>
+  </div>
+
+  <div>
+    <h2><span class="num">2</span>You open YouTube</h2>
+    <div class="pc">
+      <div class="win doc" style="left:30px;top:24px;width:430px;height:300px"><div class="bar">Docs — History essay</div></div>
+      <div class="win yt" style="left:90px;top:40px;width:400px;height:290px"><div class="bar">YouTube</div><div class="vid"><div class="play"></div></div><div class="thumbs"><b></b><b></b><b></b></div></div>
+      <div class="buddy wide">
+        <svg viewBox="-80 -75 160 145" width="70" height="64">
+          <use href="#blob" fill="#F0A0AA" stroke="#40162A" stroke-width="5" transform="scale(1.05)"/>
+          <path d="M-30,-20 C-18,-34 0,-30 4,-18 M14,-28 C26,-34 40,-26 40,-12" fill="none" stroke="#CE6C7C" stroke-width="4" stroke-linecap="round"/>
+          <path d="M-26,8 L-8,14 M26,8 L8,14" stroke="#1B1B1B" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="-16" cy="22" rx="6" ry="7" fill="#1B1B1B"/><ellipse cx="18" cy="22" rx="6" ry="7" fill="#1B1B1B"/>
+          <path d="M-8,40 Q1,32 10,40" fill="none" stroke="#1B1B1B" stroke-width="4" stroke-linecap="round"/>
+          <path d="M-22,30 q-4,10 0,14 q4,-4 0,-14z" fill="#7FD8FF"/>
+        </svg>
+        <div class="ask">Back to work?</div>
+        <span class="btn">BACK TO DOCS</span>
+        <div class="later">31 min left · nudge 2</div>
+      </div>
+      <div class="task"><i></i><i class="on"></i><i></i></div>
+    </div>
+    <p class="cap">The PC checks the front window every 2 seconds. On YouTube, TikTok, games or Discord, the brain gets sad and asks "Back to work?". One tap brings your work back to the front.</p>
+  </div>
+
+  <div>
+    <h2><span class="num">3</span>Your phone sees it</h2>
+    <div class="row" style="gap:16px">
+      <div class="phone"><div class="island"></div>
+        <div class="title">LOCK IN</div>
+        <div class="line">STUDYING · PC: YOUTUBE · NUDGED 2×</div>
+        <div class="ring"><div><b>31:12</b><small>ENDS 10:57 PM</small></div></div>
+        <div class="end">END SESSION</div>
+      </div>
+    </div>
+    <p class="cap" style="max-width:300px">The phone shows what is in front on your PC. Red means off task.</p>
+  </div>
+</div>
+</body></html>

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using LockIn.Companion.Watch;
 using QRCoder;
 
 // Two doors:
@@ -27,6 +28,8 @@ builder.WebHost.ConfigureKestrel(kestrel =>
 });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SessionStore>();
+builder.Services.AddSingleton(new AllowStore(stateDir));
+builder.Services.AddSingleton(sp => new SessionWatch(sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<AllowStore>()));
 builder.Services.AddSingleton(pairing);
 var app = builder.Build();
 
@@ -100,7 +103,7 @@ app.MapGet("/pairing/devices", () =>
 app.MapDelete("/pairing/devices/{id}", (string id) =>
     stateStore.RemoveDevice(id) ? Results.NoContent() : Results.NotFound());
 
-app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, TimeProvider time) =>
+app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, SessionWatch watch, TimeProvider time) =>
 {
     if (request.DurationSeconds is < 60 or > 86400)
         return Results.BadRequest(new { error = "durationSeconds must be between 60 and 86400" });
@@ -110,6 +113,8 @@ app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, 
     var startedAt = request.StartedAt ?? time.GetUtcNow();
 
     var outcome = store.TryStart(id, request.DurationSeconds, startedAt, out var session);
+    if (outcome is StartOutcome.Started or StartOutcome.Existing)
+        watch.Begin(session.Id, request.Buddy, session.StartedAt ?? time.GetUtcNow(), session.DurationSeconds, request.Task, request.Allow);
     return outcome switch
     {
         StartOutcome.Started or StartOutcome.Existing => Results.Ok(session),
@@ -120,7 +125,44 @@ app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, 
 });
 
 app.MapPost("/session/stop", ([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] StopSessionRequest? request,
-    SessionStore store) => Results.Ok(store.Stop(request?.Id)));
+    SessionStore store, SessionWatch watch) =>
+{
+    var session = store.Stop(request?.Id);
+    watch.End(request?.Id);
+    return Results.Ok(session);
+});
+
+// What the phone shows before a session, under "OK on my PC today": the few apps the buddy could ask
+// about, with the ones this task already allowed in earlier sessions first and marked. Names only.
+app.MapGet("/session/choices", (string? task, AllowStore store) =>
+{
+    var remembered = store.For(task);
+    var known = Distractions.Choices.Select(c => new { key = c.Key, name = c.Name, remembered = remembered.Contains(c.Key) });
+    var extra = remembered.Where(r => Distractions.Choices.All(c => c.Key != r))
+        .Select(r => new { key = r, name = Distractions.FriendlyName(r), remembered = true });
+    return Results.Ok(new { task, choices = extra.Concat(known).OrderByDescending(c => c.remembered).ToArray() });
+});
+
+// What the phone polls every 15 s: the front app, whether it is on task, and the nudge count.
+app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch) =>
+{
+    var status = request.Id is null ? null : watch.StatusFor(request.Id);
+    if (status is null) return Results.NotFound(new { error = "unknown-session" });
+    return Results.Ok(new
+    {
+        app = status.Value.App,
+        onTask = status.Value.OnTask,
+        nudges = status.Value.Nudges,
+        asking = status.Value.Asking
+    });
+});
+
+if (args.Contains("--draw-buddy"))
+{
+    // Test helper: writes the buddy pictures and exits. Nothing else runs.
+    BuddyPictures.Write(Path.Combine(stateDir, "buddy"));
+    return;
+}
 
 if (args.Contains("--pair"))
 {
@@ -146,11 +188,16 @@ static void ShowPairingQr(PairingOffer offer, string dir)
     catch (Exception) { /* no picture viewer: the path above is enough */ }
 }
 
-public sealed record StartSessionRequest(int DurationSeconds, string? Id = null, DateTimeOffset? StartedAt = null);
+// Task, Buddy and Allow come from the phone (all optional; old phones send none of them).
+// Allow: apps or sites already known to be fine for this session, e.g. ["youtube", "discord"].
+public sealed record StartSessionRequest(int DurationSeconds, string? Id = null, DateTimeOffset? StartedAt = null,
+    string? Task = null, bool Buddy = false, string[]? Allow = null);
 
 public sealed record StopSessionRequest(string? Id);
 
 public sealed record PairRequest(string? Code, string? DeviceName);
+
+public sealed record SessionStatusRequest(string? Id);
 
 public sealed record FocusSession(
     string Id,

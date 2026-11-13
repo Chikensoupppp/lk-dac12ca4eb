@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In welcome slides, human version</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Caveat:wght@600&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  :root { --bg:#111214; --ink:#EDEBE6; --soft:#8D9096; --panel:#1A1C20; --ice:#9CC9F5; --sage:#8FD3B0; }
+  body { font-family: -apple-system, "Inter", system-ui, sans-serif; background:#cfcfd2; padding:22px; }
+  .row { display:flex; gap:16px; }
+  .wrap { zoom:.78; width:393px; height:852px; flex:none; }
+  .phone { width:393px; height:852px; border-radius:52px; overflow:hidden; position:relative; background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%); color:var(--ink); }
+  .island { position:absolute; top:11px; left:50%; width:120px; height:34px; margin-left:-60px; border-radius:20px; background:#000; }
+  .sb { position:absolute; top:18px; left:34px; font-weight:600; font-size:16px; }
+  .skip { position:absolute; top:66px; right:26px; font-size:15px; color:var(--soft); }
+  .mark { position:absolute; top:66px; left:26px; font-family:Onest,sans-serif; font-weight:600; font-size:17px; }
+  h1 { position:absolute; left:26px; right:26px; font-family:Onest,sans-serif; font-weight:500; font-size:50px; line-height:1; letter-spacing:-1.2px; }
+  .lead { position:absolute; left:26px; width:300px; font-size:19px; line-height:1.35; color:var(--ink); }
+  .fact { position:absolute; left:26px; right:40px; bottom:150px; font-size:15px; line-height:1.4; color:var(--soft); }
+  .fact b { color:var(--ink); font-weight:600; }
+  .btn { position:absolute; left:26px; right:26px; bottom:60px; height:58px; border-radius:14px; display:grid; place-items:center; font-weight:650; font-size:17px; background:var(--ink); color:#0A0B0D; }
+  .btn.sage { background:var(--sage); }
+  .later { position:absolute; left:0; right:0; bottom:26px; text-align:center; font-size:15px; color:var(--soft); }
+  .bars { position:absolute; left:26px; right:26px; top:54px; display:flex; gap:5px; }
+  .bars i { display:block; flex:1; height:4px; border-radius:2px; background:#2B2E34; }
+  .bars i.on { background:var(--ink); }
+  svg { position:absolute; overflow:visible; }
+  .item { position:absolute; left:26px; right:26px; }
+  .item b { display:block; font-family:Onest,sans-serif; font-weight:500; font-size:23px; letter-spacing:-.3px; padding-left:40px; }
+  .item span { display:block; font-size:15px; color:var(--soft); margin-top:3px; padding-left:40px; }
+  .item svg { left:0; top:3px; }
+  .cap { font:600 13px system-ui; color:#444; margin:0 0 6px 6px; }
+  .small { position:absolute; left:26px; right:26px; bottom:128px; font-size:13px; line-height:1.35; color:var(--soft); }
+  .note { position:absolute; font-family:Caveat,"Segoe Script",cursive; font-weight:600; font-size:26px; line-height:1.05; color:var(--ice); transform:rotate(var(--r,-4deg)); }
+  .note.warm { color:#EDEBE6; }
+  svg.rough { filter:url(#rough); }
+</style>
+</head>
+<body><svg width="0" height="0" style="position:absolute"><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/></filter></svg>
+<div class="row" id="r"></div>
+<script>
+const tick = c => `<svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 C6 15 8 18 10 21 C14 13 19 7 25 2"/></svg>`;
+function frame(cap, inner) {
+  return `<div><div class="cap">${cap}</div><div class="wrap"><div class="phone"><div class="island"></div><div class="sb">9:41</div>${inner}</div></div></div>`;
+}
+const bars = n => `<div class="bars">${[0,1,2,3,4].map(i => `<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
+
+/* 1 clock: flat, cropped by the right edge, one arc */
+const s1 = frame('1. Lock in', `
+  <div class="mark">Lock In</div><div class="skip">Skip</div>
+  <h1 style="top:128px">Lock in.</h1>
+  <p class="lead" style="top:190px">A focus timer that keeps you on task.</p>
+  <svg style="left:90px;top:290px" width="340" height="340" viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="190" fill="#17191C"/>
+    <circle cx="200" cy="200" r="158" fill="none" stroke="#25282D" stroke-width="16"/>
+    <path d="M200 42 A158 158 0 1 1 90 313" fill="none" stroke="var(--ice)" stroke-width="16" stroke-linecap="round"/>
+    <text x="200" y="222" text-anchor="middle" font-family="Onest,sans-serif" font-weight="500" font-size="74" fill="#EDEBE6" letter-spacing="-2">25:00</text>
+  </svg>
+  <p class="fact"><b>46.9%</b> of the time, our minds wander. Harvard study, 2,250 adults, 2010.</p>
+  ${bars(0)}<div class="btn">Next</div>`);
+
+/* 2 shield: grid of plain tiles, hand-drawn crosses */
+const tiles = [];
+const cols = ['#23262B','#272B31','#20232A','#2A2D33'];
+for (let i = 0; i < 12; i++) { const x = (i % 4) * 82, y = Math.floor(i / 4) * 82; tiles.push(`<rect x="${x}" y="${y}" width="68" height="68" rx="16" fill="${cols[(i*3)%4]}"/>`); }
+const cross = (x, y, j) => `<path d="M${x+14} ${y+15+j} C${x+30} ${y+30} ${x+42} ${y+44} ${x+56} ${y+55}" stroke="#EDEBE6" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M${x+55} ${y+13} C${x+42} ${y+28} ${x+30} ${y+42} ${x+13} ${y+56-j}" stroke="#EDEBE6" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+const s2 = frame('3. Shield', `
+  <div class="mark">Lock In</div><div class="skip">Skip</div>
+  <h1 style="top:128px">Shield<br>your apps.</h1>
+  <p class="lead" style="top:238px">The apps that eat your hour. Shut until your timer ends.</p>
+  ${[['Instagram', `<svg style="position:static" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#242A33"/><rect x="9" y="11" width="22" height="18" rx="4" fill="none" stroke="#9CC9F5" stroke-width="2.6"/><path d="M11 26 L17 19 L22 24 L25 21 L30 26" fill="none" stroke="#9CC9F5" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>`], ['X', `<svg style="position:static" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#242A33"/><path d="M10 12 h20 a2 2 0 0 1 2 2 v10 a2 2 0 0 1 -2 2 h-12 l-6 5 v-5 h-2 a2 2 0 0 1 -2 -2 v-10 a2 2 0 0 1 2 -2z" fill="none" stroke="#9CC9F5" stroke-width="2.6" stroke-linejoin="round"/></svg>`], ['YouTube', `<svg style="position:static" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#242A33"/><circle cx="20" cy="20" r="11" fill="none" stroke="#9CC9F5" stroke-width="2.6"/><path d="M17.5 15.5 L25 20 L17.5 24.5 Z" fill="#9CC9F5"/></svg>`]].map(([n, icon], i) => `<div style="position:absolute;left:26px;right:26px;top:${322 + i * 84}px;height:68px;border-radius:16px;background:#1A1C20;display:flex;align-items:center;padding:0 16px;gap:14px">${icon}<div style="font-size:19px;font-weight:600;flex:1">${n}</div><svg style="position:static" width="22" height="24" viewBox="0 0 22 24" fill="none" stroke="#8D9096" stroke-width="2.6" stroke-linecap="round"><rect x="3" y="10" width="16" height="12" rx="3" fill="#8D9096" stroke="none"/><path d="M6 10 V7 a5 5 0 0 1 10 0 V10"/></svg><div style="font-size:14px;color:#8D9096;width:58px">Blocked</div></div>`).join('')}
+  <p class="fact"><b>Even a notification you ignore</b> can hurt focus. Stothart and others, 2015.</p>
+  ${bars(2)}<div class="btn">Next</div>`);
+
+/* 3 PC */
+const s3 = frame('4. PC', `
+  <div class="mark">Lock In</div><div class="skip">Skip</div>
+  <h1 style="top:128px">Your PC<br>gets ready.</h1>
+  <p class="lead" style="top:238px">Tap once. Your PC opens what you need.</p>
+  <svg style="left:26px;top:330px" width="341" height="260" viewBox="0 0 341 260">
+    <rect x="0" y="150" width="62" height="104" rx="14" fill="#25282D"/>
+    <rect x="8" y="164" width="46" height="70" rx="6" fill="var(--ice)"/>
+    <path d="M70 196 C100 176 112 176 140 190" stroke="#EDEBE6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M128 180 L142 191 L125 199" stroke="#EDEBE6" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="150" y="0" width="191" height="150" rx="12" fill="#1A1C20"/>
+    <rect x="150" y="0" width="191" height="150" rx="12" fill="none" stroke="#2A2D33" stroke-width="3"/>
+    <g font-family="-apple-system,Inter,system-ui,sans-serif" font-size="15" fill="#EDEBE6">
+      <text x="196" y="52">Notes</text><text x="196" y="88">Editor</text><text x="196" y="124">Playlist</text>
+    </g>
+    <g stroke="var(--sage)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M168 47 L175 55 L185 38"/><path d="M168 83 L175 91 L185 74"/><path d="M168 119 L175 127 L185 110"/>
+    </g>
+        <rect x="136" y="150" width="205" height="10" rx="5" fill="#25282D"/>
+  </svg>
+  <p class="fact"><b>Getting back</b> after an interruption often takes 20+ minutes. UC Irvine, workplace study.</p>
+  ${bars(3)}<div class="btn">Next</div>`);
+
+/* 4 Plus: plain list, handwritten ticks, one sage accent */
+const feats = [['PC workspaces','Opens your work in one tap.'],['Lock PC if you quit early','Leaving costs something.'],['Lock screen countdown','See time left without opening.'],['History and weekly report','Your real minutes.']];
+const s4 = frame('6. Plus offer', `
+  <div class="mark">Lock In Plus</div><div class="skip">Not now</div>
+  <h1 style="top:128px">Plus is for<br>your PC.</h1>
+  <p class="lead" style="top:238px">Free stays free. Plus adds this:</p>
+  ${feats.map((f, i) => `<div class="item" style="top:${312 + i * 84}px">${tick('#8FD3B0')}<b>${f[0]}</b><span>${f[1]}</span></div>`).join('')}
+  <p class="small">7 days free, then $XX.XX a year. Cancel any time in iOS Settings.</p>
+  <div class="btn sage" style="bottom:60px">Try Plus free</div><div class="later">Restore purchases</div>`);
+
+const s5 = frame('5. Allow', `
+  <div class="mark">Lock In</div><div class="skip">Not now</div>
+  <h1 style="top:128px">Allow<br>Screen Time.</h1>
+  <p class="lead" style="top:238px">So Lock In can block the apps you pick.</p>
+  <svg style="left:96px;top:336px" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="92" fill="#17191C"/><circle cx="100" cy="100" r="76" fill="none" stroke="#25282D" stroke-width="12"/><path d="M100 24 A76 76 0 0 1 176 100" fill="none" stroke="var(--ice)" stroke-width="12" stroke-linecap="round"/><rect x="72" y="92" width="56" height="44" rx="9" fill="#EDEBE6"/><path d="M82 92 V80 a18 18 0 0 1 36 0 V92" fill="none" stroke="#EDEBE6" stroke-width="8" stroke-linecap="round"/></svg>
+  <p class="fact">Your picks stay on your phone. You can change this any time in Settings.</p>
+  ${bars(4)}<div class="btn">Allow Screen Time</div>`);
+const sQ = frame('2. Quick question', `
+  <div class="mark">Lock In</div><div class="skip">Skip</div>
+  <h1 style="top:128px">Be honest.<br>Hours a day?</h1>
+  <p class="lead" style="top:238px">On your phone. No judging.</p>
+  ${["1 to 2 hours","3 to 4 hours","5 hours or more","No idea"].map((o, i) => `<div style="position:absolute;left:26px;right:26px;top:${312 + i * 76}px;height:62px;border-radius:16px;background:#1A1C20;display:flex;align-items:center;padding:0 18px;font-size:18px;font-weight:600;${i===1?'box-shadow:inset 0 0 0 2.5px #9CC9F5;':''}">${o}</div>`).join('')}
+  ${bars(1)}<div class="btn">Next</div>`);
+document.getElementById('r').innerHTML = s1 + sQ + s2 + s3 + s5 + s4;
+const arrow = (d, c='#9CC9F5') => '<svg style="position:absolute" width="80" height="60" viewBox="0 0 80 60" fill="none" stroke="'+c+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>';
+const notes = [
+  '<div class="note" style="left:26px;top:292px;--r:-5deg">just 25 minutes.<br>you can do that.</div><div style="position:absolute;left:150px;top:300px">'+arrow('M4 8 C30 2 52 14 70 40 M70 40 L56 36 M70 40 L68 26')+'</div>',
+  '<div class="note warm" style="left:196px;top:590px;--r:-3deg">yes, even that one.</div>',
+  '<div class="note" style="left:28px;top:430px;--r:-4deg">start on<br>your phone</div>',
+  '<div class="note warm" style="right:26px;top:640px;--r:-2deg;text-align:right">cancel any time, promise.</div>',
+  '<div class="note" style="left:60px;top:560px;--r:-2deg;width:270px;text-align:center">next, a box from Apple.<br>tap Allow.</div>'
+];
+const nq='<div class="note warm" style="left:176px;top:618px;--r:-3deg">everyone says less.</div>';
+const N=[notes[0],nq,notes[1],notes[2],notes[4],notes[3]];
+document.querySelectorAll('.phone').forEach((p,i)=>{ p.insertAdjacentHTML('beforeend', N[i]||''); });
+document.querySelectorAll('.phone > svg:not(.keep)').forEach(s=>{ if (s.style.left) s.classList.add('rough'); });
+</script>
+</body>
+</html>

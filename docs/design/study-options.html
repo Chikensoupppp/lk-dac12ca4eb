@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Study slide options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#EDEBE6;--soft:#8E97A3;--body:#D2D4D9;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A}
+body{background:#cfcfd2;padding:18px 20px 20px;font-family:Onest,system-ui,sans-serif}
+.title{font:800 22px Onest;color:#16171a;margin:0 0 2px 6px}
+.sub{font:500 14px Onest;color:#3a3d44;margin:0 0 12px 6px}
+.row{display:flex;gap:20px;width:max-content}
+.cap{font:700 15px Onest;color:#222;margin:0 0 6px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i.on{background:var(--ink)}
+.hdr{position:absolute;left:12px;right:12px;top:68px;height:44px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px;color:#B9BBC0}
+.bk{width:44px;height:44px;display:grid;place-items:center}
+h1{position:absolute;left:26px;right:26px;top:122px;font:800 36px/1.05 Onest;letter-spacing:-1.3px}
+.col{position:absolute;left:26px;right:26px;top:232px;display:flex;flex-direction:column;gap:16px}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D}
+/* shared bits */
+.lab{font:700 12px Onest;letter-spacing:2px;color:var(--soft)}
+.unit{font:800 26px/1.1 Onest;letter-spacing:-.8px;color:#F3F5F8}
+.txt{font:500 18px/1.38 Onest;color:var(--body)}
+.facts{font:600 13.5px/1.3 Onest;color:var(--soft)}
+.help{border-radius:22px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;font:700 17px/1.35 Onest;color:#0A0B0D}
+.help svg{flex:none;margin-top:2px}
+.stk{position:absolute;font:700 15px Onest;padding:6px 12px;border-radius:12px;color:#0A0B0D;transform:rotate(3deg);right:16px;top:-17px}
+.src{display:flex;align-items:flex-start;gap:8px;min-height:44px;font:600 14px/1.35 Onest;color:var(--body);padding-top:12px;margin-top:12px;border-top:1.5px solid var(--edge)}
+.src i{font-style:normal;font-weight:800;flex:none}
+/* A: sharper card */
+.card{position:relative;border-radius:28px;background:var(--panel);border:1.5px solid var(--edge);padding:20px 22px 12px}
+.card .hero{font:800 76px/0.98 Onest;letter-spacing:-3.2px;margin-top:6px}
+.card .txt{margin-top:12px;font-size:17px;line-height:1.36}
+.card .facts{margin-top:10px}
+/* B: poster */
+.p{display:flex;flex-direction:column;gap:12px}
+.chiprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{font:700 12px Onest;letter-spacing:1.6px;padding:6px 10px;border-radius:999px;border:1.5px solid currentColor}
+.p .hero{font:800 104px/0.92 Onest;letter-spacing:-4.5px}
+.p .txt{font-size:19px}
+.pill{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--edge);background:var(--panel);font:600 14px Onest;color:var(--body)}
+.pill i{font-style:normal;font-weight:800}
+/* C: diagram */
+.herorow{display:flex;align-items:baseline;gap:10px;margin-top:6px;white-space:nowrap}
+.herorow .hero{font:800 52px/1 Onest;letter-spacing:-2px}
+.herorow .unit{font-size:18px}
+.diag{margin-top:12px;border-radius:18px;background:#101215;border:1.5px solid var(--edge);padding:12px 14px}
+.dl{font:700 10.5px Onest;letter-spacing:1.6px;color:var(--soft);width:62px;flex:none}
+.dr{display:flex;align-items:center;gap:8px}
+.dr+.dr{margin-top:8px}
+.card.c .txt{font-size:17px;margin-top:12px}
+/* C2: Option C, easier to read. Three zones: what they did, what happened, where it is from. */
+.c2{position:relative;border-radius:28px;background:var(--panel);border:1.5px solid var(--edge);padding:14px 20px 0}
+.c2 .res{margin-top:10px!important}.c2 .diag{margin-top:8px!important;padding:12px 14px 8px!important}.c2 .herorow{margin-top:6px!important}.c2 .src2{margin-top:8px!important;min-height:44px!important;padding:6px 0!important}
+.c2 .top{display:flex;justify-content:space-between;align-items:center}
+.c2 .stk2{font:700 13px Onest;padding:5px 10px;border-radius:10px;color:#0A0B0D;transform:rotate(2deg)}
+.c2 .herorow{margin-top:10px}
+.c2 .herorow .hero{font:800 56px/1 Onest;letter-spacing:-2px}
+.c2 .herorow .unit{font-size:19px}
+.c2 .diag{margin-top:12px;padding:14px 14px 10px}
+.c2 .dlab{font:700 13px Onest;color:var(--body);width:74px;flex:none}
+.c2 .cap2{font:600 13px Onest;color:var(--soft);margin-top:10px;border-top:1.5px solid var(--edge);padding-top:8px}
+.c2 .res{font:700 19px/1.28 Onest;color:#F3F5F8;margin-top:14px;letter-spacing:-.2px}
+.c2 .src2{margin-top:12px;border-top:1.5px solid var(--edge);padding:8px 0;min-height:48px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.c2 .src2 b{display:block;font:700 15px Onest;color:var(--ink)}
+.c2 .src2 span{display:block;font:500 12.5px/1.3 Onest;color:var(--soft);margin-top:2px}
+.c2 .src2 i{font-style:normal;font-weight:800;color:var(--ink);font-size:18px}
+</style></head><body>
+<div class="title" id="t"></div><div class="sub" id="s"></div>
+<div class="row" id="row"></div>
+<script>
+const lock='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const back='<svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#EDEBE6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg>';
+const D=[
+{cap:'1 to 2 hours',title:'More of your day, on your terms.',acc:'sage',lab:'YOUR ESTIMATE',big:'1–2',unit:'hours a day',stk:'nice work',
+ txt:'Your screen time is already on the lighter side. Lock In helps you protect the moments when you want to be fully focused.',
+ short:'Your screen time is already on the lighter side. Lock In helps you protect the moments you want to be fully focused.',
+ facts:'',src:'',type:'YOUR ESTIMATE',help:'Keep distractions out of the way when it matters. Pick a timer and Lock In.'},
+{cap:'3 to 4 hours',title:'Fewer check-ins. More headspace.',acc:'ice',lab:'IN A RESEARCH STUDY',big:'3',unit:'email check-ins a day',stk:'experiment',
+ txt:'People who limited email checks to three times a day reported less daily stress than when they checked as often as they wanted.',
+ short:'In a one-week experiment, people who checked email just three times a day felt less stressed than in the week they checked freely.',
+ find:'Less daily stress than in the week they checked freely.',
+ facts:'124 adults · each tried both weeks',src:'Kushlev & Dunn, 2015 — Computers in Human Behavior',srcShort:'Kushlev & Dunn, 2015',type:'EXPERIMENT',
+ help:'Lock In blocks your chosen distractions while you focus on what matters.'},
+{cap:'5 to 6 hours',title:'Small limits can make a difference.',acc:'warm',lab:'IN A RESEARCH STUDY',big:'10 min',unit:'per app, per day',stk:'experiment',
+ txt:'Students who limited three social apps to 10 minutes each per day experienced greater reductions in loneliness and depression over three weeks.',
+ short:'Students who kept three social apps to 10 minutes each a day saw bigger drops in loneliness and depression over three weeks.',
+ find:'Bigger drops in loneliness and depression.',
+ facts:'143 students · randomly assigned · 3 weeks',src:'Hunt et al., 2018 — Journal of Social and Clinical Psychology',srcShort:'Hunt et al., 2018',type:'EXPERIMENT',
+ help:'You don’t have to change your whole day. Start with one focused session.'},
+{cap:'7 hours or more',title:'Give your evenings a quieter ending.',acc:'warm',lab:'IN A RESEARCH STUDY',big:'844',unit:'adults surveyed',stk:'survey',
+ txt:'Researchers found that bedtime phone use was linked to poorer sleep and greater fatigue. The study didn’t establish cause and effect.',
+ short:'Bedtime phone use was linked to poorer sleep and more tiredness. It shows a link, not cause and effect.',
+ find:'Bedtime phone use was linked to poorer sleep and more tiredness.',
+ facts:'A survey · nobody was asked to change anything',src:'Exelmans & Van den Bulck, 2016 — Social Science & Medicine',srcShort:'Exelmans & Van den Bulck, 2016',type:'SURVEY · A LINK, NOT PROOF',
+ help:'Start small. Choose a time to disconnect, and let Lock In handle the distractions.'}
+];
+// small seeded jitter so the "hand drawn" marks are the same on every render
+let seed=7;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+function ticks(n,w,h,sw,color,fade){let s='';const gap=w/n;for(let i=0;i<n;i++){const x=6+i*gap,j=(rnd()-.5)*3,a=(rnd()-.5)*8,hh=h+(rnd()-.5)*5;const o=fade?(1-.82*i/(n-1)):1;
+ s+=`<line x1="${x+j}" y1="${h+4}" x2="${x+j+a*.2}" y2="${h+4-hh}" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" opacity="${o.toFixed(2)}"/>`}
+ return `<svg width="${w+12}" height="${h+8}" viewBox="0 0 ${w+12} ${h+8}">${s}</svg>`}
+function dots(){let s='';for(let r=0;r<3;r++)for(let c=0;c<7;c++)s+=`<circle cx="${8+c*13}" cy="${8+r*13}" r="4.2" fill="var(--warm)" opacity=".9"/>`;return `<svg width="98" height="42" viewBox="0 0 98 42">${s}</svg>`}
+function day(){let s='';for(let i=0;i<24;i++){const on=i<1?1:(i<2?.5:0);s+=`<rect x="${i*12+2}" y="${on?4:12}" width="6" height="${on?32:24}" rx="3" fill="${on?'var(--sage)':'#2A2D33'}" opacity="${on?on:1}"/>`}return `<svg width="292" height="48" viewBox="0 0 292 48">${s}</svg>`}
+const stkc=a=>a==='sage'?'var(--warm)':'var(--sage)';
+function A(d,i){return `<div class="col"><div class="card">
+ <div class="stk" style="background:${stkc(d.acc)}">${d.stk}</div>
+ <div class="lab">${d.lab}</div>
+ <div class="hero" style="color:var(--${d.acc})">${d.big}</div><div class="unit">${d.unit}</div>
+ <div class="txt">${d.txt}</div>
+ ${d.facts&&i<3?`<div class="facts">${d.facts}</div>`:'<div style="height:6px"></div>'}
+ ${d.src?`<div class="src"><span>${d.src}</span><i>↗</i></div>`:'<div style="height:8px"></div>'}
+</div><div class="help" style="background:var(--${d.acc})">${lock}<span>${d.help}</span></div></div>`}
+function B(d,i){return `<div class="col p">
+ <div class="chiprow"><span class="chip" style="color:var(--${d.acc})">${d.i?d.type:d.type}</span>${d.facts?`<span class="facts">${d.facts}</span>`:''}</div>
+ <div class="hero" style="color:var(--${d.acc})">${d.big}</div>
+ <div class="unit">${d.unit}</div>
+ <div class="txt">${d.short}</div>
+ ${d.src?`<div class="pill"><span>${d.srcShort}</span><i>↗</i></div>`:'<div style="height:4px"></div>'}
+ <div class="help" style="background:var(--${d.acc})">${lock}<span>${d.help}</span></div></div>`}
+function C(d,i){seed=7+i*13;let diag='';
+ if(i===0)diag=`<div class="dl" style="width:auto;margin-bottom:6px">A DAY, 24 HOURS</div>${day()}`;
+ if(i===1)diag=`<div class="dr"><div class="dl">ANY TIME</div>${ticks(15,196,24,3,'#B9BBC0',true)}</div><div class="dr"><div class="dl" style="color:var(--ice)">3 A DAY</div>${ticks(3,60,34,5.5,'var(--ice)',false)}</div>`;
+ if(i===2)diag=`<div class="dr" style="gap:14px"><div style="display:flex;gap:8px">${[1,2,3].map(()=>`<div style="width:46px;height:46px;border-radius:14px;border:1.5px solid var(--warm);display:grid;place-items:center;font:800 15px Onest;color:var(--warm);transform:rotate(${(rnd()-.5)*8}deg)">10m</div>`).join('')}</div><div style="flex:1"></div><div><div class="dl" style="width:auto;margin-bottom:4px;text-align:right">3 WEEKS</div>${dots()}</div></div>`;
+ if(i===3)diag=`<div class="dr" style="gap:0"><div style="font:700 13px/1.2 Onest;color:var(--body);border:1.5px solid var(--edge);border-radius:12px;padding:8px 10px;background:var(--panel)">Phone at bedtime</div>
+  <svg width="64" height="30" viewBox="0 0 64 30" style="flex:none"><path d="M3 15 H61" stroke="var(--warm)" stroke-width="2.4" stroke-dasharray="3 6" stroke-linecap="round"/><text x="32" y="10" text-anchor="middle" font-family="Onest" font-weight="700" font-size="10" fill="var(--warm)" letter-spacing="1">LINK</text></svg>
+  <div style="font:700 13px/1.2 Onest;color:var(--body);border:1.5px solid var(--edge);border-radius:12px;padding:8px 10px;background:var(--panel)">Poorer sleep, more tired</div></div>`;
+ const txt=i===0?d.short:d.find;
+ return `<div class="col"><div class="card c">
+ <div class="stk" style="background:${stkc(d.acc)}">${d.stk}</div>
+ <div class="lab">${d.lab}</div>
+ <div class="herorow"><div class="hero" style="color:var(--${d.acc})">${d.big}</div><div class="unit">${d.unit}</div></div>
+ <div class="diag">${diag}</div>
+ <div class="txt">${txt}</div>
+ ${d.facts?`<div class="facts" style="margin-top:10px">${d.facts}</div>`:'<div style="height:6px"></div>'}
+ ${d.src?`<div class="src"><span>${d.src}</span><i>↗</i></div>`:'<div style="height:8px"></div>'}
+</div><div class="help" style="background:var(--${d.acc})">${lock}<span>${d.help}</span></div></div>`}
+function C2(d,i){seed=7+i*13;let diag='',cap='',res='';
+ const chipS='font:700 13px/1.2 Onest;color:var(--body);border:1.5px solid var(--edge);border-radius:12px;padding:8px 10px;background:var(--panel)';
+ if(i===0){diag=`<div class="dr"><div class="dlab">Your day</div>${day()}</div>`;res=d.short;}
+ if(i===1){diag=`<div class="dr"><div class="dlab">Any time</div>${ticks(14,190,24,3,'#B9BBC0',true)}</div><div class="dr"><div class="dlab" style="color:var(--ice)">3 a day</div>${ticks(3,60,34,5.5,'var(--ice)',false)}</div>`;cap='124 adults · each tried both weeks';res='Less daily stress than in the week they checked freely.';}
+ if(i===2){diag=`<div class="dr" style="gap:10px"><div style="display:flex;gap:7px">${[1,2,3].map(()=>`<div style="width:44px;height:44px;border-radius:13px;border:1.5px solid var(--warm);display:grid;place-items:center;font:800 14px Onest;color:var(--warm);transform:rotate(${(rnd()-.5)*8}deg)">10m</div>`).join('')}</div><div style="flex:1"></div>${dots()}</div>
+  <div class="dr" style="justify-content:space-between;margin-top:6px"><div class="dlab" style="width:auto">3 apps</div><div class="dlab" style="width:auto">3 weeks</div></div>`;cap='143 students · randomly assigned';res='Bigger drops in loneliness and depression.';}
+ if(i===3){diag=`<div class="dr" style="gap:0;justify-content:space-between"><div style="${chipS};width:112px">Phone at bedtime</div>
+  <svg width="70" height="34" viewBox="0 0 70 34" style="flex:none"><path d="M4 22 H66" stroke="var(--warm)" stroke-width="2.6" stroke-dasharray="3 6" stroke-linecap="round"/><text x="35" y="14" text-anchor="middle" font-family="Onest" font-weight="800" font-size="12" fill="var(--warm)" letter-spacing="1">LINK</text></svg>
+  <div style="${chipS};width:112px">Poorer sleep, more tired</div></div>`;cap='Nobody was asked to change anything';res='Linked to poorer sleep and more tiredness. A link, not proof.';}
+ const parts=d.src?d.src.split(' — '):null;
+ return `<div class="col"><div class="c2">
+ <div class="top"><div class="lab">${d.lab}</div><div class="stk2" style="background:${stkc(d.acc)}">${d.stk}</div></div>
+ <div class="herorow"><div class="hero" style="color:var(--${d.acc})">${d.big}</div><div class="unit">${d.unit}</div></div>
+ <div class="diag">${diag}${cap?`<div class="cap2">${cap}</div>`:''}</div>
+ <div class="res">${res}</div>
+ ${parts?`<div class="src2"><div><b>${parts[0]}</b><span>${parts[1]}</span></div><i>↗</i></div>`:'<div style="height:14px"></div>'}
+</div><div class="help" style="background:var(--${d.acc})">${lock}<span>${d.help}</span></div></div>`}
+function C3(d,i){seed=7+i*13;
+ const R=['Your screen time is already on the lighter side.','124 adults felt less stressed in the week they checked 3 times a day.','143 students saw bigger drops in loneliness and depression.','Across 844 adults, bedtime phone use went with poorer sleep. A link, not proof.'][i];
+ const B=['Keep distractions out of the way when it matters.','Lock In blocks your chosen distractions while you focus.','Start with one focused session.','Choose a time to disconnect. Lock In handles the rest.'][i];
+ const chipS='font:700 14px/1.2 Onest;color:var(--body);border:1.5px solid var(--edge);border-radius:12px;padding:9px 10px;background:#101215';
+ let pic='';
+ if(i===0)pic=`<div style="display:flex;align-items:baseline;gap:10px;white-space:nowrap"><span style="font:800 72px/1 Onest;letter-spacing:-3px;color:var(--sage)">1–2</span><span class="unit">hours a day</span></div><div style="margin-top:16px">${day()}</div>`;
+ if(i===1)pic=`<div class="dr"><div class="dlab">Any time</div>${ticks(15,196,32,3.2,'#B9BBC0',true)}</div><div class="dr" style="margin-top:18px"><div class="dlab" style="color:var(--ice)">3 a day</div>${ticks(3,64,44,7,'var(--ice)',false)}</div>`;
+ if(i===2)pic=`<div class="dr" style="gap:0;justify-content:space-between"><div style="display:flex;gap:8px">${[1,2,3].map(()=>`<div style="width:52px;height:52px;border-radius:15px;border:1.5px solid var(--warm);display:grid;place-items:center;font:800 16px Onest;color:var(--warm);transform:rotate(${(rnd()-.5)*8}deg)">10m</div>`).join('')}</div>${dots()}</div>
+  <div class="dr" style="justify-content:space-between;margin-top:10px"><div class="dlab" style="width:auto">3 apps</div><div class="dlab" style="width:auto">3 weeks</div></div>`;
+ if(i===3)pic=`<div class="dr" style="gap:0;justify-content:space-between"><div style="${chipS};width:118px">Phone at bedtime</div>
+  <svg width="64" height="36" viewBox="0 0 64 36" style="flex:none"><path d="M3 24 H61" stroke="var(--warm)" stroke-width="2.8" stroke-dasharray="3 6" stroke-linecap="round"/><text x="32" y="14" text-anchor="middle" font-family="Onest" font-weight="800" font-size="12" fill="var(--warm)" letter-spacing="1">LINK</text></svg>
+  <div style="${chipS};width:118px">Poorer sleep, more tired</div></div>`;
+ const parts=d.src?d.src.split(' — ')[0]:null;
+ return `<div class="col" style="gap:18px"><div class="c2" style="padding:26px 20px 4px">
+ <div class="stk" style="background:${stkc(d.acc)}">${d.stk}</div>
+ <div>${pic}</div>
+ <div class="res" style="font-size:20px;margin-top:20px!important">${R}</div>
+ ${parts?`<div class="src2" style="margin-top:14px!important"><b>${parts}</b><i>↗</i></div>`:'<div style="height:18px"></div>'}
+</div><div class="help" style="background:var(--${d.acc})">${lock}<span>${B}</span></div></div>`}
+const O={E:{f:C3,t:'Option C, much simpler',s:'One picture, one sentence, one source link, one banner line.'},D:{f:C2,t:'Option C, easier to read',s:'Same info as C in three clear steps: what they did, what happened, where it is from.'},A:{f:A,t:'Option A — Sharper card',s:'Your look, kept. The number now shows what changed. Study type, size and a tappable source sit on the card.'},
+         B:{f:B,t:'Option B — Big number',s:'No card. One huge number, one short sentence, one source pill. The quickest to read.'},
+         C:{f:C,t:'Option C — See how it worked',s:'A small hand-drawn picture of the test. Solid marks for a test, a dashed link for a survey.'}};
+const q=new URLSearchParams(location.search).get('o')||'A';const S=new URLSearchParams(location.search).get('s');
+document.getElementById('t').textContent=O[q].t;document.getElementById('s').textContent=O[q].s;
+document.getElementById('row').innerHTML=D.map((d,i)=>`<div><div class="cap">${d.cap}</div><div class="phone"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="hdr"><div class="bk">${back}</div><div>2 of 9</div></div>
+<h1>${d.title}</h1>${O[q].f(d,i)}<div class="btn">CONTINUE</div></div></div>`).filter((_,i)=>S===null||Math.floor(i/2)===+S).join('');
+</script></body></html>

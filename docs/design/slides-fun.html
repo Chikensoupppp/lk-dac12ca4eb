@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>All slides fun</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;user-select:none}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A}
+body{background:#cfcfd2;padding:22px;font-family:Onest,system-ui,sans-serif}
+.row{display:flex;gap:22px}
+.cap{font:600 14px system-ui;color:#333;margin:0 0 6px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%);flex:none}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:9}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:9}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i.on{background:var(--ink)}
+h1{position:absolute;left:26px;right:26px;top:96px;font:800 40px/1.03 Onest;letter-spacing:-1.4px}
+.p{position:absolute;left:26px;right:30px;top:0;font-size:20px;line-height:1.3;font-weight:500;color:#D2D4D9}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D}
+.btn.ghost{background:none;color:var(--soft);bottom:20px;height:34px;font-weight:500;font-size:15px}
+.abs{position:absolute}
+.tile{position:absolute;border-radius:16px;display:grid;place-items:center}
+.tile svg{width:46%;height:46%}
+.chip{display:flex;align-items:center;gap:10px;height:56px;padding:0 18px;border-radius:28px;background:var(--panel);border:1.5px solid var(--edge);font-weight:600;font-size:18px}
+.chip.on{background:var(--ice);color:#0A0B0D;border-color:var(--ice)}
+.chk{margin-left:auto;width:24px;height:24px;border-radius:50%;background:#0A0B0D;color:var(--ice);display:grid;place-items:center;font-size:14px}
+.note{position:absolute;font-weight:700;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--warm);color:#1A1208}
+</style></head><body>
+<div class="row" id="r"></div>
+<script>
+const q=new URLSearchParams(location.search),from=+(q.get('from')||1),cnt=+(q.get('n')||3);
+const g=(p,c='#fff',w=2.2)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const G={cam:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>',x:'<path d="M5 5l14 14M19 5L5 19"/>',play:'<path d="M8 5l11 7-11 7z" fill="#fff"/>',chat:'<path d="M4 6h16v10H10l-4 3v-3H4z"/>',game:'<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4"/>',news:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',bag:'<path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',book:'<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>',moon:'<path d="M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z"/>',bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',pen:'<path d="M4 20l4-1L19 8l-3-3L5 16z"/>',brief:'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3"/>',pc:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'};
+const bars=n=>`<div class="bars">${Array.from({length:10},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>`;
+const T=(l,t,w,h,bg,rot,gl)=>`<div class="tile" style="left:${l}px;top:${t}px;width:${w}px;height:${w}px;background:${bg};transform:rotate(${rot}deg)">${g(gl)}</div>`;
+const slide=(n,body)=>`<div><div class="cap">Slide ${n}</div><div class="phone"><div class="island"></div><div class="sb">9:41</div>${bars(n)}${body}</div></div>`;
+const S={};
+// 1
+S[1]=`<h1 style="top:110px;font-size:46px">You lose hours<br>to your phone.</h1>
+<p class="p" style="top:262px;font-size:34px;font-weight:800;letter-spacing:-1px;color:var(--ice)">Let’s get them back.</p>
+<svg class="abs" style="left:66px;top:360px" width="260" height="260" viewBox="0 0 260 260"><circle cx="130" cy="130" r="118" fill="#141619" stroke="#2A2D33" stroke-width="10"/><path d="M130 130 L130 52" stroke="#EDEBE6" stroke-width="10" stroke-linecap="round"/><path d="M130 130 L196 168" stroke="#9CC9F5" stroke-width="8" stroke-linecap="round"/><circle cx="130" cy="130" r="10" fill="#EDEBE6"/></svg>
+${T(30,540,68,0,'#E4573D',-12,G.cam)}${T(300,350,68,0,'#D93636',10,G.play)}${T(290,560,60,0,'#17181B',-8,G.x)}
+<div class="note" style="left:232px;top:330px;transform:rotate(6deg);background:var(--ice)">just one look</div>
+<div class="btn">Show me</div>`;
+// 2
+const hrs=['1 to 2 hours','3 to 4 hours','5 to 6 hours','7 hours or more'];
+S[2]=`<h1>How long are you on your phone each day?</h1>
+<div class="abs" style="left:26px;right:26px;top:330px;display:grid;gap:12px">${hrs.map((h,i)=>`<div class="chip ${i==2?'on':''}" style="height:66px;font-size:20px;${i==2?'transform:rotate(-1.5deg) scale(1.03)':''}">${h}${i==2?'<span class="chk">&#10003;</span>':''}</div>`).join('')}</div>
+<div class="note" style="right:34px;top:684px;transform:rotate(-4deg)">about average</div>
+<div class="btn">Next</div>`;
+// 3
+const cats=[['Social',G.cam,'#E4573D',1],['Video',G.play,'#D93636',1],['Games',G.game,'#8A3FA0',0],['News',G.news,'#4B5563',0],['Shopping',G.bag,'#C46A2B',0],['Chat',G.chat,'#3E7BD6',0]];
+S[3]=`<h1>Which apps pull you in the most?</h1>
+<div class="abs" style="left:26px;right:26px;top:300px;display:grid;grid-template-columns:1fr 1fr;gap:14px">${cats.map(c=>`<div style="height:104px;border-radius:22px;background:${c[3]?c[2]:'var(--panel)'};border:1.5px solid ${c[3]?c[2]:'var(--edge)'};padding:16px;position:relative;${c[3]?'transform:rotate(-1deg)':''}"><div style="width:38px;height:38px">${g(c[1])}</div><div style="position:absolute;left:16px;bottom:14px;font-weight:700;font-size:19px">${c[0]}</div>${c[3]?'<span class="chk" style="position:absolute;right:14px;top:14px;color:'+c[2]+';background:#fff">&#10003;</span>':''}</div>`).join('')}</div>
+<p class="p" style="top:696px;color:var(--ink);font-weight:600">Got it. Next, we lock them.</p>
+<div class="btn">Next</div>`;
+// 4
+S[4]=`<h1>Now we lock them.</h1>
+<p class="p" style="top:200px">Your iPhone asks first. Tap <b style="color:var(--ink)">Continue</b>.</p>
+<div class="abs" style="left:26px;right:26px;top:290px;display:grid;gap:12px">
+ <div style="display:flex;gap:14px;align-items:center;padding:18px;border-radius:20px;background:var(--panel)"><div style="width:44px;height:44px;border-radius:14px;background:var(--sage);display:grid;place-items:center">${g(G.lock,'#0A0B0D',2.4)}<span></span></div><div style="font-weight:600;font-size:18px;line-height:1.2">Only you can<br>unlock them.</div></div>
+ <div style="display:flex;gap:14px;align-items:center;padding:18px;border-radius:20px;background:var(--panel)"><div style="width:44px;height:44px;border-radius:14px;background:var(--ice);display:grid;place-items:center">${g('<path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/>','#0A0B0D',2.4)}</div><div style="font-weight:600;font-size:18px;line-height:1.2">We never see<br>your apps.</div></div></div>
+<div class="abs" style="left:46px;right:46px;top:530px;border-radius:22px;background:#2a2a2d;padding:20px 18px 0;text-align:center;font-family:-apple-system,Inter,sans-serif;transform:rotate(-1.5deg);box-shadow:0 12px 30px #0008"><div style="font-weight:600;font-size:16px">"Lock In" Would Like to Access Screen Time</div><div style="font-size:13px;color:#aaa;margin:8px 0 16px">Lets Lock In lock the apps you pick.</div><div style="display:flex;border-top:1px solid #ffffff22;margin:0 -18px"><div style="flex:1;padding:14px;color:#0A84FF;border-right:1px solid #ffffff22">Don't Allow</div><div style="flex:1;padding:14px;color:#0A84FF;font-weight:700">Continue</div></div></div>
+<div class="note" style="right:30px;top:500px;transform:rotate(5deg);background:var(--ice)">tap this</div>
+<div class="btn">Continue</div>`;
+// 5
+const names=['Instagram','X','YouTube','Messages','Podcasts','Reddit','Camera','Maps','Mail','Notes','Photos','Music'],cols=['#E4573D','#17181B','#D93636','#3E7BD6','#3E9A4E','#E2B53A','#8A3FA0','#1F8C7E','#C46A2B','#4B5563','#D6407A','#2D7FE0'],gl=[G.cam,G.x,G.play,G.chat,'<circle cx="12" cy="11" r="3"/><path d="M6 11a6 6 0 0 1 12 0M12 14v6"/>','<circle cx="12" cy="12" r="8"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/>','<rect x="3" y="7" width="18" height="12" rx="3"/><circle cx="12" cy="13" r="3"/>','<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/>','<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 8l9 6 9-6"/>','<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 8h6M9 12h6"/>','<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>','<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>'];
+S[5]=`<h1>These apps are locked.</h1>
+<p class="p" style="top:196px">They stay locked until your timer ends.</p>
+<div class="abs" style="left:30px;right:30px;top:300px;display:grid;grid-template-columns:repeat(4,1fr);gap:26px 18px">${names.map((n,i)=>{const l=i<3;return `<div style="display:grid;justify-items:center;gap:7px;font-size:12px;color:${l?'#8d94aa':'#e5e8f2'};position:relative"><div style="width:64px;height:64px;border-radius:15px;background:${cols[i]};display:grid;place-items:center;position:relative;overflow:hidden;border-radius:15px">${l?'':'<div style="width:30px;height:30px">'+g(gl[i])+'</div>'}${l?'<div style="position:absolute;inset:0;background:rgba(10,11,13,.72)"></div><div style="position:absolute;width:26px;height:26px">'+g(G.lock,'#fff',2.4)+'</div>':''}</div>${n}</div>`}).join('')}</div>
+<div class="abs" style="left:50%;top:650px;transform:translateX(-50%);background:var(--ink);color:#0A0B0D;font-weight:800;font-size:20px;padding:11px 22px;border-radius:30px;white-space:nowrap">3 apps locked</div>
+<div class="btn">Looks right</div>`;
+// 6
+const foc=[['Study',G.book,1],['Work',G.brief,1],['Sleep',G.moon,0],['Training',G.bolt,0],['Create',G.pen,0],['Read',G.news,0]];
+S[6]=`<h1>What do you want to focus on?</h1>
+<div class="abs" style="left:26px;right:26px;top:300px;display:flex;flex-wrap:wrap;gap:12px">${foc.map((f,i)=>`<div class="chip ${f[2]?'on':''}" style="height:62px;font-size:20px;${f[2]?'transform:rotate('+(i?1.5:-1.5)+'deg)':''}"><div style="width:24px;height:24px">${g(f[1],f[2]?'#0A0B0D':'#fff')}</div>${f[0]}</div>`).join('')}</div>
+<div class="note" style="left:40px;top:560px;transform:rotate(-3deg);background:var(--sage)">pick as many as you like</div>
+<div class="btn">Next</div>`;
+// 7
+const sq=Array.from({length:365},(_,i)=>`<i style="background:${i<53?'var(--warm)':(i>=53&&i<68?'var(--sage)':'#23262B')}"></i>`).join('');
+S[7]=`<h1>Look at your year.</h1>
+<div class="abs" style="left:26px;top:170px"><div style="font:800 96px/1 Onest;letter-spacing:-4px;color:var(--warm)">53 days</div><div style="font-size:19px;color:var(--soft);margin-top:6px">on your phone each year.</div></div>
+<div class="abs" style="left:26px;right:26px;top:390px;display:grid;grid-template-columns:repeat(26,1fr);gap:4px;direction:ltr">${sq}</div>
+<style>.phone .abs i{aspect-ratio:1;border-radius:2px;display:block}</style>
+<div class="abs" style="left:26px;top:640px;font-weight:700;font-size:22px;line-height:1.2"><span style="color:var(--sage)">Get 15 days back.</span></div>
+<div class="btn">Let's do it</div>`;
+// 8
+let qr='';const rnd=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(7);
+for(let y=0;y<17;y++)for(let x=0;x<17;x++){const f=(x<5&&y<5)||(x>11&&y<5)||(x<5&&y>11);if(f)continue;if(rnd()>.5)qr+=`<rect x="${x*8}" y="${y*8}" width="8" height="8" rx="1.5"/>`}
+const eye=(x,y)=>`<rect x="${x*8}" y="${y*8}" width="40" height="40" rx="6" fill="#0A0B0D"/><rect x="${x*8+8}" y="${y*8+8}" width="24" height="24" rx="3" fill="#fff"/><rect x="${x*8+14}" y="${y*8+14}" width="12" height="12" rx="2" fill="#0A0B0D"/>`;
+S[8]=`<h1>Do you have a PC?</h1>
+<p class="p" style="top:150px">Open <b style="color:var(--ink)">lockin.app/pc</b> on it, then scan this code.</p>
+<div class="abs" style="left:96px;top:250px;width:200px;height:200px;border-radius:26px;background:#fff;padding:16px;transform:rotate(-2deg)"><svg viewBox="0 0 136 136" width="168" height="168" fill="#0A0B0D">${qr}${eye(0,0)}${eye(11.9,0)}${eye(0,11.9)}</svg></div>
+<div class="abs" style="left:26px;right:26px;top:500px;display:flex;align-items:center;gap:10px;justify-content:center"><div style="width:64px;height:64px;border-radius:18px;background:var(--panel);display:grid;place-items:center"><div style="width:32px;height:32px">${g(G.phone)}</div></div><div style="flex:1;border-top:3px dashed var(--ice);opacity:.7"></div><div style="width:64px;height:64px;border-radius:18px;background:var(--panel);display:grid;place-items:center"><div style="width:32px;height:32px">${g(G.pc)}</div></div></div>
+<div class="note" style="left:112px;top:586px;transform:rotate(-3deg);background:var(--sage)">phone and PC, linked</div>
+<div class="btn">Scan to pair</div><div class="btn ghost">I only have a phone</div>`;
+// 9
+S[9]=`<h1>Plus works on your PC.</h1>
+<div class="abs" style="left:26px;right:26px;top:210px;display:grid;gap:14px">${[['1','It saves your work.','It remembers your tabs and files.'],['2','It locks your PC too.','Phone and PC lock together.'],['3','It brings your work back.','One tap, and it is all open again.']].map(s=>`<div style="display:flex;gap:16px;align-items:flex-start;padding:20px;border-radius:22px;background:var(--panel)"><div style="font:800 34px/1 Onest;color:var(--ice)">${s[0]}</div><div><div style="font-weight:700;font-size:20px">${s[1]}</div><div style="font-size:15px;color:var(--soft);margin-top:4px">${s[2]}</div></div></div>`).join('')}</div>
+<div class="btn">Try Plus</div><div class="btn ghost">Not now</div>`;
+// 10
+S[10]=`<h1 style="font-size:46px">Ready to focus?</h1>
+<p class="p" style="top:156px">25 minutes. Phone down.</p>
+<svg class="abs" style="left:56px;top:290px" width="280" height="280" viewBox="0 0 280 280"><circle cx="140" cy="140" r="124" fill="none" stroke="#23262B" stroke-width="14"/><circle cx="140" cy="140" r="124" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" stroke-dasharray="780" stroke-dashoffset="150" transform="rotate(-90 140 140)"/><text x="140" y="156" text-anchor="middle" font-family="Onest" font-weight="800" font-size="62" fill="#EDEBE6" letter-spacing="-2">25:00</text><text x="140" y="188" text-anchor="middle" font-family="Onest" font-weight="500" font-size="16" fill="#9A9DA3">minutes</text></svg>
+<div class="note" style="right:36px;top:270px;transform:rotate(5deg);background:var(--sage)">you got this</div>
+<div class="btn">Start 25 minutes</div>`;
+let out='';for(let i=from;i<from+cnt&&i<=10;i++)out+=slide(i,S[i]);
+document.getElementById('r').innerHTML=out;
+</script></body></html>

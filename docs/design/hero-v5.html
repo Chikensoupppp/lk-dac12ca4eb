@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Hero v5</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--edge:#2A2D33;--ice:#9CC9F5;--warm:#F2B27A}
+body{background:#cfcfd2;display:grid;place-items:center;min-height:100vh;font-family:Onest,system-ui,sans-serif}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:90}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i:first-child{background:var(--ink)}
+h1{position:absolute;left:26px;right:26px;top:128px;font:800 44px/1.02 Onest;letter-spacing:-1.6px}
+.sub{position:absolute;left:26px;top:238px;font:600 22px Onest;color:var(--ice)}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D;letter-spacing:.5px}
+.abs{position:absolute}
+.glow{left:-10px;top:360px;width:300px;height:340px;background:radial-gradient(closest-side,#9CC9F533,#9CC9F500);filter:blur(10px)}
+/* a real-looking phone: dark glass body, thin edge light, lit screen */
+.ph{left:50px;top:366px;width:190px;height:330px;transform:rotate(-7deg);border-radius:40px;
+ background:linear-gradient(160deg,#2C3038 0%,#15171C 45%,#0E0F12 100%);
+ box-shadow:inset 0 0 0 1.5px #3C414B, inset 0 2px 0 #ffffff22, 0 30px 50px -10px #000, 0 0 60px #9CC9F522}
+.scr{position:absolute;inset:7px;border-radius:33px;overflow:hidden;background:linear-gradient(180deg,#0F1520 0%,#0B0E15 100%)}
+.scr:after{content:"";position:absolute;inset:0;background:radial-gradient(120% 60% at 50% 105%,#9CC9F544,transparent 70%)}
+.isl{position:absolute;left:50%;top:9px;width:50px;height:15px;margin-left:-25px;border-radius:10px;background:#000;z-index:3}
+.st{position:absolute;top:36px;display:flex;gap:7px;left:14px}
+.st i{width:26px;height:26px;border-radius:50%;border:1.5px solid #9CC9F588;background:#1B2332}
+.vid{position:absolute;left:12px;right:12px;top:78px;height:128px;border-radius:16px;background:linear-gradient(160deg,#243047,#171D2B);border:1px solid #ffffff14}
+.vid:after{content:"";position:absolute;left:50%;top:50%;margin:-13px 0 0 -9px;border-left:22px solid #ffffff55;border-top:13px solid transparent;border-bottom:13px solid transparent}
+.ln{position:absolute;left:14px;height:8px;border-radius:4px;background:#ffffff1c}
+.clk{position:absolute;left:0;right:0;top:30px;text-align:center;font:600 11px Onest;color:#9A9DA3;letter-spacing:1px}
+.thumb{position:absolute;right:5px;top:70px;width:3px;height:14px;border-radius:2px;background:#ffffff66}
+.sheet{position:absolute;left:8px;right:8px;bottom:8px;height:62px;border-radius:22px;display:flex;align-items:center;gap:10px;padding:0 14px;background:linear-gradient(160deg,#1E2A3Ccc,#141B27ee);border:1px solid #9CC9F577;box-shadow:0 -8px 30px #000a, 0 0 24px #9CC9F533}
+.sheet b{display:block;font:700 13px Onest;color:#EDEBE6}.sheet span{font:500 11px Onest;color:#9CC9F5}
+.st2{position:absolute;left:12px;right:12px;top:132px;height:100px;border-radius:16px;padding:12px 14px;background:linear-gradient(160deg,#3A1A1A,#231213);border:1px solid #E9453A88;box-shadow:0 0 24px #E9453A33}
+.st2 .l{font:600 11px Onest;color:#FFB4AB;letter-spacing:.5px}
+.st2 .v{font:800 32px/1.05 Onest;color:#FF6B5E;letter-spacing:-1px;margin-top:4px}
+.st2 .bar{position:absolute;right:14px;bottom:12px;display:flex;gap:4px;align-items:flex-end}
+.st2 .bar b{width:7px;border-radius:2px;background:#ffffff40;display:block}
+.badge{position:absolute;right:12px;top:232px;width:22px;height:22px;border-radius:50%;background:#E9453A;display:grid;place-items:center;font:700 12px Onest;color:#fff;box-shadow:0 0 14px #E9453A88}
+/* hours: frosted amber chips that drift out and fade */
+.t{position:absolute;border-radius:16px;display:grid;place-items:center;font:700 21px Onest;color:var(--warm);
+ background:linear-gradient(160deg,#F2B27A55,#F2B27A22);border:1.5px solid #F2B27Acc;box-shadow:0 0 30px #F2B27A44, inset 0 1px 0 #ffffff2a}
+.dust{position:absolute;width:4px;height:4px;border-radius:50%;background:#F2B27A}
+.note{position:absolute;font-weight:700;font-size:16px;padding:7px 13px;border-radius:12px;color:#0A0B0D;background:var(--ice)}
+</style></head><body>
+<div class="phone">
+ <div class="island"></div><div class="sb">9:41</div>
+ <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <h1>You lose hours<br>to your phone.</h1>
+ <div class="sub">Let&rsquo;s get them back.</div>
+
+ <div class="abs glow"></div>
+ <svg class="abs" style="left:0;top:0" width="393" height="852" fill="none"><path d="M176 392 C 236 320, 340 340, 326 480 S 336 640, 350 722" stroke="#F2B27A" stroke-opacity=".22" stroke-width="2" stroke-dasharray="1 9" stroke-linecap="round"/></svg>
+
+ <div class="abs ph"><div class="scr"><div class="isl"></div>
+   <div class="clk">2:47 AM</div>
+   <div class="vid" style="top:56px;height:66px"></div>
+   <div class="thumb"></div>
+   <div class="st2"><div class="l">Screen Time</div><div class="v">7h 42m</div>
+    <div class="bar"><b style="height:10px"></b><b style="height:13px"></b><b style="height:12px"></b><b style="height:17px"></b><b style="height:15px"></b><b style="height:20px"></b><b style="height:30px;background:#FF6B5E"></b></div></div>
+   <div class="sheet"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="11" stroke="#ffffff33" stroke-width="3"/><circle cx="15" cy="15" r="11" stroke="#9CC9F5" stroke-width="3" stroke-linecap="round" stroke-dasharray="46 70" transform="rotate(-90 15 15)"/></svg><div><b>Still scrolling?</b><span>Take a breath first.</span></div></div>
+   </div></div>
+
+ <div class="t" style="left:150px;top:340px;width:60px;height:60px;transform:rotate(-12deg)">1h</div>
+ <div class="t" style="left:236px;top:318px;width:56px;height:56px;transform:rotate(10deg);opacity:.92">1h</div>
+ <div class="t" style="left:296px;top:402px;width:50px;height:50px;transform:rotate(-8deg);opacity:.8;font-size:19px">1h</div>
+ <div class="t" style="left:304px;top:496px;width:42px;height:42px;transform:rotate(14deg);opacity:.58;font-size:16px;border-radius:13px">1h</div>
+ <div class="t" style="left:322px;top:580px;width:34px;height:34px;transform:rotate(-10deg);opacity:.36;font-size:13px;border-radius:11px">1h</div>
+ <div class="t" style="left:334px;top:652px;width:26px;height:26px;transform:rotate(8deg);opacity:.2;font-size:11px;border-radius:9px;border-width:1px">1h</div>
+ <i class="dust" style="left:262px;top:380px;opacity:.5"></i><i class="dust" style="left:330px;top:350px;opacity:.35;width:3px;height:3px"></i><i class="dust" style="left:318px;top:540px;opacity:.3;width:3px;height:3px"></i><i class="dust" style="left:352px;top:470px;opacity:.4"></i>
+
+ <div class="note" style="left:232px;top:686px;transform:rotate(4deg)">just one look</div>
+ <div class="btn">SHOW ME</div>
+</div>
+</body></html>

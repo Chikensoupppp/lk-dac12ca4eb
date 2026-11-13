@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Picker with many apps</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Caveat:wght@600&display=swap">
+<style>
+  * { box-sizing:border-box; margin:0; }
+  :root { --ink:#EDEBE6; --soft:#8D9096; --panel:#1A1C20; --edge:#2B2E34; --ice:#9CC9F5; --sage:#8FD3B0; }
+  body { background:#cfcfd2; padding:22px; font-family:Onest,system-ui,sans-serif; }
+  .row { display:flex; gap:20px; }
+  .cap { font:600 13px system-ui; color:#444; margin:0 0 6px 6px; }
+  .phone { width:393px; height:852px; border-radius:52px; overflow:hidden; position:relative; color:var(--ink); background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%); flex:none; }
+  .island { position:absolute; top:11px; left:50%; width:120px; height:34px; margin-left:-60px; border-radius:20px; background:#000; }
+  .sb { position:absolute; top:18px; left:34px; font-weight:600; font-size:16px; }
+  .bars { position:absolute; left:26px; right:26px; top:54px; display:flex; gap:3px; }
+  .bars i { flex:1; height:4px; border-radius:2px; background:var(--edge); } .bars i.on { background:var(--ink); }
+  .scr { position:absolute; inset:0; padding:100px 26px 0; }
+  h1 { font-weight:500; font-size:46px; line-height:1.02; letter-spacing:-1.2px; margin-top:30px; }
+  .lead { font-size:19px; line-height:1.35; margin-top:14px; max-width:320px; }
+  .btn { position:absolute; left:26px; right:26px; bottom:60px; height:58px; border-radius:14px; display:grid; place-items:center; font-weight:650; font-size:17px; background:var(--ink); color:#0A0B0D; }
+  .stage { position:absolute; left:0; width:393px; }
+  .tile { position:absolute; border-radius:15px; display:grid; place-items:center; }
+  .more { background:#1d2733; border:2px solid var(--ice); color:var(--ice); font-weight:600; }
+  .count { position:absolute; left:0; right:0; text-align:center; }
+  .count b { font-size:24px; font-weight:600; color:var(--sage); }
+  .link { position:absolute; left:0; right:0; text-align:center; color:var(--ice); font-size:16px; font-weight:500; }
+  .item { display:flex; align-items:center; gap:14px; height:56px; border-bottom:1px solid #ffffff12; font-size:17px; font-weight:500; }
+  .item .ic { width:34px; height:34px; border-radius:8px; flex:none; }
+  .pill { margin-left:auto; display:flex; align-items:center; gap:6px; height:26px; padding:0 11px; border-radius:13px; background:#16251d; color:var(--sage); font-size:12px; font-weight:600; }
+  .sect { padding:12px 0 4px; font-size:12px; color:var(--soft); text-transform:uppercase; letter-spacing:.4px; }
+  .fade { position:absolute; left:0; right:0; bottom:118px; height:70px; background:linear-gradient(180deg,#0A0B0D00,#08090A); pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="row" id="r"></div>
+<script>
+const cols = ['linear-gradient(135deg,#f58529,#dd2a7b,#8134af)','#000','#e53935','#3a7bd5','#43a047','#fbc02d','#8e24aa','#00897b','#6d4c41','#546e7a','#d81b60','#1e88e5'];
+const lock = (c, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
+const frame = (cap, inner) => `<div><div class="cap">${cap}</div><div class="phone"><div class="island"></div><div class="sb">9:41</div><div class="bars">${[0,1,2,3,4,5,6,7,8,9].map(i=>`<i class="${i<=4?'on':''}"></i>`).join('')}</div>${inner}</div></div>`;
+
+// ring + orbiting icons. 3 apps: triangle. 4-5 apps: that many. more: 4 icons + a "+N" tile.
+function ring(n, top, scale) {
+  const R = 112 * scale, cx = 196, cy = 180 * scale + 10;
+  const shown = n <= 5 ? n : 4, extra = n > 5 ? n - 4 : 0;
+  const total = shown + (extra ? 1 : 0);
+  const orbit = R + 52 * scale, size = 52 * scale;
+  let tiles = '';
+  for (let i = 0; i < total; i++) {
+    const a = (-90 + (360 / total) * i + (total === 3 ? 0 : 0)) * Math.PI / 180;
+    const x = cx + Math.cos(a) * orbit - size / 2, y = cy + Math.sin(a) * orbit - size / 2;
+    if (i < shown) tiles += `<div class="tile" style="left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${cols[i % cols.length]}${i===1?';border:1px solid #444':''}"></div>`;
+    else tiles += `<div class="tile more" style="left:${x}px;top:${y}px;width:${size}px;height:${size}px;font-size:${18*scale}px">+${extra}</div>`;
+  }
+  return `<div class="stage" style="top:${top}px;height:${2*cy+60}px">
+    <svg width="393" height="${2*cy+60}" viewBox="0 0 393 ${2*cy+60}" style="position:absolute;left:0;top:0;overflow:visible">
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="#141619" stroke="#8FD3B0" stroke-width="${12*scale}"/>
+      <rect x="${cx-30*scale}" y="${cy-12*scale}" width="${60*scale}" height="${46*scale}" rx="9" fill="#8FD3B0"/>
+      <path d="M${cx-19*scale} ${cy-12*scale} V${cy-24*scale} a${19*scale} ${19*scale} 0 0 1 ${38*scale} 0 V${cy-12*scale}" fill="none" stroke="#8FD3B0" stroke-width="${8*scale}"/>
+    </svg>${tiles}</div>`;
+}
+const A = frame('3 apps', `<div class="scr"><h1>Shield<br>your apps.</h1><p class="lead">They shut when your timer runs.</p></div>${ring(3, 270, 1)}
+  <div class="count" style="top:660px"><b>3 apps blocked</b></div><div class="link" style="top:700px">Edit apps</div><div class="btn">Next</div>`);
+const B = frame('8 apps', `<div class="scr"><h1>Shield<br>your apps.</h1><p class="lead">They shut when your timer runs.</p></div>${ring(8, 290, .9)}
+  <div class="count" style="top:660px"><b>8 apps blocked</b></div><div class="link" style="top:700px">See all →</div><div class="btn">Next</div>`);
+const C = frame('25 apps', `<div class="scr"><h1>Shield<br>your apps.</h1><p class="lead">They shut when your timer runs.</p></div>${ring(25, 290, .9)}
+  <div class="count" style="top:660px"><b>25 apps blocked</b></div><div class="link" style="top:700px">See all →</div><div class="btn">Next</div>`);
+const names = ['Instagram','X','YouTube','Messages','Podcasts','Reddit','Snapchat','TikTok','Netflix','Twitch','Pinterest','Discord','Safari','News','Games'];
+const rowsHtml = names.map((n,i)=>`<div class="item"><div class="ic" style="background:${cols[i%cols.length]}${i===1?';border:1px solid #444':''}"></div>${n}<span class="pill">${lock('#8FD3B0',12)} Blocked</span></div>`).join('');
+const D = frame('See all (scrolls)', `<div class="scr" style="padding-top:96px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:28px"><h1 style="font-size:36px;margin:0">25 apps</h1><span style="color:var(--ice);font-size:16px;font-weight:500">Edit</span></div>
+  <p class="small" style="font-size:14px;color:var(--soft);margin-top:6px">All blocked while your timer runs.</p>
+  <div class="sect">Social</div>${rowsHtml.split('</div><div class="item">').slice(0,10).join('</div><div class="item">')}</div>
+  ${''}<div class="fade"></div><div class="btn">Done</div>`);
+document.getElementById('r').innerHTML = A + B + C + D;
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Hero ideas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--edge:#2A2D33;--ice:#9CC9F5;--warm:#F2B27A;--sage:#8FD3B0}
+body{background:#cfcfd2;font-family:Onest,system-ui,sans-serif;padding:20px;display:flex;gap:26px;align-items:flex-start;width:max-content}
+.col{width:393px}
+.lab{font:800 26px Onest;color:#222;margin:0 0 10px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge)}.bars i:first-child{background:var(--ink)}
+h1{position:absolute;left:26px;right:26px;top:128px;font:800 44px/1.02 Onest;letter-spacing:-1.6px}
+.sub{position:absolute;left:26px;top:238px;font:600 22px Onest;color:var(--ice)}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D;letter-spacing:.5px}
+.abs{position:absolute}
+.note{position:absolute;font-weight:700;font-size:16px;padding:7px 13px;border-radius:12px;color:#0A0B0D;background:var(--ice)}
+/* A: the day as 24 cells */
+.grid{left:26px;right:26px;top:350px;display:grid;grid-template-columns:repeat(6,1fr);gap:9px}
+.grid i{aspect-ratio:1;border-radius:11px;background:#1B1D22;border:1.5px solid #2A2D33}
+.grid i.p{background:linear-gradient(160deg,#F2B27A66,#F2B27A22);border-color:#F2B27Acc;box-shadow:0 0 22px #F2B27A44}
+.grid i.y{border-color:#8FD3B088;background:#8FD3B012}
+/* C: the Lock In ring with a hole */
+.t{position:absolute;border-radius:14px;display:grid;place-items:center;font:700 19px Onest;color:var(--warm);background:linear-gradient(160deg,#F2B27A55,#F2B27A22);border:1.5px solid #F2B27Acc;box-shadow:0 0 26px #F2B27A44}
+.mini{left:150px;top:480px;width:92px;height:168px;border-radius:24px;background:linear-gradient(160deg,#2C3038,#0E0F12);box-shadow:inset 0 0 0 1.5px #3C414B,0 0 40px #9CC9F522}
+.mini div{position:absolute;inset:5px;border-radius:19px;background:linear-gradient(180deg,#0F1520,#0B0E15)}
+</style></head><body>
+
+<div class="col"><div class="lab">A. Your day, eaten</div>
+<div class="phone"><div class="island"></div><div class="sb">9:41</div>
+ <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <h1>You lose hours<br>to your phone.</h1><div class="sub">Let&rsquo;s get them back.</div>
+ <div class="abs grid">
+  <i></i><i></i><i></i><i></i><i></i><i></i>
+  <i></i><i></i><i></i><i></i><i></i><i></i>
+  <i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i>
+  <i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i>
+ </div>
+ <div class="note" style="left:196px;top:646px;transform:rotate(-4deg)">just one look</div>
+ <div class="btn">SHOW ME</div></div></div>
+
+<div class="col"><div class="lab">B. Hours leak out (saved)</div>
+<div class="phone"><img src="hero-v5.png" style="position:absolute;left:-54px;top:-24px;width:500px;max-width:none"></div></div>
+
+<div class="col"><div class="lab">C. The ring, broken</div>
+<div class="phone"><div class="island"></div><div class="sb">9:41</div>
+ <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+ <h1>You lose hours<br>to your phone.</h1><div class="sub">Let&rsquo;s get them back.</div>
+ <svg class="abs" style="left:46px;top:360px" width="300" height="300" viewBox="0 0 300 300" fill="none">
+  <circle cx="150" cy="150" r="128" stroke="#23262B" stroke-width="14"/>
+  <circle cx="150" cy="150" r="128" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" stroke-dasharray="560 244" transform="rotate(-60 150 150)"/>
+  <circle cx="150" cy="150" r="128" stroke="#9CC9F5" stroke-opacity=".15" stroke-width="30" stroke-dasharray="560 244" transform="rotate(-60 150 150)"/>
+ </svg>
+ <div class="abs mini"><div></div></div>
+ <div class="t" style="left:300px;top:430px;width:46px;height:46px;transform:rotate(12deg)">1h</div>
+ <div class="t" style="left:330px;top:520px;width:36px;height:36px;transform:rotate(-10deg);opacity:.6;font-size:15px">1h</div>
+ <div class="t" style="left:332px;top:600px;width:28px;height:28px;transform:rotate(8deg);opacity:.35;font-size:12px;border-radius:10px">1h</div>
+ <div class="btn">SHOW ME</div></div></div>
+
+</body></html>

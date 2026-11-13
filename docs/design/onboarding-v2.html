@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lock In first-run demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Caveat:wght@600&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; user-select: none; -webkit-user-select: none; }
+  :root { --ink:#EDEBE6; --soft:#8D9096; --panel:#1A1C20; --edge:#2B2E34; --ice:#9CC9F5; --sage:#8FD3B0; --warm:#E8A27C; }
+  body { background:#cfcfd2; display:grid; place-items:center; min-height:100vh; font-family:Onest,system-ui,sans-serif; }
+  .phone { width:393px; height:852px; border-radius:52px; overflow:hidden; position:relative; color:var(--ink);
+    background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%); box-shadow:0 20px 60px #0004; }
+  .island { position:absolute; top:11px; left:50%; width:120px; height:34px; margin-left:-60px; border-radius:20px; background:#000; z-index:9; }
+  .sb { position:absolute; top:18px; left:34px; font-weight:600; font-size:16px; z-index:9; }
+  .bars { position:absolute; left:26px; right:26px; top:54px; display:flex; gap:3px; z-index:8; }
+  .bars i { display:block; flex:1; height:4px; border-radius:2px; background:var(--edge); transition:background .4s; }
+  .bars i.on { background:var(--ink); }
+  .scr { position:absolute; inset:0; padding:100px 26px 0; transition:transform .55s cubic-bezier(.3,.8,.2,1), opacity .4s; }
+  .scr.right { transform:translateX(110%); opacity:0; }
+  .scr.left { transform:translateX(-30%); opacity:0; }
+  h1 { font-weight:500; font-size:46px; line-height:1.02; letter-spacing:-1.2px; margin-top:30px; }
+  .lead { font-size:19px; line-height:1.35; margin-top:16px; max-width:310px; }
+  .small { font-size:13px; line-height:1.35; color:var(--soft); }
+  .abs { position:absolute; left:26px; right:26px; }
+  .btn { position:absolute; left:26px; right:26px; bottom:60px; height:58px; border-radius:14px; display:grid; place-items:center;
+    font-weight:650; font-size:17px; background:var(--ink); color:#0A0B0D; transition:transform .12s; }
+  .btn.sage { background:var(--sage); }
+  .btn.dim { opacity:.35; }
+  .btn.press, .opt.press, .app.press { transform:scale(.97); }
+  .later { position:absolute; left:0; right:0; bottom:26px; text-align:center; font-size:15px; color:var(--soft); }
+  .opt { height:56px; border-radius:14px; background:var(--panel); border:2px solid transparent; display:flex; align-items:center; padding:0 16px;
+    font-size:17px; font-weight:500; margin-top:10px; transition:background .15s, border-color .15s; }
+  .opt.sel { border-color:var(--ice); background:#1d2733; animation:shake .45s; }
+  .react { margin-top:18px; font-size:18px; line-height:1.35; color:var(--ice); opacity:0; transform:translateY(8px); transition:all .5s; min-height:26px; }
+  .react.show { opacity:1; transform:none; }
+  .react b { color:var(--ink); font-weight:600; }
+  .note { font-family:Caveat,cursive; font-weight:600; font-size:26px; color:var(--ice); transform:rotate(-4deg); line-height:1.05; }
+  .tap { position:absolute; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; border:3px solid #fff; background:#ffffff33;
+    z-index:20; pointer-events:none; opacity:0; transform:scale(1.4); transition:opacity .2s, transform .2s; }
+  .tap.on { opacity:1; transform:scale(1); }
+  .tile { width:34px; height:34px; border-radius:9px; background:#262A30; display:grid; place-items:center; flex:none; }
+  .tile.big { width:54px; height:54px; border-radius:14px; }
+  .lockbadge { position:absolute; right:-6px; bottom:-6px; width:22px; height:22px; border-radius:50%; background:var(--sage); display:grid; place-items:center; }
+  /* keyframes */
+  @keyframes pop { 0% { transform:scale(0); opacity:0 } 60% { transform:scale(1.18); opacity:1 } 100% { transform:scale(1); opacity:1 } }
+  @keyframes fadein { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+  @keyframes fadeout { from { opacity:1 } to { opacity:0 } }
+  @keyframes shake { 0%,100% { transform:translateX(0) } 20% { transform:translateX(-7px) } 45% { transform:translateX(6px) } 70% { transform:translateX(-3px) } }
+  @keyframes bob { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-6px) } }
+  @keyframes draw { from { stroke-dashoffset:660 } to { stroke-dashoffset:0 } }
+  @keyframes ringcolor { from { stroke:#9CC9F5 } to { stroke:#8FD3B0 } }
+  @keyframes dim { to { opacity:.3; transform:scale(.9) } }
+  @keyframes slidein { from { opacity:0; transform:translateX(-18px) } to { opacity:1; transform:none } }
+  @keyframes ripple { 0% { transform:scale(.6); opacity:.9 } 100% { transform:scale(2.2); opacity:0 } }
+  @keyframes dash { from { stroke-dashoffset:60 } to { stroke-dashoffset:0 } }
+  @keyframes shackle { 0% { transform:translateY(-12px) rotate(-18deg) } 55% { transform:translateY(-12px) rotate(-18deg) } 80% { transform:translateY(2px) } 100% { transform:translateY(0) } }
+  @keyframes glow { 0%,100% { box-shadow:0 0 0 0 #8FD3B000 } 50% { box-shadow:0 0 0 8px #8FD3B033 } }
+  @keyframes lightice { to { background:var(--ice) } }
+  @keyframes lightsage { to { background:var(--sage) } }
+  .static *, .static { animation-duration:0s !important; animation-delay:0s !important; transition:none !important; }
+  /* s1 */
+  .act .s1-ring { stroke-dasharray:660; animation:draw 3s linear both, ringcolor .4s 3.3s both; }
+  .act .s1-num { animation:fadeout .3s 3.3s both; }
+  .act .s1-lock { opacity:0; animation:pop .5s 3.5s both; }
+  .act .s1-ico { animation:pop .5s var(--d) both, bob 2.2s calc(var(--d) + .5s) infinite, dim .5s 3.5s forwards; }
+  /* s2 strip */
+  .strip { opacity:0; transition:opacity .4s; margin-top:26px; }
+  .picked .strip { opacity:1; }
+  .cells { display:flex; gap:3px; margin-top:8px; }
+  .cells i { display:block; width:11px; height:30px; border-radius:3px; background:#23262B; transition:background .3s; transition-delay:calc(var(--i) * 140ms + 500ms); }
+  .picked .cells i.h { background:var(--ice); }
+  .picked .cells i.hh { background:linear-gradient(90deg,var(--ice) 50%,#23262B 50%); }
+  /* s3 s4 */
+  .popwrap { display:flex; gap:16px; margin-top:20px; opacity:0; }
+  .picked .popwrap { opacity:1; }
+  .picked .popwrap > div { animation:pop .5s var(--d) both; }
+  .picked .sparkle { animation:pop .5s .1s both, bob 1.6s .7s infinite; }
+  /* s5 */
+  .plan li { list-style:none; display:flex; gap:12px; align-items:center; font-size:19px; padding:14px 0; opacity:.25; transition:opacity .4s; }
+  .plan li.done { opacity:1; }
+  .plan i { width:26px; height:26px; border-radius:50%; border:2px solid var(--soft); display:grid; place-items:center; font-style:normal; font-size:15px; color:#0A0B0D; transition:all .3s; }
+  .plan li.done i { background:var(--sage); border-color:var(--sage); animation:pop .4s both; }
+  .pb { height:8px; border-radius:4px; background:#23262B; margin-top:30px; overflow:hidden; }
+  .pb i { display:block; height:100%; width:0; background:var(--sage); transition:width .8s; }
+  /* s6 */
+  .grid { display:grid; grid-template-columns:repeat(25,10px); gap:2px; }
+  .grid i { width:10px; height:10px; border-radius:2px; background:#23262B; }
+  .act .grid i.a { animation:lightice .2s calc(.4s + var(--k) * 14ms) forwards; }
+  .act .grid i.b { animation:lightice .2s calc(.4s + var(--k) * 14ms) forwards, lightsage .3s calc(2.6s + var(--j) * 60ms) forwards; }
+  .act .s6-more { opacity:0; animation:fadein .6s 2.3s both; }
+  .big { font-size:84px; font-weight:500; letter-spacing:-3px; line-height:1; color:var(--ice); }
+  /* s7 */
+  .app { display:flex; align-items:center; gap:14px; height:58px; border-radius:14px; background:var(--panel); padding:0 14px; margin-top:12px; font-size:18px; font-weight:500; border:2px solid transparent; transition:all .2s; }
+  .app em { margin-left:auto; font-style:normal; font-size:13px; color:var(--soft); display:flex; align-items:center; }
+  .app.sel { border-color:var(--ice); background:#1d2733; }
+  .app.sel em { color:var(--ice); font-weight:600; }
+  .chk { width:24px; height:24px; border-radius:50%; border:2px solid var(--soft); display:inline-grid; place-items:center; color:#0A0B0D; font-size:15px; font-weight:700; margin-right:8px; transition:all .2s; font-style:normal; }
+  .app.sel .chk { background:var(--sage); border-color:var(--sage); animation:pop .45s both; }
+  /* s8 */
+  .act .s8-phone { animation:glow 1s .5s 2; }
+  .act .s8-ripple { animation:ripple 1s .5s 2 both; opacity:0; }
+  .act .s8-arrow { stroke-dasharray:60; animation:dash .8s 1.3s both; }
+  .act .s8-pc { opacity:.4; animation:fadein .5s 2s both; }
+  .act .s8-row { opacity:0; animation:slidein .45s var(--d) both; }
+  /* s9 */
+  .act .s9-shackle { transform-box:fill-box; transform-origin:100% 100%; animation:shackle 1.8s .4s both; }
+  .act .s9-ring { animation:ripple 1s 1.9s both; opacity:0; }
+  /* s10 */
+  .feat { margin-top:18px; padding-left:38px; position:relative; }
+  .feat b { display:block; font-size:21px; font-weight:500; }
+  .feat span { font-size:14px; color:var(--soft); }
+  .feat svg { position:absolute; left:0; top:1px; }
+  .act .feat { opacity:0; animation:slidein .5s var(--d) both; }
+  .act .feat svg { animation:pop .5s var(--d) both; }
+  /* s11 */
+  .act .s11-ring { stroke-dasharray:660; animation:draw 1.6s ease-out both; }
+  .act .s11-btn { animation:glow 1.4s 2s infinite; }
+
+  /* v2 */
+  .dim-back { position:absolute; inset:0; background:#000a; z-index:30; opacity:0; pointer-events:none; transition:opacity .3s; }
+  .dim-back.on { opacity:1; }
+  .alert { position:absolute; left:61px; right:61px; top:270px; z-index:31; border-radius:20px; background:#2a2c31f2; color:#fff; text-align:center; transform:scale(.9); opacity:0; pointer-events:none; transition:all .25s; font-family:-apple-system,"Inter",system-ui,sans-serif; overflow:hidden; }
+  .alert.on { transform:none; opacity:1; }
+  .alert h4 { font-size:17px; font-weight:600; padding:20px 16px 4px; }
+  .alert p { font-size:13px; line-height:1.3; padding:0 16px 18px; color:#e8e8ea; }
+  .alert .ab { border-top:1px solid #ffffff22; height:46px; display:grid; place-items:center; font-size:17px; color:#0A84FF; }
+  .alert .ab.b { font-weight:600; }
+  .sheet { position:absolute; left:0; right:0; top:110px; bottom:0; z-index:32; border-radius:22px 22px 0 0; background:#1c1c1e; transform:translateY(105%); transition:transform .5s cubic-bezier(.3,.8,.2,1); font-family:-apple-system,"Inter",system-ui,sans-serif; color:#fff; }
+  .sheet.on { transform:none; }
+  .sh-top { display:flex; justify-content:space-between; padding:18px 20px 8px; font-size:17px; color:#0A84FF; }
+  .sh-top b { color:#fff; font-weight:600; }
+  .sh-search { margin:6px 16px 10px; height:36px; border-radius:10px; background:#2c2c2e; color:#8e8e93; display:flex; align-items:center; padding:0 12px; font-size:16px; }
+  .sh-h { padding:12px 20px 6px; font-size:13px; color:#8e8e93; text-transform:uppercase; letter-spacing:.3px; }
+  .sh-row { display:flex; align-items:center; gap:12px; padding:0 20px; height:54px; border-bottom:1px solid #ffffff12; font-size:17px; transition:transform .12s; }
+  .sh-row.press { transform:scale(.98); }
+  .sh-ic { width:34px; height:34px; border-radius:8px; flex:none; }
+  .sh-rad { margin-left:auto; width:24px; height:24px; border-radius:50%; border:2px solid #636366; display:grid; place-items:center; color:#fff; font-size:14px; transition:all .15s; }
+  .sh-row.sel .sh-rad { background:#0A84FF; border-color:#0A84FF; animation:pop .35s both; }
+  .done-btn.press { opacity:.5; }
+  .cam { position:relative; height:300px; border-radius:20px; background:linear-gradient(135deg,#1a2230,#0d1117); overflow:hidden; margin-top:26px; }
+  .cam .c { position:absolute; width:34px; height:34px; border:4px solid var(--ice); transition:border-color .3s; }
+  .cam .c1 { left:60px; top:50px; border-right:0; border-bottom:0; border-radius:12px 0 0 0; }
+  .cam .c2 { right:60px; top:50px; border-left:0; border-bottom:0; border-radius:0 12px 0 0; }
+  .cam .c3 { left:60px; bottom:50px; border-right:0; border-top:0; border-radius:0 0 0 12px; }
+  .cam .c4 { right:60px; bottom:50px; border-left:0; border-top:0; border-radius:0 0 12px 0; }
+  .cam .qr { position:absolute; left:50%; top:50%; width:120px; height:120px; margin:-60px 0 0 -60px; background:conic-gradient(#EDEBE6 25%, #0d1117 0 50%, #EDEBE6 0 75%, #0d1117 0); background-size:30px 30px; border-radius:6px; opacity:.85; }
+  .cam .scan { position:absolute; left:60px; right:60px; height:3px; background:var(--ice); box-shadow:0 0 12px var(--ice); top:60px; opacity:0; }
+  .act .cam .scan { animation:scanmove 1.6s .3s 2 both; }
+  @keyframes scanmove { 0% { top:60px; opacity:1 } 100% { top:236px; opacity:1 } }
+  .cam.ok .c { border-color:var(--sage); }
+  .cam .okmark { position:absolute; inset:0; display:grid; place-items:center; background:#0d1117dd; opacity:0; transition:opacity .35s; font-size:20px; font-weight:600; color:var(--sage); text-align:center; }
+  .cam.ok .okmark { opacity:1; }
+  .sumrow { display:flex; align-items:center; gap:12px; height:64px; border-radius:14px; background:#1d2733; border:2px solid var(--ice); padding:0 16px; font-size:19px; font-weight:500; margin-top:24px; opacity:0; transform:translateY(10px); transition:all .5s; }
+  .sumrow.show { opacity:1; transform:none; }
+  .tiles { display:flex; margin-left:auto; }
+  .tiles .tile { margin-left:-8px; border:2px solid #1d2733; }
+  svg { overflow:visible; }
+</style>
+</head>
+<body>
+<div class="phone" id="ph">
+  <div class="island"></div><div class="sb">9:41</div>
+  <div class="bars" id="bars"></div>
+  <div class="dim-back" id="dim"></div>
+  <div class="alert" id="alert"><h4>Screen Time Access</h4><p>Allow “Lock In” to access Screen Time? Providing access may allow this app to see your activity data, restrict content, and limit the usage of apps and websites.</p><div class="ab b" id="alertGo">Continue</div><div class="ab">Don’t Allow</div></div>
+  <div class="sheet" id="sheet"><div class="sh-top"><span>Cancel</span><b>Select Apps</b><span class="done-btn" id="doneBtn">Done</span></div>
+    <div class="sh-search">⌕&nbsp; Search</div>
+    <div class="sh-h">Social</div>
+    <div class="sh-row" data-r><div class="sh-ic" style="background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)"></div>Instagram<div class="sh-rad"></div></div>
+    <div class="sh-row" data-r><div class="sh-ic" style="background:#000;border:1px solid #444"></div>X<div class="sh-rad"></div></div>
+    <div class="sh-h">Entertainment</div>
+    <div class="sh-row" data-r><div class="sh-ic" style="background:#e53935"></div>YouTube<div class="sh-rad"></div></div>
+    <div class="sh-row"><div class="sh-ic" style="background:#3a7bd5"></div>Safari<div class="sh-rad"></div></div>
+    <div class="sh-row"><div class="sh-ic" style="background:#43a047"></div>Messages<div class="sh-rad"></div></div>
+  </div>
+  <div class="tap" id="tap"></div>
+</div>
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ph = $('#ph');
+const st = (c='#9CC9F5', w=2) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+const I = {
+  cam: (c) => `<svg width="20" height="20" viewBox="0 0 24 24" ${st(c)}><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/></svg>`,
+  chat: (c) => `<svg width="20" height="20" viewBox="0 0 24 24" ${st(c)}><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg>`,
+  play: (c) => `<svg width="20" height="20" viewBox="0 0 24 24" ${st(c)}><rect x="3" y="5" width="18" height="14" rx="4"/><path d="M10 9.5v5l4.5-2.5z"/></svg>`,
+  lock: (c,s=14) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" ${st(c,2.6)}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
+  mon: `<svg width="26" height="26" viewBox="0 0 24 24" ${st('#8FD3B0')}><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>`,
+  lk: `<svg width="26" height="26" viewBox="0 0 24 24" ${st('#8FD3B0')}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
+  bar: `<svg width="26" height="26" viewBox="0 0 24 24" ${st('#8FD3B0')}><path d="M5 20V12M12 20V5M19 20v-5"/></svg>`,
+  book: `<svg width="34" height="34" viewBox="0 0 24 24" ${st('#9CC9F5',1.8)}><path d="M4 5.5C7 4 10 4.3 12 6c2-1.7 5-2 8-.5V19c-3-1.5-6-1.2-8 .5-2-1.7-5-2-8-.5z M12 6v13.5"/></svg>`,
+};
+const tile = (svg, cls='') => `<div class="tile ${cls}" style="position:relative">${svg}</div>`;
+const ringSvg = (cls, num) => `<svg style="position:absolute;left:71px;top:340px" width="250" height="250" viewBox="0 0 250 250">
+  <circle cx="125" cy="125" r="118" fill="#17191C"/>
+  <circle cx="125" cy="125" r="105" fill="none" stroke="#25282D" stroke-width="14"/>
+  <circle class="${cls}" cx="125" cy="125" r="105" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" transform="rotate(-90 125 125)"/>${num||''}</svg>`;
+
+const cells = (n) => Array.from({length:n}, (_, i) => `<i class="${i<3?'h':i===3?'hh':''}" style="--i:${i}"></i>`).join('');
+const grid = Array.from({length:365}, (_, k) => k < 15 ? `<i class="b" style="--k:${k};--j:${k}"></i>` : k < 53 ? `<i class="a" style="--k:${k}"></i>` : `<i></i>`).join('');
+
+const all = [
+ { id:'s1', html:`<h1>Where did<br>the hour go?</h1><p class="lead">Lock In blocks those apps until your timer ends.</p>
+   ${ringSvg('s1-ring')}
+   <div class="s1-num" style="position:absolute;left:0;right:0;top:420px;text-align:center"><div id="n1" style="font-size:64px;font-weight:500;letter-spacing:-2px;line-height:1">0</div><div class="small" style="margin-top:4px">minutes gone</div></div>
+   <div class="s1-lock" style="position:absolute;left:0;right:0;top:433px;text-align:center">${I.lock('#8FD3B0',64)}</div>
+   <div class="s1-ico" style="--d:.2s;position:absolute;left:34px;top:350px">${tile(I.cam('#9CC9F5'),'big')}</div>
+   <div class="s1-ico" style="--d:.5s;position:absolute;right:34px;top:370px">${tile(I.chat('#9CC9F5'),'big')}</div>
+   <div class="s1-ico" style="--d:.8s;position:absolute;left:170px;top:612px">${tile(I.play('#9CC9F5'),'big')}</div>
+   <div class="btn" data-tap>Next</div>` },
+ { id:'s2', html:`<h1 style="font-size:40px">How many hours<br>a day are you on<br>your phone?</h1><p class="lead">Be honest. No one is judging.</p>
+   <div style="margin-top:16px"><div class="opt">1 to 2 hours</div><div class="opt" data-pick>3 to 4 hours</div><div class="opt">5 hours or more</div><div class="opt">No idea</div></div>
+   <div class="strip"><div class="small">Your day: 24 hours</div><div class="cells">${cells(24)}</div></div>
+   <p class="react" id="r2" style="margin-top:14px">That is about <b>53 days</b> a year.</p><div class="btn dim" id="b2" data-tap>Next</div>` },
+ { id:'s3', html:`<h1 style="font-size:40px">What kind of app<br>pulls you in<br>the most?</h1><p class="lead">Pick one.</p>
+   <div style="margin-top:16px"><div class="opt" data-pick>Social media</div><div class="opt">Videos</div><div class="opt">Games</div><div class="opt">News</div></div>
+   <p class="react" id="r3">Got it. We will block those first.</p>
+   <div class="popwrap"><div style="--d:.3s;position:relative">${tile(I.cam('#9CC9F5'),'big')}<div class="lockbadge">${I.lock('#0A0B0D',12)}</div></div><div style="--d:.6s;position:relative">${tile(I.chat('#9CC9F5'),'big')}<div class="lockbadge">${I.lock('#0A0B0D',12)}</div></div></div>
+   <div class="btn dim" id="b3" data-tap>Next</div>` },
+ { id:'s4', html:`<h1 style="font-size:40px">What do you want<br>to focus on?</h1><p class="lead">Pick one.</p>
+   <div style="margin-top:16px"><div class="opt" data-pick>Study</div><div class="opt">Work</div><div class="opt">Create</div><div class="opt">Rest</div></div>
+   <p class="react" id="r4">Great. We will help you study.</p>
+   <div class="popwrap"><div class="sparkle tile big" style="width:64px;height:64px">${I.book}</div></div>
+   <div class="btn dim" id="b4" data-tap>Next</div>` },
+ { id:'s5', html:`<h1>Building<br>your plan.</h1><ul class="plan" style="margin-top:34px"><li id="p1"><i>✓</i>Counting your hours</li><li id="p2"><i>✓</i>Choosing your apps</li><li id="p3"><i>✓</i>Setting your goal</li><li id="p4"><i>✓</i>Planning your first session</li></ul>
+   <div class="pb"><i id="pbi"></i></div>` },
+ { id:'s6', html:`<h1>That adds up.</h1><p class="lead">Today you spend about <b>53 days</b> a year on your phone.</p>
+   <div class="abs" style="top:318px"><div class="grid">${grid}</div><div class="small" style="margin-top:8px">Each square is one day of the year.</div></div>
+   <div class="abs s6-more" style="top:548px"><p style="font-size:19px;line-height:1.35;max-width:310px">Get back one hour a day and you gain</p><div class="big"><span id="n6">0</span> days</div></div>
+   <div class="btn" data-tap>Show me how</div>` },
+ { id:'s7', html:`<h1>Shield<br>your apps.</h1><p class="lead">Tap each app you want to block.</p>
+   <div style="margin-top:24px">
+    <div class="app" data-app><div class="tile">${I.cam('#9CC9F5')}</div>Instagram<em><i class="chk"></i><span>Tap</span></em></div>
+    <div class="app" data-app><div class="tile">${I.chat('#9CC9F5')}</div>X<em><i class="chk"></i><span>Tap</span></em></div>
+    <div class="app" data-app><div class="tile">${I.play('#9CC9F5')}</div>YouTube<em><i class="chk"></i><span>Tap</span></em></div></div>
+   <div class="note" style="margin:22px 0 0 150px">yes, even that one.</div><div class="btn dim" id="b7" data-tap>Next</div>` },
+ { id:'s8', html:`<h1>Do you have<br>a PC?</h1><p class="lead">Lock In can open your work on it with one tap.</p>
+   <div class="abs" style="top:340px;display:flex;align-items:center;gap:10px">
+     <div style="width:92px;text-align:center"><div class="s8-phone" style="position:relative;width:62px;height:108px;margin:0 auto;border-radius:14px;border:3px solid var(--ice);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--ice);line-height:1.2">Lock<br>In<div class="s8-ripple" style="position:absolute;inset:-3px;border-radius:14px;border:3px solid var(--ice)"></div></div><div class="small" style="margin-top:8px">1. You tap<br>on your phone</div></div>
+     <svg width="40" height="24" viewBox="0 0 40 24" ${st('#9CC9F5',3)}><path class="s8-arrow" d="M3 12 H34 M26 4 L35 12 L26 20"/></svg>
+     <div style="flex:1;text-align:center"><div class="s8-pc" style="border-radius:12px;border:3px solid var(--sage);padding:12px 10px;background:#141a17"><div class="s8-row" style="--d:2.2s;font-size:15px;padding:5px 0;text-align:left">✎&nbsp; Notes</div><div class="s8-row" style="--d:2.7s;font-size:15px;padding:5px 0;text-align:left">&lt;/&gt;&nbsp; Editor</div><div class="s8-row" style="--d:3.2s;font-size:15px;padding:5px 0;text-align:left">♪&nbsp; Playlist</div></div><div style="width:50px;height:5px;background:var(--sage);margin:0 auto;border-radius:3px"></div><div class="small" style="margin-top:8px">2. Your PC opens<br>your work</div></div>
+   </div>
+   <div class="btn">Set up my PC</div><div class="later" id="later8">Maybe later</div>` },
+ { id:'s9', html:`<h1 style="font-size:40px">Let Lock In<br>block your apps.</h1><p class="lead">Next, Apple asks you to confirm.</p>
+   <svg style="position:absolute;left:146px;top:380px" width="100" height="120" viewBox="0 0 100 120"><circle class="s9-ring" cx="50" cy="70" r="46" fill="none" stroke="#8FD3B0" stroke-width="3"/><rect x="10" y="48" width="80" height="64" rx="12" fill="#EDEBE6"/><path class="s9-shackle" d="M26 48 V34 a24 24 0 0 1 48 0 V48" fill="none" stroke="#EDEBE6" stroke-width="10"/></svg>
+   <div class="note" style="position:absolute;left:130px;top:540px">then tap Allow.</div>
+   <p class="small" style="position:absolute;left:26px;right:26px;bottom:128px">Your picks stay on your phone. You can change this in Settings.</p><div class="btn" data-tap>Continue</div>` },
+ { id:'s10', html:`<h1>Plus is for<br>your PC.</h1><p class="lead">The free app stays free. Plus adds:</p>
+   <div class="feat" style="--d:.4s">${I.mon}<b>PC workspaces</b><span>Opens your work in one tap.</span></div>
+   <div class="feat" style="--d:1.2s">${I.lk}<b>PC lock if you quit early</b><span>Quitting early has a cost.</span></div>
+   <div class="feat" style="--d:2s">${I.bar}<b>History and weekly report</b><span>Your real minutes, every week.</span></div>
+   <p class="small" style="position:absolute;left:26px;right:26px;bottom:132px">7 days free, then $XX.XX per year. Cancel anytime in iOS Settings.</p>
+   <div class="btn sage" data-tap>Try Plus free</div><div class="later" id="notnow">Not now</div>` },
+ { id:'s11', html:`<h1>Ready.</h1><p class="lead">Your first session: 25 minutes of studying.</p>
+   ${ringSvg('s11-ring', '<text x="125" y="140" text-anchor="middle" font-family="Onest" font-weight="500" font-size="52" fill="#EDEBE6" letter-spacing="-1.5">25:00</text>')}
+   <div class="btn s11-btn" data-tap>LOCK IN</div>` },
+];
+const S5 = { id:'s5', html:`<h1 style="font-size:40px">Let Lock In<br>block your apps.</h1><p class="lead">Next, Apple asks you to confirm.</p>
+   <svg style="position:absolute;left:146px;top:380px" width="100" height="120" viewBox="0 0 100 120"><circle class="s9-ring" cx="50" cy="70" r="46" fill="none" stroke="#8FD3B0" stroke-width="3"/><rect x="10" y="48" width="80" height="64" rx="12" fill="#EDEBE6"/><path class="s9-shackle" d="M26 48 V34 a24 24 0 0 1 48 0 V48" fill="none" stroke="#EDEBE6" stroke-width="10"/></svg>
+   <div class="note" style="position:absolute;left:130px;top:540px">then tap Continue.</div>
+   <p class="small" style="position:absolute;left:26px;right:26px;bottom:128px">Your picks stay on your phone. You can change this in Settings.</p><div class="btn" data-tap>Continue</div>` };
+const S6 = { id:'s6b', html:`<h1>Shield<br>your apps.</h1><p class="lead">Pick the apps that pull you in.</p>
+   <div class="sumrow" id="sum"><span class="chk" style="background:var(--sage);border-color:var(--sage);margin:0">✓</span><span>3 apps blocked</span><div class="tiles"><div class="tile">${I.cam('#9CC9F5')}</div><div class="tile">${I.chat('#9CC9F5')}</div><div class="tile">${I.play('#9CC9F5')}</div></div></div>
+   <div class="btn" id="chooseBtn">Choose apps</div>` };
+const SQR = { id:'sqr', html:`<h1>Do you have<br>a PC?</h1><p class="lead">Open Lock In on your PC. Scan the code it shows.</p>
+   <div class="cam" id="cam"><div class="c c1"></div><div class="c c2"></div><div class="c c3"></div><div class="c c4"></div><div class="qr"></div><div class="scan"></div><div class="okmark" id="okmark"><div>✓<br>PC paired</div></div></div>
+   <p class="small" style="margin-top:14px">Your PC opens your work when you tap Lock In.</p>
+   <div class="btn dim" id="bqr" data-tap>Next</div><div class="later" id="later8">Maybe later</div>` };
+const S11 = { id:'s11', html:`<h1>Ready.</h1><p class="lead">Your first session: 25 minutes of studying. 3 apps blocked.</p>
+   ${ringSvg('s11-ring', '<text x="125" y="140" text-anchor="middle" font-family="Onest" font-weight="500" font-size="52" fill="#EDEBE6" letter-spacing="-1.5">25:00</text>')}
+   <div class="btn s11-btn" data-tap>LOCK IN</div>` };
+const screens = [all[0], all[1], all[2], all[3], S5, S6, all[5], SQR, all[9], S11];
+
+const bars = $('#bars');
+bars.innerHTML = screens.map(() => '<i></i>').join('');
+const els = screens.map(s => { const d = document.createElement('div'); d.className = 'scr right'; d.id = s.id; d.innerHTML = s.html; ph.appendChild(d); return d; });
+function setBars(n){ [...bars.children].forEach((b,i) => b.classList.toggle('on', i<=n)); }
+const tap = $('#tap');
+function countTo(el, to, ms, delay=0){ const t0 = performance.now() + delay; (function f(t){ const p = Math.max(0, Math.min(1, (t - t0) / ms)); el.textContent = Math.round(to * p); if (p < 1) requestAnimationFrame(f); })(performance.now()); }
+async function tapAt(el){
+  const pr = ph.getBoundingClientRect(), r = el.getBoundingClientRect();
+  tap.style.left = (r.left - pr.left + r.width*0.5) + 'px'; tap.style.top = (r.top - pr.top + r.height*0.5) + 'px';
+  tap.classList.add('on'); await sleep(350); el.classList.add('press'); await sleep(130); el.classList.remove('press'); await sleep(150); tap.classList.remove('on');
+}
+async function show(i){
+  const prev = els.findIndex(e => !e.classList.contains('right') && !e.classList.contains('left'));
+  if (prev >= 0) els[prev].classList.add('left');
+  els[i].classList.remove('right','left'); els[i].classList.add('act'); setBars(i);
+  if (i === 0) countTo($('#n1'), 60, 3000);
+  if (i === 5) countTo($('#n6'), 15, 1200, 2600);
+  await sleep(700);
+}
+async function pick(i){
+  const el = els[i], pk = $('[data-pick]', el);
+  await tapAt(pk); pk.classList.add('sel');
+  await sleep(500); el.classList.add('picked'); $('#r'+(i+1)).classList.add('show'); $('#b'+(i+1)).classList.remove('dim');
+}
+
+async function play(){
+  window.__done = false;
+  const dim = $('#dim'), alertEl = $('#alert'), sheet = $('#sheet');
+  await show(0); await sleep(5200); await tapAt($('[data-tap]', els[0]));
+  await show(1); await sleep(1800); await pick(1); await sleep(4200); await tapAt($('[data-tap]', els[1]));
+  await show(2); await sleep(1800); await pick(2); await sleep(3200); await tapAt($('[data-tap]', els[2]));
+  await show(3); await sleep(1800); await pick(3); await sleep(3200); await tapAt($('[data-tap]', els[3]));
+  await show(4); await sleep(3600); await tapAt($('[data-tap]', els[4]));
+  dim.classList.add('on'); alertEl.classList.add('on'); await sleep(2600); await tapAt($('#alertGo'));
+  alertEl.classList.remove('on'); dim.classList.remove('on'); await sleep(500);
+  await show(5); await sleep(1800); await tapAt($('#chooseBtn'));
+  sheet.classList.add('on'); await sleep(1400);
+  for (const r of sheet.querySelectorAll('[data-r]')) { await tapAt(r); r.classList.add('sel'); $('.sh-rad', r).textContent = '\u2713'; await sleep(600); }
+  await sleep(600); await tapAt($('#doneBtn')); sheet.classList.remove('on'); await sleep(700);
+  $('#sum').classList.add('show'); $('#chooseBtn').textContent = 'Next'; await sleep(2200); await tapAt($('#chooseBtn'));
+  await show(6); await sleep(6200); await tapAt($('[data-tap]', els[6]));
+  await show(7); await sleep(3600); $('#cam').classList.add('ok'); $('#bqr').classList.remove('dim'); await sleep(2400); await tapAt($('#bqr'));
+  await show(8); await sleep(4200); await tapAt($('#notnow'));
+  await show(9); await sleep(3800); await tapAt($('[data-tap]', els[9]));
+  await sleep(800); window.__done = true;
+}
+setBars(-1);
+window.play = play;
+
+const sp = new URLSearchParams(location.search).get('s');
+if (sp !== null) {
+  const n = +sp; document.body.style.background = 'transparent'; ph.style.boxShadow = 'none'; ph.classList.add('static');
+  els.forEach(e => e.style.transition = 'none');
+  els[n].classList.remove('right'); els[n].classList.add('act','picked'); setBars(n);
+  if ([1,2,3].includes(n)) { $('[data-pick]', els[n]).classList.add('sel'); $('#r'+(n+1)).classList.add('show'); $('#b'+(n+1)).classList.remove('dim'); }
+  if (n === 6) $('#n6').textContent = '15';
+  if (n === 5) { $('#sum').classList.add('show'); $('#chooseBtn').textContent = 'Next'; }
+  if (n === 7) { $('#cam').classList.add('ok'); $('#bqr').classList.remove('dim'); }
+  const ex = new URLSearchParams(location.search).get('o');
+  if (ex === 'alert') { $('#dim').classList.add('on'); $('#alert').classList.add('on'); }
+  if (ex === 'sheet') { $('#sheet').classList.add('on'); document.querySelectorAll('.sh-row[data-r]').forEach(r => { r.classList.add('sel'); $('.sh-rad', r).textContent = '\u2713'; }); }
+}
+</script>
+</body>
+</html>

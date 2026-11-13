@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Shield options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Instrument+Serif&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#cfcfd2;padding:22px;font-family:Onest,system-ui,sans-serif}
+.row{display:flex;gap:22px}
+.cap{font:600 14px system-ui;color:#333;margin:0 0 6px 6px}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;flex:none}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:5}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:5}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:29px;display:grid;place-items:center;font-weight:600;font-size:17px}
+.ic{position:absolute;border-radius:22%}
+/* A paper */
+.A{background:#F3ECDD;color:#1D1A16}
+.A h1{position:absolute;left:28px;top:112px;font:400 54px/1 Fraunces,serif;letter-spacing:-1.5px}
+.A h1 em{font-style:italic;color:#C4472B}
+.A .p{position:absolute;left:28px;top:300px;width:300px;font-size:18px;line-height:1.35;color:#4A443B}
+.A .btn{background:#1D1A16;color:#F3ECDD}
+/* B big number */
+.B{background:#0B0B0C;color:#F2F0EA}
+.B .n{position:absolute;left:14px;top:92px;font:400 400px/1 "Instrument Serif",serif;letter-spacing:-20px;color:#F2F0EA}
+.B .t{position:absolute;left:28px;top:470px;font:500 40px/1.05 Onest;letter-spacing:-1.2px}
+.B .t span{color:#7C7F85;display:block;margin-top:14px;font-size:20px;letter-spacing:0;font-weight:400}
+.B .btn{background:#F2F0EA;color:#0B0B0C;border-radius:16px}
+/* C home screen */
+.C{background:linear-gradient(170deg,#2a3550,#0f1320 70%);color:#fff}
+.C h1{position:absolute;left:28px;top:104px;font:600 38px/1.05 Onest;letter-spacing:-1px}
+.C .p{position:absolute;left:28px;top:200px;font-size:17px;color:#b9c0d4}
+.C .grid{position:absolute;left:30px;right:30px;top:268px;display:grid;grid-template-columns:repeat(4,1fr);gap:26px 18px}
+.C .cell{display:grid;justify-items:center;gap:7px;font-size:12px;color:#e5e8f2;position:relative}
+.C .cell i{width:64px;height:64px;border-radius:15px;display:block;position:relative;overflow:hidden}
+.C .cell.lk i::after{content:"";position:absolute;inset:0;background:rgba(18,22,36,.62);backdrop-filter:blur(6px)}
+.C .cell.lk b{position:absolute;top:21px;width:22px;height:22px;z-index:2}
+.C .cell.lk{color:#8d94aa}
+.C .btn{background:#fff;color:#0f1320;border-radius:18px}
+.C .tag{position:absolute;left:28px;right:28px;top:620px;font-size:15px;color:#b9c0d4;display:flex;gap:8px;align-items:center}
+</style></head><body>
+<div class="row" id="r"></div>
+<script>
+const lk=`<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" fill="#fff3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
+const cols=['#E4573D','#17181B','#D93636','#3E7BD6','#3E9A4E','#E2B53A','#8A3FA0','#1F8C7E','#C46A2B','#4B5563','#D6407A','#2D7FE0'];
+const frame=(c,cls,inner)=>`<div><div class="cap">${c}</div><div class="phone ${cls}"><div class="island"></div><div class="sb">9:41</div>${inner}</div></div>`;
+// A: paper, flat colour shapes, serif
+const A=frame('Option A: Paper (warm, light, serif)','A',`
+<h1>Shield the<br>apps that <em>eat</em><br>your day.</h1>
+<p class="p">Pick them once. They stay shut whenever your timer runs.</p>
+<div class="ic" style="left:36px;top:410px;width:96px;height:96px;background:#E4573D;transform:rotate(-7deg)"></div>
+<div class="ic" style="left:118px;top:440px;width:96px;height:96px;background:#17181B;transform:rotate(5deg)"></div>
+<div class="ic" style="left:210px;top:404px;width:96px;height:96px;background:#D93636;transform:rotate(-3deg)"></div>
+<svg style="position:absolute;left:36px;top:560px" width="320" height="120" viewBox="0 0 320 120" fill="none" stroke="#1D1A16" stroke-width="2.5" stroke-linecap="round"><path d="M10 20 C60 90 130 100 210 70"/><path d="M196 56 L212 70 L192 82"/></svg>
+<div style="position:absolute;left:236px;top:668px;font:italic 400 30px Fraunces;color:#C4472B;transform:rotate(-3deg)">3 shut.</div>
+<div class="btn">Choose apps</div>`);
+// B: big number
+const B=frame('Option B: Big number (dark, typographic)','B',`
+<div class="n">3</div>
+<div class="t">apps shut while<br>you focus.<br><span>Instagram, X, YouTube</span></div>
+<div class="btn">Change apps</div>`);
+// C: home screen
+const names=['Instagram','X','YouTube','Messages','Podcasts','Reddit','Camera','Maps','Mail','Notes','Photos','Music'];
+const lockSet=[0,1,2];
+const cells=names.map((n,i)=>`<div class="cell ${lockSet.includes(i)?'lk':''}"><i style="background:${cols[i]}"></i>${lockSet.includes(i)?`<b>${lk}</b>`:''}${n}</div>`).join('');
+const C=frame('Option C: Your home screen (shows the real result)','C',`
+<h1>This is your phone<br>while you focus.</h1>
+<p class="p">Locked apps go dim. Nothing opens.</p>
+<div class="grid">${cells}</div>
+<div class="tag">3 apps shut &middot; tap any app to change</div>
+<div class="btn">Looks right</div>`);
+document.getElementById('r').innerHTML=A+B+C;
+</script></body></html>

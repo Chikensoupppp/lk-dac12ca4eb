@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>New user flow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;user-select:none}
+:root{--ink:#EDEBE6;--soft:#9A9DA3;--panel:#181A1E;--edge:#2A2D33;--ice:#9CC9F5;--sage:#8FD3B0;--warm:#F2B27A}
+body{background:#cfcfd2;display:grid;place-items:center;min-height:100vh;font-family:Onest,system-ui,sans-serif}
+.phone{width:393px;height:852px;border-radius:52px;overflow:hidden;position:relative;color:var(--ink);background:linear-gradient(180deg,#121417 0%,#0A0B0D 60%,#08090A 100%)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:90}
+.sb{position:absolute;top:18px;left:34px;font-weight:600;font-size:16px;z-index:90}
+.bars{position:absolute;left:26px;right:26px;top:56px;display:flex;gap:3px;z-index:5}
+.bars i{flex:1;height:4px;border-radius:2px;background:var(--edge);transition:background .4s}.bars i.on{background:var(--ink)}
+.pane{position:absolute;inset:0;display:none}
+h1{position:absolute;left:26px;right:26px;top:96px;font:800 40px/1.03 Onest;letter-spacing:-1.4px}
+.p{position:absolute;left:26px;right:30px;top:0;font-size:20px;line-height:1.3;font-weight:500;color:#D2D4D9}
+.btn{position:absolute;left:26px;right:26px;bottom:60px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:700;font-size:17px;background:var(--ink);color:#0A0B0D}
+.btn.ghost{background:none;color:var(--soft);bottom:20px;height:34px;font-weight:500;font-size:15px}
+.abs{position:absolute}
+.tile{position:absolute;border-radius:16px;display:grid;place-items:center}.tile svg{width:46%;height:46%}
+.chip{display:flex;align-items:center;gap:10px;height:56px;padding:0 18px;border-radius:28px;background:var(--panel);border:1.5px solid var(--edge);font-weight:600;font-size:18px}
+.chip.on{background:var(--ice);color:#0A0B0D;border-color:var(--ice)}
+.chk{margin-left:auto;width:24px;height:24px;border-radius:50%;background:#0A0B0D;color:var(--ice);display:grid;place-items:center;font-size:14px}
+.note{position:absolute;font-weight:700;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--warm);color:#1A1208}
+[data-sel]{transition:background .3s,border-color .3s,transform .45s cubic-bezier(.3,1.6,.5,1),color .3s}
+[data-sel]:not(.picked) .chk{opacity:0;transform:scale(0)}
+.chip[data-sel]:not(.picked) svg{stroke:#fff}
+[data-sel] .chk{transition:opacity .2s,transform .4s cubic-bezier(.3,1.8,.5,1)}
+#sq i{aspect-ratio:1;border-radius:2px;display:block;background:#23262B}
+.cell{display:grid;justify-items:center;gap:7px;font-size:12px;color:#e5e8f2;position:relative;transition:color .4s}
+.ic5{width:64px;height:64px;border-radius:15px;display:grid;place-items:center;position:relative;overflow:hidden;isolation:isolate}
+.ic5 .gl{width:30px;height:30px}
+.ov{position:absolute;inset:0;background:rgba(10,11,13,.84);opacity:0;transition:opacity .25s}
+.lkk{position:absolute;width:26px;height:26px;opacity:0}
+.cell.lk .ov,.cell.lk .lkk{opacity:1}.cell.lk{color:#8d94aa}
+.bub{position:absolute;top:-30px;left:50%;transform:translateX(-50%) scale(0);background:#fff;color:#0f1320;font-weight:700;font-size:13px;padding:4px 10px;border-radius:12px;white-space:nowrap;z-index:6;opacity:0}
+.bub::after{content:"";position:absolute;bottom:-5px;left:50%;margin-left:-5px;border:5px solid transparent;border-top-color:#fff;border-bottom:0}
+.ring5{position:absolute;left:50%;top:32px;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:3px solid #fff;z-index:7;pointer-events:none;opacity:0}
+.wig{animation:wig .5s ease-in-out infinite alternate}
+@keyframes wig{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}
+.dim{position:absolute;inset:0;background:#0008;z-index:30;opacity:0;pointer-events:none}
+.sheet{position:absolute;left:0;right:0;top:120px;bottom:0;z-index:40;border-radius:22px 22px 0 0;background:#1c1c1e;transform:translateY(105%);font-family:-apple-system,Inter,system-ui,sans-serif}
+.sh-top{display:flex;justify-content:space-between;padding:18px 20px 8px;font-size:17px;color:#0A84FF}.sh-top b{color:#fff;font-weight:600}
+.sh-s{margin:6px 16px 8px;height:36px;border-radius:10px;background:#2c2c2e;color:#8e8e93;display:flex;align-items:center;padding:0 12px;font-size:16px}
+.sh-h{padding:10px 20px 6px;font-size:13px;color:#8e8e93;text-transform:uppercase}
+.srow{display:flex;align-items:center;gap:12px;padding:0 20px;height:54px;border-bottom:1px solid #ffffff12;font-size:17px;opacity:0}
+.srow u{width:34px;height:34px;border-radius:8px;flex:none;display:block}
+.rad{margin-left:auto;width:26px;height:26px;border-radius:50%;border:2px solid #636366;display:grid;place-items:center;color:#fff;font-size:15px}
+.srow.sel .rad{background:#34C759;border-color:#34C759}
+.cnt{position:absolute;left:0;right:0;bottom:34px;text-align:center;color:#8e8e93;font-size:14px}
+.tap{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;background:#ffffff33;z-index:95;pointer-events:none;opacity:0}
+.fly{position:absolute;z-index:70;border-radius:15px;pointer-events:none}
+.dot{position:absolute;width:9px;height:9px;border-radius:50%;z-index:75;pointer-events:none}
+</style></head><body>
+<div class="phone" id="ph"><div class="island"></div><div class="sb">9:41</div>
+<div class="bars" id="bars"></div><div id="stack"></div>
+<div class="dim" id="dim"></div>
+<div class="sheet" id="sheet">
+ <div class="sh-top"><span>Cancel</span><b>Select Apps</b><span id="done">Done</span></div>
+ <div class="sh-s">&#8981;&nbsp; Search</div>
+ <div class="sh-h">Social</div>
+ <div class="srow" data-i="0"><u style="background:#E4573D"></u>Instagram<div class="rad"></div></div>
+ <div class="srow" data-i="1"><u style="background:#17181B;box-shadow:0 0 0 1px #444 inset"></u>X<div class="rad"></div></div>
+ <div class="srow"><u style="background:#3E7BD6"></u>Messages<div class="rad"></div></div>
+ <div class="sh-h">Entertainment</div>
+ <div class="srow" data-i="2"><u style="background:#D93636"></u>YouTube<div class="rad"></div></div>
+ <div class="srow"><u style="background:#3E9A4E"></u>Podcasts<div class="rad"></div></div>
+ <div class="cnt" id="cnt">0 selected</div>
+</div>
+<div class="tap" id="tap"></div></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],sleep=ms=>new Promise(r=>setTimeout(r,ms)),ph=$('#ph');
+const A=(el,kf,o)=>el.animate(kf,Object.assign({fill:'forwards'},o)).finished;
+const spring='cubic-bezier(.3,1.7,.5,1)';
+const g=(p,c='#fff',w=2.2)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const G={cam:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>',x:'<path d="M5 5l14 14M19 5L5 19"/>',play:'<path d="M8 5l11 7-11 7z" fill="#fff"/>',chat:'<path d="M4 6h16v10H10l-4 3v-3H4z"/>',game:'<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4"/>',news:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',bag:'<path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2" fill="#fff3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',book:'<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>',moon:'<path d="M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z"/>',bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',pen:'<path d="M4 20l4-1L19 8l-3-3L5 16z"/>',brief:'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3"/>',pc:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'};
+const T=(l,t,w,bg,rot,gl)=>`<div class="tile" style="left:${l}px;top:${t}px;width:${w}px;height:${w}px;background:${bg};transform:rotate(${rot}deg)">${g(gl)}</div>`;
+const S={};
+S[1]=`<h1 style="top:110px;font-size:46px">You lose hours<br>to your phone.</h1>
+<p class="p" style="top:262px;font-size:34px;font-weight:800;letter-spacing:-1px;color:var(--ice)">Let’s get them back.</p>
+<svg class="abs" style="left:66px;top:360px" width="260" height="260" viewBox="0 0 260 260"><circle cx="130" cy="130" r="118" fill="#141619" stroke="#2A2D33" stroke-width="10"/><path d="M130 130 L130 52" stroke="#EDEBE6" stroke-width="10" stroke-linecap="round"/><path id="hand1" d="M130 130 L130 62" stroke="#9CC9F5" stroke-width="8" stroke-linecap="round" style="transform-origin:130px 130px"/><circle cx="130" cy="130" r="10" fill="#EDEBE6"/></svg>
+<div id="t1a">${T(30,540,68,'#E4573D',-12,G.cam)}</div><div id="t1b">${T(300,350,68,'#D93636',10,G.play)}</div><div id="t1c">${T(290,560,60,'#17181B',-8,G.x)}</div>
+<div class="note" id="n1" style="left:232px;top:330px;transform:rotate(6deg);background:var(--ice)">just one look</div>
+<div class="btn">Show me</div>`;
+const hrs=['1 to 2 hours','3 to 4 hours','5 to 6 hours','7 hours or more'];
+S[2]=`<h1>How long are you on your phone each day?</h1>
+<div class="abs" style="left:26px;right:26px;top:330px;display:grid;gap:12px">${hrs.map((h,i)=>`<div class="chip ${i==2?'on':''}" ${i==2?'data-sel="1"':''} style="height:66px;font-size:20px;${i==2?'transform:rotate(-1.5deg) scale(1.03)':''}">${h}<span class="chk">&#10003;</span></div>`).join('')}</div>
+<div class="note" id="n2" style="right:34px;top:684px;transform:rotate(-4deg);opacity:0">about average</div>
+<div class="btn">Next</div>`;
+const cats=[['Social',G.cam,'#E4573D',1],['Video',G.play,'#D93636',1],['Games',G.game,'#8A3FA0',0],['News',G.news,'#4B5563',0],['Shopping',G.bag,'#C46A2B',0],['Chat',G.chat,'#3E7BD6',0]];
+S[3]=`<h1>Which apps pull you in the most?</h1>
+<div class="abs" style="left:26px;right:26px;top:300px;display:grid;grid-template-columns:1fr 1fr;gap:14px">${cats.map(c=>`<div ${c[3]?'data-sel="1"':''} style="height:104px;border-radius:22px;background:${c[3]?c[2]:'var(--panel)'};border:1.5px solid ${c[3]?c[2]:'var(--edge)'};padding:16px;position:relative;${c[3]?'transform:rotate(-1deg)':''}"><div style="width:38px;height:38px">${g(c[1])}</div><div style="position:absolute;left:16px;bottom:14px;font-weight:700;font-size:19px">${c[0]}</div><span class="chk" style="position:absolute;right:14px;top:14px;color:${c[2]};background:#fff">&#10003;</span></div>`).join('')}</div>
+<p class="p" id="p3" style="top:696px;color:var(--ink);font-weight:600;opacity:0">Got it. Next, we lock them.</p>
+<div class="btn">Next</div>`;
+S[4]=`<h1>Now we lock them.</h1>
+<p class="p" style="top:200px">Your iPhone asks first. Tap <b style="color:var(--ink)">Continue</b>.</p>
+<div class="abs" style="left:26px;right:26px;top:290px;display:grid;gap:12px">
+ <div style="display:flex;gap:14px;align-items:center;padding:18px;border-radius:20px;background:var(--panel)"><div style="width:44px;height:44px;border-radius:14px;background:var(--sage);display:grid;place-items:center">${g(G.lock,'#0A0B0D',2.4)}</div><div style="font-weight:600;font-size:18px;line-height:1.2">Only you can<br>unlock them.</div></div>
+ <div style="display:flex;gap:14px;align-items:center;padding:18px;border-radius:20px;background:var(--panel)"><div style="width:44px;height:44px;border-radius:14px;background:var(--ice);display:grid;place-items:center">${g('<path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/>','#0A0B0D',2.4)}</div><div style="font-weight:600;font-size:18px;line-height:1.2">We never see<br>your apps.</div></div></div>
+<div class="abs" id="alert4" style="left:46px;right:46px;top:530px;border-radius:22px;background:#2a2a2d;padding:20px 18px 0;text-align:center;font-family:-apple-system,Inter,sans-serif;box-shadow:0 12px 30px #0008;opacity:0;z-index:50"><div style="font-weight:600;font-size:16px">"Lock In" Would Like to Access Screen Time</div><div style="font-size:13px;color:#aaa;margin:8px 0 16px">Lets Lock In lock the apps you pick.</div><div style="display:flex;border-top:1px solid #ffffff22;margin:0 -18px"><div style="flex:1;padding:14px;color:#0A84FF;border-right:1px solid #ffffff22">Don't Allow</div><div id="cont4" style="flex:1;padding:14px;color:#0A84FF;font-weight:700">Continue</div></div></div>
+<div class="note" id="n4" style="right:30px;top:500px;transform:rotate(5deg);background:var(--ice);opacity:0;z-index:51">tap this</div>
+<div class="btn">Continue</div>`;
+const names=['Instagram','X','YouTube','Messages','Podcasts','Reddit','Camera','Maps','Mail','Notes','Photos','Music'],cols=['#E4573D','#17181B','#D93636','#3E7BD6','#3E9A4E','#E2B53A','#8A3FA0','#1F8C7E','#C46A2B','#4B5563','#D6407A','#2D7FE0'],gl=[G.cam,G.x,G.play,G.chat,'<circle cx="12" cy="11" r="3"/><path d="M6 11a6 6 0 0 1 12 0M12 14v6"/>','<circle cx="12" cy="12" r="8"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/>','<rect x="3" y="7" width="18" height="12" rx="3"/><circle cx="12" cy="13" r="3"/>','<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/>','<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 8l9 6 9-6"/>','<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 8h6M9 12h6"/>','<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>','<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>'];
+S[5]=`<h1 id="h5">Choose the apps to lock.</h1>
+<p class="p" id="p5" style="top:196px">Pick them once. You can change them later.</p>
+<div class="abs" id="g5" style="left:30px;right:30px;top:300px;display:grid;grid-template-columns:repeat(4,1fr);gap:26px 18px">${names.map((n,i)=>`<div class="cell" id="c${i}"><div class="ic5" style="background:${cols[i]}"><div class="gl">${g(gl[i])}</div><div class="ov"></div><div class="lkk">${g(G.lock,'#fff',2.4)}</div></div>${n}<div class="bub">nope.</div><div class="ring5"></div></div>`).join('')}</div>
+<div class="abs" id="pill5" style="left:50%;top:650px;transform:translateX(-50%);background:var(--ink);color:#0A0B0D;font-weight:800;font-size:20px;padding:11px 22px;border-radius:30px;white-space:nowrap;opacity:0">3 apps locked</div>
+<div class="btn" id="b5">Choose apps</div>`;
+const foc=[['Study',G.book,1],['Work',G.brief,1],['Sleep',G.moon,0],['Training',G.bolt,0],['Create',G.pen,0],['Read',G.news,0]];
+S[6]=`<h1>What do you want to focus on?</h1>
+<div class="abs" style="left:26px;right:26px;top:300px;display:flex;flex-wrap:wrap;gap:12px">${foc.map((f,i)=>`<div class="chip ${f[2]?'on':''}" ${f[2]?'data-sel="1"':''} style="height:62px;font-size:20px;${f[2]?'transform:rotate('+(i?1.5:-1.5)+'deg)':''}"><div style="width:24px;height:24px">${g(f[1],f[2]?'#0A0B0D':'#fff')}</div>${f[0]}</div>`).join('')}</div>
+<div class="note" id="n6" style="left:40px;top:560px;transform:rotate(-3deg);background:var(--sage);opacity:0">pick as many as you like</div>
+<div class="btn">Next</div>`;
+S[7]=`<h1>Look at your year.</h1>
+<div class="abs" style="left:26px;top:170px"><div id="num7" style="font:800 96px/1 Onest;letter-spacing:-4px;color:var(--warm)">0 days</div><div style="font-size:20px;font-weight:500;color:#D2D4D9;margin-top:6px">on your phone each year.</div></div>
+<div class="abs" id="sq" style="left:26px;right:26px;top:390px;display:grid;grid-template-columns:repeat(26,1fr);gap:4px">${Array.from({length:365},()=>'<i></i>').join('')}</div>
+<div class="abs" id="t7" style="left:26px;top:640px;font-weight:800;font-size:26px;line-height:1.2;color:var(--sage);opacity:0">Get 15 days back.</div>
+<div class="btn">Let's do it</div>`;
+let qr='';const rnd=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(7);
+for(let y=0;y<17;y++)for(let x=0;x<17;x++){const f=(x<5&&y<5)||(x>11&&y<5)||(x<5&&y>11);if(f)continue;if(rnd()>.5)qr+=`<rect x="${x*8}" y="${y*8}" width="8" height="8" rx="1.5"/>`}
+const eye=(x,y)=>`<rect x="${x*8}" y="${y*8}" width="40" height="40" rx="6" fill="#0A0B0D"/><rect x="${x*8+8}" y="${y*8+8}" width="24" height="24" rx="3" fill="#fff"/><rect x="${x*8+14}" y="${y*8+14}" width="12" height="12" rx="2" fill="#0A0B0D"/>`;
+S[8]=`<h1>Do you have a PC?</h1>
+<p class="p" style="top:150px">Open <b style="color:var(--ink)">lockin.app/pc</b> on it, then scan this code.</p>
+<div class="abs" id="qr8" style="left:96px;top:250px;width:200px;height:200px;border-radius:26px;background:#fff;padding:16px;transform:rotate(-2deg);overflow:hidden"><svg viewBox="0 0 136 136" width="168" height="168" fill="#0A0B0D">${qr}${eye(0,0)}${eye(11.9,0)}${eye(0,11.9)}</svg><div id="scan8" style="position:absolute;left:0;right:0;top:0;height:5px;background:#34C759;box-shadow:0 0 16px #34C759;opacity:0"></div></div>
+<div class="abs" style="left:26px;right:26px;top:500px;display:flex;align-items:center;gap:10px;justify-content:center"><div style="width:64px;height:64px;border-radius:18px;background:var(--panel);display:grid;place-items:center"><div style="width:32px;height:32px">${g(G.phone)}</div></div><div id="ln8" style="flex:1;border-top:3px dashed var(--ice);opacity:.7"></div><div style="width:64px;height:64px;border-radius:18px;background:var(--panel);display:grid;place-items:center"><div style="width:32px;height:32px">${g(G.pc)}</div></div></div>
+<div class="note" id="n8" style="left:112px;top:586px;transform:rotate(-3deg);background:var(--sage);opacity:0">phone and PC, linked</div>
+<div class="btn" id="b8">Scan to pair</div><div class="btn ghost">I only have a phone</div>`;
+S[9]=`<h1>Plus works on your PC.</h1>
+<div class="abs" style="left:26px;right:26px;top:210px;display:grid;gap:14px">${[['1','It saves your work.','It remembers your tabs and files.'],['2','It locks your PC too.','Phone and PC lock together.'],['3','It brings your work back.','One tap, and it is all open again.']].map(s=>`<div class="c9" style="display:flex;gap:16px;align-items:flex-start;padding:20px;border-radius:22px;background:var(--panel)"><div style="font:800 34px/1 Onest;color:var(--ice)">${s[0]}</div><div><div style="font-weight:700;font-size:20px">${s[1]}</div><div style="font-size:15px;color:var(--soft);margin-top:4px">${s[2]}</div></div></div>`).join('')}</div>
+<div class="btn">Try Plus</div><div class="btn ghost">Not now</div>`;
+S[10]=`<h1 style="font-size:46px">Ready to focus?</h1>
+<p class="p" style="top:156px">25 minutes. Phone down.</p>
+<svg class="abs" style="left:56px;top:290px" width="280" height="280" viewBox="0 0 280 280"><circle cx="140" cy="140" r="124" fill="none" stroke="#23262B" stroke-width="14"/><circle id="ring10" cx="140" cy="140" r="124" fill="none" stroke="#9CC9F5" stroke-width="14" stroke-linecap="round" stroke-dasharray="780" stroke-dashoffset="780" transform="rotate(-90 140 140)"/><text id="tm10" x="140" y="156" text-anchor="middle" font-family="Onest" font-weight="800" font-size="62" fill="#EDEBE6" letter-spacing="-2">25:00</text><text x="140" y="188" text-anchor="middle" font-family="Onest" font-weight="500" font-size="16" fill="#9A9DA3">minutes</text></svg>
+<div class="note" id="n10" style="right:36px;top:270px;transform:rotate(5deg);background:var(--sage);opacity:0">you got this</div>
+<div class="btn" id="b10">Start 25 minutes</div>`;
+// build panes
+$('#bars').innerHTML=Array.from({length:10},()=>'<i></i>').join('');
+for(let i=1;i<=10;i++){const d=document.createElement('div');d.className='pane';d.id='s'+i;d.innerHTML=S[i];$('#stack').appendChild(d)}
+$$('.chk').forEach(c=>{if(!c.closest('[data-sel]'))c.style.display='none'});
+// neutralise preselected choices
+$$('[data-sel]').forEach(el=>{el._css=el.style.cssText;el._on=el.classList.contains('on');el.classList.remove('on');el.style.transform='none';if(!el._on){el.style.background='var(--panel)';el.style.borderColor='var(--edge)'}});
+function pick(el){el.style.cssText=el._css;if(el._on)el.classList.add('on');el.classList.add('picked')}
+async function tapAt(el){const pr=ph.getBoundingClientRect(),r=el.getBoundingClientRect(),t=$('#tap');
+ t.style.left=(r.left-pr.left+r.width/2)+'px';t.style.top=(r.top-pr.top+r.height/2)+'px';
+ await A(t,[{opacity:0,transform:'scale(1.5)'},{opacity:1,transform:'scale(1)'}],{duration:240});
+ await A(el,[{transform:getComputedStyle(el).transform==='none'?'scale(1)':getComputedStyle(el).transform},{transform:'scale(.95)'},{transform:getComputedStyle(el).transform==='none'?'scale(1)':getComputedStyle(el).transform}],{duration:220,fill:'none'});
+ await A(t,[{opacity:1},{opacity:0}],{duration:160})}
+let cur=0;
+async function go(n){
+ const nb=$$('#bars i');nb.forEach((b,i)=>b.classList.toggle('on',i<n));
+ if(cur){const o=$('#s'+cur);await A(o,[{transform:'none',opacity:1},{transform:'translateX(-50px)',opacity:0}],{duration:280,easing:'ease-in'});o.style.display='none'}
+ cur=n;const p=$('#s'+n);p.style.display='block';
+ A(p,[{opacity:1}],{duration:1});
+ await Promise.all($$(':scope > *',p).map((c,i)=>{const op=c.style.opacity;return A(c,[{transform:(c.style.transform||'')+' translateY(28px)',opacity:0},{transform:c.style.transform||'none',opacity:op===''?1:+op}],{duration:520,delay:i*80,easing:'cubic-bezier(.2,.8,.2,1)',fill:'backwards'})}));
+}
+const B=n=>$('.btn:not(.ghost)',$('#s'+n));
+function burst(el){const pr=ph.getBoundingClientRect(),r=el.getBoundingClientRect(),x=r.left-pr.left+r.width/2,y=r.top-pr.top+32,c=['#fff','#9CC9F5','#8FD3B0','#EDEBE6','#9CC9F5'];
+ for(let k=0;k<12;k++){const d=document.createElement('div');d.className='dot';d.style.background=c[k%5];d.style.left=x-4+'px';d.style.top=y-4+'px';ph.appendChild(d);const a=k/12*6.28,dist=55+Math.random()*30;A(d,[{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*dist}px,${Math.sin(a)*dist-10}px) scale(.3)`,opacity:0}],{duration:700,easing:'cubic-bezier(.2,.8,.3,1)'}).then(()=>d.remove())}}
+async function lock(i){const c=$('#c'+i);c.classList.remove('wig');c.style.animation='none';
+ A($('.ic5',c),[{transform:'scale(1)'},{transform:'scale(1.25) rotate(-6deg)'},{transform:'scale(.9) rotate(3deg)'},{transform:'scale(1)'}],{duration:460,fill:'none',easing:'ease-out'});
+ c.classList.add('lk');A($('.lkk',c),[{transform:'scale(3.4)'},{transform:'scale(.8)',offset:.55},{transform:'scale(1)'}],{duration:420,easing:'ease-out',fill:'none'});
+ A($('.ring5',c),[{transform:'scale(.8)',opacity:.9},{transform:'scale(2.4)',opacity:0}],{duration:600,easing:'ease-out',fill:'none'});burst(c);
+ A($('.bub',c),[{transform:'translateX(-50%) scale(0)',opacity:1},{transform:'translateX(-50%) scale(1.15)',opacity:1,offset:.3},{transform:'translateX(-50%) scale(1)',opacity:1,offset:.4},{transform:'translateX(-50%) scale(1)',opacity:1,offset:.8},{transform:'translateX(-50%) scale(0)',opacity:0}],{duration:1400,fill:'none'});await sleep(520)}
+function swapText(el,t){return A(el,[{opacity:1},{opacity:0}],{duration:160}).then(()=>{el.textContent=t;return A(el,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320})})}
+async function play(){
+ window.__done=false;
+ await go(1);A($('#hand1'),[{transform:'rotate(0)'},{transform:'rotate(1080deg)'}],{duration:3200,easing:'cubic-bezier(.5,0,.3,1)'});
+ ['t1a','t1b','t1c'].forEach((id,i)=>A($('#'+id),[{transform:'translateY(0)'},{transform:'translateY(-10px)'},{transform:'translateY(0)'}],{duration:1800+i*300,iterations:3,fill:'none',easing:'ease-in-out'}));
+ await sleep(3300);await tapAt(B(1));
+ await go(2);await sleep(1200);const c2=$('[data-sel]',$('#s2'));await tapAt(c2);pick(c2);A($('#n2'),[{opacity:0,transform:'rotate(-4deg) scale(.5)'},{opacity:1,transform:'rotate(-4deg) scale(1)'}],{duration:450,easing:spring});await sleep(1300);await tapAt(B(2));
+ await go(3);await sleep(1200);for(const t of $$('[data-sel]',$('#s3'))){await tapAt(t);pick(t);await sleep(450)}
+ A($('#p3'),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:400});await sleep(1500);await tapAt(B(3));
+ await go(4);await sleep(2200);await tapAt(B(4));
+ const al=$('#alert4');A(al,[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.03)',offset:.7},{opacity:1,transform:'scale(1)'}],{duration:420,easing:'ease-out'});A($('#n4'),[{opacity:0,transform:'rotate(5deg) scale(.4)'},{opacity:1,transform:'rotate(5deg) scale(1)'}],{duration:450,delay:300,easing:spring});
+ await sleep(1500);await tapAt($('#cont4'));await A(al,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.9)'}],{duration:250});$('#n4').style.display='none';await sleep(300);
+ await go(5);
+ const cells=$$('.cell');await Promise.all(cells.map((c,i)=>A(c,[{transform:'scale(0) rotate(-20deg)'},{transform:'scale(1) rotate(0)'}],{duration:520,delay:i*45,easing:spring,fill:'both'}).then(()=>{c.style.transform='none';c.getAnimations().forEach(a=>a.cancel());c.classList.add('wig');c.style.animationDelay=(-i*.11)+'s'})));
+ await sleep(900);await tapAt(B(5));
+ $('#dim').animate([{opacity:0},{opacity:1}],{duration:350,fill:'forwards'});
+ $$('#h5,#p5,#g5,#b5').forEach(e=>A(e,[{opacity:1},{opacity:0}],{duration:250}));
+ await A($('#sheet'),[{transform:'translateY(105%)'},{transform:'translateY(-14px)',offset:.8},{transform:'none'}],{duration:620,easing:'cubic-bezier(.2,.8,.2,1)'});
+ await Promise.all($$('.srow',ph).map((r,i)=>A(r,[{opacity:0,transform:'translateX(30px)'},{opacity:1,transform:'none'}],{duration:350,delay:i*70,easing:'ease-out'})));
+ await sleep(600);let n=0;const picked=[];
+ for(const r of $$('.srow[data-i]',ph)){const rad=$('.rad',r);await tapAt(rad);r.classList.add('sel');rad.textContent='✓';A(rad,[{transform:'scale(.5)'},{transform:'scale(1.35)',offset:.5},{transform:'scale(1)'}],{duration:380,fill:'none'});n++;const cn=$('#cnt');cn.textContent=n+' selected';A(cn,[{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:300,fill:'none'});picked.push(r);await sleep(450)}
+ await sleep(350);await tapAt($('#done'));
+ const pr=ph.getBoundingClientRect();
+ const fl=picked.map(r=>{const u=$('u',r),ur=u.getBoundingClientRect(),f=document.createElement('div');f.className='fly';f.style.cssText+=`background:${u.style.background};left:${ur.left-pr.left}px;top:${ur.top-pr.top}px;width:34px;height:34px`;ph.appendChild(f);return f});
+ $$('#h5,#p5,#g5,#b5').forEach(e=>{e.getAnimations().forEach(a=>a.cancel())});
+ await Promise.all([A($('#sheet'),[{transform:'none'},{transform:'translateY(105%)'}],{duration:450,easing:'ease-in'}),A($('#dim'),[{opacity:1},{opacity:0}],{duration:450}),...$$('#h5,#p5,#g5,#b5').map(e=>A(e,[{opacity:0},{opacity:1}],{duration:450,fill:'none'}))]);
+ await Promise.all(fl.map((f,i)=>{const cr=$('#c'+i+' .ic5').getBoundingClientRect(),fr=f.getBoundingClientRect(),dx=cr.left-fr.left,dy=cr.top-fr.top;return A(f,[{transform:'translate(0,0) scale(1)'},{transform:`translate(${dx/2}px,${dy/2-90}px) scale(2.2) rotate(${i%2?12:-12}deg)`,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(${64/34})`}],{duration:700,delay:i*140,easing:'cubic-bezier(.4,0,.2,1)'}).then(()=>f.remove())}));
+ for(const i of [0,1,2])await lock(i);
+ await Promise.all([swapText($('#h5'),'These apps are locked.'),swapText($('#p5'),'They stay locked until your timer ends.')]);
+ A($('#pill5'),[{opacity:0,transform:'translate(-50%,20px) scale(.6)'},{opacity:1,transform:'translate(-50%,-6px) scale(1.12)',offset:.6},{opacity:1,transform:'translate(-50%,0) scale(1)'}],{duration:600,easing:'ease-out'});
+ await swapText(B(5),'Looks right');await sleep(1700);await tapAt(B(5));
+ await go(6);await sleep(1200);for(const t of $$('[data-sel]',$('#s6'))){await tapAt(t);pick(t);await sleep(450)}
+ A($('#n6'),[{opacity:0,transform:'rotate(-3deg) scale(.5)'},{opacity:1,transform:'rotate(-3deg) scale(1)'}],{duration:450,easing:spring});await sleep(1400);await tapAt(B(6));
+ await go(7);
+ const sq=$$('#sq i'),t0=performance.now();
+ await new Promise(res=>{const step=()=>{const k=Math.min(1,(performance.now()-t0)/1800),e=1-Math.pow(1-k,3),v=Math.round(53*e);$('#num7').textContent=v+' days';for(let i=0;i<v;i++)sq[i].style.background='var(--warm)';k<1?requestAnimationFrame(step):res()};step()});
+ await sleep(900);A($('#t7'),[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:450});
+ for(let i=53;i<68;i++){sq[i].style.background='var(--sage)';await sleep(70)}
+ await sleep(1700);await tapAt(B(7));
+ await go(8);await sleep(1400);await tapAt(B(8));
+ const sc=$('#scan8');await A(sc,[{opacity:1,top:'0%'},{opacity:1,top:'96%'},{opacity:1,top:'0%'},{opacity:1,top:'96%'}],{duration:1800,easing:'ease-in-out'});sc.style.opacity=0;
+ $('#ln8').style.cssText='flex:1;border-top:3px solid #8FD3B0;opacity:1';A($('#n8'),[{opacity:0,transform:'rotate(-3deg) scale(.5)'},{opacity:1,transform:'rotate(-3deg) scale(1)'}],{duration:450,easing:spring});
+ await swapText(B(8),'PC paired. Continue');await sleep(1600);await tapAt(B(8));
+ await go(9);await sleep(3000);await tapAt(B(9));
+ await go(10);A($('#ring10'),[{strokeDashoffset:780},{strokeDashoffset:0}],{duration:900,easing:'ease-out'});A($('#n10'),[{opacity:0,transform:'rotate(5deg) scale(.5)'},{opacity:1,transform:'rotate(5deg) scale(1)'}],{duration:450,delay:500,easing:spring});
+ await sleep(1800);await tapAt(B(10));await swapText(B(10),'Focusing...');
+ const s0=performance.now();await new Promise(res=>{const st=()=>{const el=(performance.now()-s0)/1000,left=1500-Math.round(el*60);const m=Math.floor(left/60),s=left%60;$('#tm10').textContent=m+':'+String(s).padStart(2,'0');$('#ring10').style.strokeDashoffset=(el/6)*780;el<4?requestAnimationFrame(st):res()};st()});
+ await sleep(800);window.__done=true}
+window.play=play;
+</script></body></html>
