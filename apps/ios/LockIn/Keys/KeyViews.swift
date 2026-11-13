@@ -1,11 +1,14 @@
 import SwiftUI
 
 private enum KInk {
-    static let bg = BrainDrawing.bg
-    static let panel = BrainDrawing.panel
-    static let cream = BrainDrawing.cream
-    static let green = BrainDrawing.green
-    static let alarm = BrainDrawing.alarm
+    // Riso newsprint, same as the slides and the main screen (2026-11-13).
+    static let bg = Color(hex: 0xE7E8E3)
+    static let panel = Color(hex: 0xF3F4F0)
+    /// Main text (the name is from the old dark look, where text was cream).
+    static let cream = Color(hex: 0x1B1B1B)
+    /// The action color: riso Medium Blue.
+    static let green = Color(hex: 0x3255A4)
+    static let alarm = Color(hex: 0xD25A44)
 }
 
 private struct KTitle: View {
@@ -81,7 +84,7 @@ struct KeysSheet: View {
             .navigationDestination(isPresented: $helping) { HelpNearbyView(keys: keys) }
             .task { pending = (try? await RemoteKeys.pending(for: keys)) ?? [] }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 
     private func section(_ title: String, _ people: [KeyPerson], remove: @escaping (String) -> Void) -> some View {

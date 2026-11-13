@@ -5,12 +5,15 @@ struct ReportWeek: Identifiable, Equatable { let id: Date }
 
 /// Goal page colors: the same monitor palette as the brain widget and the quit screens.
 private enum GoalInk {
-    static let bg = BrainDrawing.bg
-    static let panel = BrainDrawing.panel
-    static let cream = BrainDrawing.cream
-    static let green = BrainDrawing.green
-    static let alarm = BrainDrawing.alarm
-    static let empty = BrainDrawing.rgb(0x1E3A32)
+    // Riso newsprint, same as the slides and the main screen (2026-11-13).
+    static let bg = Color(hex: 0xE7E8E3)
+    static let panel = Color(hex: 0xF3F4F0)
+    /// Main text (the name is from the old dark look, where text was cream).
+    static let cream = Color(hex: 0x1B1B1B)
+    /// The action color: riso Medium Blue.
+    static let green = Color(hex: 0x3255A4)
+    static let alarm = Color(hex: 0xD25A44)
+    static let empty = Color(hex: 0xD8DAD2)
 }
 
 private let dayLetters = ["M", "T", "W", "T", "F", "S", "S"]
@@ -106,7 +109,7 @@ struct GoalSheet: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(GoalInk.bg.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onAppear { draft = goal ?? GoalStore.suggested }
         .sheet(item: $report) { r in
             WeekReportView(goals: goals, weekStart: r.id) { report = nil }
@@ -257,7 +260,7 @@ struct WeekReportView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(GoalInk.bg.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onAppear { goals.markSeen(weekStart) }
     }
 

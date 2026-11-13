@@ -3,11 +3,23 @@ import SwiftUI
 // Screens for leaving a session early. All use the heart-monitor look of the brain.
 
 private enum QuitInk {
-    static let bg = BrainDrawing.bg
-    static let panel = BrainDrawing.panel
-    static let cream = BrainDrawing.cream
-    static let green = BrainDrawing.green
-    static let alarm = BrainDrawing.alarm
+    // Riso newsprint, same as the slides and the main screen (2026-11-13).
+    static let bg = Color(hex: 0xE7E8E3)
+    static let panel = Color(hex: 0xF3F4F0)
+    /// Main text (the name is from the old dark look, where text was cream).
+    static let cream = Color(hex: 0x1B1B1B)
+    /// The action color: riso Medium Blue.
+    static let green = Color(hex: 0x3255A4)
+    static let alarm = Color(hex: 0xD25A44)
+
+    /// Wait bar and heart number: blue while calm, sunflower when tired, red at the end.
+    static func level(_ stage: Int) -> Color {
+        switch stage {
+        case 4, 5: return alarm
+        case 3: return Color(hex: 0xC98A00)
+        default: return green
+        }
+    }
 }
 
 /// A wait that only counts while this screen is open and the app is in front. Leave and it starts
@@ -39,14 +51,14 @@ struct WatchedWait: View {
                 GeometryReader { g in
                     ZStack(alignment: .leading) {
                         Capsule().fill(QuitInk.panel)
-                        Capsule().fill(BrainDrawing.levelColor(stage)).frame(width: g.size.width * progress)
+                        Capsule().fill(QuitInk.level(stage)).frame(width: g.size.width * progress)
                     }
                 }
                 .frame(height: 10)
                 .accessibilityHidden(true)
                 Text("\u{2665} \([72, 98, 126, 154, 188, 38][stage]) BPM")
                     .font(PrintFont.mono(13, .heavy))
-                    .foregroundStyle(BrainDrawing.levelColor(stage))
+                    .foregroundStyle(QuitInk.level(stage))
             }
             .onChange(of: left) { _, now in
                 if now == 0 && !finished {
@@ -122,7 +134,7 @@ struct QuitSheet: View {
                     .buttonStyle(PrintButtonStyle(fill: QuitInk.green, text: QuitInk.bg))
                 if waited {
                     Button { onQuit() } label: { Text("END SESSION").lineLimit(1).minimumScaleFactor(0.7) }
-                        .buttonStyle(PrintButtonStyle(fill: QuitInk.alarm, text: QuitInk.cream))
+                        .buttonStyle(PrintButtonStyle(fill: QuitInk.alarm, text: QuitInk.panel))
                         .disabled(!QuitRules.matches(typed))
                         .opacity(QuitRules.matches(typed) ? 1 : 0.35)
                 }
@@ -133,7 +145,7 @@ struct QuitSheet: View {
             .background(QuitInk.bg)
         }
         .background(QuitInk.bg.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onChange(of: waited) { _, now in if now { typing = true } }
         #if DEBUG
         .onAppear { if DebugShot.name == "quit-type" { waited = true } }
@@ -187,7 +199,7 @@ struct LockedExitSheet: View {
                 .background(QuitInk.bg.ignoresSafeArea())
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 
     private func option(_ symbol: String, _ title: String, _ detail: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -285,6 +297,6 @@ struct ProofBrokenSheet: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(QuitInk.bg.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }
