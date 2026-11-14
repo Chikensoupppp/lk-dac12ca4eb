@@ -1,9 +1,9 @@
 name: Windows companion checks
 on:
   push:
-    paths: ['apps/windows-companion/**', 'tests/windows-companion/**', '.github/workflows/windows-companion-ci.yml']
+    paths: ['apps/windows-companion/**', 'tests/windows-companion/**', 'apps/browser-extension/**', 'tests/browser-extension/**', '.github/workflows/windows-companion-ci.yml']
   pull_request:
-    paths: ['apps/windows-companion/**', 'tests/windows-companion/**', '.github/workflows/windows-companion-ci.yml']
+    paths: ['apps/windows-companion/**', 'tests/windows-companion/**', 'apps/browser-extension/**', 'tests/browser-extension/**', '.github/workflows/windows-companion-ci.yml']
   workflow_dispatch:
 jobs:
   checks:
@@ -15,3 +15,8 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build and exercise session lifecycle
         run: dotnet run --project tests/windows-companion/LockIn.Companion.Checks.csproj --configuration Release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exercise extension privacy and save requests
+        run: node --test tests/browser-extension/background.test.cjs

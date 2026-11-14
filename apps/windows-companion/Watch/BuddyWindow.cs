@@ -110,18 +110,25 @@ public sealed class BuddyWindow : Form
     }
 
     /// <summary>Show or hide the buddy, and set its mood and words. Safe to call from any thread.</summary>
-    public void SetMood(BuddyMood next, bool show, string? words = null, bool ask = false, bool scrolling = false)
+    public void SetMood(BuddyMood next, bool show, string? words = null, bool ask = false, bool scrolling = false, bool canSave = false)
     {
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => Apply(next, show, words, ask, scrolling));
+            BeginInvoke(() => Apply(next, show, words, ask, scrolling, canSave));
             return;
         }
-        Apply(next, show, words, ask, scrolling);
+        Apply(next, show, words, ask, scrolling, canSave);
     }
 
-    private void Apply(BuddyMood next, bool show, string? words, bool ask, bool scrolling)
+    public void ShowLater(LaterStore store)
+    {
+        if (IsDisposed) return;
+        if (InvokeRequired) { BeginInvoke(() => ShowLater(store)); return; }
+        new LaterWindow(store).Show();
+    }
+
+    private void Apply(BuddyMood next, bool show, string? words, bool ask, bool scrolling, bool canSave)
     {
         if (!show)
         {
@@ -131,7 +138,7 @@ public sealed class BuddyWindow : Form
             return;
         }
         // Same mood and same words: the scene keeps going, so the bubble does not restart every 2 seconds.
-        scene.Set(next, words ?? BuddyWords.For(next, null, 0), Now, ask, scrolling);
+        scene.Set(next, words ?? BuddyWords.For(next, null, 0), Now, ask, scrolling, canSave);
         Visible = true;
         frame.Start();
         Render();

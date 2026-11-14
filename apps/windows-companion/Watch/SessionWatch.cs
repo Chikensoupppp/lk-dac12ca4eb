@@ -34,6 +34,9 @@ public sealed class SessionWatch : IDisposable
     private readonly AllowStore allowStore;
     private readonly ScrollGuard guard;
     private readonly BrowserGuard browsers;
+    private readonly LaterStore later;
+    private readonly LaterCapture capture = new();
+    private bool savedThisSession;
     private readonly WorkWindowMemory work = new();
     private readonly int ownProcessId = Environment.ProcessId;
     private bool hooked;
@@ -74,6 +77,7 @@ public sealed class SessionWatch : IDisposable
         this.allowStore = allowStore;
         guard = new ScrollGuard(guardianOptions);
         browsers = new BrowserGuard(TimeSpan.FromSeconds(guard.Options.BrowserGraceSeconds), stateDir);
+        later = new LaterStore(stateDir ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockIn"));
         timer = new System.Threading.Timer(_ => Tick(), null, Timeout.Infinite, Timeout.Infinite);
     }
 
@@ -88,6 +92,8 @@ public sealed class SessionWatch : IDisposable
         {
             if (sessionId == id) return;
             sessionId = id;
+            capture.Clear();
+            savedThisSession = false;
             cheerUntil = null;
             buddy = showBuddy;
             task = taskName;
@@ -123,6 +129,7 @@ public sealed class SessionWatch : IDisposable
             if (id is not null && sessionId != id) return;
             if (sessionId is null) return;
             var natural = clock.GetUtcNow() >= startedAt + length;
+            ShowLaterLocked();
             sessionId = null;
             asking = askName = declined = sayText = null;
             guard.Reset(clock.GetUtcNow());
@@ -197,6 +204,45 @@ public sealed class SessionWatch : IDisposable
         lock (gate) browsers.Heartbeat(clock.GetUtcNow(), beat);
     }
 
+    /// <summary>Request/response stays on the same user's native pipe; only a click can save a URL.</summary>
+    public string? HandleLater(string browser, LaterMessage message)
+    {
+        lock (gate)
+        {
+            var now = clock.GetUtcNow();
+            if (sessionId is null || !buddy || now >= startedAt + length) return null;
+            if (message.Kind == "later-poll") return capture.Poll(browser, now);
+            var front = FrontWindow.Current();
+            var url = capture.Complete(browser, message.Request!, message.Url!, sessionId, front, now);
+            if (url is null) return null;
+            var saved = later.Save(url, now);
+            sayText = saved ? "Saved for later. Back to it!" : "Couldn't save. Try again.";
+            sayMood = BuddyMood.Fresh;
+            sayUntil = now + SayTime;
+            if (saved)
+            {
+                savedThisSession = true;
+                if (asking is not null) ShowWindow(DeclineLocked(), SwMinimize);
+                else if (reminding)
+                {
+                    reminding = false;
+                    guard.Answered(now, true);
+                    if (front is not null) ShowWindow(front.Handle, SwMinimize);
+                }
+            }
+            BuddyWindow.Instance.SetMood(BuddyMood.Fresh, true, sayText);
+            return null;
+        }
+    }
+
+    private void ShowLaterLocked()
+    {
+        capture.Clear();
+        if (!savedThisSession) return;
+        savedThisSession = false;
+        BuddyWindow.Instance.ShowLater(later);
+    }
+
     private void Tick()
     {
         string? id;
@@ -218,6 +264,7 @@ public sealed class SessionWatch : IDisposable
             }
             if (CompletionTiming.Evaluate(observedAt, startedAt + length, null) == CompletionTiming.Phase.StartCheer)
             {
+                ShowLaterLocked();
                 sessionId = null;
                 asking = askName = declined = sayText = null;
                 guard.Reset(observedAt);
@@ -254,6 +301,13 @@ public sealed class SessionWatch : IDisposable
         lock (gate)
         {
             if (sessionId != id) return;
+            if (capture.Expired(now))
+            {
+                capture.Clear();
+                sayText = "Couldn't save. Check the extension.";
+                sayMood = BuddyMood.Fresh;
+                sayUntil = now + SayTime;
+            }
             app = Distractions.NameOf(front);
             var off = isDistraction && key is not null && !allowed.Contains(key);
             work.Seen(front, ownProcessId);
@@ -366,7 +420,8 @@ public sealed class SessionWatch : IDisposable
             if (sessionId != id) return;
             // Minimize the distraction. Never close it: unsaved work must survive.
             if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
-            BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling);
+            var canSave = ask && Distractions.IsBrowser(front) && key is "youtube" or "reddit";
+            BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling, canSave);
         }
     }
 
@@ -384,6 +439,21 @@ public sealed class SessionWatch : IDisposable
     /// <summary>The user tapped a button on the buddy's question.</summary>
     private void OnChosen(AskChoice choice)
     {
+        if (choice == AskChoice.SaveLater)
+        {
+            lock (gate)
+            {
+                if (sessionId is null || (!reminding && asking is null)) return;
+                if (capture.Request(sessionId, FrontWindow.Current(), clock.GetUtcNow()))
+                {
+                    sayText = "Saving this page...";
+                    sayMood = BuddyMood.Fresh;
+                    sayUntil = clock.GetUtcNow() + TimeSpan.FromSeconds(5);
+                    BuddyWindow.Instance.SetMood(BuddyMood.Fresh, true, sayText);
+                }
+            }
+            return;
+        }
         if (TryAnswerReminder(choice)) return;
         IntPtr minimize = IntPtr.Zero;
         string? say = null;

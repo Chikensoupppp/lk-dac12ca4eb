@@ -103,9 +103,13 @@ public static class NativeHost
                 {
                     line = JsonSerializer.Serialize(new { v = 1, kind = "alive", browser, incognito });
                 }
-                var delivered = line is not null && TrySend(ref pipe, line + "\n");
+                else if (browser is not null && LaterMessage.Parse(message) is { } later)
+                {
+                    line = JsonSerializer.Serialize(new { v = 1, kind = later.Kind, request = later.Request, url = later.Url, browser });
+                }
+                var response = line is not null ? TrySend(ref pipe, line + "\n") : null;
                 // The extension shows nothing; the answer only tells it whether the buddy is running.
-                NativeMessages.Write(stdout, delivered ? "{\"ok\":true}" : "{\"ok\":false}");
+                NativeMessages.Write(stdout, response ?? "{\"ok\":false}");
             }
         }
         catch (IOException e) { Console.Error.WriteLine("host: " + e); }
@@ -113,7 +117,7 @@ public static class NativeHost
         return 0;
     }
 
-    private static bool TrySend(ref NamedPipeClientStream? pipe, string line)
+    private static string? TrySend(ref NamedPipeClientStream? pipe, string line)
     {
         for (var attempt = 0; attempt < 2; attempt++)
         {
@@ -122,22 +126,31 @@ public static class NativeHost
                 if (pipe is null || !pipe.IsConnected)
                 {
                     pipe?.Dispose();
-                    pipe = new NamedPipeClientStream(".", GuardianPipe.Name, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+                    pipe = new NamedPipeClientStream(".", GuardianPipe.Name, PipeDirection.InOut, PipeOptions.CurrentUserOnly | PipeOptions.Asynchronous);
                     pipe.Connect(300);
                 }
                 var bytes = Encoding.UTF8.GetBytes(line);
                 pipe.Write(bytes);
                 pipe.Flush();
-                return true;
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                var response = new StringBuilder();
+                var next = new byte[1];
+                while (response.Length < 256)
+                {
+                    if (pipe.ReadAsync(next, timeout.Token).AsTask().GetAwaiter().GetResult() == 0) return null;
+                    if (next[0] == '\n') return response.ToString();
+                    response.Append((char)next[0]);
+                }
+                return null;
             }
-            catch (Exception e) when (e is IOException or TimeoutException or UnauthorizedAccessException)
+            catch (Exception e) when (e is IOException or TimeoutException or UnauthorizedAccessException or OperationCanceledException)
             {
                 Console.Error.WriteLine("send: " + e.GetType().Name + " " + e.Message);
                 pipe?.Dispose();
                 pipe = null; // companion not running, or restarted: try once more with a fresh connection
             }
         }
-        return false;
+        return null;
     }
 }
 
@@ -147,16 +160,19 @@ public sealed class GuardianPipe : IDisposable
     /// <summary>One pipe per Windows user, so two people on one PC never mix.</summary>
     public static string Name => "LockIn.Guardian." + (WindowsIdentity.GetCurrent().User?.Value ?? "user");
 
-    private const int MaxLine = 2048;
+    private const int MaxLine = NativeMessages.MaxBytes;
     private const int Instances = 8; // one connection per open browser (Chrome, Edge, Firefox, ...)
     private readonly Action<GuardianSignal> onSignal;
     private readonly Action<BrowserHeartbeat> onAlive;
+    private readonly Func<string, LaterMessage, string?>? onLater;
     private readonly CancellationTokenSource stop = new();
 
-    public GuardianPipe(Action<GuardianSignal> onSignal, Action<BrowserHeartbeat> onAlive)
+    public GuardianPipe(Action<GuardianSignal> onSignal, Action<BrowserHeartbeat> onAlive,
+        Func<string, LaterMessage, string?>? onLater = null)
     {
         this.onSignal = onSignal;
         this.onAlive = onAlive;
+        this.onLater = onLater;
         for (var i = 0; i < Instances; i++) _ = Task.Run(ServeAsync);
     }
 
@@ -168,7 +184,7 @@ public sealed class GuardianPipe : IDisposable
             PipeAccessRights.FullControl, AccessControlType.Deny));
         security.AddAccessRule(new PipeAccessRule(me, PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
             AccessControlType.Allow));
-        return NamedPipeServerStreamAcl.Create(Name, PipeDirection.In, Instances, PipeTransmissionMode.Byte,
+        return NamedPipeServerStreamAcl.Create(Name, PipeDirection.InOut, Instances, PipeTransmissionMode.Byte,
             PipeOptions.Asynchronous, 0, 0, security);
     }
 
@@ -190,8 +206,19 @@ public sealed class GuardianPipe : IDisposable
                     {
                         if (chars[i] != '\n') { buffer.Append(chars[i]); continue; }
                         var text = buffer.ToString();
+                        string? request = null;
                         if (GuardianSignal.Parse(text) is { } signal) onSignal(signal);
                         else if (BrowserHeartbeat.Parse(text) is { } alive) onAlive(alive);
+                        else if (LaterMessage.Parse(text) is { } later)
+                        {
+                            using var doc = JsonDocument.Parse(text);
+                            if (doc.RootElement.TryGetProperty("browser", out var browser) && browser.ValueKind == JsonValueKind.String
+                                && browser.GetString() is { Length: > 0 and <= 64 } name)
+                                request = onLater?.Invoke(name, later);
+                        }
+                        var reply = JsonSerializer.Serialize(new { ok = true, savePage = request }) + "\n";
+                        await server.WriteAsync(Encoding.UTF8.GetBytes(reply), stop.Token);
+                        await server.FlushAsync(stop.Token);
                         buffer.Clear();
                     }
                     if (buffer.Length > MaxLine) break; // not a report; drop this client

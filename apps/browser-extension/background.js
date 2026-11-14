@@ -18,7 +18,17 @@ function connect() {
     port = null;
     return null;
   }
-  port.onMessage.addListener(() => {}); // {"ok":true|false}: whether the buddy is running; nothing to do
+  port.onMessage.addListener(async (message) => {
+    if (typeof message?.savePage !== "string" || !/^[a-f0-9]{32}$/.test(message.savePage)) return;
+    // Only an explicit buddy click requests a URL. Never enumerate history or background tabs.
+    try {
+      const window = await api.windows.getLastFocused();
+      if (!window.focused) return;
+      const [tab] = await api.tabs.query({ active: true, windowId: window.id });
+      const url = cleanLaterUrl(tab?.url);
+      if (url) send({ v: 1, kind: "later-save", request: message.savePage, url });
+    } catch { /* tab closed or permissions changed: save nothing */ }
+  });
   port.onDisconnect.addListener(() => {
     void api.runtime.lastError; // host not installed, or the companion closed: the alarm tries again
     port = null;
@@ -32,6 +42,15 @@ function send(message) {
   } catch {
     port = null;
   }
+}
+
+function cleanLaterUrl(value) {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return null;
+    return ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "reddit.com", "www.reddit.com", "old.reddit.com"].includes(url.hostname) ? url.href : null;
+  } catch { return null; }
 }
 
 async function privateAllowed() {
@@ -78,6 +97,8 @@ api.runtime.onMessage.addListener((msg, sender) => {
 // While the native connection is open the browser keeps this worker running, so the timer keeps
 // ticking. If the worker was stopped, the alarm (every 30 s, the shortest allowed) starts it again.
 setInterval(alive, ALIVE_MS);
+// No URL in this poll. A request comes back only after "Save it for later" was clicked.
+setInterval(() => send({ v: 1, kind: "later-poll" }), 1000);
 api.alarms?.create("lockin-alive", { periodInMinutes: 0.5 });
 api.alarms?.onAlarm.addListener(alive);
 api.runtime.onStartup?.addListener(alive);

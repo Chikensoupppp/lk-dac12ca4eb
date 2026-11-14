@@ -1,5 +1,14 @@
 # Phone to PC: task, desk buddy, status
 
+## Save it for later (2026-11-13)
+
+- During a YouTube/Reddit question or scrolling reminder, the buddy offers "Save it for later".
+- Extension 0.2.0 polls over native messaging with `{v:1,kind:"later-poll"}` (no browsing data). Only after an explicit buddy click does the companion reply with `savePage`, a five-second single-use request ID bound to the session and foreground browser window.
+- The extension reads the active tab of the focused window and replies `{v:1,kind:"later-save",request,url}`. The native host stamps the real parent browser name; the companion checks session, window, browser, site and deadline before saving. Only HTTPS YouTube/Reddit URLs without embedded credentials/custom ports are accepted.
+- Saved links live in `later.dat` under the companion state folder, encrypted with Windows DPAPI for this user. No cloud, HTTP route, page contents, history or screenshots. Other scrolling reports remain counts-only.
+- Only after the save succeeds is the distracting window minimized. Never closed. A local Later window appears at natural or early session end when something was saved; each link can be opened or removed. `LockIn.Companion.exe --later` reopens the persisted list after a restart.
+- Both companion and unpacked extension must be updated. The signed Firefox 0.1.0 XPI does not include this feature and still requires a new signed release.
+
 Written 2026-11-13. The phone side is built (iOS `LockIn/PC/`). The Windows side is next.
 All calls are the existing HTTPS + pinned certificate + bearer token from pairing.
 

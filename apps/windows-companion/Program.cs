@@ -34,6 +34,14 @@ if (args.Contains("--unregister-browser"))
     Console.WriteLine("Removed the Chrome and Edge link.");
     return;
 }
+if (args.Contains("--later"))
+{
+    var ui = new Thread(() => System.Windows.Forms.Application.Run(new LaterWindow(new LaterStore(stateDir))));
+    ui.SetApartmentState(ApartmentState.STA);
+    ui.Start();
+    ui.Join();
+    return;
+}
 var stateStore = new CompanionStateStore(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
 var fingerprint = CompanionStateStore.Fingerprint(certificate);
@@ -199,7 +207,7 @@ if (args.Contains("--pair"))
 
 // Browser activity arrives through a private pipe, not through either HTTP door.
 var sessionWatch = app.Services.GetRequiredService<SessionWatch>();
-using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat);
+using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat, sessionWatch.HandleLater);
 
 app.Run();
 

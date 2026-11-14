@@ -1,5 +1,7 @@
 using LockIn.Companion.Watch;
 
+LaterChecks.Run(Check);
+
 var completionStart = new DateTimeOffset(2026, 1, 1, 0, 1, 0, TimeSpan.Zero);
 var cheerUntil = completionStart + CompletionTiming.CheerDuration;
 Check(CompletionTiming.Evaluate(completionStart.AddTicks(-1), completionStart, null) == CompletionTiming.Phase.Running,

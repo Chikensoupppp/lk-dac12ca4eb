@@ -2,6 +2,10 @@
 
 ## Coach completion and CI - 2026-11-13
 
+- macOS 43531411677 compiled all iOS code but failed three UI assertions. Fixed the hold conflict by using the same non-Button long-press pattern as the proven promise control; fixed debug pending flag persistence and removed hidden toolbar buttons from the active accessibility tree (7249ace). New run 43533273116 pending.
+- Save for Later source is complete. Local checks: 128 Windows and 3 Node browser tests, including actual duplex private-pipe request round-trip, encrypted persistence, corruption preservation, concurrency and rendered save hit target. No full live browser-to-buddy save has been observed. UI renders use synthetic fixtures only. Both app and unpacked extension 0.2.0 must be updated; signed Firefox XPI is still 0.1.0. Reopen persisted list with `LockIn.Companion.exe --later`.
+- Used two independent reviewers total (owner cap); no further subagents. Final review found and fixed data-loss risks plus stale sparkles/gloss on degraded mood layers. Normal `BrainExact` stays pristine.
+
 - Owner explicitly replaced the drawn approximation with the exact right-hand mascot from his comparison image. Both apps now bundle identical raster assets; normal artwork is an exact crop with black surround removed. Expression layers clear only eyes/mouth and preserve the original body. Mood colors/marks remain. Extraction script: `scripts/extract-brain-assets.py`.
 
 - Pulled clean branch at 82db621. Coach parity changes add typed bubbles, downward/directional gaze, star-eye rewards, YES!/NICE! stickers, hold shake, and target dimming. Approved brain body and mood marks are preserved. Independent source review caught and fixed typing cancellation and routes that hid Skip.

@@ -2,6 +2,10 @@
 
 ## Active verification - 2026-11-13
 
+- Exact owner-selected right-hand bitmap now replaces the code approximation in iOS and Windows (016e845). Mood layers retain their existing colors/marks; normal art remains unchanged.
+- First actual macOS run 43531411677 compiled but failed UI tests (hold gesture conflict, debug coach persistence, hidden-toolbar accessibility). Root fixes pushed as 7249ace; replacement run 43533273116 is in progress.
+- Save for Later is implemented: explicit buddy click requests the active YouTube/Reddit URL over native messaging, encrypted local storage, session-end list and `--later` reopening. 128 Windows checks and 3 browser-handler tests pass locally; live browser click-through remains unverified. Independent review fixes preserve unreadable stores and serialize cross-process edits. Firefox signed 0.1.0 XPI remains old.
+
 - Coach parity implemented and pushed at 87dc071; follow-up review fixes pending push. Windows checks pass locally. iOS CI 43531411677 is running; no current compile/render claim.
 - Repository temporarily public to bypass GitHub account billing block, explicitly authorized by owner. Restore private after verification/upload.
 - TestFlight upload and Save for Later remain pending.

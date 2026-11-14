@@ -6,7 +6,7 @@ using System.Drawing.Text;
 namespace LockIn.Companion.Watch;
 
 /// <summary>What the user tapped on the buddy's question.</summary>
-public enum AskChoice { None, ForWork, BackToWork, NotNow }
+public enum AskChoice { None, ForWork, BackToWork, NotNow, SaveLater }
 
 /// <summary>How the buddy moves while it talks. Each line of speech picks one (see <see cref="BuddyWords.GestureFor"/>).</summary>
 public enum BuddyGesture
@@ -28,8 +28,8 @@ public enum BuddyGesture
 /// </summary>
 public sealed class BuddyScene
 {
-    public const int Width = 240, Height = 256;
-    private const int BrainTop = 92;          // the brain's area starts here; the bubble sits above it
+    public const int Width = 240, Height = 288;
+    private const int BrainTop = 124;         // room for the optional Save for Later button
     private const double TypeStart = 0.25;    // seconds after the bubble pops in
     private const double CharsPerSecond = 34;
     private const double HoldSeconds = 6.0;   // how long the finished bubble stays
@@ -59,13 +59,15 @@ public sealed class BuddyScene
     private bool scrollAsk; // the question is the scrolling reminder ("Back to work" / "Not now"), not "Is it for work?"
     private double askStart;
     private RectangleF yesRect = RectangleF.Empty, noRect = RectangleF.Empty; // the two buttons, in window pixels
+    private bool canSave;
+    private RectangleF laterRect = RectangleF.Empty;
 
     /// <summary>
     /// Call whenever the mood or the words may have changed. Same mood and words: nothing restarts.
     /// <paramref name="ask"/> true shows the two buttons ("It's for work" / "Back to work") and a countdown.
     /// With <paramref name="scrolling"/> the buttons are "Back to work" / "Not now" instead.
     /// </summary>
-    public void Set(BuddyMood nextMood, string nextText, double now, bool ask = false, bool scrolling = false)
+    public void Set(BuddyMood nextMood, string nextText, double now, bool ask = false, bool scrolling = false, bool saveLater = false)
     {
         scrolling &= ask;
         if (ask && !asking) askStart = now;
@@ -73,7 +75,9 @@ public sealed class BuddyScene
         {
             yesRect = noRect = RectangleF.Empty;
         }
-        var askChanged = ask != asking || scrolling != scrollAsk;
+        var askChanged = ask != asking || scrolling != scrollAsk || canSave != (saveLater && ask);
+        canSave = saveLater && ask;
+        if (askChanged) laterRect = RectangleF.Empty;
         asking = ask;
         scrollAsk = scrolling;
         if (nextMood == mood && nextText == text && !askChanged && !double.IsNegativeInfinity(speechStart)) return;
@@ -103,6 +107,8 @@ public sealed class BuddyScene
         text = "";
         asking = false;
         scrollAsk = false;
+        canSave = false;
+        laterRect = RectangleF.Empty;
         yesRect = noRect = RectangleF.Empty;
         speechStart = double.NegativeInfinity;
         moodStart = double.NegativeInfinity;
@@ -114,6 +120,7 @@ public sealed class BuddyScene
 
     /// <summary>Which button, if any, is at this point of the window.</summary>
     public AskChoice HitTest(Point p) =>
+        laterRect.Contains(p) ? AskChoice.SaveLater :
         yesRect.Contains(p) ? (scrollAsk ? AskChoice.BackToWork : AskChoice.ForWork)
         : noRect.Contains(p) ? (scrollAsk ? AskChoice.NotNow : AskChoice.BackToWork)
         : AskChoice.None;
@@ -390,7 +397,7 @@ public sealed class BuddyScene
         lines ??= Wrap(g, text, Width - 12 - 26);
         var lineHeight = BubbleFont.GetHeight(g);
         var widest = lines.Max(l => g.MeasureString(l, BubbleFont, int.MaxValue, Typographic).Width);
-        const float buttonRoom = 46; // buttons row plus the countdown line
+        var buttonRoom = canSave ? 78 : 46; // buttons plus the optional save row and countdown
         var w = Math.Max(widest + 26, asking ? 212 : 0);
         var h = lines.Count * lineHeight + 18 + (asking ? buttonRoom : 0);
         var tailX = Width / 2f + 14;
@@ -431,9 +438,14 @@ public sealed class BuddyScene
             noRect = new RectangleF(x + 13 + buttonWidth + 8, rowY, buttonWidth, 24);
             Button(g, yesRect, scrollAsk ? "Back to work" : "It's for work", filled: true, a);
             Button(g, noRect, scrollAsk ? "Not now" : "Back to work", filled: false, a);
+            if (canSave)
+            {
+                laterRect = new RectangleF(x + 13, rowY + 28, w - 26, 24);
+                Button(g, laterRect, "Save it for later", filled: false, a);
+            }
 
             var left01 = (float)Math.Clamp(1 - (now - askStart) / AskSeconds, 0, 1);
-            var barY = rowY + 24 + 9;
+            var barY = rowY + 24 + 9 + (canSave ? 28 : 0);
             using var barBack = new Pen(Color.FromArgb((int)(60 * alpha), Ink), 3f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
             using var bar = new Pen(Color.FromArgb(a, Sun), 3f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
             g.DrawLine(barBack, x + 15, barY, x + w - 15, barY);
