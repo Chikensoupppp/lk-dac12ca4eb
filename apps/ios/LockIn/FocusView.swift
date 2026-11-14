@@ -479,7 +479,7 @@ struct FocusView: View {
         coachStep = .celebrate
         startSession()
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: .seconds(6))
             if coachStep == .celebrate { coachStep = nil }
         }
     }
