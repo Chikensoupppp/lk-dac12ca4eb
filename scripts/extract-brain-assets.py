@@ -51,8 +51,19 @@ def rgb(value):
     return (value >> 16, (value >> 8) & 255, value & 255)
 for stage, colors in enumerate(palette):
     image = body.copy()
+    if stage >= 2:
+        # Exterior sparkles belong only to fresh/sleepy moods, as in both original renderers.
+        for left, top, right, bottom in [(558, 75, 594, 116), (862, 92, 900, 132), (870, 294, 898, 328)]:
+            image.paste((0, 0, 0, 0), (left - 493, top - 24, right - 493, bottom - 24))
+    if stage >= 3:
+        # Gloss is an expression-layer detail. BrainExact remains untouched.
+        for y in range(image.height):
+            for x in range(image.width):
+                r, g, b, a = image.getpixel((x, y))
+                if a and r >= 248 and g > 205 and b > 228:
+                    image.putpixel((x, y), (*rgb(palette[0][0]), a))
     replacements = dict(zip(map(rgb, palette[0]), map(rgb, colors)))
-    image.putdata([(*replacements.get(p[:3], p[:3]), p[3]) for p in body.getdata()])
+    image.putdata([(*replacements.get(p[:3], p[:3]), p[3]) for p in image.get_flattened_data()])
     save("BrainBody" + str(stage), image)
 
 print("Extracted exact mascot and six expression layers for both apps.")

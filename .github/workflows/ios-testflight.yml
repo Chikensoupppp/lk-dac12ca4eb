@@ -3,6 +3,7 @@ name: iOS TestFlight
 # Tag push named testflight-*: also uploads the build to App Store Connect / TestFlight.
 # Only the repository owner's explicit go-ahead should create such a tag.
 on:
+  workflow_dispatch:
   push:
     branches: ['ios/**']
     paths: ['.github/workflows/ios-testflight.yml', 'apps/ios/project.testflight.yml', 'scripts/check-asc-key.sh']

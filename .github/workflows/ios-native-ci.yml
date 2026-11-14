@@ -106,3 +106,17 @@ jobs:
             ${{ runner.temp }}/large-attachments
             ${{ runner.temp }}/selected-devices.txt
           if-no-files-found: warn
+      - name: Upload visual captures separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-visuals
+          path: |
+            ${{ runner.temp }}/test-attachments/*.png
+            ${{ runner.temp }}/test-attachments/manifest.json
+            ${{ runner.temp }}/compact-attachments/*.png
+            ${{ runner.temp }}/compact-attachments/manifest.json
+            ${{ runner.temp }}/large-attachments/*.png
+            ${{ runner.temp }}/large-attachments/manifest.json
+            ${{ runner.temp }}/screenshots
+          if-no-files-found: warn
