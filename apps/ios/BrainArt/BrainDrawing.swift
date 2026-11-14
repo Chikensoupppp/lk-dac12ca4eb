@@ -276,7 +276,7 @@ enum BrainDrawing {
             let side: CGFloat = i == 1 ? 1 : -1
             switch st {
             case 0:
-                let look: CGFloat = (expression == .lookDown || expression == .lookDownRight) ? 5 : 0
+                let look: CGFloat = (expression == .lookDown || expression == .lookDownRight || expression == .keen) ? 5 : 0
                 let lookX: CGFloat = expression == .lookDownRight ? 6 : 0
                 if expression == .cheer {
                     c.fill(star(x, ey, 18), with: .color(gold))

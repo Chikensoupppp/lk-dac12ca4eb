@@ -1,5 +1,12 @@
 # Handoff
 
+## Coach completion and CI - 2026-11-13
+
+- Pulled clean branch at 82db621. Coach parity changes add typed bubbles, downward/directional gaze, star-eye rewards, YES!/NICE! stickers, hold shake, and target dimming. Approved brain body and mood marks are preserved. Independent source review caught and fixed typing cancellation and routes that hid Skip.
+- Local Windows checks pass. iOS CI for 87dc071 is running (43531411677); compilation and rendered behavior remain pending. GitHub billing prevented private-repo jobs, so visibility was temporarily changed to public with owner authorization; restore private after CI/TestFlight.
+- No local iOS simulator is available. Preview rejected the local prototype file URL; fallback browser host is unavailable. Prototype comparison so far is against its animation source.
+- Save for Later is next; signed Firefox XPI remains the old version.
+
 ## Current work — 2026-11-13
 
 - `SessionWatch` detects expiry without requiring a phone message, celebrates for six seconds only when the buddy is enabled, and avoids a late tick showing after a session ends. `CompletionTiming` has boundary checks. Windows checks passed locally; the on-screen transition still needs live verification.

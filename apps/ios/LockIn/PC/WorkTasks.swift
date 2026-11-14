@@ -82,6 +82,7 @@ struct WorkTaskSheet: View {
     var skipCoach: (() -> Void)? = nil
     @State private var draft = ""
     @FocusState private var typing: Bool
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
         NavigationStack {
@@ -89,6 +90,10 @@ struct WorkTaskSheet: View {
                 FocusBackdrop(timing: nil, flash: nil)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        if skipCoach != nil {
+                            FocusCoach(step: .task, reduceMotion: motionLimited(systemReduceMotion))
+                                .allowsHitTesting(false)
+                        }
                         Text("What are you working on?")
                             .font(Cream.rounded(26, .light))
                             .foregroundStyle(Matte.text)

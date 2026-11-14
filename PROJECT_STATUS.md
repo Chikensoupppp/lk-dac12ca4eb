@@ -1,5 +1,11 @@
 # Project status
 
+## Active verification - 2026-11-13
+
+- Coach parity implemented and pushed at 87dc071; follow-up review fixes pending push. Windows checks pass locally. iOS CI 43531411677 is running; no current compile/render claim.
+- Repository temporarily public to bypass GitHub account billing block, explicitly authorized by owner. Restore private after verification/upload.
+- TestFlight upload and Save for Later remain pending.
+
 ## 2026-11-13 work in progress
 
 - PC buddy detects natural session expiry and displays a six-second cheer; four deterministic timing checks and the existing Windows checks passed locally. Actual desktop behavior has not yet been observed.
