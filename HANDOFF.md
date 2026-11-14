@@ -2,6 +2,8 @@
 
 ## Coach completion and CI - 2026-11-13
 
+- Owner explicitly replaced the drawn approximation with the exact right-hand mascot from his comparison image. Both apps now bundle identical raster assets; normal artwork is an exact crop with black surround removed. Expression layers clear only eyes/mouth and preserve the original body. Mood colors/marks remain. Extraction script: `scripts/extract-brain-assets.py`.
+
 - Pulled clean branch at 82db621. Coach parity changes add typed bubbles, downward/directional gaze, star-eye rewards, YES!/NICE! stickers, hold shake, and target dimming. Approved brain body and mood marks are preserved. Independent source review caught and fixed typing cancellation and routes that hid Skip.
 - Local Windows checks pass. iOS CI for 87dc071 is running (43531411677); compilation and rendered behavior remain pending. GitHub billing prevented private-repo jobs, so visibility was temporarily changed to public with owner authorization; restore private after CI/TestFlight.
 - No local iOS simulator is available. Preview rejected the local prototype file URL; fallback browser host is unavailable. Prototype comparison so far is against its animation source.

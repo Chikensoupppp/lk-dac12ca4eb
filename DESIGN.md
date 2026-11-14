@@ -30,6 +30,7 @@ paragraphs in the app.
 - The timestamp-driven readout is never animated by its parent.
 
 ## Brain mascot (changed 2026-11-13)
+- Owner correction in this session: use the exact right-hand artwork on the black background, not a code redraw. `docs/design/brain-mascot-exact.png` is that image with only its black surround removed. Identical PNGs are bundled by both apps; facial expressions and existing mood marks are layered on top. `scripts/extract-brain-assets.py` reproduces the assets from the owner's comparison image.
 - Brandon picked the soft plush brain made in Figma (`docs/design/brain-mascot-chosen.png`, Figma
   file "Lock In brain mascot"). Drawn in code to match, in both `apps/ios/BrainArt/BrainDrawing.swift`
   and `apps/windows-companion/Watch/BrainArt.cs` (keep them in step): oval wider than tall, a smooth

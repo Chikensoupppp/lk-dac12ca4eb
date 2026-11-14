@@ -39,6 +39,26 @@ public struct BrainPose
 /// </summary>
 public static class BrainArt
 {
+    private static readonly Bitmap[] Sprites = Enumerable.Range(0, 7).Select(index =>
+    {
+        var name = index == 0 ? "BrainExact" : "BrainBody" + (index - 1);
+        using var stream = typeof(BrainArt).Assembly.GetManifestResourceStream("LockIn.Companion.Watch.Assets." + name + ".png")
+            ?? throw new InvalidOperationException("Missing mascot asset: " + name);
+        using var image = Image.FromStream(stream);
+        return new Bitmap(image);
+    }).ToArray();
+
+    private static void DrawSprite(Graphics g, Matrix transform, int index)
+    {
+        var saved = g.Save();
+        try
+        {
+            g.MultiplyTransform(transform);
+            lock (Sprites[index]) g.DrawImage(Sprites[index], new RectangleF(0, 0, 364, 300));
+        }
+        finally { g.Restore(saved); }
+    }
+
     private static Color Hex(uint v) => Color.FromArgb((int)(0xFF000000u | v));
 
     private static readonly Color Cream = Hex(0xF2ECE1);
@@ -76,73 +96,17 @@ public static class BrainArt
         var oy = area.Top + (area.Height - 300 * s) / 2;
         using var outer = new Matrix(s, 0, 0, s, ox, oy);
 
-        // Sparkles while it is still doing well (they twinkle; at time 0 they sit at these sizes).
-        var sparkle = Has(st => st <= 1);
-        if (sparkle > 0)
-        {
-            var sparkles = new[] { (X: 56f, Y: 50f, R: 16f), (X: 320f, Y: 66f, R: 11f), (X: 322f, Y: 236f, R: 9f) };
-            using var gold = new SolidBrush(Fade(Gold, sparkle));
-            for (var i = 0; i < sparkles.Length; i++)
-            {
-                var k = 1 + 0.25 * Math.Sin(2.0 * i + p.Time * 3.5);
-                using var star = Star(sparkles[i].X, sparkles[i].Y, (float)(sparkles[i].R * k));
-                star.Transform(outer);
-                g.FillPath(gold, star);
-            }
-        }
-
         // Droop and tilt for the worse stages. The brain is also drawn 1.08 larger.
         static float DroopOf(int st) => st switch { 3 => 6f, 4 => 10f, 5 => 18f, _ => 0f };
         var droop = Lerp(DroopOf(from), DroopOf(stage), w);
         using var brain = BrainMatrix(s, ox, oy, droop, droop * 0.4, p);
         var k2 = s * 1.08f; // width of every line, in canvas pixels
 
-        using var outlinePath = Outline();
-        outlinePath.Transform(brain);
-        using var foldsPath = Folds();
-        foldsPath.Transform(brain);
-
-        // Body: cream sticker border, bottom shade, pink body lifted up-left so the shade shows,
-        // a shine while it is fresh, folds, then the dark outline.
-        using var creamPen = new Pen(Cream, 18 * k2) { LineJoin = LineJoin.Round };
-        using var shadeBrush = new SolidBrush(shadeColor);
-        using var bodyBrush = new SolidBrush(bodyColor);
-        g.DrawPath(creamPen, outlinePath);
-        g.FillPath(shadeBrush, outlinePath);
-
-        var saved = g.Save();
-        g.SetClip(outlinePath, CombineMode.Replace);
-        using (var shifted = Outline())
-        {
-            shifted.Transform(new Matrix(1, 0, 0, 1, -3, -40));
-            shifted.Transform(brain);
-            g.FillPath(bodyBrush, shifted);
-        }
-        static float ShineOf(int st) => st <= 2 ? (200 - st * 50) / 255f : 0f;
-        var alpha = Lerp(ShineOf(from), ShineOf(stage), w);
-        if (alpha > 0)
-        {
-            // Short glossy marks on the top bumps, like a soft plush toy catching the light.
-            using var shinePath = new GraphicsPath();
-            AddQuad(shinePath, new PointF(86, 120), new PointF(88, 104), new PointF(100, 94));
-            shinePath.StartFigure();
-            AddQuad(shinePath, new PointF(134, 76), new PointF(144, 70), new PointF(156, 70));
-            shinePath.StartFigure();
-            AddQuad(shinePath, new PointF(208, 70), new PointF(220, 70), new PointF(230, 76));
-            shinePath.StartFigure();
-            AddQuad(shinePath, new PointF(266, 94), new PointF(278, 102), new PointF(280, 118));
-            shinePath.Transform(brain);
-            using var shinePen = new Pen(Color.FromArgb((int)(alpha * 255), 255, 255, 255), 9 * k2)
-            { StartCap = LineCap.Round, EndCap = LineCap.Round };
-            g.DrawPath(shinePen, shinePath);
-        }
-        g.Restore(saved);
-
-        using var foldPen = new Pen(foldColor, 4.5f * k2) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
-        var foldClip = g.Save();
-        g.SetClip(outlinePath, CombineMode.Replace);
-        g.DrawPath(foldPen, foldsPath);
-        g.Restore(foldClip);
+        var exact = stage == 0 && from == 0 && !p.StarEyes && !p.FromStarEyes
+            && p.LookX == 0 && p.LookY == 0 && p.Brows == 0 && p.Grin == 0 && p.Blink == 0 && p.MouthOpen < 0;
+        if (exact) { DrawSprite(g, brain, 0); return; }
+        if (w < 0.999f) FadedLayer(g, 1, lg => DrawSprite(lg, brain, from + 1));
+        FadedLayer(g, w, lg => DrawSprite(lg, brain, stage + 1));
 
         // Damage that stays. Between two moods each mark fades in or out.
         var bandage = Has(st => st >= 2);
@@ -198,9 +162,6 @@ public static class BrainArt
                 g.FillPath(faintCream, wing);
             }
         }
-
-        using (var inkPen = new Pen(Edge, 6 * k2) { LineJoin = LineJoin.Round })
-            g.DrawPath(inkPen, outlinePath);
 
         // The face. Between two moods both faces are drawn: the old one fades out as the new one fades in.
         if (w >= 0.999f) DrawFace(g, stage, brain, k2, bodyColor, p, p.StarEyes);
@@ -386,17 +347,6 @@ public static class BrainArt
                     g.DrawPath(roundPen, lidLine);
                     break;
                 }
-            }
-        }
-
-        if (stage <= 2)
-        {
-            using var blush = new SolidBrush(Blush);
-            foreach (var bx in new[] { 110f, 254f })
-            {
-                using var cheek = Ellipse(bx, 196, 16, 8.5f);
-                cheek.Transform(brain);
-                g.FillPath(blush, cheek);
             }
         }
 

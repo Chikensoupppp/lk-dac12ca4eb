@@ -203,13 +203,6 @@ enum BrainDrawing {
         let droop: CGFloat = ([0, 0, 0, 6, 10, 18] as [CGFloat])[st]
         let shake: CGFloat = st == 4 ? CGFloat(sin(t * 40) * 1.4) : 0
 
-        // Sparkles while it is still doing well; they twinkle.
-        if st <= 1 {
-            for (i, s) in [(56.0, 50.0, 16.0), (320.0, 66.0, 11.0), (322.0, 236.0, 9.0)].enumerated() {
-                let k = 1 + 0.15 * sin(t * 3 + Double(i) * 2)
-                ctx.fill(star(s.0, s.1, s.2 * k), with: .color(gold))
-            }
-        }
 
         var c = ctx
         c.translateBy(x: shake, y: droop)
@@ -221,25 +214,11 @@ enum BrainDrawing {
         c.scaleBy(x: 1.08, y: 1.08)
         c.translateBy(x: -182, y: -150)
 
-        // Body: cream sticker border, bottom shade, pink body lifted up-left so the shade shows,
-        // shine, folds, outline.
-        c.stroke(outline, with: .color(cream), style: StrokeStyle(lineWidth: 18, lineJoin: .round))
-        c.fill(outline, with: .color(colors.shade))
-        var inside = c
-        inside.clip(to: outline)
-        inside.fill(outline.applying(CGAffineTransform(translationX: -3, y: -40)), with: .color(colors.body))
-        if st <= 2 {
-            // Short glossy marks on the top bumps.
-            var shine = Path()
-            for (a, ctl, b) in [((86.0, 120.0), (88.0, 104.0), (100.0, 94.0)), ((134.0, 76.0), (144.0, 70.0), (156.0, 70.0)),
-                                ((208.0, 70.0), (220.0, 70.0), (230.0, 76.0)), ((266.0, 94.0), (278.0, 102.0), (280.0, 118.0))] {
-                shine.move(to: CGPoint(x: a.0, y: a.1))
-                shine.addQuadCurve(to: CGPoint(x: b.0, y: b.1), control: CGPoint(x: ctl.0, y: ctl.1))
-            }
-            let a = (200 - Double(st) * 50) / 255
-            inside.stroke(shine, with: .color(.white.opacity(a)), style: StrokeStyle(lineWidth: 9, lineCap: .round))
-        }
-        inside.stroke(folds, with: .color(colors.fold), style: round)
+        // The owner's exact right-hand artwork, not a vector approximation. Only expressions
+        // replace the face; body, folds, highlights, sticker edge and sparkles come from the PNG.
+        let exact = st == 0 && expression == .normal
+        c.draw(Image(exact ? "BrainExact" : "BrainBody\(st)"), in: CGRect(x: 0, y: 0, width: 364, height: 300))
+        if exact { return }
 
         // Damage that stays.
         if st >= 2 { bandage(&c) }
@@ -268,7 +247,6 @@ enum BrainDrawing {
                 c.fill(Path(ellipseIn: CGRect(x: fx - 9, y: fy - 8, width: 10, height: 6)), with: .color(cream.opacity(0.5)))
             }
         }
-        c.stroke(outline, with: .color(edgeInk), style: StrokeStyle(lineWidth: 6, lineJoin: .round))
 
         // Eyes: big and set low, like a baby face.
         let ey: CGFloat = 168
@@ -333,10 +311,6 @@ enum BrainDrawing {
                 brow.addQuadCurve(to: CGPoint(x: x + 15, y: ey - 21), control: CGPoint(x: x, y: ey - 32))
                 c.stroke(brow, with: .color(ink), style: StrokeStyle(lineWidth: 4, lineCap: .round))
             }
-        }
-        if st <= 2 {
-            c.fill(oval(110, 196, 16, 8.5), with: .color(blush))
-            c.fill(oval(254, 196, 16, 8.5), with: .color(blush))
         }
         if st == 1 {
             var drop = Path()
