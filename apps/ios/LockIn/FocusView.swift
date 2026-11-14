@@ -91,7 +91,7 @@ struct FocusView: View {
         _onboardingDone = State(initialValue: OnboardingStore.isDone() || hadSession)
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-coach"), !hadSession {
-            _coachPending = AppStorage(wrappedValue: true, "lockin.coach.pending.v1")
+            UserDefaults.standard.set(true, forKey: "lockin.coach.pending.v1")
             _coachStep = State(initialValue: .task)
         }
         if DebugShot.name != nil {
@@ -162,7 +162,10 @@ struct FocusView: View {
                 VStack(spacing: 0) {
                     // Its own row, so the buttons can never sit on the title. Hidden (but still
                     // taking its space) during a session, so nothing jumps.
-                    topBar
+                    Group {
+                        if !isLocked && coachStep == nil { topBar }
+                        else { Color.clear.frame(height: 44).accessibilityHidden(true) }
+                    }
                         .opacity(isLocked || coachStep != nil ? 0 : 1)
                         .allowsHitTesting(!isLocked && coachStep == nil)
                         .accessibilityHidden(isLocked || coachStep != nil)
@@ -414,10 +417,14 @@ struct FocusView: View {
 
     @ViewBuilder private var focusButton: some View {
         if coachStep == .hold {
-            Button {
-                if UIAccessibility.isVoiceOverRunning { startCoachedSession() }
-            } label: { Text("HOLD TO LOCK IN") }
-            .buttonStyle(MatteButtonStyle(prominent: true))
+            Text("HOLD TO LOCK IN")
+            .font(Cream.rounded(16, .heavy))
+            .tracking(2)
+            .foregroundStyle(Color(hex: 0xF3F4F0))
+            .frame(maxWidth: .infinity, minHeight: 60)
+            .background(RoundedRectangle(cornerRadius: 22).fill(Matte.riso)
+                .shadow(color: Matte.tip.opacity(0.9), radius: 0, x: 3, y: 3))
+            .contentShape(RoundedRectangle(cornerRadius: 22))
             .overlay(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 22)
                     .fill(Ink.blue.opacity(0.25))
@@ -425,7 +432,12 @@ struct FocusView: View {
                     .animation(reduceMotion ? nil : .linear(duration: 1.5), value: coachPressing)
                     .allowsHitTesting(false)
             }
-            .onLongPressGesture(minimumDuration: 1.5, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
+            .onLongPressGesture(minimumDuration: 1.5, maximumDistance: 60, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Hold to lock in")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { startCoachedSession() }
+            .accessibilityAction(named: "Start now") { startCoachedSession() }
             .accessibilityHint("Hold to start. VoiceOver: double tap to start.")
             .accessibilityIdentifier("coach-hold-to-start")
         } else {
