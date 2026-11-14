@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The coach uses the same mascot, with a few expressions for pointing and celebrating.
-enum CoachExpression { case normal, lookDown, keen, cheer }
+enum CoachExpression { case normal, lookDown, lookDownRight, keen, cheer }
 
 /// The printed pink brain and its heart trace. Shared by the onboarding brain slide (app) and the
 /// home screen widget, so both draw the same brain. Stages: 0 fresh ... 5 rotten.
@@ -276,10 +276,16 @@ enum BrainDrawing {
             let side: CGFloat = i == 1 ? 1 : -1
             switch st {
             case 0:
-                let look: CGFloat = expression == .lookDown ? 5 : 0
-                c.fill(oval(x, ey + look, 13, 15), with: .color(ink))
-                c.fill(circle(x - 4, ey - 6 + look, 5.5), with: .color(.white))
-                c.fill(circle(x + 5, ey + 7 + look, 2.6), with: .color(.white))
+                let look: CGFloat = (expression == .lookDown || expression == .lookDownRight) ? 5 : 0
+                let lookX: CGFloat = expression == .lookDownRight ? 6 : 0
+                if expression == .cheer {
+                    c.fill(star(x, ey, 18), with: .color(gold))
+                    c.stroke(star(x, ey, 18), with: .color(ink), lineWidth: 2)
+                } else {
+                    c.fill(oval(x + lookX, ey + look, 13, 15), with: .color(ink))
+                    c.fill(circle(x - 4 + lookX, ey - 6 + look, 5.5), with: .color(.white))
+                    c.fill(circle(x + 5 + lookX, ey + 7 + look, 2.6), with: .color(.white))
+                }
             case 1:
                 // Sleepy: the lid covers the top half.
                 c.fill(circle(x, ey + 3, 14), with: .color(ink))

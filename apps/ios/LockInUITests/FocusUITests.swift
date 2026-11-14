@@ -238,15 +238,39 @@ final class FocusUITests: XCTestCase {
         app.buttons["work-task"].tap()
         XCTAssertTrue(app.buttons["Studying"].waitForExistence(timeout: 5))
         app.buttons["Studying"].tap()
+        capture("coach-task-win")
         XCTAssertTrue(app.buttons["25 minutes"].waitForExistence(timeout: 5))
         app.buttons["25 minutes"].tap()
         let start = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
+        capture("coach-hold")
         start.press(forDuration: 2)
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["first-lock-in-stamp"].waitForExistence(timeout: 2))
+        capture("coach-first-lock-in")
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    func testCoachReduceMotionAndInterruptedHold() {
+        let app = makeApp()
+        app.launchArguments += ["-ui-testing-coach", "-ui-testing-reduce-motion"]
+        app.launch()
+        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
+        app.buttons["work-task"].tap()
+        app.buttons["Studying"].tap()
+        app.buttons["25 minutes"].tap()
+        let hold = app.buttons["coach-hold-to-start"]
+        XCTAssertTrue(hold.waitForExistence(timeout: 5))
+        hold.press(forDuration: 0.3)
+        XCTAssertFalse(app.buttons["END SESSION"].exists)
+        capture("coach-reduce-motion")
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-ui-testing-reset-state" || $0 == "-ui-testing-coach" }
+        app.launch()
+        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
+        app.buttons["skip-focus-coach"].tap()
+        XCTAssertTrue(app.buttons["LOCK IN"].isEnabled)
     }
 
     /// Skipping everything reaches the main screen with no session, and leaves out the year slide.

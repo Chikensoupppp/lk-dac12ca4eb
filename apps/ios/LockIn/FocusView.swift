@@ -39,6 +39,7 @@ struct FocusView: View {
     @AppStorage("lockin.coach.pending.v1") private var coachPending = false
     @State private var coachStep: FocusCoachStep?
     @State private var coachPressing = false
+    @State private var coachReward: String?
     /// Proof Check: Screen Time access was turned off during this session.
     @State private var showProofBroken = false
     @StateObject private var goals = GoalStore()
@@ -89,6 +90,10 @@ struct FocusView: View {
         }
         _onboardingDone = State(initialValue: OnboardingStore.isDone() || hadSession)
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-coach"), !hadSession {
+            _coachPending = AppStorage(wrappedValue: true, "lockin.coach.pending.v1")
+            _coachStep = State(initialValue: .task)
+        }
         if DebugShot.name != nil {
             _onboardingDone = State(initialValue: DebugShot.onboardingStep == nil)
             DebugShot.seed()
@@ -200,21 +205,27 @@ struct FocusView: View {
                         sweepTrigger: completionCount
                     )
                     .frame(width: side, height: side)
+                    .opacity(coachStep != nil && coachStep != .celebrate ? 0.25 : 1)
 
                     Spacer(minLength: 16)
 
                     VStack(spacing: 10) {
                         WorkTaskPill(tasks: tasks) { showTasks = true }
                             .overlay(Capsule().strokeBorder(coachStep == .task ? Ink.blue : .clear, lineWidth: 3))
+                            .opacity(coachStep == nil || coachStep == .task ? 1 : 0.3)
                         Text("MINUTES")
                             .font(Cream.rounded(11, .semibold))
                             .tracking(3)
                             .foregroundStyle(Matte.textSoft)
                         DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
-                            if coachStep == .minutes { coachStep = .hold }
+                            if coachStep == .minutes { coachStep = .hold; coachReward = "NICE!" }
                         }
+                        .disabled(coachStep != nil && coachStep != .minutes)
+                        .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
                         .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(coachStep == .minutes ? Ink.blue : .clear, lineWidth: 3))
                         lockedToggle
+                            .opacity(coachStep == nil ? 1 : 0.25)
+                            .disabled(coachStep != nil)
                     }
                     .opacity(isLocked ? 0 : 1)
                     .allowsHitTesting(!isLocked)
@@ -232,7 +243,7 @@ struct FocusView: View {
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .sheet(isPresented: $showTasks) {
             WorkTaskSheet(tasks: tasks, done: { showTasks = false }, onSelection: {
-                if coachStep == .task { showTasks = false; coachStep = .minutes }
+                if coachStep == .task { showTasks = false; coachStep = .minutes; coachReward = "YES!" }
             }, skipCoach: coachStep == .task ? { skipCoach() } : nil)
         }
         .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
@@ -278,10 +289,10 @@ struct FocusView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Button("Skip") { skipCoach() }
                         .font(.headline)
-                        .foregroundStyle(Ink.ink)
+                        .foregroundStyle(Matte.text)
                         .frame(minWidth: 44, minHeight: 44)
                         .accessibilityIdentifier("skip-focus-coach")
-                    FocusCoach(step: coachStep, reduceMotion: reduceMotion)
+                    FocusCoach(step: coachStep, reduceMotion: reduceMotion, pressing: coachPressing, reward: coachReward)
                         .allowsHitTesting(false)
                 }
                 .padding(.horizontal, 16)
@@ -289,6 +300,12 @@ struct FocusView: View {
             }
         }
         .preferredColorScheme(.light)
+        .sensoryFeedback(.success, trigger: coachReward) { _, reward in reward != nil }
+        .task(id: coachReward) {
+            guard coachReward != nil else { return }
+            do { try await Task.sleep(for: .milliseconds(900)) } catch { return }
+            coachReward = nil
+        }
         // The brain widget watches the apps picked to lock; keep that watch in step.
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
@@ -435,11 +452,14 @@ struct FocusView: View {
         coachPending = false
         coachStep = nil
         coachPressing = false
+        coachReward = nil
     }
 
     private func startCoachedSession() {
         guard coachStep == .hold, !isLocked else { return }
         coachPending = false
+        coachPressing = false
+        coachReward = nil
         coachStep = .celebrate
         startSession()
         Task { @MainActor in
