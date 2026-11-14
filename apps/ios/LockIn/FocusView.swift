@@ -176,11 +176,13 @@ struct FocusView: View {
                         .tracking(4)
                         .foregroundStyle(Matte.textSoft)
                         .padding(.top, 6)
+                        .opacity(coachStep == nil ? 1 : 0)
+                        .accessibilityHidden(coachStep != nil)
 
                     PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
                         .allowsHitTesting(coachStep == nil)
                         .accessibilityHidden(coachStep != nil)
-                        .opacity(coachStep == nil ? 1 : 0.25)
+                        .opacity(coachStep == nil ? 1 : 0)
 
                     // In a session: the task, and what the PC sees (front app, buddy nudges).
                     if isLocked, let line = sessionWorkLine {
