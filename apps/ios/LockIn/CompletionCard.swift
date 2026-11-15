@@ -75,6 +75,7 @@ struct CompletionCard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Ink.paper.ignoresSafeArea())
         .preferredColorScheme(.light)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("completion-card")
     }
 }
