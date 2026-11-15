@@ -152,7 +152,8 @@ struct FocusView: View {
         return justCompleted ? "Session complete" : "Ready"
     }
 
-    var body: some View {
+    /// The screen and its sheets. Split from `body` so Swift can type-check each part quickly.
+    private var screen: some View {
         ZStack {
             FocusBackdrop(timing: timing, flash: flash)
 
@@ -285,6 +286,10 @@ struct FocusView: View {
         .fullScreenCover(isPresented: $showStreak) {
             StreakView(minutes: streakMinutes) { showStreak = false }
         }
+    }
+
+    private var framed: some View {
+        screen
         .overlay(alignment: .topLeading) {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-completion-count") {
@@ -293,38 +298,12 @@ struct FocusView: View {
             }
             #endif
         }
-        .overlay(alignment: .topLeading) {
-            if let coachStep {
-                VStack(alignment: .leading, spacing: 2) {
-                    if coachStep != .hello {
-                        Button("Skip") { skipCoach() }
-                            .font(.headline)
-                            .foregroundStyle(Matte.text)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .accessibilityIdentifier("skip-focus-coach")
-                    }
-                    FocusCoach(step: coachStep, reduceMotion: reduceMotion, pressing: coachPressing, reward: coachReward)
-                        .allowsHitTesting(false)
-                    if coachStep == .hello {
-                        HStack(spacing: 12) {
-                            Button("Start the tour") { coachStep = .task }
-                                .buttonStyle(.borderedProminent)
-                                .tint(Ink.blue)
-                                .accessibilityIdentifier("coach-start-tour")
-                            Button("Skip") { skipCoach() }
-                                .buttonStyle(.bordered)
-                                .tint(Ink.ink)
-                                .accessibilityIdentifier("skip-focus-coach")
-                        }
-                        .controlSize(.large)
-                        .font(.headline)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .transition(.opacity)
-            }
-        }
+        .overlay(alignment: .topLeading) { coachOverlay }
         .preferredColorScheme(.light)
+    }
+
+    var body: some View {
+        framed
         .sensoryFeedback(.success, trigger: coachReward) { _, reward in reward != nil }
         .task(id: coachReward) {
             guard coachReward != nil else { return }
@@ -479,6 +458,38 @@ struct FocusView: View {
                         .accessibilityLabel("Suggested: start your first 25 minute session now")
                 }
             }
+        }
+    }
+
+    @ViewBuilder private var coachOverlay: some View {
+        if let coachStep {
+            VStack(alignment: .leading, spacing: 2) {
+                if coachStep != .hello {
+                    Button("Skip") { skipCoach() }
+                        .font(.headline)
+                        .foregroundStyle(Matte.text)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .accessibilityIdentifier("skip-focus-coach")
+                }
+                FocusCoach(step: coachStep, reduceMotion: reduceMotion, pressing: coachPressing, reward: coachReward)
+                    .allowsHitTesting(false)
+                if coachStep == .hello {
+                    HStack(spacing: 12) {
+                        Button("Start the tour") { coachStep = .task }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Ink.blue)
+                            .accessibilityIdentifier("coach-start-tour")
+                        Button("Skip") { skipCoach() }
+                            .buttonStyle(.bordered)
+                            .tint(Ink.ink)
+                            .accessibilityIdentifier("skip-focus-coach")
+                    }
+                    .controlSize(.large)
+                    .font(.headline)
+                }
+            }
+            .padding(.horizontal, 16)
+            .transition(.opacity)
         }
     }
 
