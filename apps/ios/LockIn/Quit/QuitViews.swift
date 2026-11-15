@@ -23,7 +23,7 @@ private enum QuitInk {
 }
 
 /// A wait that only counts while this screen is open and the app is in front. Leave and it starts
-/// over. While it runs, the brain gets visibly worse and the heart rate climbs.
+/// over. Used only by the emergency exit. Nothing on screen gets worse while it runs.
 struct WatchedWait: View {
     let seconds: TimeInterval
     let done: () -> Void
@@ -36,7 +36,7 @@ struct WatchedWait: View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: finished)) { context in
             let elapsed = finished ? seconds : min(seconds, context.date.timeIntervalSince(startedAt))
             let progress = seconds > 0 ? elapsed / seconds : 1
-            let stage = min(5, Int(progress * 6))
+            let stage = 0
             let left = max(0, Int((seconds - elapsed).rounded(.up)))
             let t = effectiveReduceMotion(systemReduceMotion) ? 0 : context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10_000)
             VStack(spacing: 14) {
@@ -56,9 +56,6 @@ struct WatchedWait: View {
                 }
                 .frame(height: 10)
                 .accessibilityHidden(true)
-                Text("\u{2665} \([72, 98, 126, 154, 188, 38][stage]) BPM")
-                    .font(PrintFont.mono(13, .heavy))
-                    .foregroundStyle(QuitInk.level(stage))
             }
             .onChange(of: left) { _, now in
                 if now == 0 && !finished {
@@ -76,68 +73,41 @@ struct WatchedWait: View {
     }
 }
 
-/// Free users: quitting costs a watched wait, a typed sentence, and a scar on today's brain.
+/// Free sessions: ending early is one calm choice. The time already focused still counts.
 struct QuitSheet: View {
+    let focusedMinutes: Int
     let onQuit: () -> Void
     let onStay: () -> Void
-    @State private var waited = false
-    @State private var typed = ""
-    @FocusState private var typing: Bool
-
-    private let wait = QuitRules.nextQuitWait()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(waited ? "Say it." : "Still want\nto quit?")
+                Text("End this\nsession?")
                     .font(PrintFont.head(52))
                     .foregroundStyle(QuitInk.cream)
-                if !waited {
-                    Text("This wait only counts while you watch it. Leave the app and it starts over. Your apps stay locked.")
-                        .font(PrintFont.body(16))
-                        .foregroundStyle(QuitInk.cream.opacity(0.8))
-                        .fixedSize(horizontal: false, vertical: true)
-                    WatchedWait(seconds: wait) { withAnimation { waited = true } }
-                    Text("Quit #\(QuitRules.quitsThisWeek() + 1) this week. Next one waits longer.")
-                        .font(PrintFont.mono(12))
-                        .foregroundStyle(QuitInk.cream.opacity(0.6))
-                } else {
-                    Text("Type this to end the session:")
-                        .font(PrintFont.body(16))
-                        .foregroundStyle(QuitInk.cream.opacity(0.8))
-                    Text("\u{201C}\(QuitRules.sentence)\u{201D}")
-                        .font(PrintFont.bold(24))
-                        .foregroundStyle(QuitInk.alarm)
-                    TextField("Type it here", text: $typed)
-                        .font(PrintFont.body(17))
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.asciiCapable)
-                        .submitLabel(.done)
-                        .onSubmit { if QuitRules.matches(typed) { onQuit() } }
-                        .focused($typing)
-                        .padding(14)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(QuitInk.panel))
-                        .foregroundStyle(QuitInk.cream)
-                    Text("Your widget brain keeps a scar until tomorrow morning.")
-                        .font(PrintFont.mono(12))
-                        .foregroundStyle(QuitInk.cream.opacity(0.6))
-                }
+                    .accessibilityAddTraits(.isHeader)
+                Text(focusedMinutes > 0
+                     ? "You focused \(FocusLog.format(minutes: focusedMinutes)). That time counts."
+                     : "No problem. You can start again any time.")
+                    .font(PrintFont.body(18))
+                    .foregroundStyle(QuitInk.cream.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("quit-focused-line")
             }
             .padding(24)
         }
         .scrollBounceBehavior(.basedOnSize)
-        // Pinned to the bottom, so the keyboard pushes the buttons up instead of covering them.
+        // Pinned to the bottom so the buttons are always reachable, even at large text sizes.
         .safeAreaInset(edge: .bottom) {
-            HStack(spacing: 10) {
+            VStack(spacing: 10) {
                 Button { onStay() } label: { Text("KEEP GOING").lineLimit(1).minimumScaleFactor(0.7) }
                     .buttonStyle(PrintButtonStyle(fill: QuitInk.green, text: QuitInk.bg))
-                if waited {
-                    Button { onQuit() } label: { Text("END SESSION").lineLimit(1).minimumScaleFactor(0.7) }
-                        .buttonStyle(PrintButtonStyle(fill: QuitInk.alarm, text: QuitInk.panel))
-                        .disabled(!QuitRules.matches(typed))
-                        .opacity(QuitRules.matches(typed) ? 1 : 0.35)
-                }
+                    .accessibilityIdentifier("quit-keep-going")
+                Button { onQuit() } label: { Text("End session").lineLimit(1).minimumScaleFactor(0.7) }
+                    .font(PrintFont.body(17, .semibold))
+                    .foregroundStyle(QuitInk.cream)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .accessibilityIdentifier("quit-end-session")
             }
             .padding(.horizontal, 24)
             .padding(.top, 10)
@@ -146,10 +116,6 @@ struct QuitSheet: View {
         }
         .background(QuitInk.bg.ignoresSafeArea())
         .preferredColorScheme(.light)
-        .onChange(of: waited) { _, now in if now { typing = true } }
-        #if DEBUG
-        .onAppear { if DebugShot.name == "quit-type" { waited = true } }
-        #endif
     }
 }
 
@@ -251,7 +217,7 @@ struct EmergencyExitView: View {
 }
 
 /// Proof Check: Screen Time access was turned off in Settings during a session. The shields are
-/// gone, so it counts as a quit. The user can turn it back on and get the shields back.
+/// gone. The user can turn it back on and get the shields back.
 struct ProofBrokenSheet: View {
     let turnBackOn: () async -> Bool
     let onClose: () -> Void
@@ -261,14 +227,14 @@ struct ProofBrokenSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("SIGNAL LOST")
+                Text("SCREEN TIME OFF")
                     .font(PrintFont.mono(13))
                     .tracking(2)
                     .foregroundStyle(QuitInk.alarm)
                 Text("Screen Time\nwas turned off.")
                     .font(PrintFont.head(52))
                     .foregroundStyle(QuitInk.cream)
-                Text("Your apps are not locked right now. That counts as a quit, and your brain widget has a scar until tomorrow.")
+                Text("Your apps are not locked right now. Turn it back on to keep them quiet, or carry on without.")
                     .font(PrintFont.body(16))
                     .foregroundStyle(QuitInk.cream.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)

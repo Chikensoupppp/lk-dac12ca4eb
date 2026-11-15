@@ -1,9 +1,9 @@
 import SwiftUI
 import WidgetKit
 
-/// The brain widget: one medium widget. The brain rots as today's phone time crosses hour lines,
-/// and one heavy app makes it worse. It never flatlines: at 7h+ the heartbeat is weak but there.
-/// Widgets cannot animate on their own, so the heart trace is a still picture of the current beat.
+/// The selected-apps widget: one medium widget. It shows today's time in the apps the user picked
+/// to watch (not total phone use), as a big number and hour blocks. The mascot only looks a little
+/// tired at most. It does not measure anyone's brain or health.
 @main
 struct LockInWidgets: WidgetBundle {
     var body: some Widget {
@@ -17,8 +17,8 @@ struct BrainWidget: Widget {
         StaticConfiguration(kind: BrainLevel.widgetKind, provider: BrainProvider()) { entry in
             BrainWidgetView(entry: entry)
         }
-        .configurationDisplayName("Your brain")
-        .description("Your brain rots as your phone time adds up today.")
+        .configurationDisplayName("Selected apps")
+        .description("Today's time in the apps you picked to watch.")
         .supportedFamilies([.systemMedium])
     }
 }
@@ -27,8 +27,7 @@ struct BrainEntry: TimelineEntry {
     let date: Date
     let today: BrainLevel.Today
     let watching: Bool
-    /// Which frame this is. Each frame shifts the beat line and nudges the BPM, so the monitor
-    /// looks alive when glanced at (widgets cannot animate on their own).
+    /// Which timeline frame this is (kept so each entry is distinct).
     let frame: Int
     /// Proof Check: Screen Time access was turned off after being on.
     var proofOff = false
@@ -71,25 +70,15 @@ struct BrainWidgetView: View {
     private var stage: Int { entry.today.stage }
     private var reached: Int { entry.today.total }
 
-    private static let words = ["FRESH", "TIRED", "DIZZY", "FADING", "BEGGING", "ROTTEN"]
-    /// Climbs with the hours; at "rotten" it is weak and slow, but never zero.
-    private static let bpmBase = [72, 98, 126, 154, 188, 38]
+    /// The mascot never looks worse than a little tired.
+    private var mascotStage: Int { min(stage, 1) }
 
-    /// Drifts a few beats from frame to frame, like a real monitor.
-    private var bpm: Int {
-        let wobble = ((entry.frame &* 7919) % 7 + 7) % 7 - 3
-        return Self.bpmBase[stage] + wobble
-    }
-
-    /// "4+ hrs on phone · 1 app 2h+"
+    /// "4+ hrs in selected apps · 1 app 2h+"
     private var hoursLine: some View {
-        let hours = entry.today.total == 0 ? "Under 1 hr on phone" : "\(entry.today.total)+ hrs on phone"
+        let hours = entry.today.total == 0 ? "Under 1 hr in selected apps" : "\(entry.today.total)+ hrs in selected apps"
         var line = Text(hours).foregroundColor(BrainDrawing.cream)
         if entry.today.app >= 2 {
             line = line + Text(" \u{00B7} 1 app \(entry.today.app)h+").foregroundColor(BrainDrawing.tongueColor)
-        }
-        if entry.today.scar {
-            line = line + Text(" \u{00B7} quit early").foregroundColor(BrainDrawing.alarm)
         }
         return line
             .font(.system(size: 13, weight: .bold).width(.condensed))
@@ -99,22 +88,16 @@ struct BrainWidgetView: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            BrainCanvas(stage: stage)
+            BrainCanvas(stage: mascotStage)
                 .frame(width: 138)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 if entry.watching {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("YOUR BRAIN")
-                            .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                            .tracking(1.2)
-                        Spacer(minLength: 4)
-                        Text("\u{2665} \(bpm) BPM")
-                            .font(.system(size: 12, weight: .heavy, design: .monospaced))
-                            .monospacedDigit()
-                    }
-                    .foregroundStyle(BrainDrawing.levelColor(stage))
-                    Text(Self.words[stage])
+                    Text("SELECTED APPS TODAY")
+                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                        .tracking(1.2)
+                        .foregroundStyle(BrainDrawing.green)
+                    Text(entry.today.headline)
                         .font(.system(size: 38, weight: .black).width(.compressed))
                         .foregroundStyle(BrainDrawing.cream)
                         .lineLimit(1)
@@ -123,7 +106,7 @@ struct BrainWidgetView: View {
                     hourBar
                         .padding(.top, 2)
                 } else if entry.proofOff {
-                    Text("SIGNAL LOST")
+                    Text("SCREEN TIME OFF")
                         .font(.system(size: 10, weight: .heavy, design: .monospaced))
                         .tracking(1.2)
                         .foregroundStyle(BrainDrawing.alarm)
@@ -132,7 +115,7 @@ struct BrainWidgetView: View {
                         .foregroundStyle(BrainDrawing.cream)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    Text("YOUR BRAIN")
+                    Text("SELECTED APPS")
                         .font(.system(size: 10, weight: .heavy, design: .monospaced))
                         .tracking(1.2)
                         .foregroundStyle(BrainDrawing.green)
@@ -141,16 +124,15 @@ struct BrainWidgetView: View {
                         .foregroundStyle(BrainDrawing.cream)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                heartTrace
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .containerBackground(for: .widget) { BrainDrawing.bg }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(entry.watching
-            ? "Your brain is \(Self.words[stage].lowercased()), \(bpm) beats a minute. \(entry.today.headline) on your phone today. \(entry.today.appLine ?? "")"
+            ? "Time in your selected apps today: \(entry.today.headline). \(entry.today.appLine ?? "")"
             : entry.proofOff ? "Screen Time was turned off. Open Lock In to turn it back on."
-            : "Your brain. Open Lock In and pick the apps to watch.")
+            : "Selected apps. Open Lock In and pick the apps to watch.")
     }
 
     /// Seven blocks for 1 to 7 hours: green, then yellow at 4, red from 5.
@@ -163,20 +145,5 @@ struct BrainWidgetView: View {
                     .frame(height: 9)
             }
         }
-    }
-
-    private var heartTrace: some View {
-        Canvas { ctx, size in
-            // Each frame starts the strip at a different point in the beat.
-            let phase = Double(entry.frame % 97) * 0.37
-            let line = BrainDrawing.ecg(stage: stage, t: phase, width: size.width, mid: size.height / 2,
-                                        scale: 0.36, beat: 40, neverFlat: true)
-            let color = BrainDrawing.traceColor(stage)
-            var glow = ctx
-            glow.addFilter(.blur(radius: 2.5))
-            glow.stroke(line, with: .color(color.opacity(0.8)), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-            ctx.stroke(line, with: .color(color), style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
-        }
-        .frame(height: 30)
     }
 }

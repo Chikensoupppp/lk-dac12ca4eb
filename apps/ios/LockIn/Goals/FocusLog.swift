@@ -66,8 +66,10 @@ enum FocusLog {
         update(date, defaults) { $0.minutes += max(minutes, 0); $0.sessions += 1 }
     }
 
-    static func recordQuit(at date: Date = .now, defaults: UserDefaults = .standard) {
-        update(date, defaults) { $0.quits += 1 }
+    /// An early end. The minutes already focused still count toward the day; the session does not
+    /// count as finished, so it does not move the streak.
+    static func recordQuit(minutes: Int = 0, at date: Date = .now, defaults: UserDefaults = .standard) {
+        update(date, defaults) { $0.quits += 1; $0.minutes += max(minutes, 0) }
     }
 
     static func week(of date: Date, defaults: UserDefaults = .standard) -> Week {

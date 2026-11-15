@@ -10,7 +10,7 @@ struct FocusView: View {
 
     private let store: SessionStoring
 
-    @State private var selectedMinutes = 45
+    @AppStorage("lockin.minutes.v1") private var selectedMinutes = 45
     @State private var timing: SessionTiming?
     @State private var sessionID: UUID?
     @State private var justCompleted = false
@@ -40,6 +40,11 @@ struct FocusView: View {
     @State private var coachStep: FocusCoachStep?
     @State private var coachPressing = false
     @State private var coachReward: String?
+    /// After a finished session: the "time focused" card, then the streak screen, then (once) the Plus offer.
+    @State private var completion: CompletionInfo?
+    @State private var pendingStreak = false
+    @State private var pendingPlus = false
+    @State private var pendingTaskPicker = false
     /// Proof Check: Screen Time access was turned off during this session.
     @State private var showProofBroken = false
     @StateObject private var goals = GoalStore()
@@ -71,6 +76,9 @@ struct FocusView: View {
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset-state") {
             store.clear()
             UserDefaults.standard.removeObject(forKey: "lockin.coach.pending.v1")
+            UserDefaults.standard.removeObject(forKey: "lockin.minutes.v1")
+            UserDefaults.standard.removeObject(forKey: "lockin.firstWin.v1")
+            UserDefaults.standard.removeObject(forKey: "lockin.plusOffered.v1")
         }
         #endif
         var hadSession = false
@@ -139,6 +147,51 @@ struct FocusView: View {
         if args.contains(where: { $0.hasPrefix("-ui-testing") }) { return args.contains("-ui-testing-streak") }
         #endif
         return true
+    }
+
+    /// UI tests that finish sessions must not be covered by the completion card, unless asked.
+    private var completionCardAllowed: Bool {
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains(where: { $0.hasPrefix("-ui-testing") }) { return args.contains("-ui-testing-completion-card") }
+        #endif
+        return true
+    }
+
+    /// The Plus offer comes once, after the first finished free session (never before it).
+    private var plusOfferAllowed: Bool {
+        guard !plus.hasPlus, !UserDefaults.standard.bool(forKey: "lockin.plusOffered.v1") else { return false }
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains(where: { $0.hasPrefix("-ui-testing") }) { return args.contains("-ui-testing-plus-after") }
+        #endif
+        return true
+    }
+
+    /// Whole minutes focused in the running session (a partial session still counts).
+    private var focusedMinutesSoFar: Int {
+        guard let timing else { return 0 }
+        let seconds = min(max(Date.now.timeIntervalSince(timing.startedAt), 0), timing.duration)
+        return Int(seconds / 60)
+    }
+
+    /// One thing at a time after a session: the streak screen, then the Plus offer, then the task picker.
+    private func advanceAfterSession() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            guard timing == nil, completion == nil, !showStreak, !showPlusOffer else { return }
+            if pendingStreak {
+                pendingStreak = false
+                showStreak = true
+            } else if pendingPlus {
+                pendingPlus = false
+                UserDefaults.standard.set(true, forKey: "lockin.plusOffered.v1")
+                showPlusOffer = true
+            } else if pendingTaskPicker {
+                pendingTaskPicker = false
+                showTasks = true
+            }
+        }
     }
 
     private var stateAnimation: Animation {
@@ -228,14 +281,18 @@ struct FocusView: View {
                             .tracking(3)
                             .foregroundStyle(Matte.textSoft)
                         DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
-                            if coachStep == .minutes { coachStep = .hold; coachReward = "NICE!" }
+                            if coachStep == .minutes { coachStep = restrictions.hasSelection ? .hold : .apps; coachReward = "NICE!" }
                         }
                         .disabled(coachStep != nil && coachStep != .minutes)
                         .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
                         .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(coachStep == .minutes ? Ink.blue : .clear, lineWidth: 3))
-                        lockedToggle
-                            .opacity(coachStep == nil ? 1 : 0.25)
-                            .disabled(coachStep != nil)
+                        if coachStep == .apps {
+                            coachAppsButtons
+                        } else {
+                            lockedToggle
+                                .opacity(coachStep == nil ? 1 : 0.25)
+                                .disabled(coachStep != nil)
+                        }
                     }
                     .opacity(isLocked ? 0 : 1)
                     .allowsHitTesting(!isLocked)
@@ -249,7 +306,9 @@ struct FocusView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .sheet(isPresented: $showRestrictions) { RestrictionsSheet(restrictions: restrictions) }
+        .sheet(isPresented: $showRestrictions, onDismiss: { if coachStep == .apps { coachStep = .hold } }) {
+            RestrictionsSheet(restrictions: restrictions)
+        }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .sheet(isPresented: $showTasks) {
             WorkTaskSheet(tasks: tasks, done: { showTasks = false }, onSelection: {
@@ -259,9 +318,13 @@ struct FocusView: View {
         .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
-        .sheet(isPresented: $showPlusOffer) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
+        .sheet(isPresented: $showPlusOffer, onDismiss: advanceAfterSession) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
+        .sheet(item: $completion, onDismiss: advanceAfterSession) { info in
+            CompletionCard(info: info, keep: { completion = nil }, change: { pendingTaskPicker = true; completion = nil })
+                .presentationDetents([.large])
+        }
         .fullScreenCover(isPresented: $showQuit) {
-            QuitSheet(onQuit: { showQuit = false; endSession() }, onStay: { showQuit = false })
+            QuitSheet(focusedMinutes: focusedMinutesSoFar, onQuit: { showQuit = false; endSession() }, onStay: { showQuit = false })
         }
         .fullScreenCover(isPresented: $showProofBroken) {
             ProofBrokenSheet(turnBackOn: turnShieldsBackOn) { showProofBroken = false }
@@ -274,16 +337,14 @@ struct FocusView: View {
             }
         }
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow(restrictions: restrictions, plus: plus) { startNow in
+            OnboardingFlow(restrictions: restrictions) {
                 onboardingDone = true
-                if startNow {
-                    selectedMinutes = 25
-                }
+                selectedMinutes = 25
                 coachPending = true
-                coachStep = .hello
+                coachStep = .task
             }
         }
-        .fullScreenCover(isPresented: $showStreak) {
+        .fullScreenCover(isPresented: $showStreak, onDismiss: advanceAfterSession) {
             StreakView(minutes: streakMinutes) { showStreak = false }
         }
     }
@@ -314,7 +375,7 @@ struct FocusView: View {
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
         .onAppear {
-            if onboardingDone && coachPending && timing == nil { coachStep = .hello }
+            if onboardingDone && coachPending && timing == nil { coachStep = .task }
             updateBrainWatch()
             runProofCheck()
             checkKeyRequests()
@@ -414,7 +475,11 @@ struct FocusView: View {
 
     @ViewBuilder private var focusButton: some View {
         if coachStep == .hold {
-            Text("HOLD TO LOCK IN")
+            VStack(spacing: 6) {
+            Text("Keep holding until the ring fills.")
+                .font(Cream.rounded(12, .medium))
+                .foregroundStyle(Matte.textSoft)
+            Text("HOLD TO START")
             .font(Cream.rounded(16, .heavy))
             .tracking(2)
             .foregroundStyle(Color(hex: 0xF3F4F0))
@@ -431,12 +496,13 @@ struct FocusView: View {
             }
             .onLongPressGesture(minimumDuration: 1.5, maximumDistance: 60, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Hold to lock in")
+            .accessibilityLabel("Hold to start")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { startCoachedSession() }
             .accessibilityAction(named: "Start now") { startCoachedSession() }
             .accessibilityHint("Hold to start. VoiceOver: double tap to start.")
             .accessibilityIdentifier("coach-hold-to-start")
+            }
         } else {
             Button(action: isLocked ? askToEnd : startSession) {
                 Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
@@ -464,32 +530,28 @@ struct FocusView: View {
     @ViewBuilder private var coachOverlay: some View {
         if let coachStep {
             VStack(alignment: .leading, spacing: 2) {
-                if coachStep != .hello {
-                    Button("Skip") { skipCoach() }
-                        .font(.headline)
-                        .foregroundStyle(Matte.text)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .accessibilityIdentifier("skip-focus-coach")
-                }
+                Button("Skip") { skipCoach() }
+                    .font(.headline)
+                    .foregroundStyle(Matte.text)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityIdentifier("skip-focus-coach")
                 FocusCoach(step: coachStep, reduceMotion: reduceMotion, pressing: coachPressing, reward: coachReward)
                     .allowsHitTesting(false)
-                if coachStep == .hello {
-                    HStack(spacing: 12) {
-                        Button("Start the tour") { coachStep = .task }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Ink.blue)
-                            .accessibilityIdentifier("coach-start-tour")
-                        Button("Skip") { skipCoach() }
-                            .buttonStyle(.bordered)
-                            .tint(Ink.ink)
-                            .accessibilityIdentifier("skip-focus-coach")
-                    }
-                    .controlSize(.large)
-                    .font(.headline)
-                }
             }
             .padding(.horizontal, 16)
             .transition(.opacity)
+        }
+    }
+
+    /// The coach's apps step: choose the apps to quiet, or go on without them.
+    private var coachAppsButtons: some View {
+        HStack(spacing: 12) {
+            Button("Choose apps") { showRestrictions = true }
+                .buttonStyle(MatteButtonStyle(prominent: true))
+                .accessibilityIdentifier("coach-choose-apps")
+            Button("Skip apps") { coachStep = .hold }
+                .buttonStyle(MatteButtonStyle(prominent: false))
+                .accessibilityIdentifier("coach-skip-apps")
         }
     }
 
@@ -549,7 +611,8 @@ struct FocusView: View {
     /// END SESSION. Free sessions go through the quit screen; Locked ones only have the ways out.
     private func askToEnd() {
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { endSession(); return }
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains(where: { $0.hasPrefix("-ui-testing") }) && !args.contains("-ui-testing-quit-sheet") { endSession(); return }
         #endif
         if QuitRules.isLocked(sessionID) { showLockedExit = true } else { showQuit = true }
     }
@@ -586,7 +649,7 @@ struct FocusView: View {
     }
 
     /// Proof Check. Turning Screen Time access off mid-session drops the shields, so it counts
-    /// as a quit (weekly count + brain scar) and the user is told right away.
+    /// as an early end (weekly count only) and the user is told right away.
     private func runProofCheck() {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { return }
@@ -650,8 +713,11 @@ struct FocusView: View {
     }
 
     private func endSession() {
+        // Time already focused still counts (goals and the weekly report), but not as a finished
+        // session, so it does not move the streak.
+        let focused = focusedMinutesSoFar
         QuitRules.recordEarlyEnd()
-        FocusLog.recordQuit()
+        FocusLog.recordQuit(minutes: focused)
         QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
@@ -687,12 +753,20 @@ struct FocusView: View {
         FocusLog.recordFinished(minutes: Int((session.duration / 60).rounded()))
         goals.reschedule()
         let firstToday = StreakStore.record()
-        if firstToday && streakScreenAllowed {
-            streakMinutes = Int((session.duration / 60).rounded())
-            // Let the finished glow play first.
-            Task {
-                try? await Task.sleep(for: .milliseconds(1800))
-                showStreak = true
+        let minutes = Int((session.duration / 60).rounded())
+        streakMinutes = minutes
+        pendingStreak = firstToday && streakScreenAllowed
+        pendingPlus = plusOfferAllowed
+        let info = CompletionInfo(minutes: minutes, task: tasks.selected, nextMinutes: selectedMinutes,
+                                  firstEver: !UserDefaults.standard.bool(forKey: "lockin.firstWin.v1"))
+        // Let the finished glow play first.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1800))
+            if completionCardAllowed {
+                UserDefaults.standard.set(true, forKey: "lockin.firstWin.v1")
+                completion = info
+            } else {
+                advanceAfterSession()
             }
         }
         showFlash(.finished, seconds: 3.2)

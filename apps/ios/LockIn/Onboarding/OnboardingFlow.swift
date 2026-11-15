@@ -2,24 +2,26 @@ import SwiftUI
 
 /// First-run flow, "printed" version (docs/ONBOARDING_V2.md, mock docs/design/ob-v2.html).
 ///
-/// Order: hook, guess, why we ask, real hours, brain, what pulls you in, lock apps, your year,
-/// goals, making your plan, promise, Plus. The real hours can only be drawn by Apple's report
-/// extension (Lock In can never read them), so the user taps the band that matches what they see.
-/// Without Screen Time access, or without the extension, the rest of the flow uses the guess.
+/// The short way is the default: the first slide's main button ends the flow, and the Focus screen's
+/// coach takes over (task, minutes, distracting apps, one hold to start). The longer introduction is
+/// optional ("See why first"): guess, why we ask, real hours, brain, what pulls you in, lock apps,
+/// your year, goals, making your plan. There is no promise to sign and no Plus offer here; Plus is
+/// shown once, after the first finished free session.
+/// The real hours can only be drawn by Apple's report extension (Lock In can never read them), so
+/// the user taps the band that matches what they see. Without Screen Time access, or without the
+/// extension, the rest of the flow uses the guess.
 struct OnboardingFlow: View {
-    static let stepCount = 12
+    static let stepCount = 10
 
     enum Step: Int {
-        case hook = 1, guess, check, reveal, brain, pulls, lock, year, goals, plan, promise, plus
+        case hook = 1, guess, check, reveal, brain, pulls, lock, year, goals, plan
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
     }
 
     @ObservedObject var restrictions: RestrictionController
-    @ObservedObject var plus: PlusStore
-    /// `true` means the user signed the promise, so the first session starts right away.
-    let onFinish: (Bool) -> Void
+    let onFinish: () -> Void
 
     @State private var step: Step = .hook
     @State private var history: [Step] = []
@@ -30,7 +32,6 @@ struct OnboardingFlow: View {
     @State private var realIndex: Int?
     @State private var categories: Set<String> = []
     @State private var goals: Set<String> = []
-    @State private var signed = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
@@ -78,9 +79,7 @@ struct OnboardingFlow: View {
         case .lock: advance(to: hoursIndex == nil ? .goals : .year)
         case .year: advance(to: .goals)
         case .goals: advance(to: .plan)
-        case .plan: advance(to: .promise)
-        case .promise: advance(to: .plus)
-        case .plus: finish()
+        case .plan: finish()
         }
     }
 
@@ -91,7 +90,7 @@ struct OnboardingFlow: View {
 
     private func finish() {
         OnboardingStore.save(hoursIndex: hoursIndex, categories: categories, goals: goals)
-        onFinish(signed)
+        onFinish()
     }
 
     // MARK: Body
@@ -100,7 +99,7 @@ struct OnboardingFlow: View {
         ZStack {
             Group {
                 switch step {
-                case .hook: HookStep(next: next)
+                case .hook: HookStep(next: next, startNow: finish)
                 case .guess: GuessStep(guessIndex: $guessIndex, next: next)
                 case .check: CheckStep(restrictions: restrictions, next: next, skip: skipCheck)
                 case .reveal: RevealStep(guessIndex: guessIndex, realIndex: $realIndex, next: next)
@@ -110,8 +109,6 @@ struct OnboardingFlow: View {
                 case .year: YearStep(hoursIndex: hoursIndex ?? 1, next: next)
                 case .goals: GoalsStep(goals: $goals, next: next)
                 case .plan: PlanStep(hoursIndex: hoursIndex, categories: categories, goals: goals, next: next)
-                case .promise: PromiseStep(signed: $signed, goals: goals, next: next)
-                case .plus: PlusOfferStep(plus: plus, next: next)
                 }
             }
             .environment(\.obBack, history.isEmpty || step == .plan ? nil : back)

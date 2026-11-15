@@ -210,7 +210,8 @@ final class FocusUITests: XCTestCase {
             button.tap()
         }
 
-        step("onboarding-1-hook", tap: "TAKE A GUESS")
+        // The long introduction is optional: "See why first" opens it.
+        step("onboarding-1-hook", tap: "See why first")
         step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
         step("onboarding-3-check", tap: "ENABLE SCREEN TIME")
@@ -224,32 +225,92 @@ final class FocusUITests: XCTestCase {
         step("onboarding-7-lock", tap: "Skip for now")
         step("onboarding-8-year", tap: "LET\u{2019}S DO IT")
         step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
-        // "Your first session" moves on by itself.
-        let hold = app.buttons["hold-to-sign"]
-        XCTAssertTrue(hold.waitForExistence(timeout: 15))
-        sleep(1)
-        capture("onboarding-11-promise")
-        hold.press(forDuration: 2.6)
-        // No product in the simulator, so the offer says it is not on sale; "Not now" moves on.
-        step("onboarding-12-plus", tap: "Not now")
+        // "Your first session" moves on by itself and ends the introduction. No promise to sign,
+        // no Plus offer here. The coach takes over on the real Focus screen.
+        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
+        runCoachToSession(app)
+    }
 
-        // The coach uses the real task, duration, and hold controls.
+    /// The short way: one tap on the first slide goes straight to the coach.
+    func testStartNowSkipsTheLongIntroduction() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing-calm-background", "-ui-testing-reset-state", "-ui-testing-onboarding"]
+        app.launch()
+        let start = app.buttons["START NOW"]
+        XCTAssertTrue(start.waitForExistence(timeout: 10))
+        sleep(2)
+        capture("quick-1-hook")
+        start.tap()
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["TAKE A GUESS"].exists)
+        runCoachToSession(app)
+    }
+
+    /// The coach points at the real controls: task, minutes, apps (skipped here, the simulator has
+    /// no Screen Time), then ONE hold. The first-win badge must not appear when the session starts.
+    private func runCoachToSession(_ app: XCUIApplication) {
         app.buttons["work-task"].tap()
         XCTAssertTrue(app.buttons["Studying"].waitForExistence(timeout: 5))
         app.buttons["Studying"].tap()
         capture("coach-task-win")
         XCTAssertTrue(app.buttons["25 minutes"].waitForExistence(timeout: 5))
         app.buttons["25 minutes"].tap()
+        let skipApps = app.buttons["coach-skip-apps"]
+        XCTAssertTrue(skipApps.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["coach-choose-apps"].exists)
+        capture("coach-apps")
+        skipApps.tap()
         let start = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
         capture("coach-hold")
         start.press(forDuration: 2)
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["first-lock-in-stamp"].waitForExistence(timeout: 2))
-        capture("coach-first-lock-in")
+        XCTAssertFalse(app.staticTexts["first-lock-in-stamp"].exists, "the badge belongs to a finished session")
+        capture("coach-session-running")
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    /// Ending early is one calm choice: the time focused still counts, nothing to type or wait out.
+    func testEndingEarlyIsNeutral() {
+        let app = makeApp()
+        app.launchArguments.append("-ui-testing-quit-sheet")
+        app.launch()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        app.buttons["END SESSION"].tap()
+        XCTAssertTrue(app.staticTexts["quit-focused-line"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields.count, 0, "nothing to type")
+        XCTAssertFalse(app.staticTexts["Say it."].exists)
+        capture("quit-neutral")
+        // Keep going returns to the running session.
+        app.buttons["quit-keep-going"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        app.buttons["END SESSION"].tap()
+        XCTAssertTrue(app.buttons["quit-end-session"].waitForExistence(timeout: 5))
+        app.buttons["quit-end-session"].tap()
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    /// A finished session shows the time focused and offers to keep the same task.
+    func testCompletionShowsTimeFocusedAndKeepsTheTask() {
+        let app = makeApp()
+        app.launchArguments += ["-ui-testing-short-session", "-ui-testing-completion-card"]
+        app.launch()
+        app.buttons["work-task"].tap()
+        XCTAssertTrue(app.buttons["Studying"].waitForExistence(timeout: 5))
+        app.buttons["Studying"].tap()
+        app.buttons["Done"].tap()
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["completion-card"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["completion-minutes"].exists)
+        XCTAssertTrue(app.staticTexts["first-lock-in-stamp"].exists, "the first finished session earns the badge")
+        capture("completion-card")
+        app.buttons["completion-keep"].tap()
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+        // The task is still picked for next time.
+        XCTAssertTrue(app.buttons["work-task"].label.contains("Studying"))
     }
 
     func testCoachReduceMotionAndInterruptedHold() {
@@ -260,6 +321,8 @@ final class FocusUITests: XCTestCase {
         app.buttons["work-task"].tap()
         app.buttons["Studying"].tap()
         app.buttons["25 minutes"].tap()
+        XCTAssertTrue(app.buttons["coach-skip-apps"].waitForExistence(timeout: 5))
+        app.buttons["coach-skip-apps"].tap()
         let hold = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(hold.waitForExistence(timeout: 5))
         hold.press(forDuration: 0.3)
@@ -284,19 +347,15 @@ final class FocusUITests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label)")
             button.tap()
         }
-        tap("TAKE A GUESS")
+        tap("See why first")
         tap("Skip")                      // guess
         tap("Not now (keep my guess)")   // Screen Time
         tap("Skip")                      // what pulls you in
         tap("Skip for now")              // lock apps
         XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
         tap("Skip")                      // goals
-        let notNow = app.buttons["Not now"]
-        XCTAssertTrue(notNow.waitForExistence(timeout: 15))   // promise, after the plan prints
-        notNow.tap()
-        capture("onboarding-skip-plus")
-        tap("Not now")                   // offer
-        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
+        // The plan prints, then the introduction ends by itself and the coach starts.
+        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         app.buttons["skip-focus-coach"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
     }
@@ -311,6 +370,6 @@ final class FocusUITests: XCTestCase {
         let replay = app.buttons["Replay intro"]
         XCTAssertTrue(replay.waitForExistence(timeout: 5))
         replay.tap()
-        XCTAssertTrue(app.buttons["TAKE A GUESS"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["START NOW"].waitForExistence(timeout: 10))
     }
 }

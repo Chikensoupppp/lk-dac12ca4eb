@@ -50,11 +50,6 @@ enum BrainLevel {
         return true
     }
 
-    /// Quitting a session early scars today's brain: one stage worse until tomorrow morning.
-    static func markScar(now: Date = .now, defaults: UserDefaults? = shared) {
-        defaults?.set(true, forKey: "brain.\(dayKey(now)).scar")
-    }
-
     struct Today: Equatable {
         /// Highest whole hour reached across watched apps today (0 = under 1 hour).
         var total: Int

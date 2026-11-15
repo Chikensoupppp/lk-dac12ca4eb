@@ -11,14 +11,18 @@ private let hoursTabs = ["1\u{2013}2 HRS", "3\u{2013}4 HRS", "5\u{2013}6 HRS", "
 // MARK: 1. Hook
 
 struct HookStep: View {
+    /// The longer introduction (optional).
     let next: () -> Void
+    /// The short way: straight to the Focus screen, where the coach takes over.
+    let startNow: () -> Void
     @State private var number = "?H ??M"
     @State private var noteShown = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
         PrintScaffold(step: 1, background: Ink.orange, foreground: Ink.paper, title: "Where does\nthe time go?", titleSize: 58, grain: true,
-                      primaryTitle: "TAKE A GUESS", primaryAction: next) {
+                      primaryTitle: "START NOW", primaryAction: startNow,
+                      secondaryTitle: "See why first", secondaryAction: next) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number)
                     .font(PrintFont.head(128))

@@ -1,23 +1,25 @@
 import SwiftUI
 
+/// The first-run coach: task, minutes, distracting apps, then one hold to start. Every step
+/// points at a real control. Skip stays visible the whole time (FocusView draws it).
 enum FocusCoachStep: Equatable {
-    case hello, task, minutes, hold, celebrate
+    case task, minutes, apps, hold, celebrate
 
     var words: String {
         switch self {
-        case .hello: return "Hey. Want the 20-second tour?"
         case .task: return "First — what are we working on?"
         case .minutes: return "Try 25. Long enough to count."
-        case .hold: return "Hold to lock in."
-        case .celebrate: return "First lock-in done."
+        case .apps: return "Which apps pull you away?"
+        case .hold: return "Hold to start."
+        case .celebrate: return "Locked in. Go get it."
         }
     }
 
     var expression: CoachExpression {
         switch self {
-        case .hello: return .cheer
         case .task: return .lookDownRight
         case .minutes: return .lookDown
+        case .apps: return .lookDown
         case .hold: return .keen
         case .celebrate: return .cheer
         }
@@ -30,7 +32,6 @@ struct FocusCoach: View {
     let reduceMotion: Bool
     var pressing = false
     var reward: String? = nil
-    @State private var confettiVisible = false
     @State private var typed = ""
 
     private var words: String { reward ?? step.words }
@@ -64,30 +65,6 @@ struct FocusCoach: View {
                     .rotationEffect(.degrees(reduceMotion ? 0 : -8))
                     .accessibilityIdentifier("coach-reward")
                     .transition(.opacity)
-            }
-            if step == .celebrate {
-                Text("FIRST LOCK-IN · DAY 1")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(Ink.blue)
-                    .padding(8)
-                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Ink.blue, lineWidth: 2))
-                    .accessibilityIdentifier("first-lock-in-stamp")
-                    .overlay {
-                        if !reduceMotion {
-                            HStack(spacing: 10) {
-                                ForEach(0..<6, id: \.self) { index in
-                                    Circle()
-                                        .fill(index.isMultiple(of: 2) ? Ink.sun : Ink.blue)
-                                        .frame(width: 6, height: 6)
-                                        .offset(y: confettiVisible ? (index.isMultiple(of: 2) ? -30 : 30) : 0)
-                                        .opacity(confettiVisible ? 0 : 1)
-                                }
-                            }
-                            .allowsHitTesting(false)
-                            .accessibilityHidden(true)
-                            .onAppear { withAnimation(.easeOut(duration: 1)) { confettiVisible = true } }
-                        }
-                    }
             }
         }
         .accessibilityElement(children: .contain)

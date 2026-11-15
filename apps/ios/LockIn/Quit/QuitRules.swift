@@ -1,15 +1,11 @@
 import Foundation
-import WidgetKit
 
 /// Rules for leaving a session early.
 ///
-/// Free: you can always quit, but it costs you. A wait that only counts while you watch it (and
-/// grows each time this week: 1, 5, then 15 minutes), a sentence you type, and a scar on the
-/// widget brain until tomorrow morning.
-/// Plus "Locked" sessions have no quit button. The ways out are a Key Holder (in person, or a
+/// Free: you can always end a session. It takes one tap and the time you focused still counts.
+/// Plus "Locked" sessions are strict on purpose (the user turns that on themselves) and have no quit button. The ways out are a Key Holder (in person, or a
 /// remote ask through iCloud) or one emergency exit a week with a 15-minute watched wait.
 enum QuitRules {
-    static let sentence = "I'm choosing my phone over my goal"
     static let emergencyWait: TimeInterval = 15 * 60
     /// After a Key Holder says yes from far away, the session ends after this cool-down.
     static let remoteCoolDown: TimeInterval = 10 * 60
@@ -32,22 +28,11 @@ enum QuitRules {
         return defaults.integer(forKey: weekQuitsKey)
     }
 
-    /// The watched wait for the next free quit: 1 minute, then 5, then 15.
-    static func nextQuitWait(_ defaults: UserDefaults = .standard) -> TimeInterval {
-        switch quitsThisWeek(defaults) {
-        case 0: return 60
-        case 1: return 5 * 60
-        default: return 15 * 60
-        }
-    }
-
-    /// Records an early end: counts it for the week and scars today's widget brain.
+    /// Records an early end: counts it for the week. Nothing else happens to the user.
     static func recordEarlyEnd(_ defaults: UserDefaults = .standard) {
         let count = quitsThisWeek(defaults) + 1
         defaults.set(weekKey(), forKey: weekKeyKey)
         defaults.set(count, forKey: weekQuitsKey)
-        BrainLevel.markScar()
-        WidgetCenter.shared.reloadTimelines(ofKind: BrainLevel.widgetKind)
     }
 
     static func emergencyAvailable(_ defaults: UserDefaults = .standard) -> Bool {
@@ -68,16 +53,5 @@ enum QuitRules {
     static func isLocked(_ sessionID: UUID?, _ defaults: UserDefaults = .standard) -> Bool {
         guard let sessionID else { return false }
         return defaults.string(forKey: lockedKey) == sessionID.uuidString
-    }
-
-    /// Does the typed text match the sentence? Only the letters count: case, spaces and every
-    /// kind of apostrophe or period are ignored. The iPhone keyboard swaps in curly or other
-    /// apostrophes and double spaces, so a strict compare rejected correct typing.
-    static func matches(_ typed: String) -> Bool {
-        func clean(_ s: String) -> String {
-            String(s.lowercased().unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }
-                .map(Character.init))
-        }
-        return clean(typed) == clean(sentence)
     }
 }

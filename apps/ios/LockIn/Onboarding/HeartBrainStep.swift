@@ -103,21 +103,6 @@ struct HeartBrainStep: View {
                     .padding(.horizontal, 4).padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 4).fill(HeartArt.panel))
                     .padding(.leading, 12).padding(.top, 9)
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text("\(HeartArt.bpm(stage: stage, t: t))")
-                        .font(PrintFont.mono(30, .heavy))
-                        .monospacedDigit()
-                    Text("BPM").font(PrintFont.mono(10)).tracking(2).opacity(0.7)
-                }
-                .foregroundStyle(HeartArt.bpmColor(stage))
-                .opacity(stage == 4 && Int(t / 0.3) % 2 == 1 ? 0.25 : 1)
-                .padding(.top, 12).padding(.trailing, 14)
-                .frame(width: 92, alignment: .trailing)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .background(alignment: .trailing) {
-                    LinearGradient(colors: [HeartArt.panel.opacity(0), HeartArt.panel], startPoint: .leading, endPoint: UnitPoint(x: 0.22, y: 0.5))
-                        .frame(width: 92)
-                }
             }
         }
         .frame(height: 96)
@@ -125,7 +110,7 @@ struct HeartBrainStep: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0x1F4238), lineWidth: 1.5))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Heart monitor. \(HeartArt.clock(minutes)). \(HeartArt.bpmBase[stage]) beats a minute.")
+        .accessibilityLabel("Heart monitor drawing. \(HeartArt.clock(minutes)).")
     }
 
     private var chips: some View {
