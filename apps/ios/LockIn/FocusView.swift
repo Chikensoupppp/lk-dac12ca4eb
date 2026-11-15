@@ -252,7 +252,7 @@ struct FocusView: View {
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
         .sheet(isPresented: $showTasks) {
             WorkTaskSheet(tasks: tasks, done: { showTasks = false }, onSelection: {
-                if coachStep == .task { showTasks = false; coachStep = .minutes; coachReward = "YES!" }
+                if coachStep == .task { showTasks = false; coachStep = .minutes; coachReward = "Nice." }
             }, skipCoach: coachStep == .task ? { skipCoach() } : nil)
         }
         .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
@@ -279,7 +279,7 @@ struct FocusView: View {
                     selectedMinutes = 25
                 }
                 coachPending = true
-                coachStep = .task
+                coachStep = .hello
             }
         }
         .fullScreenCover(isPresented: $showStreak) {
@@ -296,13 +296,29 @@ struct FocusView: View {
         .overlay(alignment: .topLeading) {
             if let coachStep {
                 VStack(alignment: .leading, spacing: 2) {
-                    Button("Skip") { skipCoach() }
-                        .font(.headline)
-                        .foregroundStyle(Matte.text)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .accessibilityIdentifier("skip-focus-coach")
+                    if coachStep != .hello {
+                        Button("Skip") { skipCoach() }
+                            .font(.headline)
+                            .foregroundStyle(Matte.text)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .accessibilityIdentifier("skip-focus-coach")
+                    }
                     FocusCoach(step: coachStep, reduceMotion: reduceMotion, pressing: coachPressing, reward: coachReward)
                         .allowsHitTesting(false)
+                    if coachStep == .hello {
+                        HStack(spacing: 12) {
+                            Button("Start the tour") { coachStep = .task }
+                                .buttonStyle(.borderedProminent)
+                                .tint(Ink.blue)
+                                .accessibilityIdentifier("coach-start-tour")
+                            Button("Skip") { skipCoach() }
+                                .buttonStyle(.bordered)
+                                .tint(Ink.ink)
+                                .accessibilityIdentifier("skip-focus-coach")
+                        }
+                        .controlSize(.large)
+                        .font(.headline)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .transition(.opacity)
@@ -319,7 +335,7 @@ struct FocusView: View {
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
         .onAppear {
-            if onboardingDone && coachPending && timing == nil { coachStep = .task }
+            if onboardingDone && coachPending && timing == nil { coachStep = .hello }
             updateBrainWatch()
             runProofCheck()
             checkKeyRequests()

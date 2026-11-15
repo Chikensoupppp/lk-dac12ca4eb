@@ -1,19 +1,21 @@
 import SwiftUI
 
 enum FocusCoachStep: Equatable {
-    case task, minutes, hold, celebrate
+    case hello, task, minutes, hold, celebrate
 
     var words: String {
         switch self {
-        case .task: return "What are we working on?"
-        case .minutes: return "Pick your focus time."
+        case .hello: return "Hey. Want the 20-second tour?"
+        case .task: return "First — what are we working on?"
+        case .minutes: return "Try 25. Long enough to count."
         case .hold: return "Hold to lock in."
-        case .celebrate: return "You did it!"
+        case .celebrate: return "First lock-in done."
         }
     }
 
     var expression: CoachExpression {
         switch self {
+        case .hello: return .cheer
         case .task: return .lookDownRight
         case .minutes: return .lookDown
         case .hold: return .keen

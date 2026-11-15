@@ -31,15 +31,14 @@ paragraphs in the app.
 
 ## Brain mascot (changed 2026-11-13)
 - Owner correction in this session: use the exact right-hand artwork on the black background, not a code redraw. `docs/design/brain-mascot-exact.png` is that image with only its black surround removed. Identical PNGs are bundled by both apps; facial expressions and existing mood marks are layered on top. `scripts/extract-brain-assets.py` reproduces the assets from the owner's comparison image.
-- Brandon picked the soft plush brain made in Figma (`docs/design/brain-mascot-chosen.png`, Figma
-  file "Lock In brain mascot"). Drawn in code to match, in both `apps/ios/BrainArt/BrainDrawing.swift`
-  and `apps/windows-companion/Watch/BrainArt.cs` (keep them in step): oval wider than tall, a smooth
+- The soft plush brain is now bundled as the exact raster artwork in both `apps/ios/BrainArt/BrainDrawing.swift`
+  and `apps/windows-companion/Watch/BrainArt.cs` (keep assets and expressions in step): oval wider than tall, a smooth
   round dome on top (Brandon asked for a rounder top; approved) and puffy bumps on the sides and bottom, pastel pink (#F9BAD2) with a darker lower half, soft plum outline (#6B4561), cream
   sticker edge, swirl folds and a split on top, short glossy marks, smaller eyes set wider, oval
   blush, tiny smile. All moods (sleepy to rotten) keep their marks and colors.
 - Rejected: realistic dense folds with blue eyes ("too scary"), code-drawn detailed folds ("horrible").
 
-## First-run coach (designed 2026-11-13, not built)
+## First-run coach (implemented 2026-11-13, physical-device review pending)
 - Mock `docs/design/tutorial-mock.html`, animated prototype `docs/design/tutorial-proto.html`
   (poses in `docs/design/tutorial-assets/`, drawn by `LockIn.Companion.exe --draw-poses`).
 - The pink brain coaches the user through a real first session: Working on, minutes, hold to lock

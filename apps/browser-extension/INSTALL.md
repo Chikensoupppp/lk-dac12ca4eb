@@ -36,13 +36,5 @@ To install:
 
 1. Open Firefox, go to `about:addons`.
 2. Click the gear icon, then **Install Add-on From File**.
-3. Pick `apps\browser-extension-builds\lockin-focus-buddy-firefox-0.1.0.xpi`.
+3. Pick `apps\browser-extension-builds\lockin-focus-buddy-firefox-0.2.0.xpi`.
 
-Note: that file is version 0.1.0, which is older. The "Save it for later" button needs a newer signed
-version. A new signed file needs a higher version number in `manifest.json` and a new signing run.
-
-## Later: Chrome Web Store (no Developer mode for anyone)
-
-When the Chrome Web Store listing exists (one-time $5 developer fee), people install from the store
-and never see Developer mode. The store gives the extension a new ID, so the companion's
-`NativeHost.ExtensionId` must be updated to match.

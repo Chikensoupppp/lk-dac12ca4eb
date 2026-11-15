@@ -1,23 +1,15 @@
 # Handoff
 
-## Coach completion and CI - 2026-11-13
+## Current work - 2026-11-13
 
-- macOS 43531411677 compiled all iOS code but failed three UI assertions. Fixed the hold conflict by using the same non-Button long-press pattern as the proven promise control; fixed debug pending flag persistence and removed hidden toolbar buttons from the active accessibility tree (7249ace). New run 43533273116 pending.
-- Save for Later source is complete. Local checks: 128 Windows and 3 Node browser tests, including actual duplex private-pipe request round-trip, encrypted persistence, corruption preservation, concurrency and rendered save hit target. No full live browser-to-buddy save has been observed. UI renders use synthetic fixtures only. Both app and unpacked extension 0.2.0 must be updated; signed Firefox XPI is still 0.1.0. Reopen persisted list with `LockIn.Companion.exe --later`.
-- Used two independent reviewers total (owner cap); no further subagents. Final review found and fixed data-loss risks plus stale sparkles/gloss on degraded mood layers. Normal `BrainExact` stays pristine.
-
-- Owner explicitly replaced the drawn approximation with the exact right-hand mascot from his comparison image. Both apps now bundle identical raster assets; normal artwork is an exact crop with black surround removed. Expression layers clear only eyes/mouth and preserve the original body. Mood colors/marks remain. Extraction script: `scripts/extract-brain-assets.py`.
-
-- Pulled clean branch at 82db621. Coach parity changes add typed bubbles, downward/directional gaze, star-eye rewards, YES!/NICE! stickers, hold shake, and target dimming. Approved brain body and mood marks are preserved. Independent source review caught and fixed typing cancellation and routes that hid Skip.
-- Local Windows checks pass. iOS CI for 87dc071 is running (43531411677); compilation and rendered behavior remain pending. GitHub billing prevented private-repo jobs, so visibility was temporarily changed to public with owner authorization; restore private after CI/TestFlight.
-- No local iOS simulator is available. Preview rejected the local prototype file URL; fallback browser host is unavailable. Prototype comparison so far is against its animation source.
-- Save for Later is next; signed Firefox XPI remains the old version.
-
-## Current work — 2026-11-13
-
-- `SessionWatch` detects expiry without requiring a phone message, celebrates for six seconds only when the buddy is enabled, and avoids a late tick showing after a session ends. `CompletionTiming` has boundary checks. Windows checks passed locally; the on-screen transition still needs live verification.
-- The first-run Focus coach and session payload's `allow` array were added to Swift source. The coach uses real task, duration, and hold controls; skip is available, and the pending coach state survives relaunch. These changes have not yet passed iOS CI or been rendered. The phone currently sends an empty allow list unless an explicit caller supplies one; the PC merges remembered task allowances.
-- Save for Later remains to be implemented. Do not claim URL privacy or a working list before testing the browser-to-companion path. The signed Firefox XPI is an older build and must not be represented as containing future extension changes.
+- Pulled clean branch at 82db621. Coach gaps filled: typed bubbles, gaze, star-eye YES!/NICE! rewards, charge-up shake, dimmed non-target controls, always-reachable Skip, Reduce Motion fades. The hold uses the proven non-Button gesture pattern after CI exposed a recognizer conflict. Coach persistence and active toolbar accessibility are fixed (7249ace).
+- The owner requires the EXACT right-hand artwork from his comparison image. Both apps bundle the same PNGs; 76,504 original non-background pixels are unchanged in the normal asset. Expressions replace only the face. Degraded mood layers retain colors and damage marks, lose sparkles after stage 1 and gloss after stage 2. `scripts/extract-brain-assets.py` reproduces them; reference is `docs/design/brain-mascot-exact.png`.
+- Windows CI 43533952859 passed: 128 checks plus 3 Node extension tests. Tests include encrypted persistence, corrupt-store preservation, concurrent store instances, single-use session/window-bound URL requests, actual duplex private-pipe round-trip and rendered save-button hit targets. UI renders use synthetic fixtures only.
+- Save for Later is implemented in e846ee5. A buddy click requests the active YouTube/Reddit URL over native messaging; only chosen links are saved locally (Windows DPAPI). The list opens at natural or early session end; `LockIn.Companion.exe --later` reopens it. No cloud processing, page contents, screenshots or keylogging. Full live browser-to-buddy click-through remains unverified because the browser host is unavailable. Update both companion and unpacked extension 0.2.0; signed Firefox XPI remains 0.1.0.
+- Natural-expiry PC cheer remains six seconds. Deterministic timing checks pass; live desktop transition remains unverified. The phone sends buddy/guardian settings and an optional allow list; remembered task allowances merge on PC.
+- iOS main build/test step PASSED in 43535356052 (fb21ffd), after fixing hold recognition, pending state, hidden toolbar accessibility and the stamp's too-short lifetime (now six seconds). Compact/large-device checks remain in progress. Signed archive/export 43535496068 PASSED on the same iOS source (export only, no upload). TestFlight upload awaits the remaining device checks.
+- GitHub private-repo billing blocked jobs. Repository is temporarily public with owner authorization; restore private after CI/TestFlight. Two independent reviewers were used total (owner's cap); data-loss and mood-layer findings are fixed. No further subagents.
+- No local iOS simulator is available. The prototype video was inspected through extracted frames and its animation source. Preview rejected the local file URL; fallback browser host is unavailable. Physical-device Screen Time, VoiceOver and system Reduce Motion remain unverified.
 
 ## Current state
 

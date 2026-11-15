@@ -2,19 +2,12 @@
 
 ## Active verification - 2026-11-13
 
-- Exact owner-selected right-hand bitmap now replaces the code approximation in iOS and Windows (016e845). Mood layers retain their existing colors/marks; normal art remains unchanged.
-- First actual macOS run 43531411677 compiled but failed UI tests (hold gesture conflict, debug coach persistence, hidden-toolbar accessibility). Root fixes pushed as 7249ace; replacement run 43533273116 is in progress.
-- Save for Later is implemented: explicit buddy click requests the active YouTube/Reddit URL over native messaging, encrypted local storage, session-end list and `--later` reopening. 128 Windows checks and 3 browser-handler tests pass locally; live browser click-through remains unverified. Independent review fixes preserve unreadable stores and serialize cross-process edits. Firefox signed 0.1.0 XPI remains old.
-
-- Coach parity implemented and pushed at 87dc071; follow-up review fixes pending push. Windows checks pass locally. iOS CI 43531411677 is running; no current compile/render claim.
-- Repository temporarily public to bypass GitHub account billing block, explicitly authorized by owner. Restore private after verification/upload.
-- TestFlight upload and Save for Later remain pending.
-
-## 2026-11-13 work in progress
-
-- PC buddy detects natural session expiry and displays a six-second cheer; four deterministic timing checks and the existing Windows checks passed locally. Actual desktop behavior has not yet been observed.
-- First-run Focus coach and iPhone session-start allow-list payload are implemented in source; iOS compilation, simulator behavior, screenshots, and physical-device behavior are pending.
-- Save for Later is not implemented yet. No TestFlight build has been uploaded for these changes.
+- Exact owner-selected right-hand bitmap replaces the code approximation in iOS and Windows; normal asset preserves 76,504 original artwork pixels. Both apps bundle byte-identical PNGs. Expressions and existing mood marks/colors remain layered on top.
+- Coach parity is implemented. Final main build/test step PASSED in 43535356052 (fb21ffd); compact/large-device checks are pending. CI exposed and fixed hold recognition, debug persistence, hidden-toolbar accessibility and an unreadably short stamp display (now six seconds).
+- Signed archive and export 43535496068 PASSED on the final iOS source. This was export only; TestFlight upload awaits the remaining simulator checks.
+- Save for Later is implemented and pushed as e846ee5: explicit buddy click requests the active YouTube/Reddit URL, encrypted local list, session-end display and `--later` reopening. Windows CI 43533952859 PASSED (128 Windows checks and 3 browser-handler tests). Live browser click-through remains unverified. Signed Firefox 0.1.0 XPI is older than this feature.
+- Two independent reviewers total; corruption overwrite, concurrent store updates and degraded-mood decorations were fixed. PC natural-expiry cheer timing checks pass; actual desktop transition and physical iPhone behavior remain unverified.
+- Repository temporarily public to bypass the GitHub account billing block, explicitly authorized by owner. Restore private after validation/upload.
 
 Updated: 2026-11-02 (branch ios/native-clock-ci)
 

@@ -12,7 +12,7 @@ Version 0.2.0 also supports the buddy's "Save it for later" button. It polls for
 browsing data. Only after that button is clicked does it read the active tab of the focused window
 and send its HTTPS YouTube/Reddit URL to the companion on this PC. It never reads browser history.
 The companion encrypts saved links for this Windows user and shows them when the session ends.
-The signed Firefox 0.1.0 XPI is older; reload this unpacked version for the new feature.
+The signed Firefox 0.2.0 XPI has this feature.
 
 ## How it reaches the PC
 Chrome native messaging (`chrome.runtime.connectNative("com.lockin.guardian")`). Chrome starts
