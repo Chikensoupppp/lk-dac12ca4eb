@@ -211,7 +211,9 @@ struct FocusView: View {
             FocusBackdrop(timing: timing, flash: flash)
 
             GeometryReader { geo in
-                let side = max(min(geo.size.width - 48, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : (geo.size.height < 700 ? 0.36 : 0.45))), 140)
+                // Short phones (SE): the clock gives up space first, so the buttons below always fit.
+                let roomForClock = geo.size.height < 700 ? geo.size.height - 470 : .infinity
+                let side = max(min(geo.size.width - 48, roomForClock, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : (geo.size.height < 700 ? 0.36 : 0.45))), 110)
 
                 VStack(spacing: 0) {
                     // Its own row, so the buttons can never sit on the title. Hidden (but still
@@ -297,7 +299,7 @@ struct FocusView: View {
                     .opacity(isLocked ? 0 : 1)
                     .allowsHitTesting(!isLocked)
                     .accessibilityHidden(isLocked)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, geo.size.height < 700 ? 12 : 24)
 
                     focusButton
                 }
