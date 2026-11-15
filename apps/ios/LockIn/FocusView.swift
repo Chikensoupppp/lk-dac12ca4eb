@@ -386,7 +386,15 @@ struct FocusView: View {
                 if coachStep == .task { showTasks = false; coachStep = .minutes; coachReward = "Nice." }
             }, skipCoach: coachStep == .task ? { skipCoach() } : nil)
         }
-        .sheet(isPresented: $showGoals) { GoalSheet(goals: goals) { showGoals = false } }
+        .sheet(isPresented: $showGoals) {
+            GoalSheet(goals: goals, onDone: { showGoals = false }, onStart: timing == nil ? {
+                showGoals = false
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(450))
+                    if timing == nil { startFromButton() }
+                }
+            } : nil)
+        }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
         .sheet(isPresented: $showPlusOffer, onDismiss: advanceAfterSession) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }

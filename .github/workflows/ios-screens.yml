@@ -45,7 +45,7 @@ jobs:
           SPECS=("16:iPhone 16 Pro:iPhone 16:iPhone 15" "SE:iPhone SE (3rd generation):iPhone 16e")
           # A `screens-new-*` tag photographs only the newest screens, on both small and normal phones.
           if [[ "${GITHUB_REF_NAME:-}" == screens-new* ]]; then
-            SHOTS="goals"
+            SHOTS="goals report"
           fi
           for spec in "${SPECS[@]}"; do
             label="${spec%%:*}"; names="${spec#*:}"
