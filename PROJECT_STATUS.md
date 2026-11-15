@@ -1,5 +1,10 @@
 # Project status
 
+## Mobile milestone - 2026-11-15
+
+- Implemented and CI-verified (run 43749652340, commit 1b1e77b): shorter first run, single hold, Plus after first finished session, optional coach, neutral quit with partial credit, completion card, "Selected apps" widget wording, small-iPhone LOCK IN fit.
+- Unverified: physical device, Screen Time picker in the coach, VoiceOver, real widget. Nudge notification, tools hint, if-then line and streak grace are not built. No TestFlight upload for this change.
+
 ## Active verification - 2026-11-13
 
 - Exact owner-selected right-hand bitmap replaces the code approximation in iOS and Windows; normal asset preserves 76,504 original artwork pixels. Both apps bundle byte-identical PNGs. Expressions and existing mood marks/colors remain layered on top.
