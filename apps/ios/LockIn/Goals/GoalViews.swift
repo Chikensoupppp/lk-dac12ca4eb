@@ -19,7 +19,9 @@ private enum GoalInk {
 private let dayLetters = ["M", "T", "W", "T", "F", "S", "S"]
 private let dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-/// Seven bars, Monday to Sunday, scaled to a day's share of the goal.
+/// Seven day bars, Monday to Sunday. A dashed line marks one day's share of the goal: days that
+/// reach it are full color, shorter days are lighter, empty days are a pale stub. Today's letter
+/// sits in a sunflower dot.
 private struct WeekBars: View {
     let week: FocusLog.Week
     let goal: Int?
@@ -27,30 +29,68 @@ private struct WeekBars: View {
     var fill: Color = GoalInk.green
     var empty: Color = GoalInk.empty
     var today: Int?
+    private let height: CGFloat = 112
+
+    /// Minutes a day needs to carry its share of the goal.
+    private var target: Double? { goal.map { Double($0 * 60) / 7 } }
+
+    /// The bar scale: the dashed line sits about two thirds up, and a long day is never clipped.
+    private var full: Double {
+        let tallest = Double(week.days.map(\.minutes).max() ?? 0)
+        return max((target ?? 40) * 1.5, tallest, 1)
+    }
+
+    private func barColor(_ minutes: Int) -> Color {
+        if minutes == 0 { return empty }
+        guard let target else { return fill }
+        return Double(minutes) >= target ? fill : fill.opacity(0.42)
+    }
 
     var body: some View {
-        // A full bar is a day that did a fifth of the goal, so a normal week fills most bars.
-        let full = max(Double((goal ?? GoalStore.suggested) * 60) / 5, Double(week.days.map(\.minutes).max() ?? 0), 1)
-        HStack(alignment: .bottom, spacing: 6) {
-            ForEach(0..<7, id: \.self) { i in
-                VStack(spacing: 4) {
-                    GeometryReader { geo in
-                        VStack(spacing: 0) {
-                            Spacer(minLength: 0)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(week.days[i].minutes > 0 ? fill : empty)
-                                .frame(height: max(6, geo.size.height * min(Double(week.days[i].minutes) / full, 1)))
-                        }
-                    }
-                    Text(dayLetters[i])
-                        .font(PrintFont.mono(11, i == today ? .heavy : .medium))
-                        .foregroundStyle(ink.opacity(i == today ? 1 : 0.55))
+        VStack(spacing: 8) {
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(0..<7, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(barColor(week.days[i].minutes))
+                        .frame(height: max(8, height * min(Double(week.days[i].minutes) / full, 1)))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: height, alignment: .bottom)
+            .overlay { targetLine }
+
+            HStack(spacing: 8) {
+                ForEach(0..<7, id: \.self) { i in
+                    dayLabel(i)
                 }
             }
         }
-        .frame(height: 96)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel((0..<7).map { "\(dayNames[$0]) \(FocusLog.format(minutes: week.days[$0].minutes))" }.joined(separator: ", "))
+    }
+
+    @ViewBuilder private var targetLine: some View {
+        if let target {
+            GeometryReader { geo in
+                Path { p in
+                    let y = geo.size.height * (1 - min(target / full, 1))
+                    p.move(to: CGPoint(x: 0, y: y))
+                    p.addLine(to: CGPoint(x: geo.size.width, y: y))
+                }
+                .stroke(ink.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            }
+            .allowsHitTesting(false)
+        }
+    }
+
+    private func dayLabel(_ i: Int) -> some View {
+        let isToday = i == today
+        return Text(dayLetters[i])
+            .font(PrintFont.mono(12, isToday ? .heavy : .medium))
+            .foregroundStyle(isToday ? Ink.ink : ink.opacity(0.55))
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(isToday ? Ink.sun : Color.clear))
+            .frame(maxWidth: .infinity)
     }
 }
 
@@ -68,41 +108,31 @@ struct GoalSheet: View {
     private var todayIndex: Int { (FocusLog.calendar.component(.weekday, from: .now) + 5) % 7 }
     private var lastWeek: Date? { FocusLog.calendar.date(byAdding: .day, value: -7, to: FocusLog.weekStart(.now)) }
 
+    private var range: String {
+        let start = FocusLog.weekStart(.now)
+        let end = FocusLog.calendar.date(byAdding: .day, value: 6, to: start) ?? start
+        let f = Date.FormatStyle().month(.abbreviated).day()
+        return "\(start.formatted(f)) \u{2013} \(end.formatted(f))".uppercased()
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                HStack {
-                    Text("THIS WEEK")
-                        .font(PrintFont.mono(13, .heavy)).tracking(2)
-                        .foregroundStyle(GoalInk.green)
-                    Spacer()
-                    Button("Done", action: onDone)
-                        .font(PrintFont.body(16, .bold))
-                        .foregroundStyle(GoalInk.cream)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                progress
+            VStack(alignment: .leading, spacing: 20) {
+                header
+                hero
+                if let goal { punchCard(goal: goal) }
                 WeekBars(week: week, goal: goal, today: todayIndex)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
+                statsLine
 
                 divider
                 goalPicker
-                divider
                 reminders
+                    .padding(16)
+                    .background(RoundedRectangle(cornerRadius: 18).fill(GoalInk.panel))
 
                 if let lastWeek, !FocusLog.week(of: lastWeek).isEmpty || goals.goal(forWeekOf: lastWeek) != nil {
-                    Button { report = ReportWeek(id: lastWeek) } label: {
-                        HStack {
-                            Text("LAST WEEK'S REPORT")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .font(PrintFont.mono(14, .heavy))
-                        .foregroundStyle(GoalInk.cream)
-                        .padding(.horizontal, 16)
-                        .frame(minHeight: 52)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(GoalInk.panel))
-                    }
+                    lastWeekTicket(lastWeek)
                 }
             }
             .padding(24)
@@ -116,57 +146,123 @@ struct GoalSheet: View {
         }
     }
 
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("THIS WEEK")
+                    .font(PrintFont.mono(13, .heavy)).tracking(2)
+                    .foregroundStyle(GoalInk.green)
+                Text(range)
+                    .font(PrintFont.mono(11, .medium))
+                    .foregroundStyle(GoalInk.cream.opacity(0.55))
+            }
+            Spacer()
+            Button("Done", action: onDone)
+                .font(PrintFont.body(16, .bold))
+                .foregroundStyle(GoalInk.cream)
+                .frame(minWidth: 44, minHeight: 44)
+        }
+    }
+
     private var divider: some View {
         Rectangle().fill(GoalInk.cream.opacity(0.12)).frame(height: 1)
     }
 
-    @ViewBuilder private var progress: some View {
-        let done = week.minutes
-        Text(FocusLog.format(minutes: done))
-            .font(PrintFont.head(72))
-            .foregroundStyle(GoalInk.cream)
-            .accessibilityLabel("\(FocusLog.format(minutes: done)) focused this week")
+    /// How the brain looks at the week so far: calm, then keen, then cheering once the goal is hit.
+    private var mood: CoachExpression {
+        guard let goal else { return .normal }
+        let percent = week.minutes * 100 / (goal * 60)
+        return percent >= 100 ? .cheer : (percent >= 50 ? .keen : .normal)
+    }
+
+    private var hero: some View {
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                // Two-ink "misprint": a sunflower copy sits just behind the black numerals.
+                ZStack(alignment: .leading) {
+                    Text(FocusLog.format(minutes: week.minutes))
+                        .foregroundStyle(Ink.sun)
+                        .offset(x: 3, y: 3)
+                        .accessibilityHidden(true)
+                    Text(FocusLog.format(minutes: week.minutes))
+                        .foregroundStyle(GoalInk.cream)
+                }
+                .font(PrintFont.head(72))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(FocusLog.format(minutes: week.minutes)) focused this week")
+                subtitle
+            }
+            Spacer(minLength: 0)
+            BrainCanvas(stage: 0, expression: mood)
+                .frame(width: 88, height: 74)
+                .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder private var subtitle: some View {
         if let goal {
+            let done = week.minutes
             let percent = min(done * 100 / (goal * 60), 100)
             Text(done >= goal * 60 ? "Goal hit. \(goal) hours done." : "of your \(goal)-hour goal \u{00B7} \(percent)%")
-                .font(PrintFont.body(17, .bold))
+                .font(PrintFont.body(16, .bold))
                 .foregroundStyle(done >= goal * 60 ? GoalInk.green : GoalInk.cream.opacity(0.8))
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(GoalInk.empty)
-                    Capsule().fill(GoalInk.green)
-                        .frame(width: max(12, geo.size.width * Double(percent) / 100))
-                }
-            }
-            .frame(height: 12)
-            .accessibilityHidden(true)
         } else {
-            Text("focused this week. Set a goal to see how far along you are.")
+            Text("focused. Set a goal below.")
                 .font(PrintFont.body(16))
                 .foregroundStyle(GoalInk.cream.opacity(0.8))
+        }
+    }
+
+    /// One slot for every hour of the goal. Each fills blue as the hours add up, like a punch card.
+    private func punchCard(goal: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<goal, id: \.self) { hour in
+                let fraction = min(max(Double(week.minutes - hour * 60) / 60, 0), 1)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 7).fill(GoalInk.empty)
+                        RoundedRectangle(cornerRadius: 7).fill(GoalInk.green)
+                            .frame(width: geo.size.width * fraction)
+                    }
+                }
+                .frame(height: 24)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(min(week.minutes / 60, goal)) of \(goal) goal hours filled")
+    }
+
+    @ViewBuilder private var statsLine: some View {
+        let parts = statParts
+        if !parts.isEmpty {
+            Text(parts.joined(separator: "  \u{00B7}  "))
+                .font(PrintFont.mono(12, .heavy))
+                .tracking(1)
+                .foregroundStyle(GoalInk.cream.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
+    private var statParts: [String] {
+        var parts: [String] = []
+        if week.sessions > 0 { parts.append("\(week.sessions) SESSION\(week.sessions == 1 ? "" : "S")") }
+        if let best = week.bestDay { parts.append("BEST \(dayNames[best].prefix(3).uppercased())") }
+        let streak = StreakStore.current()
+        if streak > 0 { parts.append("STREAK \(streak)D") }
+        return parts
+    }
+
     private var goalPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("WEEKLY GOAL")
+        VStack(alignment: .leading, spacing: 12) {
+            Text("WEEKLY GOAL \u{00B7} HOURS")
                 .font(PrintFont.mono(13, .heavy)).tracking(2)
                 .foregroundStyle(GoalInk.cream.opacity(0.7))
-            HStack(spacing: 14) {
-                stepButton("minus", enabled: draft > GoalStore.range.lowerBound) { change(-1) }
-                VStack(spacing: 0) {
-                    Text("\(draft)")
-                        .font(PrintFont.head(56))
-                        .monospacedDigit()
-                    Text("HOURS")
-                        .font(PrintFont.mono(11, .heavy)).tracking(2)
+            HStack(spacing: 6) {
+                ForEach(Array(GoalStore.range), id: \.self) { hours in
+                    goalChip(hours)
                 }
-                .foregroundStyle(GoalInk.cream)
-                .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(draft) hours a week")
-                stepButton("plus", enabled: draft < GoalStore.range.upperBound) { change(1) }
             }
             Text("About \(FocusLog.format(minutes: draft * 60 / 7)) a day.")
                 .font(PrintFont.body(15))
@@ -178,22 +274,57 @@ struct GoalSheet: View {
         }
     }
 
-    private func change(_ by: Int) {
-        draft = min(max(draft + by, GoalStore.range.lowerBound), GoalStore.range.upperBound)
-        if goal != nil { goals.setGoal(draft) }
+    private func goalChip(_ hours: Int) -> some View {
+        let on = hours == draft
+        return Button {
+            draft = hours
+            if goal != nil { goals.setGoal(hours) }
+        } label: {
+            Text("\(hours)")
+                .font(PrintFont.head(26))
+                .foregroundStyle(on ? GoalInk.bg : GoalInk.cream)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(RoundedRectangle(cornerRadius: 14).fill(on ? GoalInk.green : GoalInk.panel))
+                .shadow(color: on ? Ink.sun : .clear, radius: 0, x: 3, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(hours) hours a week")
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    private func stepButton(_ icon: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .heavy))
-                .foregroundStyle(GoalInk.bg)
-                .frame(width: 56, height: 56)
-                .background(Circle().fill(GoalInk.cream))
+    /// A small ticket for last week: the time, the stamp, and a way into the full report.
+    private func lastWeekTicket(_ start: Date) -> some View {
+        let past = FocusLog.week(of: start)
+        let pastGoal = goals.goal(forWeekOf: start)
+        let hit = pastGoal.map { past.minutes >= $0 * 60 } ?? false
+        return Button { report = ReportWeek(id: start) } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("LAST WEEK'S REPORT")
+                        .font(PrintFont.mono(11, .heavy)).tracking(1.5)
+                        .foregroundStyle(GoalInk.cream.opacity(0.6))
+                    Text(FocusLog.format(minutes: past.minutes))
+                        .font(PrintFont.head(32))
+                        .foregroundStyle(GoalInk.cream)
+                }
+                Spacer()
+                if pastGoal != nil {
+                    Stamp(text: hit ? "Goal hit" : "Missed", color: hit ? Ink.blue : Ink.red, size: 14, tilt: hit ? -8 : 6)
+                        .fixedSize()
+                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(GoalInk.cream)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 22)
+            .frame(minHeight: 72)
+            .background(ReceiptEdge().fill(GoalInk.panel))
         }
-        .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.3)
-        .accessibilityLabel(icon == "plus" ? "One hour more" : "One hour less")
+        .buttonStyle(.plain)
+        .accessibilityLabel("Last week's report. \(FocusLog.format(minutes: past.minutes)) focused.")
+        .accessibilityIdentifier("last-week-report")
     }
 
     @AppStorage(IfThenPlan.onKey) private var ifThenOn = false
@@ -240,7 +371,7 @@ struct GoalSheet: View {
                     .font(PrintFont.body(17, .regular))
                     .padding(.horizontal, 14)
                     .frame(minHeight: 48)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(GoalInk.cream.opacity(0.12)))
+                    .background(RoundedRectangle(cornerRadius: 12).fill(GoalInk.cream.opacity(0.08)))
                     .onChange(of: ifThenCue) { _, value in
                         if value.count > IfThenPlan.maxLength { ifThenCue = String(value.prefix(IfThenPlan.maxLength)) }
                     }
@@ -313,10 +444,19 @@ struct WeekReportView: View {
             .font(PrintFont.mono(11, .heavy))
             .foregroundStyle(Ink.soft)
 
-            Text(headline.uppercased())
-                .font(PrintFont.head(58))
-                .foregroundStyle(Ink.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // Two-ink "misprint": a sunflower copy sits just behind the black headline.
+            ZStack(alignment: .topLeading) {
+                Text(headline.uppercased())
+                    .foregroundStyle(Ink.sun)
+                    .offset(x: 3, y: 3)
+                    .accessibilityHidden(true)
+                Text(headline.uppercased())
+                    .foregroundStyle(Ink.ink)
+            }
+            .font(PrintFont.head(58))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(headline)
             // The stamp gets its own space beside the line, so it never covers the numbers.
             HStack(alignment: .center, spacing: 12) {
                 Text(line)
@@ -334,6 +474,10 @@ struct WeekReportView: View {
             WeekBars(week: week, goal: goal, ink: Ink.ink, fill: Ink.ink, empty: Ink.ink.opacity(0.1))
                 .padding(.vertical, 6)
 
+            // A dashed tear line between the picture and the numbers, like a printed receipt.
+            Rectangle()
+                .stroke(Ink.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                .frame(height: 1)
             VStack(spacing: 8) {
                 ReceiptRow(label: "Focused", value: FocusLog.format(minutes: week.minutes), bold: true)
                 ReceiptRow(label: "Sessions finished", value: "\(week.sessions)")
