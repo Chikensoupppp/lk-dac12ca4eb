@@ -566,7 +566,7 @@ struct WeekReportView: View {
                 if let best = week.bestDay {
                     ReceiptRow(label: "Best day", value: dayNames[best])
                 }
-                ReceiptRow(label: "Quit early", value: "\(week.quits)", color: Ink.ink)
+                ReceiptRow(label: "Ended early", value: "\(week.quits)", color: Ink.ink)
                 if let previous, !previous.isEmpty {
                     let diff = week.minutes - previous.minutes
                     ReceiptRow(label: "Vs last week",
@@ -595,11 +595,19 @@ struct WeekReportView: View {
                     .font(PrintFont.bold(24))
                     .foregroundStyle(GoalInk.cream)
             } else {
-                Button(goal == nil ? "START WITH \(base) HOURS" : (hit ? "STAY AT \(base) HOURS" : "TRY \(base) HOURS AGAIN")) { pick(base) }
-                    .buttonStyle(PrintButtonStyle(fill: hit ? GoalInk.panel : GoalInk.tangerine, text: GoalInk.cream))
-                if goal != nil && other != base {
-                    Button(hit ? "GO BIGGER: \(other) HOURS" : "EASE OFF: \(other) HOURS") { pick(other) }
-                        .buttonStyle(PrintButtonStyle(fill: hit ? GoalInk.tangerine : GoalInk.panel, text: GoalInk.cream))
+                if hit && other != base {
+                    // Goal hit: the bigger goal leads; staying put is the quiet choice.
+                    Button("GO BIGGER: \(other) HOURS") { pick(other) }
+                        .buttonStyle(PrintButtonStyle(fill: GoalInk.tangerine, text: GoalInk.cream))
+                    Button("STAY AT \(base) HOURS") { pick(base) }
+                        .buttonStyle(PrintButtonStyle(fill: GoalInk.panel, text: GoalInk.cream))
+                } else {
+                    Button(goal == nil ? "START WITH \(base) HOURS" : (hit ? "STAY AT \(base) HOURS" : "TRY \(base) HOURS AGAIN")) { pick(base) }
+                        .buttonStyle(PrintButtonStyle(fill: GoalInk.tangerine, text: GoalInk.cream))
+                    if goal != nil && other != base {
+                        Button("EASE OFF: \(other) HOURS") { pick(other) }
+                            .buttonStyle(PrintButtonStyle(fill: GoalInk.panel, text: GoalInk.cream))
+                    }
                 }
             }
             Button(chosen == nil ? "Decide later" : "Done", action: onDone)
