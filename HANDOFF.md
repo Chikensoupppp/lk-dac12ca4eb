@@ -1,5 +1,15 @@
 # Handoff
 
+## Habit features - 2026-11-15 (CI 43754543243 green on 426ae7b)
+
+- Streak rest day: one missed day keeps a streak alive if the days around it were finished; usable once per 7 days (`StreakStore.run`). The streak screen says "rest day used. nice save".
+- Daily reminder (`Nudge.swift`, `DailyNudge`): optional row on the finish card, "Remind me tomorrow at <start time>". Asks notification permission only on tap. Off switch in the weekly goal sheet.
+- Tools hint: one bubble under the top-right buttons after the first finished session, once (`lockin.toolsHint.v1`).
+- If-then line: default off; toggle and text in the weekly goal sheet; shows "When <cue>, I lock in." on Focus.
+- Allowed on PC: per-task list (`AllowedApps`, `AllowedAppsSheet`), opened from the task picker, sent as `allow` with the session start. PC-side matching of names is unverified on a real PC.
+- First-run bug fixed (53aee12): LOCK IN and the hold button start on a tap while the coach shows. Shipped as testflight-33. The habit features are NOT in testflight-33.
+- Cleanup: removed the test-only Chromium native-messaging registry key for `com.lockin.guardian`. BlockP is still installed in Program Files; nothing of it was removed.
+
 ## Mobile milestone - 2026-11-15 (CI 43749652340 green on 1b1e77b)
 
 - Shorter first run: slide 1 "START NOW" ends onboarding; the Focus coach then walks task, minutes, distracting apps, ONE hold-to-start. "See why first" keeps the long intro. No promise to sign, no tutorial holds, no Plus offer in the flow.
