@@ -1,7 +1,12 @@
+import RevenueCat
 import StoreKit
 import UserNotifications
 
 /// Lock In Plus through Apple's In-App Purchase (StoreKit 2). One yearly subscription.
+///
+/// RevenueCat runs alongside in "purchases completed by my app" mode: the app still buys with
+/// StoreKit 2 (so nothing here depends on RevenueCat being up), and RevenueCat records each
+/// purchase for the dashboard, charts and, later, Plus on the PC. Without a key it stays off.
 ///
 /// The product must exist in App Store Connect with this exact ID, in a subscription group, with
 /// a free-trial introductory offer. Until it does, `loadState` is `.unavailable` and the offer
@@ -36,6 +41,19 @@ final class PlusStore: ObservableObject {
     }
 
     deinit { updates?.cancel() }
+
+    /// Turns RevenueCat on when the build has a public key (see project.yml, REVENUECAT_API_KEY).
+    static func configureRevenueCat() {
+        guard !Purchases.isConfigured,
+              let key = Bundle.main.object(forInfoDictionaryKey: "RevenueCatAPIKey") as? String,
+              key.hasPrefix("appl_") else { return }
+        #if DEBUG
+        Purchases.logLevel = .warn
+        #endif
+        Purchases.configure(with: Configuration.Builder(withAPIKey: key)
+            .with(purchasesAreCompletedBy: .myApp, storeKitVersion: .storeKit2)
+            .build())
+    }
 
     /// TestFlight builds unlock Plus features so they can be tried before Plus is on sale.
     /// App Store builds never match this.
@@ -100,7 +118,9 @@ final class PlusStore: ObservableObject {
         busy = true
         defer { busy = false }
         do {
-            switch try await product.purchase() {
+            let result = try await product.purchase()
+            if Purchases.isConfigured { _ = try? await Purchases.shared.recordPurchase(result) }
+            switch result {
             case .success(let verification):
                 guard case .verified(let transaction) = verification else {
                     message = "The App Store could not confirm the purchase."
@@ -126,6 +146,7 @@ final class PlusStore: ObservableObject {
         defer { busy = false }
         do {
             try await AppStore.sync()
+            if Purchases.isConfigured { _ = try? await Purchases.shared.syncPurchases() }
             await refreshEntitlement()
             message = isPlus ? "Plus is back." : "No Plus purchase found for this Apple ID."
         } catch {
