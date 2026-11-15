@@ -1,4 +1,8 @@
 name: LockIn
+packages:
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios-spm
+    from: 5.0.0
 # Release spec for TestFlight. Apple approved Family Controls (Distribution) for both
 # bundle IDs, so this build carries the entitlement and the Device Activity extension.
 options:
@@ -28,9 +32,13 @@ targets:
     dependencies:
       - target: LockInMonitor
       - target: LockInWidget
+      - package: RevenueCat
+        product: RevenueCat
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin
+        # RevenueCat's public Apple SDK key (made to ship in apps). Same as project.yml.
+        REVENUECAT_API_KEY: appl_isEkAeKkQaltkFfNOQNsiZPrjEg
         INFOPLIST_FILE: AppInfo/LockIn-Extra.plist
         DEVELOPMENT_TEAM: D6TH2NSZLT
         CODE_SIGN_STYLE: Automatic
