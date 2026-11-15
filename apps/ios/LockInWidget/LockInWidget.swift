@@ -110,7 +110,7 @@ struct BrainWidgetView: View {
                         .font(.system(size: 10, weight: .heavy, design: .monospaced))
                         .tracking(1.2)
                         .foregroundStyle(BrainDrawing.alarm)
-                    Text("Screen Time was turned off. Open Lock In to turn it back on.")
+                    Text("Screen Time was turned off. Open Nogbox to turn it back on.")
                         .font(.system(size: 16, weight: .heavy).width(.condensed))
                         .foregroundStyle(BrainDrawing.cream)
                         .fixedSize(horizontal: false, vertical: true)
@@ -119,7 +119,7 @@ struct BrainWidgetView: View {
                         .font(.system(size: 10, weight: .heavy, design: .monospaced))
                         .tracking(1.2)
                         .foregroundStyle(BrainDrawing.green)
-                    Text("Open Lock In and pick the apps to watch.")
+                    Text("Open Nogbox and pick the apps to watch.")
                         .font(.system(size: 16, weight: .heavy).width(.condensed))
                         .foregroundStyle(BrainDrawing.cream)
                         .fixedSize(horizontal: false, vertical: true)
@@ -131,8 +131,8 @@ struct BrainWidgetView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(entry.watching
             ? "Time in your selected apps today: \(entry.today.headline). \(entry.today.appLine ?? "")"
-            : entry.proofOff ? "Screen Time was turned off. Open Lock In to turn it back on."
-            : "Selected apps. Open Lock In and pick the apps to watch.")
+            : entry.proofOff ? "Screen Time was turned off. Open Nogbox to turn it back on."
+            : "Selected apps. Open Nogbox and pick the apps to watch.")
     }
 
     /// Seven blocks for 1 to 7 hours: green, then yellow at 4, red from 5.

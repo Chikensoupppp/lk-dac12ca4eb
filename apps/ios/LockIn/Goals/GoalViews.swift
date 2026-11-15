@@ -519,7 +519,7 @@ struct WeekReportView: View {
     private var receipt: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("LOCK IN \u{00B7} YOUR WEEK")
+                Text("NOGBOX \u{00B7} YOUR WEEK")
                 Spacer()
                 Text(range)
             }
@@ -573,7 +573,7 @@ struct WeekReportView: View {
                                value: diff == 0 ? "same" : (diff > 0 ? "+" : "\u{2212}") + FocusLog.format(minutes: abs(diff)))
                 }
             }
-            Text("Counts finished Lock In sessions only.")
+            Text("Counts finished Nogbox sessions only.")
                 .font(PrintFont.mono(10))
                 .foregroundStyle(Ink.soft)
                 .padding(.bottom, 14)

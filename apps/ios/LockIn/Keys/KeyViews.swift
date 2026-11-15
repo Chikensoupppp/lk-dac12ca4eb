@@ -55,7 +55,7 @@ struct KeysSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     KTitle(text: "Keys.")
-                    KBody(text: "A Key Holder is a friend who can let you out of a Locked session. They need Lock In too (free). You pair once, in person.")
+                    KBody(text: "A Key Holder is a friend who can let you out of a Locked session. They need Nogbox too (free). You pair once, in person.")
                     TextField("Your first name", text: $keys.myName)
                         .font(PrintFont.body(17))
                         .padding(14)
@@ -185,7 +185,7 @@ struct InPersonUnlockView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 KTitle(text: "Ask your\nKey Holder.")
-                KBody(text: "They open Lock In, go to Keys, and tap \u{201C}Let a friend out\u{201D}. Phones close together.")
+                KBody(text: "They open Nogbox, go to Keys, and tap \u{201C}Let a friend out\u{201D}. Phones close together.")
                 TextField("Why do you need out?", text: $reason, axis: .vertical)
                     .font(PrintFont.body(17))
                     .padding(14)

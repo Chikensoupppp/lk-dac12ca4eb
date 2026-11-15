@@ -99,7 +99,7 @@ enum RemoteKeys {
                                       subscriptionID: id, options: [.firesOnRecordCreation])
         let info = CKSubscription.NotificationInfo()
         info.title = "A friend wants out"
-        info.alertBody = "Someone you hold a key for wants to end their Lock In session. Open Lock In to answer."
+        info.alertBody = "Someone you hold a key for wants to end their Nogbox session. Open Nogbox to answer."
         info.soundName = "default"
         sub.notificationInfo = info
         _ = try? await db.save(sub)

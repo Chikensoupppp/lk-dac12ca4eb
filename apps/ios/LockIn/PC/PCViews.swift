@@ -158,7 +158,7 @@ struct PCSheet: View {
                     onCode: { text in
                         scanning = false
                         guard let offer = PCPairingOffer.decode(text) else {
-                            pc.report("That QR code is not from Lock In.")
+                            pc.report("That QR code is not from Nogbox.")
                             return
                         }
                         Task { await pc.pair(offer: offer) }

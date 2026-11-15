@@ -287,7 +287,7 @@ struct FocusView: View {
                         .overlay(alignment: .topTrailing) { toolsHintBubble }
                         .zIndex(1)
 
-                    Text("LOCK IN")
+                    Text("NOGBOX")
                         .font(Cream.rounded(13, .bold))
                         .tracking(4)
                         .foregroundStyle(Matte.textSoft)

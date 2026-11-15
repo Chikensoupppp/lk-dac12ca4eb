@@ -111,7 +111,7 @@ struct PlusOfferStep: View {
         .shadow(color: .black.opacity(0.6), radius: 20, y: 18)
         .padding(.horizontal, 12)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Lock In Plus card")
+        .accessibilityLabel("Nogbox Plus card")
     }
 
     /// Yearly (with the free trial) or monthly. Prices come from the App Store.

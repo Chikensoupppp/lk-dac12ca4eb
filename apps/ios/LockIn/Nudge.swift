@@ -48,7 +48,7 @@ enum DailyNudge {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [requestID])
         let content = UNMutableNotificationContent()
-        content.title = "Lock In"
+        content.title = "Nogbox"
         content.body = "Ready for a focus session? One hold and you are in."
         content.sound = .default
         let when = DateComponents(hour: minute / 60, minute: minute % 60)
