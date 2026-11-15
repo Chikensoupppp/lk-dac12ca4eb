@@ -497,6 +497,8 @@ struct FocusView: View {
                     .allowsHitTesting(false)
             }
             .onLongPressGesture(minimumDuration: 1.5, maximumDistance: 60, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
+            // A quick tap must never feel dead: it starts too. Holding is the nicer way, not the only way.
+            .simultaneousGesture(TapGesture().onEnded { startCoachedSession() })
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Hold to start")
             .accessibilityAddTraits(.isButton)
@@ -506,11 +508,10 @@ struct FocusView: View {
             .accessibilityIdentifier("coach-hold-to-start")
             }
         } else {
-            Button(action: isLocked ? askToEnd : startSession) {
+            Button(action: isLocked ? askToEnd : startFromButton) {
                 Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
             }
             .buttonStyle(MatteButtonStyle(prominent: !isLocked))
-            .disabled(coachStep != nil && !isLocked)
             .overlay { LatchEffect(trigger: startCount, enabled: motion) }
             .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
             .overlay(alignment: .top) {
@@ -555,6 +556,13 @@ struct FocusView: View {
                 .buttonStyle(MatteButtonStyle(prominent: false))
                 .accessibilityIdentifier("coach-skip-apps")
         }
+    }
+
+    /// LOCK IN while the coach is still showing (for example on the apps step) ends the coach
+    /// and starts, so a tap is never ignored.
+    private func startFromButton() {
+        if coachStep != nil { skipCoach() }
+        startSession()
     }
 
     private func skipCoach() {

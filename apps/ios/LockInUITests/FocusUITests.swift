@@ -325,15 +325,28 @@ final class FocusUITests: XCTestCase {
         app.buttons["coach-skip-apps"].tap()
         let hold = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(hold.waitForExistence(timeout: 5))
-        hold.press(forDuration: 0.3)
-        XCTAssertFalse(app.buttons["END SESSION"].exists)
         capture("coach-reduce-motion")
+
         app.terminate()
         app.launchArguments.removeAll { $0 == "-ui-testing-reset-state" || $0 == "-ui-testing-coach" }
         app.launch()
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 10))
         app.buttons["skip-focus-coach"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].isEnabled)
+    }
+
+    /// Real report: after picking 25 minutes the first time, tapping LOCK IN did nothing.
+    func testLockInTapWorksWhileTheCoachShowsTheAppsStep() {
+        let app = makeApp()
+        app.launchArguments += ["-ui-testing-coach"]
+        app.launch()
+        app.buttons["work-task"].tap()
+        XCTAssertTrue(app.buttons["Studying"].waitForExistence(timeout: 5))
+        app.buttons["Studying"].tap()
+        app.buttons["25 minutes"].tap()
+        XCTAssertTrue(app.buttons["coach-skip-apps"].waitForExistence(timeout: 5))
+        app.buttons["LOCK IN"].tap()
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
     }
 
     /// Skipping everything reaches the main screen with no session, and leaves out the year slide.
