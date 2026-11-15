@@ -42,15 +42,22 @@ jobs:
             xcrun simctl io "$1" screenshot "$OUT/$2-$3.png" >/dev/null 2>&1
             xcrun simctl terminate "$1" com.brandon132199.lockin >/dev/null 2>&1
           }
-          for spec in "16:iPhone 16 Pro:iPhone 16:iPhone 15" "SE:iPhone SE (3rd generation):iPhone 16e"; do
+          SPECS=("16:iPhone 16 Pro:iPhone 16:iPhone 15" "SE:iPhone SE (3rd generation):iPhone 16e")
+          # A `screens-new-*` tag photographs only the newest screens, on both small and normal phones.
+          if [[ "${GITHUB_REF_NAME:-}" == screens-new* ]]; then
+            SHOTS="rest-streak completion tools-hint if-then goals-habits allowed tasks idle"
+          fi
+          for spec in "${SPECS[@]}"; do
             label="${spec%%:*}"; names="${spec#*:}"
             IFS=: read -ra list <<< "$names"
             id=$(pick "${list[@]}") || continue
             xcrun simctl boot "$id"; xcrun simctl bootstatus "$id" -b >/dev/null
             xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100
             for s in $SHOTS; do shoot "$id" "$label" "$s"; done
-            xcrun simctl ui "$id" content_size accessibility-extra-large
-            for s in idle goals quit-type; do shoot "$id" "$label-bigtext" "$s"; done
+            if [[ "${GITHUB_REF_NAME:-}" != screens-new* ]]; then
+              xcrun simctl ui "$id" content_size accessibility-extra-large
+              for s in idle goals quit-type; do shoot "$id" "$label-bigtext" "$s"; done
+            fi
             xcrun simctl shutdown "$id"
           done
           ls "$OUT" | wc -l

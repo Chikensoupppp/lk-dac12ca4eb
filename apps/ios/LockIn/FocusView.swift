@@ -135,6 +135,23 @@ struct FocusView: View {
                 report = ReportWeek(id: FocusLog.calendar.date(byAdding: .day, value: -7, to: FocusLog.weekStart(.now))!)
             case "streak": StreakStore.record(); streakMinutes = 45; showStreak = true
             case "plus": showPlusOffer = true
+            case "rest-streak":
+                for d in [-3, -2, 0] { StreakStore.record(Calendar.current.date(byAdding: .day, value: d, to: .now)!) }
+                streakMinutes = 25
+                showStreak = true
+            case "completion":
+                tasks.add("Studying")
+                completion = CompletionInfo(minutes: 25, task: "Studying", nextMinutes: 25, firstEver: false, nudgeMinute: 15 * 60 + 20)
+            case "tools-hint": showToolsHint = true
+            case "if-then": ifThenOn = true; ifThenCue = "I sit at my desk"
+            case "goals-habits":
+                ifThenOn = true; ifThenCue = "I sit at my desk"
+                UserDefaults.standard.set(15 * 60 + 20, forKey: "lockin.dailyNudge.minute.v1")
+                showGoals = true
+            case "allowed":
+                tasks.add("Studying")
+                for name in ["Spotify", "notion.so", "Docs"] { AllowedApps.add(name, for: "Studying") }
+                showTasks = true
             case "restrictions": showRestrictions = true
             default: break
             }

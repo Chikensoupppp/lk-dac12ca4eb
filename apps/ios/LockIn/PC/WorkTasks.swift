@@ -162,6 +162,9 @@ struct WorkTaskSheet: View {
         }
         .preferredColorScheme(.light)
         .sheet(isPresented: $showAllowed) { AllowedAppsSheet(task: tasks.selected) { showAllowed = false } }
+        #if DEBUG
+        .onAppear { if DebugShot.name == "allowed" { showAllowed = true } }
+        #endif
     }
 
     private func addDraft() {
