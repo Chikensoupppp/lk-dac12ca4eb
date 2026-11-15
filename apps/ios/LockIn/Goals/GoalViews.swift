@@ -284,8 +284,12 @@ struct GoalSheet: View {
                 .font(PrintFont.head(26))
                 .foregroundStyle(on ? GoalInk.bg : GoalInk.cream)
                 .frame(maxWidth: .infinity, minHeight: 54)
-                .background(RoundedRectangle(cornerRadius: 14).fill(on ? GoalInk.green : GoalInk.panel))
-                .shadow(color: on ? Ink.sun : .clear, radius: 0, x: 3, y: 3)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(on ? GoalInk.green : GoalInk.panel)
+                        // The sunflower edge belongs to the chip, not to its number.
+                        .shadow(color: on ? Ink.sun : .clear, radius: 0, x: 3, y: 3)
+                )
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(hours) hours a week")
