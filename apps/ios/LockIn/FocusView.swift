@@ -234,9 +234,10 @@ struct FocusView: View {
                 .font(Cream.rounded(13, .semibold))
                 .foregroundStyle(Color(hex: 0xF3F4F0))
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .frame(maxWidth: 230)
+                .frame(maxWidth: 240)
                 .background(RoundedRectangle(cornerRadius: 14).fill(Matte.text))
                 .offset(y: 54)
                 .onTapGesture { showToolsHint = false }
