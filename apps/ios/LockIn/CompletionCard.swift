@@ -8,6 +8,8 @@ struct CompletionInfo: Identifiable, Equatable {
     let task: String?
     let nextMinutes: Int
     let firstEver: Bool
+    /// The time (minutes after midnight) to offer a daily reminder for; nil when it is already on.
+    var nudgeMinute: Int? = nil
 }
 
 struct CompletionCard: View {
@@ -18,6 +20,35 @@ struct CompletionCard: View {
     let change: () -> Void
 
     private var focusedText: String { FocusLog.format(minutes: info.minutes) }
+
+    @State private var nudgeSet = false
+    @State private var nudgeAsking = false
+
+    /// Optional: "Remind me tomorrow at 3:40 PM". Nothing is asked until it is tapped.
+    @ViewBuilder private func nudgeRow(minute: Int) -> some View {
+        if nudgeSet {
+            Label("Reminder set for \(DailyNudge.timeText(minute: minute))", systemImage: "checkmark")
+                .font(PrintFont.mono(13))
+                .foregroundStyle(Ink.soft)
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("completion-nudge-set")
+        } else {
+            Button {
+                nudgeAsking = true
+                Task {
+                    nudgeSet = await DailyNudge.turnOn(minute: minute)
+                    nudgeAsking = false
+                }
+            } label: {
+                Text("Remind me tomorrow at \(DailyNudge.timeText(minute: minute))")
+                    .font(PrintFont.body(16))
+                    .foregroundStyle(Ink.blue)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .disabled(nudgeAsking)
+            .accessibilityIdentifier("completion-nudge")
+        }
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -52,6 +83,9 @@ struct CompletionCard: View {
                     .accessibilityIdentifier("first-lock-in-stamp")
             }
             Spacer(minLength: 4)
+            if let minute = info.nudgeMinute {
+                nudgeRow(minute: minute)
+            }
             if let task = info.task {
                 Text("Next time: \(task) · \(info.nextMinutes) min")
                     .font(PrintFont.mono(13))

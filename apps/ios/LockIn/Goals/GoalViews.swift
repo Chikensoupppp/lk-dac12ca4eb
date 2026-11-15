@@ -196,6 +196,10 @@ struct GoalSheet: View {
         .accessibilityLabel(icon == "plus" ? "One hour more" : "One hour less")
     }
 
+    @AppStorage(IfThenPlan.onKey) private var ifThenOn = false
+    @AppStorage(IfThenPlan.cueKey) private var ifThenCue = ""
+    @State private var dailyMinute: Int? = DailyNudge.minuteOfDay()
+
     private var reminders: some View {
         VStack(alignment: .leading, spacing: 6) {
             Toggle(isOn: Binding(
@@ -219,6 +223,29 @@ struct GoalSheet: View {
             .disabled(!goals.remindersOn)
             .opacity(goals.remindersOn ? 1 : 0.4)
             .frame(minHeight: 44)
+            if let minute = dailyMinute {
+                Toggle(isOn: Binding(get: { true }, set: { _ in DailyNudge.turnOff(); dailyMinute = nil })) {
+                    Text("Daily reminder · \(DailyNudge.timeText(minute: minute))").font(PrintFont.body(17, .bold))
+                }
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("daily-nudge-toggle")
+            }
+            Toggle(isOn: $ifThenOn) {
+                Text("If-then line").font(PrintFont.body(17, .bold))
+            }
+            .frame(minHeight: 44)
+            .accessibilityIdentifier("if-then-toggle")
+            if ifThenOn {
+                TextField("When I sit at my desk", text: $ifThenCue)
+                    .font(PrintFont.body(17, .regular))
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 48)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(GoalInk.cream.opacity(0.12)))
+                    .onChange(of: ifThenCue) { _, value in
+                        if value.count > IfThenPlan.maxLength { ifThenCue = String(value.prefix(IfThenPlan.maxLength)) }
+                    }
+                    .accessibilityIdentifier("if-then-field")
+            }
         }
         .tint(GoalInk.green)
         .foregroundStyle(GoalInk.cream)

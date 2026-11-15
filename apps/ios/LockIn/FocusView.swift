@@ -36,6 +36,10 @@ struct FocusView: View {
     /// Right after the intro (promise signed): 25 minutes are picked and a note suggests starting
     /// now. Nothing starts until the user taps LOCK IN.
     @State private var firstSessionHint = false
+    /// One-time pointer to the tools (goals, keys, restrictions) after the first finished session.
+    @State private var showToolsHint = false
+    @AppStorage(IfThenPlan.onKey) private var ifThenOn = false
+    @AppStorage(IfThenPlan.cueKey) private var ifThenCue = ""
     @AppStorage("lockin.coach.pending.v1") private var coachPending = false
     @State private var coachStep: FocusCoachStep?
     @State private var coachPressing = false
@@ -190,9 +194,45 @@ struct FocusView: View {
             } else if pendingTaskPicker {
                 pendingTaskPicker = false
                 showTasks = true
+            } else if toolsHintAllowed {
+                UserDefaults.standard.set(true, forKey: "lockin.toolsHint.v1")
+                showToolsHint = true
             }
         }
     }
+
+    /// The tools pointer shows once, after the first finished session, when nothing else is waiting.
+    private var toolsHintAllowed: Bool {
+        guard onboardingDone, coachStep == nil, !UserDefaults.standard.bool(forKey: "lockin.toolsHint.v1") else { return false }
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains(where: { $0.hasPrefix("-ui-testing") }) { return args.contains("-ui-testing-tools-hint") }
+        #endif
+        return true
+    }
+
+    @ViewBuilder private var toolsHintBubble: some View {
+        if showToolsHint {
+            Text("Goals, keys and app limits are up here.")
+                .font(Cream.rounded(13, .semibold))
+                .foregroundStyle(Color(hex: 0xF3F4F0))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .frame(maxWidth: 230)
+                .background(RoundedRectangle(cornerRadius: 14).fill(Matte.text))
+                .offset(y: 54)
+                .onTapGesture { showToolsHint = false }
+                .task {
+                    try? await Task.sleep(for: .seconds(8))
+                    showToolsHint = false
+                }
+                .accessibilityLabel("Tip: goals, keys and app limits are in the buttons at the top right.")
+                .accessibilityIdentifier("tools-hint")
+        }
+    }
+
+    private var ifThenLine: String? { IfThenPlan.line(on: ifThenOn, cue: ifThenCue) }
 
     private var stateAnimation: Animation {
         reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.7)
@@ -212,7 +252,7 @@ struct FocusView: View {
 
             GeometryReader { geo in
                 // Short phones (SE): the clock gives up space first, so the buttons below always fit.
-                let roomForClock = geo.size.height < 700 ? geo.size.height - 470 : .infinity
+                let roomForClock = geo.size.height < 700 ? geo.size.height - (ifThenLine == nil ? 470 : 494) : .infinity
                 let side = max(min(geo.size.width - 48, roomForClock, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : (geo.size.height < 700 ? 0.36 : 0.45))), 110)
 
                 VStack(spacing: 0) {
@@ -226,6 +266,8 @@ struct FocusView: View {
                         .allowsHitTesting(!isLocked && coachStep == nil)
                         .accessibilityHidden(isLocked || coachStep != nil)
                         .padding(.top, 4)
+                        .overlay(alignment: .topTrailing) { toolsHintBubble }
+                        .zIndex(1)
 
                     Text("LOCK IN")
                         .font(Cream.rounded(13, .bold))
@@ -256,6 +298,15 @@ struct FocusView: View {
                             .foregroundStyle(Matte.textSoft)
                             .padding(.top, 4)
                             .accessibilityIdentifier("restrictions-line")
+                    }
+
+                    if !isLocked, coachStep == nil, let line = ifThenLine {
+                        Text(line)
+                            .font(Cream.rounded(13, .medium))
+                            .foregroundStyle(Matte.textSoft)
+                            .lineLimit(1)
+                            .padding(.top, 4)
+                            .accessibilityIdentifier("if-then-line")
                     }
 
                     Spacer(minLength: 16)
@@ -463,7 +514,7 @@ struct FocusView: View {
     }
 
     private func roundButton(_ icon: String, size: CGFloat, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button { showToolsHint = false; action() } label: {
             Image(systemName: icon)
                 .font(.system(size: size))
                 .foregroundStyle(Matte.textQuiet)
@@ -639,7 +690,8 @@ struct FocusView: View {
 
     /// What the PC gets with a session start: the task (its workspace opens) and the buddy switch.
     private var pcExtras: PCSessionExtras {
-        PCSessionExtras(task: tasks.selected, buddy: PCSheet.buddyOn, remindAfterMinutes: PCSheet.remindAfter)
+        PCSessionExtras(task: tasks.selected, buddy: PCSheet.buddyOn,
+                        allow: AllowedApps.list(for: tasks.selected), remindAfterMinutes: PCSheet.remindAfter)
     }
 
     /// "STUDYING · PC: DOCS" or "STUDYING · PC: YOUTUBE · NUDGED 2×".
@@ -768,7 +820,8 @@ struct FocusView: View {
         pendingStreak = firstToday && streakScreenAllowed
         pendingPlus = plusOfferAllowed
         let info = CompletionInfo(minutes: minutes, task: tasks.selected, nextMinutes: selectedMinutes,
-                                  firstEver: !UserDefaults.standard.bool(forKey: "lockin.firstWin.v1"))
+                                  firstEver: !UserDefaults.standard.bool(forKey: "lockin.firstWin.v1"),
+                                  nudgeMinute: DailyNudge.isOn ? nil : DailyNudge.suggestedMinute(focusedMinutes: minutes))
         // Let the finished glow play first.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(1800))

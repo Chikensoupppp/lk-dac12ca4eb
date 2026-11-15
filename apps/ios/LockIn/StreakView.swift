@@ -11,6 +11,7 @@ struct StreakView: View {
 
     private let streak = StreakStore.current()
     private let week = StreakStore.week()
+    private let restDay = StreakStore.usedRestDayRecently()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -68,7 +69,7 @@ struct StreakView: View {
             .padding(.top, 48)
             .accessibilityHidden(true)
 
-            StickerNote(text: "come back tomorrow", color: OB.sage, tilt: -3)
+            StickerNote(text: restDay ? "rest day used. nice save" : "come back tomorrow", color: OB.sage, tilt: -3)
                 .padding(.top, 40)
                 .opacity(shown ? 1 : 0)
 

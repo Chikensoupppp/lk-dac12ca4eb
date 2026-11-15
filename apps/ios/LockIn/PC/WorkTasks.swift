@@ -81,6 +81,7 @@ struct WorkTaskSheet: View {
     var onSelection: () -> Void = {}
     var skipCoach: (() -> Void)? = nil
     @State private var draft = ""
+    @State private var showAllowed = false
     @FocusState private var typing: Bool
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
@@ -123,6 +124,22 @@ struct WorkTaskSheet: View {
                             .disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
                             .accessibilityLabel("Add task")
                         }
+                        if skipCoach == nil {
+                            Button { showAllowed = true } label: {
+                                HStack {
+                                    Image(systemName: "checkmark.shield")
+                                    Text("Allowed on PC")
+                                        .font(Cream.rounded(16, .semibold))
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold))
+                                }
+                                .foregroundStyle(Matte.textQuiet)
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 50)
+                                .background(RoundedRectangle(cornerRadius: 16).fill(Matte.tray))
+                            }
+                            .accessibilityIdentifier("allowed-apps-open")
+                        }
                     }
                     .padding(24)
                 }
@@ -144,6 +161,7 @@ struct WorkTaskSheet: View {
             }
         }
         .preferredColorScheme(.light)
+        .sheet(isPresented: $showAllowed) { AllowedAppsSheet(task: tasks.selected) { showAllowed = false } }
     }
 
     private func addDraft() {
