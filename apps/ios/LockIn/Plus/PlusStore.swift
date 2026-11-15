@@ -14,11 +14,20 @@ import UserNotifications
 @MainActor
 final class PlusStore: ObservableObject {
     static let yearlyID = "com.brandon132199.lockin.plus.yearly"
+    static let monthlyID = "com.brandon132199.lockin.plus.monthly"
+    static let allIDs: Set<String> = [yearlyID, monthlyID]
 
     enum LoadState: Equatable { case loading, ready, unavailable }
 
     @Published private(set) var loadState: LoadState = .loading
-    @Published private(set) var product: Product?
+    /// Both plans, as the App Store returned them.
+    @Published private(set) var products: [Product] = []
+    /// The plan the offer screen has picked. Yearly by default (it has the free trial).
+    @Published var selectedID = PlusStore.yearlyID
+    /// The picked plan, or whichever one loaded.
+    var product: Product? { products.first { $0.id == selectedID } ?? products.first }
+    var yearly: Product? { products.first { $0.id == Self.yearlyID } }
+    var monthly: Product? { products.first { $0.id == Self.monthlyID } }
     @Published private(set) var isPlus = false
     @Published private(set) var trialEligible = false
     @Published private(set) var busy = false
@@ -63,12 +72,14 @@ final class PlusStore: ObservableObject {
 
     func load() async {
         do {
-            let products = try await Product.products(for: [Self.yearlyID])
-            product = products.first
-            if let subscription = product?.subscription {
+            products = try await Product.products(for: Self.allIDs)
+                .sorted { $0.id == Self.yearlyID && $1.id != Self.yearlyID }
+            if yearly == nil, let first = products.first { selectedID = first.id }
+            if let subscription = products.first?.subscription {
+                // Both plans share one subscription group, so eligibility is the same for both.
                 trialEligible = await subscription.isEligibleForIntroOffer
             }
-            loadState = product == nil ? .unavailable : .ready
+            loadState = products.isEmpty ? .unavailable : .ready
         } catch {
             loadState = .unavailable
         }
@@ -77,7 +88,7 @@ final class PlusStore: ObservableObject {
     func refreshEntitlement() async {
         var active = false
         for await result in Transaction.currentEntitlements {
-            if case .verified(let t) = result, t.productID == Self.yearlyID, t.revocationDate == nil {
+            if case .verified(let t) = result, Self.allIDs.contains(t.productID), t.revocationDate == nil {
                 active = true
             }
         }

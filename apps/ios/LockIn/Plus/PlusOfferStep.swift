@@ -67,6 +67,7 @@ struct PlusOfferStep: View {
                         .font(PrintFont.bold(22))
                         .foregroundStyle(Self.cream)
                 } else {
+                    if plus.monthly != nil && plus.yearly != nil { planPicker }
                     timeline
                 }
                 if let message = plus.message {
@@ -111,6 +112,38 @@ struct PlusOfferStep: View {
         .padding(.horizontal, 12)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Lock In Plus card")
+    }
+
+    /// Yearly (with the free trial) or monthly. Prices come from the App Store.
+    private var planPicker: some View {
+        HStack(spacing: 10) {
+            if let yearly = plus.yearly {
+                planChip(id: PlusStore.yearlyID, title: "Yearly", price: "\(yearly.displayPrice) / year",
+                         note: plus.trialDays.map { "\($0) days free" } ?? "Best value")
+            }
+            if let monthly = plus.monthly {
+                planChip(id: PlusStore.monthlyID, title: "Monthly", price: "\(monthly.displayPrice) / month", note: "Cancel any time")
+            }
+        }
+    }
+
+    private func planChip(id: String, title: String, price: String, note: String) -> some View {
+        let on = plus.selectedID == id
+        return Button { plus.selectedID = id } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title.uppercased()).font(PrintFont.mono(12, .heavy)).tracking(1.5)
+                Text(price).font(PrintFont.bold(19))
+                Text(note).font(PrintFont.mono(11, .medium)).opacity(0.75)
+            }
+            .foregroundStyle(Self.cream)
+            .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
+            .padding(.horizontal, 14)
+            .background(RoundedRectangle(cornerRadius: 16).fill(on ? Ink.sun.opacity(0.35) : Color.clear))
+            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Self.cream.opacity(on ? 1 : 0.3), lineWidth: on ? 3 : 1.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(price), \(note)")
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     /// Today / reminder day / charge day. Dates are real, counted from today.
