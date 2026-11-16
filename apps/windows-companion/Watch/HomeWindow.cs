@@ -27,19 +27,22 @@ public sealed class HomeWindow : Form
     private static readonly Color Caption = Color.FromArgb(0x23, 0x26, 0x2B);
 
     // Layout in 96-dpi units; scaled by Px() for drawing and placing.
-    private const int W = 440, HeroH = 392, RowH = 66, FooterH = 62;
+    private const int W = 440, HeroH = 392, RowH = 66, FooterH = 62, Rows = 2;
     private const int RingX = 220, RingY = 132, RingR = 84;
 
     private readonly Func<PairingOffer> openPairing;
     private readonly Func<IReadOnlyList<PairedDevice>> devices;
     private readonly Func<FocusSession> session;
     private readonly Func<string?> taskName;
+    private readonly Func<bool> buddyOn;
+    private readonly Action<bool> setBuddy;
     private readonly string stateDir;
 
     private readonly Bitmap? brain;
     private readonly PrimaryButton pairButton = new("Pair a phone");
     private readonly QuietButton rowButton = new("Pair another");
     private readonly Toggle startup = new();
+    private readonly Toggle buddySwitch = new() { BackColor = Paper };
     private readonly LinkLabel quit = FooterLink("Quit");
     private readonly NotifyIcon tray = new();
     private readonly System.Windows.Forms.Timer refresh = new() { Interval = 1000 };
@@ -59,8 +62,11 @@ public sealed class HomeWindow : Form
     private bool rowOn;
 
     public HomeWindow(Func<PairingOffer> openPairing, Func<IReadOnlyList<PairedDevice>> devices,
-        Func<FocusSession> session, string stateDir, Func<string?>? taskName = null)
+        Func<FocusSession> session, string stateDir, Func<string?>? taskName = null,
+        Func<bool>? buddyOn = null, Action<bool>? setBuddy = null)
     {
+        this.buddyOn = buddyOn ?? (() => true);
+        this.setBuddy = setBuddy ?? (_ => { });
         this.openPairing = openPairing;
         this.devices = devices;
         this.session = session;
@@ -72,7 +78,7 @@ public sealed class HomeWindow : Form
         Text = "Nogbox";
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
-        ClientSize = new Size(Px(W), Px(HeroH + RowH + FooterH));
+        ClientSize = new Size(Px(W), Px(HeroH + RowH * Rows + FooterH));
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Paper;
         ForeColor = Ink;
@@ -92,7 +98,14 @@ public sealed class HomeWindow : Form
         rowButton.Click += (_, _) => { if (qrUntil is not null) StopPairing(); else ShowPairing(); };
         Controls.Add(rowButton);
 
-        var footerTop = Px(HeroH + RowH);
+        buddySwitch.Size = new Size(Px(44), Px(24));
+        buddySwitch.Location = new Point(ClientSize.Width - buddySwitch.Width - Px(26), Px(HeroH + RowH) + (Px(RowH) - buddySwitch.Height) / 2);
+        buddySwitch.On = this.buddyOn();
+        buddySwitch.AccessibleName = "Desk buddy";
+        buddySwitch.Changed += on => { try { this.setBuddy(on); } catch (Exception) { } Invalidate(); };
+        Controls.Add(buddySwitch);
+
+        var footerTop = Px(HeroH + RowH * Rows);
         startup.Size = new Size(Px(44), Px(24));
         startup.Location = new Point(Px(26), footerTop + (Px(FooterH) - startup.Height) / 2);
         startup.On = Installer.StartsWithWindows();
@@ -237,7 +250,7 @@ public sealed class HomeWindow : Form
         rowButton.Visible = paired.Count > 0 || pairing;
         rowButton.Text = pairing ? "Cancel" : "Pair another";
         AccessibleDescription = $"{title}. {subtitle}. {rowTitle}: {rowStatus}.";
-        Invalidate(new Rectangle(0, 0, ClientSize.Width, Px(HeroH + RowH)));
+        Invalidate(new Rectangle(0, 0, ClientSize.Width, Px(HeroH + RowH * Rows)));
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -302,6 +315,7 @@ public sealed class HomeWindow : Form
         {
             g.DrawLine(line, 0, rowTop, ClientSize.Width, rowTop);
             g.DrawLine(line, 0, rowTop + Px(RowH), ClientSize.Width, rowTop + Px(RowH));
+            g.DrawLine(line, 0, rowTop + Px(RowH * 2), ClientSize.Width, rowTop + Px(RowH * 2));
         }
         var icon = new Rectangle(Px(28), rowTop + Px(RowH) / 2 - Px(11), Px(13), Px(22));
         using (var ip = new Pen(Ink, Pf(1.6f)))
@@ -321,9 +335,29 @@ public sealed class HomeWindow : Form
                 TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
+        // Desk buddy row: the little brain, what it does, and the switch.
+        var buddyTop = Px(HeroH + RowH);
+        if (brain is not null)
+        {
+            var bw = Pf(24);
+            var bh = bw * brain.Height / brain.Width;
+            g.DrawImage(brain, Pf(23), buddyTop + Pf(RowH) / 2 - bh / 2, bw, bh);
+        }
+        using (var rowFont = new Font("Segoe UI", 11f))
+        using (var statusFont = new Font("Segoe UI", 9.5f))
+        {
+            var on = buddySwitch.On;
+            TextRenderer.DrawText(g, "Desk buddy", rowFont, new Point(Px(62), buddyTop + Px(12)), Ink, TextFormatFlags.NoPadding);
+            var dotY = buddyTop + Px(44);
+            using (var dot = new SolidBrush(on ? Green : Off))
+                g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
+            TextRenderer.DrawText(g, on ? "On · speaks up when you doomscroll" : "Off", statusFont,
+                new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        }
+
         // Footer
         using (var foot = new SolidBrush(FooterPaper))
-            g.FillRectangle(foot, 0, Px(HeroH + RowH) + 1, ClientSize.Width, Px(FooterH));
+            g.FillRectangle(foot, 0, Px(HeroH + RowH * Rows) + 1, ClientSize.Width, Px(FooterH));
         using (var footFont = new Font("Segoe UI", 10.5f))
             TextRenderer.DrawText(g, "Start with Windows", footFont,
                 new Rectangle(startup.Right + Px(10), startup.Top - Px(2), Px(200), startup.Height + Px(4)), Ink,
@@ -478,7 +512,7 @@ public sealed class HomeWindow : Form
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(FooterPaper);
+            g.Clear(BackColor);
             using (var pill = Rounded(new Rectangle(0, 0, Width - 1, Height - 1), (Height - 1) / 2))
             using (var fill = new SolidBrush(on ? Green : Off))
                 g.FillPath(fill, pill);
@@ -505,11 +539,11 @@ public sealed class HomeWindow : Form
             var start = DateTimeOffset.UtcNow;
             var offer = new PairingOffer(1, new[] { "192.168.1.20" }, 47822, new string('A', 64), "123456", start.AddMinutes(5));
             var phone = new PairedDevice("d1", "iPhone", "x", start.AddDays(-1));
-            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, string? task = null)
+            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, string? task = null, bool buddy = true)
             {
                 var state = Path.Combine(dir, name + "-state");
                 Directory.CreateDirectory(state);
-                using var form = new HomeWindow(() => offer, () => paired, () => now, state, () => task);
+                using var form = new HomeWindow(() => offer, () => paired, () => now, state, () => task, () => buddy);
                 form.tray.Visible = false;
                 form.ShowInTaskbar = false;
                 form.StartPosition = FormStartPosition.Manual;
@@ -527,6 +561,7 @@ public sealed class HomeWindow : Form
             Draw("home-pairing", Array.Empty<PairedDevice>(), idle, true);
             Draw("home-idle", new[] { phone }, idle, false);
             Draw("home-session", new[] { phone }, new FocusSession("s", "active", 2700, start.AddMinutes(-20), start.AddMinutes(24).AddSeconds(18)), false, "Studying · library desk");
+            Draw("home-buddyoff", new[] { phone }, idle, false, null, false);
             Draw("home-locked", new[] { phone }, new FocusSession("s", "active", 2700, start, start.AddMinutes(45)), false);
         });
         thread.SetApartmentState(ApartmentState.STA);

@@ -43,6 +43,9 @@ public sealed class SessionWatch : IDisposable
 
     private string? sessionId;
     private bool buddy;
+    /// <summary>What the phone asked for this session; the PC's own switch can still turn the buddy off.</summary>
+    private bool phoneBuddy;
+    private readonly string? buddyOffFile;
     /// <summary>A Locked session from a Plus user: no "is it for work?" question, distractions go straight down.</summary>
     private bool strict;
     private string? task;
@@ -80,6 +83,7 @@ public sealed class SessionWatch : IDisposable
         guard = new ScrollGuard(guardianOptions);
         browsers = new BrowserGuard(TimeSpan.FromSeconds(guard.Options.BrowserGraceSeconds), stateDir);
         later = new LaterStore(stateDir ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockIn"));
+        buddyOffFile = stateDir is null ? null : Path.Combine(stateDir, "buddy-off");
         timer = new System.Threading.Timer(_ => Tick(), null, Timeout.Infinite, Timeout.Infinite);
     }
 
@@ -98,6 +102,8 @@ public sealed class SessionWatch : IDisposable
             capture.Clear();
             savedThisSession = false;
             cheerUntil = null;
+            phoneBuddy = showBuddy;
+            showBuddy = showBuddy && BuddyOn;
             buddy = showBuddy;
             task = taskName;
             startedAt = started;
@@ -122,6 +128,34 @@ public sealed class SessionWatch : IDisposable
             }
             BuddyWindow.Instance.SetMood(MoodFor(0, false, 0), showBuddy);
             timer.Change(TimeSpan.Zero, Interval);
+        }
+    }
+
+    /// <summary>The PC window's "Desk buddy" switch. Off hides the buddy at once and keeps it hidden.</summary>
+    public bool BuddyOn
+    {
+        get => buddyOffFile is null || !File.Exists(buddyOffFile);
+        set
+        {
+            try
+            {
+                if (buddyOffFile is null) return;
+                if (value) File.Delete(buddyOffFile);
+                else File.WriteAllText(buddyOffFile, "");
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            lock (gate)
+            {
+                if (sessionId is null) { if (!value) BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false); return; }
+                buddy = value && phoneBuddy;
+                if (buddy && !hooked)
+                {
+                    BuddyWindow.Instance.Chosen += OnChosen;
+                    hooked = true;
+                }
+                BuddyWindow.Instance.SetMood(MoodFor(0, false, 0), buddy);
+            }
         }
     }
 
@@ -193,6 +227,7 @@ public sealed class SessionWatch : IDisposable
     public void Greet(string words)
     {
         lock (gate) { if (sessionId is not null) return; }
+        if (!BuddyOn) return;
         BuddyWindow.Instance.SetMood(BuddyMood.Excited, true, words);
         _ = Task.Delay(TimeSpan.FromSeconds(8)).ContinueWith(_ =>
         {
