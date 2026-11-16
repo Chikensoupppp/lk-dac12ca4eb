@@ -99,6 +99,7 @@ struct RestrictionsSheet: View {
                         .padding(.bottom, 24)
 
                         Rectangle().fill(SInk.line).frame(height: 1)
+                        if rows.isEmpty { emptyRow }
                         ForEach(rows, id: \.self) { item in row(item) }
                     }
                 }
@@ -157,6 +158,27 @@ struct RestrictionsSheet: View {
         case .app(let t): Label(t).labelStyle(.titleAndIcon)
         case .category(let t): Label(t).labelStyle(.titleAndIcon)
         case .site(let t): Label(t).labelStyle(.titleAndIcon)
+        }
+    }
+
+    /// Same empty row as the Accountability partner sheet: dashed circle, plus, one line.
+    private var emptyRow: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 22) {
+                ZStack {
+                    Circle()
+                        .strokeBorder(Color(hex: 0xC4BDB0), style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+                        .frame(width: 58, height: 58)
+                    Image(systemName: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(SInk.soft)
+                }
+                .accessibilityHidden(true)
+                Text("Nobody selected yet")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(SInk.ink)
+                Spacer(minLength: 8)
+            }
+            .padding(.vertical, 20)
+            Rectangle().fill(SInk.line).frame(height: 1)
         }
     }
 
