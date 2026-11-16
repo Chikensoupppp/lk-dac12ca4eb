@@ -33,6 +33,16 @@ enum Matte {
     }
 }
 
+/// The Focus surface has its own paper palette; other screens still use Matte.
+enum FocusPaper {
+    static let page = Color(hex: 0xF6F3EC)
+    static let ink = Color(hex: 0x171513)
+    static let secondary = Color(hex: 0x6F6A60)
+    static let line = Color(hex: 0xE4DED3)
+    static let inset = Color(hex: 0xEDE9E0)
+    static let amber = Color(hex: 0xA97029)
+}
+
 /// True when decorative motion should be off: system Reduce Motion or Low Power Mode.
 func motionLimited(_ systemReduceMotion: Bool) -> Bool {
     #if DEBUG

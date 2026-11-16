@@ -1,5 +1,9 @@
 # Handoff
 
+## Focus screen · 2026-11-16
+
+The local redesign uses `BrainExact` inside a flat cream dial. The task, minutes, Locked Mode and PC pairing retain their existing actions. The session lifecycle and Live Activity code are unchanged. The supplied before picture and browser previews are design references. Run `FocusUITests` on the compact iPhone at Accessibility XXXL and check VoiceOver, coach and live countdown behavior before release.
+
 ## Habit features - 2026-11-15 (CI 43754543243 green on 426ae7b)
 
 - Streak rest day: one missed day keeps a streak alive if the days around it were finished; usable once per 7 days (`StreakStore.run`). The streak screen says "rest day used. nice save".

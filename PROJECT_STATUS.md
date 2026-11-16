@@ -1,5 +1,9 @@
 # Project status
 
+## Focus screen · 2026-11-16
+
+Local SwiftUI redesign with the approved mascot in the timer. Browser mock reviewed at standard and compact widths. Swift syntax checked on Windows. Xcode build, simulator UI tests, VoiceOver and hardware verification are pending.
+
 ## Mobile milestone - 2026-11-15
 
 - Implemented and CI-verified (run 43749652340, commit 1b1e77b): shorter first run, single hold, Plus after first finished session, optional coach, neutral quit with partial credit, completion card, "Selected apps" widget wording, small-iPhone LOCK IN fit.

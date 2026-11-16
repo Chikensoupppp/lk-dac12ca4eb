@@ -1,33 +1,13 @@
 # Lock In design
 
-Updated 2026-11-04. The Focus screen is now **matte black with a living background**
-(mocks: `docs/design/matte-black-animated.html`, `docs/design/focus-motion.html` and `.mp4`).
-The Cream look (A2) stays on the sheets (Restrictions, PC) until they are redrawn.
+## Focus screen · 2026-11-16
 
-## Intent
-A calm, premium focus timer. One machined object (a dark bezel and a glowing ice-blue ring) on a
-matte black field with slow light behind it. Everything else stays quiet and short. No help
-paragraphs in the app.
+The pink brain sits inside the dial above the time. Use the bundled `BrainExact` image at its original aspect ratio. Keep all dial marks outside the artwork. The first-run coach uses its existing expressions and takes the mascot's place while teaching.
 
-## Look (Focus screen)
-- Dark (`.preferredColorScheme(.dark)`). Colors live in `enum Matte` (`Clock/Matte.swift`).
-  Text `#F3F5F8`, soft text `#8E97A3` (about 6.5:1 on the background; not yet measured with a tool).
-- Backdrop `FocusBackdrop`: near-black gradient, three blurred glows (blue, violet, teal), rising
-  dust, soft vignette.
-- Clock: angular-gradient bezel, dark face, 60 dial marks, thick rounded ring in an ice gradient
-  (`#B5DCFC` to `#4C8EE0`) with a soft glow, a glint circling the rim, faint ripples.
-- Type: SF Rounded (`Cream.rounded`). Semibold large numerals. Labels 11 to 13 pt, tracking 2 to 4.
-- Buttons (`MatteButtonStyle`): prominent = pale metal plate with dark text. Quiet = dark plate with
-  a 1.5 pt edge.
-- Sheets still use `CreamBackdrop` and `CreamButtonStyle`.
-
-## Motion (all of it off with Reduce Motion or Low Power Mode, except short color fades)
-- Mood (`FocusMood`): idle, running (glows pulled in and calm), last minute (glows turn amber, no
-  flashing), finished (glows brighten, light sweep, ring closes), ended early (glows go gray).
-- Pick minutes: the ring glides to the new length. Digits roll.
-- Start: a bright edge runs around the button and one ring spreads out. Ring grows to full, then drains.
-- Haptics: heavy impact on lock, success on finish, warning on early end.
-- The timestamp-driven readout is never animated by its parent.
+- Paper `#F6F3EC`, ink `#171513`, secondary text `#6F6A60`, hairlines `#E4DED3`. The amber `#A97029` arc shows the selected duration while idle and time remaining during a session. Focus colors live in `Clock/Matte.swift` under `FocusPaper`.
+- Onest for the wordmark and tabular countdown. Use Dynamic Type for the controls and status. Left-align the task, minutes label and primary action. Three pencil strokes cross the lower rim.
+- Keep the duration picker and session action at the foot of the screen. Long content above can scroll. At accessibility sizes the picker wraps and the clock caption moves below the dial.
+- The brain settles slightly higher when a session starts. Reduce Motion suppresses this movement. The clock reads the same end timestamp as the session. Start, completion and early-exit haptics stay tied to session events.
 
 ## Brain mascot (changed 2026-11-13)
 - Owner correction in this session: use the exact right-hand artwork on the black background, not a code redraw. `docs/design/brain-mascot-exact.png` is that image with only its black surround removed. Identical PNGs are bundled by both apps; facial expressions and existing mood marks are layered on top. `scripts/extract-brain-assets.py` reproduces the assets from the owner's comparison image.

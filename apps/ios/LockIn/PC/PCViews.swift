@@ -9,10 +9,10 @@ struct PCStatusLine: View {
     private var label: String? {
         if let left = pc.activity?.breakSecondsLeft, left > 0 { return "ON A BREAK \u{00B7} \(left / 60):\(String(format: "%02d", left % 60))" }
         switch pc.status {
-        case .notPaired: return isLocked ? nil : "PAIR A PC"
-        case .paired: return "PC PAIRED"
-        case .connected: return "PC CONNECTED"
-        case .offline: return "PC OFFLINE, RETRYING"
+        case .notPaired: return nil
+        case .paired: return "PC paired"
+        case .connected: return "PC connected"
+        case .offline: return "PC offline, retrying"
         }
     }
 
@@ -20,19 +20,19 @@ struct PCStatusLine: View {
         if let label {
             if isLocked {
                 Text(label)
-                    .font(Cream.rounded(12, .semibold))
-                    .tracking(2)
-                    .foregroundStyle(Matte.textSoft)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(FocusPaper.secondary)
                     .padding(.top, 4)
+                    .accessibilityLabel(label.uppercased())
                     .accessibilityIdentifier("pc-status")
             } else {
                 Button(action: open) {
-                    Text(label)
-                        .font(Cream.rounded(12, .semibold))
-                        .tracking(2)
-                        .foregroundStyle(Matte.textSoft)
+                    Label(label, systemImage: "desktopcomputer")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(FocusPaper.secondary)
                         .frame(minHeight: 44)
                 }
+                .accessibilityLabel(label.uppercased())
                 .accessibilityIdentifier("pc-status")
             }
         }

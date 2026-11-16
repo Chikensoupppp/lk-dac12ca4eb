@@ -70,7 +70,6 @@ struct FocusView: View {
 
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
-    private var motion: Bool { !motionLimited(systemReduceMotion) }
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -231,15 +230,14 @@ struct FocusView: View {
     @ViewBuilder private var toolsHintBubble: some View {
         if showToolsHint {
             Text("Goals, keys and app limits are up here.")
-                .font(Cream.rounded(13, .semibold))
-                .foregroundStyle(Color(hex: 0xF3F4F0))
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(FocusPaper.page)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .frame(maxWidth: 240)
-                .background(RoundedRectangle(cornerRadius: 14).fill(Matte.text))
-                .offset(y: 54)
+                .background(RoundedRectangle(cornerRadius: 14).fill(FocusPaper.ink))
                 .onTapGesture { showToolsHint = false }
                 .task {
                     try? await Task.sleep(for: .seconds(8))
@@ -252,131 +250,74 @@ struct FocusView: View {
 
     private var ifThenLine: String? { IfThenPlan.line(on: ifThenOn, cue: ifThenCue) }
 
-    private var stateAnimation: Animation {
-        reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.7)
+    private var stateAnimation: Animation? {
+        reduceMotion ? nil : .spring(response: 0.36, dampingFraction: 1)
     }
 
     private var clockCaption: String {
         if let timing {
             return "Ends " + timing.endsAt.formatted(date: .omitted, time: .shortened)
         }
+        if flash == .endedEarly { return "Session ended" }
         return justCompleted ? "Session complete" : "Ready"
     }
 
-    /// The screen and its sheets. Split from `body` so Swift can type-check each part quickly.
     private var screen: some View {
-        ZStack {
-            FocusBackdrop(timing: timing, flash: flash)
-
-            GeometryReader { geo in
-                // Short phones (SE): the clock gives up space first, so the buttons below always fit.
-                let roomForClock = geo.size.height < 700 ? geo.size.height - (ifThenLine == nil ? 470 : 494) : .infinity
-                let side = max(min(geo.size.width - 48, roomForClock, geo.size.height * (dynamicTypeSize.isAccessibilitySize ? 0.3 : (geo.size.height < 700 ? 0.36 : 0.45))), 110)
-
-                VStack(spacing: 0) {
-                    // Its own row, so the buttons can never sit on the title. Hidden (but still
-                    // taking its space) during a session, so nothing jumps.
-                    Group {
-                        if !isLocked && coachStep == nil { topBar }
-                        else { Color.clear.frame(height: 44).accessibilityHidden(true) }
-                    }
-                        .opacity(isLocked || coachStep != nil ? 0 : 1)
-                        .allowsHitTesting(!isLocked && coachStep == nil)
-                        .accessibilityHidden(isLocked || coachStep != nil)
-                        .padding(.top, 4)
-                        .overlay(alignment: .topTrailing) { toolsHintBubble }
-                        .zIndex(1)
-
-                    Text("NOGBOX")
-                        .font(Cream.rounded(13, .bold))
-                        .tracking(4)
-                        .foregroundStyle(Matte.textSoft)
-                        .padding(.top, 6)
-                        .opacity(coachStep == nil ? 1 : 0)
-                        .accessibilityHidden(coachStep != nil)
-
-                    PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
-                        .allowsHitTesting(coachStep == nil)
-                        .accessibilityHidden(coachStep != nil)
-                        .opacity(coachStep == nil ? 1 : 0)
-
-                    // In a session: the task, and what the PC sees (front app, buddy nudges).
-                    if isLocked, let line = sessionWorkLine {
-                        Text(line)
-                            .font(Cream.rounded(12, .medium))
-                            .foregroundStyle(pc.activity?.onTask == false ? Color(hex: 0xC2410C) : Matte.textSoft)
-                            .lineLimit(1)
-                            .padding(.top, 4)
-                            .accessibilityIdentifier("pc-activity")
-                    }
-
-                    if isLocked, let line = restrictions.statusLine {
-                        Text(line)
-                            .font(Cream.rounded(12, .medium))
-                            .foregroundStyle(Matte.textSoft)
-                            .padding(.top, 4)
-                            .accessibilityIdentifier("restrictions-line")
-                    }
-
-                    if !isLocked, coachStep == nil, let line = ifThenLine {
-                        Text(line)
-                            .font(Cream.rounded(13, .medium))
-                            .foregroundStyle(Matte.textSoft)
-                            .lineLimit(1)
-                            .padding(.top, 4)
-                            .accessibilityIdentifier("if-then-line")
-                    }
-
-                    Spacer(minLength: 16)
-
-                    CountdownClockView(
-                        duration: TimeInterval(selectedMinutes * 60),
-                        timing: timing,
-                        caption: clockCaption,
-                        idleFraction: flash == .finished ? 1 : Double(selectedMinutes) / 90,
-                        flash: flash,
-                        sweepTrigger: completionCount
-                    )
-                    .frame(width: side, height: side)
-                    .opacity(coachStep != nil && coachStep != .celebrate ? 0.25 : 1)
-
-                    Spacer(minLength: 16)
-
-                    VStack(spacing: 10) {
-                        WorkTaskPill(tasks: tasks) { showTasks = true }
-                            .overlay(Capsule().strokeBorder(coachStep == .task ? Ink.blue : .clear, lineWidth: 3))
-                            .opacity(coachStep == nil || coachStep == .task ? 1 : 0.3)
-                            .disabled(coachStep != nil && coachStep != .task)
-                        Text("MINUTES")
-                            .font(Cream.rounded(11, .semibold))
-                            .tracking(3)
-                            .foregroundStyle(Matte.textSoft)
-                        DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
-                            if coachStep == .minutes { coachStep = restrictions.hasSelection ? .hold : .apps; coachReward = "NICE!" }
+        GeometryReader { geo in
+            let compact = geo.size.height < 700
+            let gutter: CGFloat = compact ? 18 : 24
+            let side = min(geo.size.width - 2 * gutter, compact ? 260 : 348,
+                           geo.size.height * (compact ? 0.38 : 0.40))
+            VStack(alignment: .leading, spacing: compact ? 4 : 12) {
+                // Keep minutes and the session action reachable while long tasks, coach
+                // prompts and accessibility text can scroll independently above them.
+                GeometryReader { upper in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            if coachStep == nil {
+                                topBar
+                                toolsHintBubble.frame(maxWidth: .infinity, alignment: .trailing)
+                                PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
+                            } else {
+                                coachOverlay
+                            }
+                            statusLines
+                            Spacer(minLength: 8)
+                            VStack(spacing: 4) {
+                                CountdownClockView(duration: TimeInterval(selectedMinutes * 60),
+                                                   timing: timing, caption: clockCaption,
+                                                   idleFraction: flash == .finished ? 1 : Double(selectedMinutes) / 90,
+                                                   flash: flash, showsMascot: coachStep == nil)
+                                    .frame(width: side, height: side)
+                                if dynamicTypeSize.isAccessibilitySize {
+                                    Text(clockCaption)
+                                        .font(.body)
+                                        .foregroundStyle(FocusPaper.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            Spacer(minLength: 8)
+                            if !isLocked {
+                                WorkTaskPill(tasks: tasks) { showTasks = true }
+                                    .overlay(Capsule().strokeBorder(coachStep == .task ? FocusPaper.ink : .clear, lineWidth: 2))
+                                    .opacity(coachStep == nil || coachStep == .task ? 1 : 0.3)
+                                    .disabled(coachStep != nil && coachStep != .task)
+                            }
                         }
-                        .disabled(coachStep != nil && coachStep != .minutes)
-                        .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
-                        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(coachStep == .minutes ? Ink.blue : .clear, lineWidth: 3))
-                        if coachStep == .apps {
-                            coachAppsButtons
-                        } else {
-                            lockedToggle
-                                .opacity(coachStep == nil ? 1 : 0.25)
-                                .disabled(coachStep != nil)
-                        }
+                        .frame(maxWidth: .infinity, minHeight: upper.size.height, alignment: .leading)
                     }
-                    .opacity(isLocked ? 0 : 1)
-                    .allowsHitTesting(!isLocked)
-                    .accessibilityHidden(isLocked)
-                    .padding(.bottom, geo.size.height < 700 ? 12 : 24)
-
-                    focusButton
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                if !isLocked {
+                    durationControls
+                }
+                focusButton
             }
+            .padding(.horizontal, gutter)
+            .padding(.top, compact ? 4 : 12)
+            .padding(.bottom, compact ? 8 : 14)
         }
+        .background(FocusPaper.page.ignoresSafeArea())
         .sheet(isPresented: $showRestrictions, onDismiss: { if coachStep == .apps { coachStep = .hold } }) {
             RestrictionsSheet(restrictions: restrictions)
         }
@@ -434,6 +375,63 @@ struct FocusView: View {
         }
     }
 
+    @ViewBuilder private var statusLines: some View {
+        if isLocked, let line = sessionWorkLine {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if pc.activity?.onTask == false {
+                    Image(systemName: "exclamationmark.circle")
+                        .accessibilityLabel("Off task")
+                }
+                Text(line)
+            }
+            .font(.footnote).foregroundStyle(FocusPaper.secondary)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("pc-activity")
+        }
+        if isLocked, let line = restrictions.statusLine {
+            Text(line).accessibilityIdentifier("restrictions-line")
+                .font(.footnote).foregroundStyle(FocusPaper.secondary)
+        }
+        if !isLocked, coachStep == nil, let line = ifThenLine {
+            Text(line).accessibilityIdentifier("if-then-line")
+                .font(.footnote).foregroundStyle(FocusPaper.secondary)
+        }
+    }
+
+    private var durationControls: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    minutesLabel
+                    Spacer(minLength: 8)
+                    modeControl
+                }
+                VStack(alignment: .leading, spacing: 0) {
+                    modeControl
+                    minutesLabel
+                }
+            }
+            DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
+                if coachStep == .minutes { coachStep = restrictions.hasSelection ? .hold : .apps; coachReward = "NICE!" }
+            }
+            .disabled(coachStep != nil && coachStep != .minutes)
+            .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
+            .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(coachStep == .minutes ? FocusPaper.ink : .clear, lineWidth: 2))
+            if coachStep == .apps { coachAppsButtons }
+        }
+    }
+
+    private var minutesLabel: some View {
+        Text("Minutes").font(.headline).foregroundStyle(FocusPaper.ink)
+            .accessibilityLabel("MINUTES")
+    }
+
+    @ViewBuilder private var modeControl: some View {
+        if coachStep == nil {
+            lockedToggle
+        }
+    }
+
     private var framed: some View {
         screen
         .overlay(alignment: .topLeading) {
@@ -444,7 +442,6 @@ struct FocusView: View {
             }
             #endif
         }
-        .overlay(alignment: .topLeading) { coachOverlay }
         .preferredColorScheme(.light)
     }
 
@@ -518,37 +515,45 @@ struct FocusView: View {
         }
     }
 
-    /// Top row: the test menu on the left, goal / keys / restrictions on the right.
+    /// Session setup tools are available from the idle header.
     private var topBar: some View {
-        HStack(spacing: 8) {
-            #if DEBUG
-            // TEST MENU, debug builds only (never in TestFlight or the App Store): replays the
-            // first-run slides or shows the streak screen.
-            Menu {
-                Button("Replay intro") { onboardingDone = false }
-                    .accessibilityIdentifier("replay-intro")
-                Button("Show streak") {
-                    // Counts today as a finished day so the screen has something to show.
-                    StreakStore.record()
-                    streakMinutes = 25
-                    showStreak = true
+        HStack(spacing: 0) {
+            Text("Nogbox.")
+                .font(AppFont.font(34, .heavy))
+                .tracking(-1.8)
+                .foregroundStyle(FocusPaper.ink)
+                .accessibilityLabel("NOGBOX")
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 0)
+            if !isLocked {
+                #if DEBUG
+                // TEST MENU, debug builds only (never in TestFlight or the App Store): replays the
+                // first-run slides or shows the streak screen.
+                Menu {
+                    Button("Replay intro") { onboardingDone = false }
+                        .accessibilityIdentifier("replay-intro")
+                    Button("Show streak") {
+                        // Counts today as a finished day so the screen has something to show.
+                        StreakStore.record()
+                        streakMinutes = 25
+                        showStreak = true
+                    }
+                    .accessibilityIdentifier("show-streak")
+                } label: {
+                    Text("TEST")
+                        .font(Cream.rounded(12, .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(FocusPaper.ink)
+                        .padding(.horizontal, 14)
+                        .frame(height: 44)
+                        .background(Capsule().fill(FocusPaper.inset).overlay(Capsule().strokeBorder(FocusPaper.line, lineWidth: 1)))
                 }
-                .accessibilityIdentifier("show-streak")
-            } label: {
-                Text("TEST")
-                    .font(Cream.rounded(12, .bold))
-                    .tracking(1.5)
-                    .foregroundStyle(Matte.textQuiet)
-                    .padding(.horizontal, 14)
-                    .frame(height: 44)
-                    .background(Capsule().fill(Matte.tray).overlay(Capsule().strokeBorder(Matte.edge, lineWidth: 1)))
+                .accessibilityIdentifier("test-menu")
+                #endif
+                roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
+                roundButton("person.2", size: 15, label: "Accountability partner") { showKeys = true }
+                roundButton("shield", size: 17, label: "Restrictions") { showRestrictions = true }
             }
-            .accessibilityIdentifier("test-menu")
-            #endif
-            Spacer(minLength: 8)
-            roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
-            roundButton("person.2.fill", size: 15, label: "Accountability partner") { showKeys = true }
-            roundButton("shield.lefthalf.filled", size: 17, label: "Restrictions") { showRestrictions = true }
         }
     }
 
@@ -556,9 +561,9 @@ struct FocusView: View {
         Button { showToolsHint = false; action() } label: {
             Image(systemName: icon)
                 .font(.system(size: size))
-                .foregroundStyle(Matte.textQuiet)
+                .foregroundStyle(FocusPaper.ink)
                 .frame(width: 44, height: 44)
-                .background(Circle().fill(Matte.tray).overlay(Circle().strokeBorder(Matte.edge, lineWidth: 1)))
+                .contentShape(Rectangle())
         }
         .accessibilityLabel(label)
     }
@@ -568,70 +573,68 @@ struct FocusView: View {
     @ViewBuilder private var focusButton: some View {
         if coachStep == .hold {
             VStack(spacing: 6) {
-            Text("Keep holding until the ring fills.")
-                .font(Cream.rounded(12, .medium))
-                .foregroundStyle(Matte.textSoft)
-            Text("HOLD TO START")
-            .font(Cream.rounded(16, .heavy))
-            .tracking(2)
-            .foregroundStyle(Color(hex: 0xF3F4F0))
-            .frame(maxWidth: .infinity, minHeight: 60)
-            .background(RoundedRectangle(cornerRadius: 22).fill(Matte.riso)
-                .shadow(color: Matte.tip.opacity(0.9), radius: 0, x: 3, y: 3))
-            .contentShape(RoundedRectangle(cornerRadius: 22))
-            .overlay(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 22)
-                    .fill(Ink.blue.opacity(0.25))
-                    .scaleEffect(x: coachPressing ? 1 : 0, anchor: .leading)
-                    .animation(reduceMotion ? nil : .linear(duration: 1.5), value: coachPressing)
-                    .allowsHitTesting(false)
-            }
-            .onLongPressGesture(minimumDuration: 1.5, maximumDistance: 60, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
-            // A quick tap must never feel dead: it starts too. Holding is the nicer way, not the only way.
-            .simultaneousGesture(TapGesture().onEnded { startCoachedSession() })
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Hold to start")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { startCoachedSession() }
-            .accessibilityAction(named: "Start now") { startCoachedSession() }
-            .accessibilityHint("Hold to start. VoiceOver: double tap to start.")
-            .accessibilityIdentifier("coach-hold-to-start")
+                Text("Keep holding to start.")
+                    .font(.footnote)
+                    .foregroundStyle(FocusPaper.secondary)
+                Text("HOLD TO START")
+                    .font(.headline.weight(.heavy))
+                    .tracking(2)
+                    .foregroundStyle(FocusPaper.page)
+                    .frame(maxWidth: .infinity, minHeight: 60)
+                    .background(RoundedRectangle(cornerRadius: 17).fill(FocusPaper.ink))
+                    .contentShape(RoundedRectangle(cornerRadius: 17))
+                    .overlay(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 17)
+                            .fill(FocusPaper.page.opacity(0.20))
+                            .scaleEffect(x: coachPressing ? 1 : 0, anchor: .leading)
+                            .animation(reduceMotion ? nil : .linear(duration: 1.5), value: coachPressing)
+                            .allowsHitTesting(false)
+                    }
+                    .onLongPressGesture(minimumDuration: 1.5, maximumDistance: 60, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
+                    // A quick tap must never feel dead: it starts too. Holding is the nicer way, not the only way.
+                    .simultaneousGesture(TapGesture().onEnded { startCoachedSession() })
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Hold to start")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { startCoachedSession() }
+                    .accessibilityAction(named: "Start now") { startCoachedSession() }
+                    .accessibilityHint("Hold to start. VoiceOver: double tap to start.")
+                    .accessibilityIdentifier("coach-hold-to-start")
             }
         } else {
-            Button(action: isLocked ? askToEnd : startFromButton) {
-                Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
+            if firstSessionHint && !isLocked && coachStep == nil {
+                Text("Start your first 25 minutes?")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(FocusPaper.secondary)
+                    .accessibilityLabel("Suggested: start your first 25 minute session now")
             }
-            .buttonStyle(MatteButtonStyle(prominent: !isLocked))
-            .overlay { LatchEffect(trigger: startCount, enabled: motion) }
-            .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
-            .overlay(alignment: .top) {
-                if firstSessionHint && !isLocked && coachStep == nil {
-                    Text("YOUR FIRST 25 MINUTES · START NOW?")
-                        .font(Cream.rounded(11, .bold))
-                        .tracking(1.5)
-                        .foregroundStyle(Color(hex: 0xF3F4F0))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(Matte.text))
-                        .offset(y: -26)
-                        .accessibilityLabel("Suggested: start your first 25 minute session now")
+            Button(action: isLocked ? askToEnd : startFromButton) {
+                HStack {
+                    Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
+                    Spacer(minLength: 6)
+                    if !isLocked {
+                        FocusArrow().stroke(style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
+                            .frame(width: 46, height: 24)
+                            .accessibilityHidden(true)
+                    }
                 }
             }
+            .buttonStyle(FocusActionStyle(prominent: !isLocked))
+            .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
         }
     }
 
     @ViewBuilder private var coachOverlay: some View {
         if let coachStep {
             VStack(alignment: .leading, spacing: 2) {
-                Button("Skip") { skipCoach() }
-                    .font(.headline)
-                    .foregroundStyle(Matte.text)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityIdentifier("skip-focus-coach")
+                Button { skipCoach() } label: {
+                    Text("Skip").font(.headline).frame(minWidth: 44, minHeight: 44)
+                }
+                .foregroundStyle(FocusPaper.ink)
+                .accessibilityIdentifier("skip-focus-coach")
                 FocusCoach(step: coachStep, reduceMotion: reduceMotion, pressing: coachPressing, reward: coachReward)
                     .allowsHitTesting(false)
             }
-            .padding(.horizontal, 16)
             .transition(.opacity)
         }
     }
@@ -640,10 +643,10 @@ struct FocusView: View {
     private var coachAppsButtons: some View {
         HStack(spacing: 12) {
             Button("Choose apps") { showRestrictions = true }
-                .buttonStyle(MatteButtonStyle(prominent: true))
+                .buttonStyle(FocusActionStyle(prominent: true))
                 .accessibilityIdentifier("coach-choose-apps")
             Button("Skip apps") { coachStep = .hold }
-                .buttonStyle(MatteButtonStyle(prominent: false))
+                .buttonStyle(FocusActionStyle(prominent: false))
                 .accessibilityIdentifier("coach-skip-apps")
         }
     }
@@ -689,23 +692,24 @@ struct FocusView: View {
     private var lockedToggle: some View {
         Button {
             if !plus.hasPlus { showPlusOffer = true; return }
+            // Locked rides on the shield, so with no apps picked the tap opens the picker instead of doing nothing.
+            if !restrictions.hasSelection { showRestrictions = true; return }
             lockedNext.toggle()
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: lockedNext ? "lock.fill" : "lock.open")
-                Text(lockedNext ? "LOCKED: NO QUITTING" : "LOCKED MODE")
-                    .font(Cream.rounded(12, .bold)).tracking(1.5)
+                Text(lockedNext ? "Locked: no quitting" : "Locked mode")
+                    .font(.footnote.weight(.medium))
                 if !plus.hasPlus {
-                    Text("PLUS").font(Cream.rounded(10, .heavy)).padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Capsule().fill(Matte.edge))
+                    Text("Plus").font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 2)
+                        .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(FocusPaper.line))
                 }
             }
-            .foregroundStyle(lockedNext ? Matte.riso : Matte.textSoft)
+            .foregroundStyle(lockedNext ? FocusPaper.ink : FocusPaper.secondary)
             .frame(minHeight: 44)
         }
-        .disabled(plus.hasPlus && !restrictions.hasSelection)
-        .opacity(plus.hasPlus && !restrictions.hasSelection ? 0.4 : 1)
-        .accessibilityHint(restrictions.hasSelection ? "No quit button for the next session" : "Pick apps to lock first")
+        .opacity(plus.hasPlus && !restrictions.hasSelection ? 0.55 : 1)
+        .accessibilityHint(restrictions.hasSelection ? "No quit button for the next session" : "Opens the app picker first. Locked mode needs apps to lock.")
     }
 
     /// END SESSION. Free sessions go through the quit screen; Locked ones only have the ways out.
@@ -916,17 +920,11 @@ private struct DurationSelector: View {
                 } label: {
                     Text("\(minutes)")
                         .font(Cream.rounded(optionFontSize, selected ? .bold : .medium).monospacedDigit())
-                        .foregroundStyle(selected ? Color.white : Matte.textDim)
+                        .foregroundStyle(selected ? FocusPaper.page : FocusPaper.ink)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background {
                             if selected {
-                                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                    .fill(LinearGradient(colors: [Matte.chipHigh, Matte.chipLow], startPoint: .top, endPoint: .bottom))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                            .strokeBorder(Color.black.opacity(0.1), lineWidth: 1)
-                                    )
-                                    .shadow(color: .black.opacity(0.18), radius: 4, x: 0, y: 2)
+                                RoundedRectangle(cornerRadius: 13, style: .continuous).fill(FocusPaper.ink)
                             }
                         }
                         .contentShape(Rectangle())
@@ -937,16 +935,47 @@ private struct DurationSelector: View {
             }
         }
         .padding(4)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Matte.tray)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Matte.edge, lineWidth: 1)
-                )
-        )
-        .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: selection)
+        .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(FocusPaper.inset))
+        .animation(reduceMotion ? nil : .spring(response: 0.30, dampingFraction: 1), value: selection)
         .sensoryFeedback(.selection, trigger: selection)
+    }
+}
+
+private struct FocusActionStyle: ButtonStyle {
+    let prominent: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        let plate = RoundedRectangle(cornerRadius: 17, style: .continuous)
+        configuration.label
+            .font(.headline.weight(.bold))
+            .foregroundStyle(prominent ? FocusPaper.page : FocusPaper.ink)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .background(plate.fill(prominent ? FocusPaper.ink : FocusPaper.page))
+            .overlay(plate.strokeBorder(prominent ? .clear : FocusPaper.line))
+            .contentShape(plate)
+            .opacity(configuration.isPressed ? 0.83 : 1)
+            .scaleEffect(configuration.isPressed && !motionLimited(reduceMotion) ? 0.985 : 1)
+            .animation(motionLimited(reduceMotion) ? nil : .spring(response: 0.30, dampingFraction: 1),
+                       value: configuration.isPressed)
+    }
+}
+
+private struct FocusArrow: Shape {
+    func path(in rect: CGRect) -> Path {
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + rect.width * x / 46, y: rect.minY + rect.height * y / 24)
+        }
+        var arrow = Path()
+        arrow.move(to: point(2, 16))
+        arrow.addQuadCurve(to: point(20, 13), control: point(12, 19))
+        arrow.addQuadCurve(to: point(42, 8), control: point(29, 6))
+        arrow.move(to: point(33, 3))
+        arrow.addLine(to: point(42, 8))
+        arrow.addLine(to: point(35, 15))
+        return arrow
     }
 }
 
