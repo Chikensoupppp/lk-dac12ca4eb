@@ -151,7 +151,7 @@ struct KeysSheet: View {
 
     @ViewBuilder
     private func rows(_ people: [KeyPerson], empty: String, role: PairView.Role, remove: @escaping (String) -> Void) -> some View {
-        if people.isEmpty {
+        if people.isEmpty && role == .holder {
             row(mark: Image(systemName: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(PInk.soft),
                 dashed: true, title: empty, detail: "", titleColor: PInk.soft) {
                 EmptyView()
