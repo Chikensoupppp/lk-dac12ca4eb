@@ -461,10 +461,15 @@ struct FocusView: View {
         .onChange(of: pc.activity) { _, _ in publishPartnerStatus() }
         .onChange(of: timing) { _, _ in publishPartnerStatus() }
         .task(id: timing?.startedAt) {
+            var round = 0
             while timing != nil, !Task.isCancelled {
                 for pause in await PartnerCloud.pendingPauses(keys: keys) {
                     pc.partnerPause(appKey: pause.appKey, seconds: pause.seconds)
                 }
+                // Heartbeat: the partner's screen calls an update older than 90 s stale, so resend
+                // every 30 s even when nothing changed.
+                if round % 3 == 0 { publishPartnerStatus() }
+                round += 1
                 try? await Task.sleep(for: .seconds(10))
             }
         }
@@ -794,8 +799,8 @@ struct FocusView: View {
         return true
     }
 
-    /// One sealed update per partner. The PC adds the window title and pause state only while its own
-    /// "Share with my partner" switch is on.
+    /// One sealed update per partner. The PC adds the window title and pause state whenever a PC is
+    /// paired and a session runs there. Without a PC, `sharing` is false.
     private func publishPartnerStatus() {
         guard !keys.holders.isEmpty else { return }
         let a = pc.activity

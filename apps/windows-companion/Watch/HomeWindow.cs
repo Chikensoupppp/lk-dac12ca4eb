@@ -59,6 +59,7 @@ public sealed class HomeWindow : Form
     private DateTimeOffset? qrUntil;
     private int pairedWhenCodeMade;
     private bool quitting;
+    private readonly Func<bool> lockedNow;
     private bool toldAboutTray;
 
     // What the window shows; set by UpdateState, drawn by OnPaint.
@@ -72,11 +73,13 @@ public sealed class HomeWindow : Form
     public HomeWindow(Func<PairingOffer> openPairing, Func<IReadOnlyList<PairedDevice>> devices,
         Func<FocusSession> session, string stateDir, Func<string?>? taskName = null,
         Func<bool>? buddyOn = null, Action<bool>? setBuddy = null, Action<string>? removeDevice = null,
-        Func<(bool Active, bool CanPause, DateTimeOffset? BreakEnds)>? pauseState = null, Func<bool>? pauseBuddy = null)
+        Func<(bool Active, bool CanPause, DateTimeOffset? BreakEnds)>? pauseState = null, Func<bool>? pauseBuddy = null,
+        Func<bool>? lockedNow = null)
     {
         this.removeDevice = removeDevice ?? (_ => { });
         this.pauseState = pauseState ?? (() => (false, false, null));
         this.pauseBuddy = pauseBuddy ?? (() => false);
+        this.lockedNow = lockedNow ?? (() => false);
         this.buddyOn = buddyOn ?? (() => true);
         this.setBuddy = setBuddy ?? (_ => { });
         this.openPairing = openPairing;
@@ -506,6 +509,12 @@ public sealed class HomeWindow : Form
 
     private void Quit()
     {
+        // In a Locked session there is no way out through Quit; Nogbox keeps watching until the timer ends.
+        if (lockedNow())
+        {
+            tray.ShowBalloonTip(3000, "You are locked in", "Nogbox stays on until the timer ends.", ToolTipIcon.None);
+            return;
+        }
         quitting = true;
         tray.Visible = false;
         Application.Exit();

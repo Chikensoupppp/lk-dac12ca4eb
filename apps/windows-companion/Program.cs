@@ -201,7 +201,7 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
     var partner = watch.PartnerView(request.Id!);
     return Results.Ok(new
     {
-        // Only filled while the user's partner switch is on.
+        // Always filled (partner sharing has no switch). Private browser windows give no title.
         title = partner.Title,
         appKey = partner.Key,
         pausedApp = partner.PausedName,
@@ -217,7 +217,7 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
     });
 });
 
-// The partner paused an app or site. The phone forwards it; it only works while the PC's partner switch is on.
+// The partner paused an app or site. The phone forwards it; it works while a session runs.
 app.MapPost("/session/partner-pause", (PartnerPauseRequest request, SessionWatch watch) =>
     request.Id is not null && request.AppKey is not null && watch.PartnerPause(request.Id, request.AppKey, request.Seconds)
         ? Results.Ok(new { paused = true })
@@ -280,7 +280,7 @@ if (!args.Contains("--headless"))
             if (!sessionWatch.PauseBuddy()) return false;
             sessions.Shift(id, SessionWatch.BreakLength);
             return true;
-        }),
+        }, () => sessionWatch.IsLockedNow),
         args.Contains("--tray"));
 }
 

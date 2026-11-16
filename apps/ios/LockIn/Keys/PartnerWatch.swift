@@ -2,8 +2,8 @@ import CloudKit
 import SwiftUI
 
 /// What a partner may see of someone in a lock-in. Sealed to each partner, so only they can read it.
-/// The PC fills `app`, `appKey`, `title` and the pause fields only while the user's "Share with my
-/// partner" switch on the PC is on.
+/// The PC fills `app`, `appKey`, `title` and the pause fields. Sharing on the PC is always on; if no
+/// PC is paired, `sharing` is false and those fields stay empty.
 struct PartnerStatus: Codable, Equatable {
     /// "locked", "break" or "free".
     var state: String
@@ -248,7 +248,7 @@ struct PartnerWatchView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("ON THEIR PC").font(.system(size: 12, weight: .semibold)).tracking(2.6).foregroundStyle(FocusPaper.amber)
                 if !s.sharing {
-                    Text("\(person.name) has not turned on sharing on their PC.")
+                    Text("\(person.name) has no PC connected.")
                         .font(.system(size: 17)).foregroundStyle(soft)
                 } else if let app = s.app, !app.isEmpty {
                     Text(s.title ?? app).font(.system(size: 20, weight: .semibold)).foregroundStyle(ink)

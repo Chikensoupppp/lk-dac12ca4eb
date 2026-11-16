@@ -202,6 +202,12 @@ public sealed class SessionWatch : IDisposable
         }
     }
 
+    /// <summary>True during a Locked session that has not run out. The PC window refuses Quit then.</summary>
+    public bool IsLockedNow
+    {
+        get { lock (gate) return sessionId is not null && strict && clock.GetUtcNow() < startedAt + length; }
+    }
+
     public void End(string? id)
     {
         lock (gate)
@@ -246,7 +252,7 @@ public sealed class SessionWatch : IDisposable
     }
 
     /// <summary>
-    /// The partner pauses an app or site for a while. Only works while the user's partner switch is on and
+    /// The partner pauses an app or site for a while. Only works while
     /// a session runs. Returns false otherwise. Minimizes the window; never closes it.
     /// </summary>
     public bool PartnerPause(string id, string key, int seconds)
