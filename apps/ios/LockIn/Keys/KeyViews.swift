@@ -40,72 +40,159 @@ private func approved(_ answer: UnlockAnswer, for ask: UnlockAsk, by holder: Key
         KeyStore.verify(answer.signature, of: KeyStore.answerText(requestID: ask.requestID, nonce: ask.nonce, approved: true), by: holder)
 }
 
-// MARK: - Keys sheet (from the main screen)
+// MARK: - Accountability partner sheet (from the main screen)
 
-/// Pair with friends in person, see who holds your key, and let a friend out.
+/// The warm paper look of the partner sheet (2026-11-15 design): cream page, near-black ink, one black pill.
+private enum PInk {
+    static let page = Color(hex: 0xF4F1EA)
+    static let ink = Color(hex: 0x171513)
+    static let soft = Color(hex: 0x6F6A60)
+    static let line = Color(hex: 0xE4DED3)
+    static let dash = Color(hex: 0xC4BDB0)
+    static let alarm = Color(hex: 0xB3402E)
+}
+
+/// Pair with a friend in person, see who can let you out (and whom you can let out), and let a friend out.
 struct KeysSheet: View {
     @ObservedObject var keys: KeyStore
     let done: () -> Void
-    @State private var pairing = false
+    @State private var pairRole: PairView.Role?
     @State private var helping = false
+    @State private var askingName = false
+    @State private var nameDraft = ""
+    @State private var wantedRole: PairView.Role = .holder
     @State private var pending: [RemoteKeys.Pending] = []
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    KTitle(text: "Keys.")
-                    KBody(text: "A Key Holder is a friend who can let you out of a Locked session. They need Nogbox too (free). You pair once, in person.")
-                    TextField("Your first name", text: $keys.myName)
-                        .font(PrintFont.body(17))
-                        .padding(14)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(KInk.panel))
-                        .foregroundStyle(KInk.cream)
-                    Button("PAIR WITH A FRIEND NEARBY") { pairing = true }
-                        .buttonStyle(PrintButtonStyle(fill: KInk.green, text: KInk.bg))
-                        .disabled(keys.myName.trimmingCharacters(in: .whitespaces).isEmpty)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Accountability partner.")
+                        .font(.system(size: 44, weight: .heavy))
+                        .tracking(-1.4)
+                        .foregroundStyle(PInk.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("A friend who can let you out of a lock-in.")
+                        .font(.system(size: 20))
+                        .foregroundStyle(PInk.soft)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 14)
 
-                    section("They can let me out", keys.holders, remove: keys.removeHolder)
-                    section("I can let them out", keys.friends, remove: keys.removeFriend)
+                    Button { startPairing(.holder) } label: {
+                        Text("PAIR A FRIEND")
+                            .font(.system(size: 18, weight: .medium))
+                            .tracking(2.4)
+                            .foregroundStyle(PInk.page)
+                            .frame(maxWidth: .infinity, minHeight: 64)
+                            .background(Capsule().fill(PInk.ink))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 28)
+                    .accessibilityIdentifier("partner-pair")
+
+                    Rectangle().fill(PInk.line).frame(height: 1).padding(.top, 28)
+                    rows(keys.holders, empty: "Can let you out", role: .holder, remove: keys.removeHolder)
+                    rows(keys.friends, empty: "You can let them out", role: .friend, remove: keys.removeFriend)
 
                     if !keys.friends.isEmpty {
-                        Button("LET A FRIEND OUT (IN PERSON)") { helping = true }
-                            .buttonStyle(PrintButtonStyle(fill: KInk.cream, text: KInk.bg))
+                        Button { helping = true } label: {
+                            Text("LET A FRIEND OUT")
+                                .font(.system(size: 16, weight: .medium))
+                                .tracking(2)
+                                .foregroundStyle(PInk.ink)
+                                .frame(maxWidth: .infinity, minHeight: 56)
+                                .overlay(Capsule().stroke(PInk.ink, lineWidth: 1.5))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 24)
                         ForEach(pending) { p in
                             PendingAskCard(keys: keys, pending: p) { pending.removeAll { $0.id == p.id } }
+                                .padding(.top, 12)
                         }
                     }
                 }
-                .padding(24)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 32)
             }
-            .background(KInk.bg.ignoresSafeArea())
+            .background(PInk.page.ignoresSafeArea())
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: done) } }
-            .navigationDestination(isPresented: $pairing) { PairView(keys: keys) }
+            .navigationDestination(item: $pairRole) { role in PairView(keys: keys, role: role) }
             .navigationDestination(isPresented: $helping) { HelpNearbyView(keys: keys) }
             .task { pending = (try? await RemoteKeys.pending(for: keys)) ?? [] }
+            .alert("Your first name", isPresented: $askingName) {
+                TextField("First name", text: $nameDraft)
+                    .textInputAutocapitalization(.words)
+                Button("Cancel", role: .cancel) {}
+                Button("Next") {
+                    let name = nameDraft.trimmingCharacters(in: .whitespaces)
+                    guard !name.isEmpty else { return }
+                    keys.myName = name
+                    pairRole = wantedRole
+                }
+            } message: {
+                Text("Your friend sees this name.")
+            }
         }
         .preferredColorScheme(.light)
     }
 
-    private func section(_ title: String, _ people: [KeyPerson], remove: @escaping (String) -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased()).font(PrintFont.mono(12, .heavy)).tracking(1.5).foregroundStyle(KInk.green)
-            if people.isEmpty {
-                Text("Nobody yet.").font(PrintFont.body(15)).foregroundStyle(KInk.cream.opacity(0.5))
-            }
-            ForEach(people) { person in
-                HStack {
-                    Image(systemName: "key.fill").foregroundStyle(KInk.green)
-                    Text(person.name).font(PrintFont.bold(19)).foregroundStyle(KInk.cream)
-                    Spacer()
-                    Button("Remove") { remove(person.id) }
-                        .font(PrintFont.body(14)).foregroundStyle(KInk.alarm)
-                }
-                .padding(14)
-                .background(RoundedRectangle(cornerRadius: 14).fill(KInk.panel))
+    /// Pairing needs a name the friend will see; ask for it once, the first time.
+    private func startPairing(_ role: PairView.Role) {
+        wantedRole = role
+        if keys.myName.trimmingCharacters(in: .whitespaces).isEmpty {
+            nameDraft = ""
+            askingName = true
+        } else {
+            pairRole = role
+        }
+    }
+
+    @ViewBuilder
+    private func rows(_ people: [KeyPerson], empty: String, role: PairView.Role, remove: @escaping (String) -> Void) -> some View {
+        if people.isEmpty {
+            row(mark: Image(systemName: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(PInk.soft),
+                dashed: true, title: "Nobody yet", detail: empty) {
+                Button("Invite") { startPairing(role) }
+                    .font(.system(size: 19))
+                    .foregroundStyle(PInk.ink)
+                    .underline()
+                    .frame(minWidth: 44, minHeight: 44)
             }
         }
-        .padding(.top, 8)
+        ForEach(people) { person in
+            row(mark: Text(String(person.name.prefix(1)).uppercased()).font(.system(size: 20, weight: .semibold)).foregroundStyle(PInk.ink),
+                dashed: false, title: person.name, detail: empty) {
+                Button("Remove") { remove(person.id) }
+                    .font(.system(size: 17))
+                    .foregroundStyle(PInk.alarm)
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+        }
+    }
+
+    private func row<Mark: View, Action: View>(mark: Mark, dashed: Bool, title: String, detail: String,
+                                               @ViewBuilder action: () -> Action) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 22) {
+                ZStack {
+                    Circle()
+                        .strokeBorder(PInk.dash, style: StrokeStyle(lineWidth: 1.2, dash: dashed ? [3, 3] : []))
+                        .frame(width: 58, height: 58)
+                    mark
+                }
+                .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.system(size: 22, weight: .semibold)).foregroundStyle(PInk.ink)
+                    Text(detail).font(.system(size: 17)).foregroundStyle(PInk.soft)
+                }
+                Spacer(minLength: 8)
+                action()
+            }
+            .padding(.vertical, 20)
+            Rectangle().fill(PInk.line).frame(height: 1)
+        }
     }
 }
 
@@ -114,13 +201,14 @@ struct KeysSheet: View {
 private struct PairView: View {
     @ObservedObject var keys: KeyStore
     @StateObject private var link: NearbyLink
-    @State private var role: Role = .holder
+    @State private var role: Role
     @State private var saved = false
 
-    enum Role { case holder, friend }
+    enum Role: Hashable { case holder, friend }
 
-    init(keys: KeyStore) {
+    init(keys: KeyStore, role: Role = .holder) {
         self.keys = keys
+        _role = State(initialValue: role)
         _link = StateObject(wrappedValue: NearbyLink(card: keys.myCard))
     }
 
@@ -128,15 +216,15 @@ private struct PairView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 KTitle(text: "Pair in\nperson.")
-                KBody(text: "Both of you open Keys and tap Pair. Keep the phones close.")
+                KBody(text: "Both of you open Accountability partner and tap Pair a friend. Keep the phones close.")
                 Picker("Role", selection: $role) {
-                    Text("They hold my key").tag(Role.holder)
-                    Text("I hold their key").tag(Role.friend)
+                    Text("They can let me out").tag(Role.holder)
+                    Text("I can let them out").tag(Role.friend)
                 }
                 .pickerStyle(.segmented)
                 if let card = link.peerCard {
                     Text("Found \(card.name).").font(PrintFont.bold(24)).foregroundStyle(KInk.cream)
-                    Button(saved ? "PAIRED" : (role == .holder ? "MAKE \(card.name.uppercased()) MY KEY HOLDER" : "HOLD \(card.name.uppercased())\u{2019}S KEY")) {
+                    Button(saved ? "PAIRED" : (role == .holder ? "MAKE \(card.name.uppercased()) MY PARTNER" : "BE \(card.name.uppercased())\u{2019}S PARTNER")) {
                         if role == .holder { keys.addHolder(card) } else { keys.addFriend(card) }
                         saved = true
                     }
@@ -184,8 +272,8 @@ struct InPersonUnlockView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                KTitle(text: "Ask your\nKey Holder.")
-                KBody(text: "They open Nogbox, go to Keys, and tap \u{201C}Let a friend out\u{201D}. Phones close together.")
+                KTitle(text: "Ask your\npartner.")
+                KBody(text: "They open Nogbox, go to Accountability partner, and tap \u{201C}Let a friend out\u{201D}. Phones close together.")
                 TextField("Why do you need out?", text: $reason, axis: .vertical)
                     .font(PrintFont.body(17))
                     .padding(14)
@@ -222,7 +310,7 @@ struct InPersonUnlockView: View {
 
     @ViewBuilder private var status: some View {
         let line: String = {
-            guard let card = link.peerCard else { return "Looking for your Key Holder\u{2019}s phone\u{2026}" }
+            guard let card = link.peerCard else { return "Looking for your partner\u{2019}s phone\u{2026}" }
             guard keys.holders.contains(where: { $0.id == card.id }) else { return "\(card.name) does not hold your key." }
             if !link.isClose, let d = link.distance { return String(format: "Come closer (%.1f m).", d) }
             if !link.isClose { return "Come closer." }
@@ -368,7 +456,7 @@ struct RemoteAskView: View {
                 KTitle(text: "Ask from\nfar away.")
                 KBody(text: "They get a notification with your reason. If they say yes, your session ends 10 minutes later. No answer in 30 minutes means no.")
                 if keys.holders.count > 1 {
-                    Picker("Key Holder", selection: Binding(get: { holder?.id ?? "" }, set: { holderID = $0 })) {
+                    Picker("Partner", selection: Binding(get: { holder?.id ?? "" }, set: { holderID = $0 })) {
                         ForEach(keys.holders) { Text($0.name).tag($0.id) }
                     }
                     .pickerStyle(.segmented)

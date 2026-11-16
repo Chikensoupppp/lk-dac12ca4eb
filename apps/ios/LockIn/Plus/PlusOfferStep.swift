@@ -58,7 +58,7 @@ struct PlusOfferStep: View {
                     .rotationEffect(.degrees(cardIn ? -4 : -14))
                     .scaleEffect(cardIn ? 1 : 0.6)
                     .opacity(cardIn ? 1 : 0)
-                Text("Plus adds Locked mode: no quit button. Only your Key Holder, or one emergency exit a week, can end a session early.")
+                Text("Plus adds Locked mode: no quit button. Only your accountability partner, or one emergency exit a week, can end a session early.")
                     .font(PrintFont.body(15, .medium))
                     .foregroundStyle(Self.cream.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)

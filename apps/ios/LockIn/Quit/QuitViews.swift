@@ -140,9 +140,9 @@ struct LockedExitSheet: View {
                         .font(PrintFont.body(16))
                         .foregroundStyle(QuitInk.cream.opacity(0.8))
                         .fixedSize(horizontal: false, vertical: true)
-                    option("person.2.fill", "My Key Holder is here", keys.holders.isEmpty ? "Add a Key Holder first (Keys)." : "Phones close together. They decide.",
+                    option("person.2.fill", "My partner is here", keys.holders.isEmpty ? "Add an accountability partner first." : "Phones close together. They decide.",
                            enabled: !keys.holders.isEmpty) { route = .inPerson }
-                    option("icloud.fill", "Ask my Key Holder from far away", keys.holders.isEmpty ? "Add a Key Holder first (Keys)." : "They get a message. If they say yes, it ends 10 minutes later.",
+                    option("icloud.fill", "Ask my partner from far away", keys.holders.isEmpty ? "Add an accountability partner first." : "They get a message. If they say yes, it ends 10 minutes later.",
                            enabled: !keys.holders.isEmpty) { route = .remote }
                     option("exclamationmark.triangle.fill", "Emergency exit",
                            QuitRules.emergencyAvailable() ? "Once a week. A 15-minute wait you have to watch." : "Already used this week.",

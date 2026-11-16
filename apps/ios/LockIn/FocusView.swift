@@ -540,7 +540,7 @@ struct FocusView: View {
             #endif
             Spacer(minLength: 8)
             roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
-            roundButton("key.fill", size: 16, label: "Keys") { showKeys = true }
+            roundButton("person.2.fill", size: 15, label: "Accountability partner") { showKeys = true }
             roundButton("shield.lefthalf.filled", size: 17, label: "Restrictions") { showRestrictions = true }
         }
     }
