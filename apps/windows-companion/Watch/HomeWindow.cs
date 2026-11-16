@@ -102,7 +102,7 @@ public sealed class HomeWindow : Form
             {
                 connectBrowsers();
                 Installer.OpenExtensionHelp();
-                browserLine.Text = "Connected. In the browser: turn on Developer mode, click Load unpacked, pick the folder that just opened, then allow Incognito.";
+                browserLine.Text = "Connected. In the browser: turn on Developer mode, click Load unpacked, paste (Ctrl+V) in the folder box, press Select Folder. Then allow Incognito.";
             }
             catch (Exception) { browserLine.Text = "Couldn't connect. Try again."; }
         };
