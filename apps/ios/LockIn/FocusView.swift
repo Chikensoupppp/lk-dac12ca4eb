@@ -334,7 +334,7 @@ struct FocusView: View {
             }, skipCoach: coachStep == .task ? { skipCoach() } : nil)
         }
         .sheet(isPresented: $showGoals) {
-            GoalSheet(goals: goals, onDone: { showGoals = false }, onStart: timing == nil ? {
+            GoalSheet(goals: goals, plus: plus, onDone: { showGoals = false }, onStart: timing == nil ? {
                 showGoals = false
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(450))
@@ -342,7 +342,7 @@ struct FocusView: View {
                 }
             } : nil)
         }
-        .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id) { report = nil } }
+        .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id, plus: plus) { report = nil } }
         .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
         .sheet(isPresented: $showPlusOffer, onDismiss: advanceAfterSession) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
         .sheet(item: $completion, onDismiss: advanceAfterSession) { info in
@@ -457,6 +457,17 @@ struct FocusView: View {
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
         // A buddy break on the PC pauses the session here too: the end moves later, once per session.
+        // Tell my partners how the lock-in is going (sealed, through iCloud), and carry out a pause they ask for.
+        .onChange(of: pc.activity) { _, _ in publishPartnerStatus() }
+        .onChange(of: timing) { _, _ in publishPartnerStatus() }
+        .task(id: timing?.startedAt) {
+            while timing != nil, !Task.isCancelled {
+                for pause in await PartnerCloud.pendingPauses(keys: keys) {
+                    pc.partnerPause(appKey: pause.appKey, seconds: pause.seconds)
+                }
+                try? await Task.sleep(for: .seconds(10))
+            }
+        }
         .onChange(of: pc.activity) { _, activity in
             guard let seconds = activity?.breakSeconds, seconds > 0, let sessionID, timing != nil,
                   UserDefaults.standard.string(forKey: Self.breakKey) != sessionID.uuidString else { return }
@@ -781,6 +792,22 @@ struct FocusView: View {
         }
         runProofCheck()
         return true
+    }
+
+    /// One sealed update per partner. The PC adds the window title and pause state only while its own
+    /// "Share with my partner" switch is on.
+    private func publishPartnerStatus() {
+        guard !keys.holders.isEmpty else { return }
+        let a = pc.activity
+        let shared = a?.sharing == true
+        let onBreak = (a?.breakSecondsLeft ?? 0) > 0
+        let status = PartnerStatus(
+            state: timing == nil ? "free" : (onBreak ? "break" : "locked"),
+            endsAt: timing?.endsAt, duration: timing?.duration,
+            app: shared ? a?.app : nil, appKey: shared ? a?.appKey : nil, title: shared ? a?.title : nil,
+            pausedApp: shared ? a?.pausedApp : nil, pausedSecondsLeft: shared ? a?.pausedSecondsLeft : nil,
+            sharing: shared, sentAt: .now)
+        Task { await PartnerCloud.publish(status, keys: keys) }
     }
 
     private func checkKeyRequests() {

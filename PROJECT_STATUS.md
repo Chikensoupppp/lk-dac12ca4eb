@@ -72,3 +72,7 @@ Updated: 2026-11-02 (branch ios/native-clock-ci)
 - Actual Windows application/site restriction enforcement.
 
 - 2026-11-04: Focus screen rebuilt as matte black with a living background (drifting glows, dust, rim glint, ripples), mood colors (running, last minute, finished, ended early), start edge-run and ring, light sweep on finish, heavy/success/warning haptics. Run 41951086970 passed (33 unit and 10 UI tests; UI tests run with the live background off via `-ui-testing-calm-background`). Idle screenshots on SE, 16 and Pro Max were inspected. The animated state, battery use and frame rate are NOT verified on a device. Sheets (Restrictions, PC) still use the Cream look.
+
+## Weekly report, history and partner view · 2026-11-16
+
+Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved weeks, rest Plus). Partner view: PC "Share with my partner" switch (PartnerShare.cs), phone seals status to partners through CloudKit (Keys/PartnerWatch.swift), partner can pause the app on the PC. NEEDS BEFORE IT WORKS ON TESTFLIGHT: add record types PartnerStatus (ownerID, holderID, payload, signature, updatedAt) and PartnerCommand (commandID, ownerID, holderID, payload, signature, createdAt) to the CloudKit production schema, with ownerID, holderID and createdAt queryable. Not built or run on iOS yet; compile happens in CI.

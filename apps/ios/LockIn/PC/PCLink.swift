@@ -138,6 +138,12 @@ final class PCLink: ObservableObject {
         enqueue { [self] in await runStart(record, extras: extras, link: link) }
     }
 
+    /// A partner paused an app or site on the PC. Does nothing without a paired PC and a running session.
+    func partnerPause(appKey: String, seconds: Int) {
+        guard let link, let id = activeSession else { return }
+        enqueue { [self] in try? await transport.partnerPause(id: id, appKey: appKey, seconds: seconds, link: link) }
+    }
+
     /// Call when a session ends early or finishes. Safe to call more than once.
     func sessionEnded(_ id: UUID) {
         guard let link else { return }

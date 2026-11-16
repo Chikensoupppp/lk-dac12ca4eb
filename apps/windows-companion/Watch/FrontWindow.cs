@@ -20,6 +20,7 @@ public static class FrontWindow
     [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool attach);
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
     private const int SwRestore = 9;
+    private const int SwMinimize = 6;
 
     public sealed record Snapshot(IntPtr Handle, int ProcessId, string Process, string Title);
 
@@ -34,6 +35,12 @@ public static class FrontWindow
         try { process = Process.GetProcessById((int)pid).ProcessName; }
         catch (Exception) { process = ""; }
         return new Snapshot(handle, (int)pid, process, sb.ToString());
+    }
+
+    /// <summary>Minimizes a window. Never closes it, so nothing the user has open is lost.</summary>
+    public static void Minimize(IntPtr handle)
+    {
+        if (handle != IntPtr.Zero && IsWindow(handle)) ShowWindow(handle, SwMinimize);
     }
 
     /// <summary>

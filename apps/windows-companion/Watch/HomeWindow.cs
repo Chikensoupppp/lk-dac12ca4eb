@@ -13,12 +13,13 @@ namespace LockIn.Companion.Watch;
 /// </summary>
 public sealed class HomeWindow : Form
 {
-    private static readonly Color Paper = Color.FromArgb(0xF7, 0xF6, 0xF2);
+    private static readonly Color Paper = Color.FromArgb(0xF6, 0xF3, 0xEC);
     private static readonly Color FooterPaper = Color.FromArgb(0xF0, 0xEE, 0xE8);
     private static readonly Color Line = Color.FromArgb(0xE6, 0xE2, 0xD9);
-    private static readonly Color Ink = Color.FromArgb(0x1C, 0x1C, 0x1E);
-    private static readonly Color Soft = Color.FromArgb(0x66, 0x65, 0x61);
-    private static readonly Color Track = Color.FromArgb(0xDE, 0xD6, 0xC7);
+    private static readonly Color Ink = Color.FromArgb(0x17, 0x15, 0x13);
+    private static readonly Color Soft = Color.FromArgb(0x6F, 0x6A, 0x60);
+    private static readonly Color Track = Color.FromArgb(0xE4, 0xDE, 0xD3);
+    private static readonly Color Accent = Color.FromArgb(0xA9, 0x70, 0x29);
     private static readonly Color Navy = Color.FromArgb(0x22, 0x33, 0x5C);
     private static readonly Color NavyHover = Color.FromArgb(0x2C, 0x41, 0x73);
     private static readonly Color Amber = Color.FromArgb(0xE5, 0x9E, 0x37);
@@ -27,8 +28,8 @@ public sealed class HomeWindow : Form
     private static readonly Color Caption = Color.FromArgb(0x23, 0x26, 0x2B);
 
     // Layout in 96-dpi units; scaled by Px() for drawing and placing.
-    private const int W = 440, HeroH = 392, RowH = 66, FooterH = 62, Rows = 2;
-    private const int RingX = 220, RingY = 132, RingR = 84;
+    private const int W = 440, HeroH = 344, RowH = 66, FooterH = 62, Rows = 3;
+    private const int RingX = 220, RingY = 148, RingR = 112;
 
     private readonly Func<PairingOffer> openPairing;
     private readonly Func<IReadOnlyList<PairedDevice>> devices;
@@ -49,6 +50,7 @@ public sealed class HomeWindow : Form
     private readonly QuietButton rowButton = new("Pair another");
     private readonly Toggle startup = new();
     private readonly Toggle buddySwitch = new() { BackColor = Paper };
+    private readonly Toggle partnerSwitch = new() { BackColor = Paper };
     private readonly LinkLabel quit = FooterLink("Quit");
     private readonly NotifyIcon tray = new();
     private readonly System.Windows.Forms.Timer refresh = new() { Interval = 1000 };
@@ -126,6 +128,18 @@ public sealed class HomeWindow : Form
             _ = Task.Run(() => { try { this.setBuddy(on); } catch (Exception) { } });
         };
         Controls.Add(buddySwitch);
+
+        partnerSwitch.Size = new Size(Px(44), Px(24));
+        partnerSwitch.Location = new Point(ClientSize.Width - partnerSwitch.Width - Px(26), Px(HeroH + RowH * 2) + (Px(RowH) - partnerSwitch.Height) / 2);
+        partnerSwitch.On = PartnerShare.On;
+        partnerSwitch.AccessibleName = "Share with my partner";
+        partnerSwitch.AccessibleDescription = "Your partner sees the title of the window you are on and can pause that app or site for a few minutes.";
+        partnerSwitch.Changed += on =>
+        {
+            PartnerShare.On = on;
+            Invalidate(new Rectangle(0, Px(HeroH + RowH * 2), ClientSize.Width, Px(RowH)));
+        };
+        Controls.Add(partnerSwitch);
 
         pauseButton.Font = new Font("Segoe UI Semibold", 9.5f);
         pauseButton.Size = new Size(Px(104), Px(34));
@@ -327,32 +341,54 @@ public sealed class HomeWindow : Form
             var r = Pf(RingR);
             var c = new PointF(Pf(RingX), Pf(RingY));
             var rect = new RectangleF(c.X - r, c.Y - r, 2 * r, 2 * r);
-            using (var track = new Pen(Track, Pf(3.5f)))
+            using (var track = new Pen(Track, Pf(5f)))
                 g.DrawEllipse(track, rect);
+            // Ticks inside the ring: 60 small, 12 long.
+            using (var tick = new Pen(Color.FromArgb(0xB9, 0xB2, 0xA4), Pf(1.2f)))
+            using (var tickBig = new Pen(Soft, Pf(1.6f)))
+            {
+                for (var i = 0; i < 60; i++)
+                {
+                    var a = i * Math.PI / 30;
+                    var big = i % 5 == 0;
+                    var r1 = r - Pf(big ? 18 : 13);
+                    var r2 = r - Pf(8);
+                    g.DrawLine(big ? tickBig : tick,
+                        c.X + (float)Math.Sin(a) * r1, c.Y - (float)Math.Cos(a) * r1,
+                        c.X + (float)Math.Sin(a) * r2, c.Y - (float)Math.Cos(a) * r2);
+                }
+            }
             if (ring > 0.001)
             {
-                using var arc = new Pen(onBreak ? Amber : Navy, Pf(4.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                using var arc = new Pen(onBreak ? Amber : Accent, Pf(5.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
                 if (ring >= 0.999) g.DrawEllipse(arc, rect);
                 else g.DrawArc(arc, rect, -90, (float)(360 * ring));
             }
+            // Hand-drawn tally ticks at the lower left of the ring.
+            using (var tally = new Pen(Ink, Pf(2f)) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+            {
+                var tx = c.X - r * 0.80f; var ty = c.Y + r * 0.66f;
+                for (var i = 0; i < 3; i++)
+                    g.DrawLine(tally, tx + i * Pf(6), ty + Pf(9), tx + i * Pf(6) + Pf(5), ty - Pf(1));
+            }
             if (brain is not null)
             {
-                var bw = Pf(122);
+                var bw = Pf(104);
                 var bh = bw * brain.Height / brain.Width;
-                g.DrawImage(brain, c.X - bw / 2, c.Y - bh / 2, bw, bh);
+                g.DrawImage(brain, c.X - bw / 2, c.Y - Pf(88), bw, bh);
+            }
+            using (var timeFont = bigTime ? new Font("Segoe UI Semibold", 30f) : new Font("Segoe UI Semibold", 15f))
+            {
+                var timeH = TextRenderer.MeasureText(g, title, timeFont, Size.Empty, TextFormatFlags.NoPadding).Height;
+                TextRenderer.DrawText(g, title, timeFont, new Rectangle((int)(c.X - r * 0.8f), (int)(c.Y + Pf(30)), (int)(r * 1.6f), timeH), Ink,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
             }
         }
 
-        var top = Px(RingY + RingR + 24);
-        using (var titleFont = bigTime ? new Font("Segoe UI Semibold", 27f) : new Font("Segoe UI Semibold", 17f))
+        var top = Px(RingY + RingR + 18);
         using (var subFont = new Font("Segoe UI", 10.5f))
-        {
-            var titleH = TextRenderer.MeasureText(g, title, titleFont, Size.Empty, TextFormatFlags.NoPadding).Height;
-            TextRenderer.DrawText(g, title, titleFont, new Rectangle(0, top, ClientSize.Width, titleH), Ink,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(g, subtitle, subFont, new Rectangle(Px(24), top + titleH + Px(bigTime ? 2 : 6), ClientSize.Width - Px(48), Px(40)), Soft,
+            TextRenderer.DrawText(g, subtitle, subFont, new Rectangle(Px(24), top, ClientSize.Width - Px(48), Px(40)), Soft,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
-        }
 
         // iPhone row
         var rowTop = Px(HeroH);
@@ -397,6 +433,27 @@ public sealed class HomeWindow : Form
             using (var dot = new SolidBrush(on ? Green : Off))
                 g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
             TextRenderer.DrawText(g, buddyStatus, statusFont,
+                new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        }
+
+        // Partner row: what the partner may see and do, and the switch. Off until the user turns it on.
+        var partnerTop = Px(HeroH + RowH * 2);
+        using (var rowFont = new Font("Segoe UI", 11f))
+        using (var statusFont = new Font("Segoe UI", 9.5f))
+        using (var pen = new Pen(Ink, Pf(1.6f)))
+        {
+            // Two small people, drawn, so the row has a mark like the other two.
+            var cy = partnerTop + Pf(RowH) / 2;
+            g.DrawEllipse(pen, Pf(24), cy - Pf(9), Pf(9), Pf(9));
+            g.DrawArc(pen, Pf(21), cy + Pf(1), Pf(15), Pf(14), 180, 180);
+            g.DrawEllipse(pen, Pf(36), cy - Pf(7), Pf(7), Pf(7));
+            g.DrawArc(pen, Pf(34), cy + Pf(2), Pf(11), Pf(11), 180, 180);
+            var on = partnerSwitch.On;
+            TextRenderer.DrawText(g, "Share with my partner", rowFont, new Point(Px(62), partnerTop + Px(12)), Ink, TextFormatFlags.NoPadding);
+            var dotY = partnerTop + Px(44);
+            using (var dot = new SolidBrush(on ? Green : Off))
+                g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
+            TextRenderer.DrawText(g, on ? "They see your window title and can pause apps" : "Off. Nothing is shared", statusFont,
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 

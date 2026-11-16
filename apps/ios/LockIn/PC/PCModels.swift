@@ -91,6 +91,12 @@ struct PCActivity: Codable, Equatable {
     var breakSeconds: Int? = nil
     /// Seconds left in that break, while it runs.
     var breakSecondsLeft: Int? = nil
+    /// Partner sharing, set by the PC only while the user's switch there is on.
+    var title: String? = nil
+    var appKey: String? = nil
+    var pausedApp: String? = nil
+    var pausedSecondsLeft: Int? = nil
+    var sharing: Bool? = nil
 }
 
 @MainActor
@@ -101,6 +107,8 @@ protocol PCTransport {
     func stopSession(id: UUID, link: PCLinkRecord) async throws
     /// Nil when the PC has nothing to report yet.
     func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity?
+    /// The partner paused an app or site on this PC.
+    func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws
 }
 
 extension PCTransport {
@@ -109,4 +117,5 @@ extension PCTransport {
     }
 
     func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity? { nil }
+    func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws {}
 }

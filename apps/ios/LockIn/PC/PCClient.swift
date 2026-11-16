@@ -71,6 +71,14 @@ final class PCClient: PCTransport {
         return try? JSONDecoder().decode(PCActivity.self, from: data)
     }
 
+    func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws {
+        struct Body: Encodable { let id: String; let appKey: String; let seconds: Int }
+        let (_, status) = try await send(
+            hosts: link.hosts, port: link.port, fingerprint: link.fingerprint,
+            path: "/session/partner-pause", token: link.token, body: Body(id: id.uuidString, appKey: appKey, seconds: seconds))
+        guard status == 200 else { throw PCError.rejected(status) }
+    }
+
     func stopSession(id: UUID, link: PCLinkRecord) async throws {
         struct Body: Encodable { let id: String }
         let (_, status) = try await send(

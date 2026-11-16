@@ -56,8 +56,8 @@ enum FocusLog {
         var day = all[dayKey(date)] ?? Day()
         change(&day)
         all[dayKey(date)] = day
-        // Keep about 10 weeks; the report only looks back one.
-        let cutoff = dayKey(calendar.date(byAdding: .day, value: -70, to: date) ?? date)
+        // Keep about 60 weeks for the history screen.
+        let cutoff = dayKey(calendar.date(byAdding: .day, value: -420, to: date) ?? date)
         all = all.filter { $0.key >= cutoff }
         if let data = try? JSONEncoder().encode(all) { defaults.set(data, forKey: key) }
     }

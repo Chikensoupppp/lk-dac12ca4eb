@@ -178,3 +178,7 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
 ## Git and collaboration
 
 The work is committed and pushed to `origin/ios/native-clock-ci`; it has not been merged into the default branch. Read `AGENTS.md`, `PROJECT_STATUS.md`, and Git status before editing. Preserve other agents' work. The private repository has no Apple signing secrets configured here; do not upload or publish without authorization.
+
+## Weekly report, history and partner view · 2026-11-16
+
+Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved weeks, rest Plus). Partner view: PC "Share with my partner" switch (PartnerShare.cs), phone seals status to partners through CloudKit (Keys/PartnerWatch.swift), partner can pause the app on the PC. NEEDS BEFORE IT WORKS ON TESTFLIGHT: add record types PartnerStatus (ownerID, holderID, payload, signature, updatedAt) and PartnerCommand (commandID, ownerID, holderID, payload, signature, createdAt) to the CloudKit production schema, with ownerID, holderID and createdAt queryable. Not built or run on iOS yet; compile happens in CI.

@@ -64,6 +64,7 @@ struct KeysSheet: View {
     let done: () -> Void
     @State private var pairRole: PairView.Role?
     @State private var helping = false
+    @State private var watching: KeyPerson?
     @State private var askingName = false
     @State private var nameDraft = ""
     @State private var wantedRole: PairView.Role = .holder
@@ -160,7 +161,14 @@ struct KeysSheet: View {
                                 ForEach(Array(keys.friends.enumerated()), id: \.element.id) { index, person in
                                     if index > 0 { Rectangle().fill(PInk.line).frame(height: 1) }
                                     personRow(mark: initial(person.name), dashed: false, title: person.name, detail: "You can let them out") {
-                                        removeButton { keys.removeFriend(person.id) }
+                                        HStack(spacing: 14) {
+                                            Button("See") { watching = person }
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .foregroundStyle(PInk.ink)
+                                                .frame(minWidth: 44, minHeight: 44)
+                                                .accessibilityIdentifier("partner-see")
+                                            removeButton { keys.removeFriend(person.id) }
+                                        }
                                     }
                                 }
                             }
@@ -196,6 +204,10 @@ struct KeysSheet: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $pairRole) { role in PairView(keys: keys, role: role) }
             .navigationDestination(isPresented: $helping) { HelpNearbyView(keys: keys) }
+            .navigationDestination(item: $watching) { person in
+                PartnerWatchView(keys: keys, person: person) { watching = nil }
+                    .navigationBarBackButtonHidden(true)
+            }
             .task { pending = (try? await RemoteKeys.pending(for: keys)) ?? [] }
             .alert("Your first name", isPresented: $askingName) {
                 TextField("First name", text: $nameDraft)

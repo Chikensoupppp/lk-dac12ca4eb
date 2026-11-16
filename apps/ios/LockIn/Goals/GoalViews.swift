@@ -106,6 +106,7 @@ private struct WeekBars: View {
 /// The goal page: this week's progress, the weekly goal, and the reminder switches.
 struct GoalSheet: View {
     @ObservedObject var goals: GoalStore
+    var plus: PlusStore? = nil
     let onDone: () -> Void
     /// Starts a session from the pace card. Nil while a session runs.
     var onStart: (() -> Void)? = nil
@@ -154,7 +155,7 @@ struct GoalSheet: View {
         .preferredColorScheme(.light)
         .onAppear { draft = goal ?? GoalStore.suggested }
         .sheet(item: $report) { r in
-            WeekReportView(goals: goals, weekStart: r.id) { report = nil }
+            WeekReportView(goals: goals, weekStart: r.id, plus: plus) { report = nil }
         }
     }
 
@@ -464,157 +465,220 @@ struct GoalSheet: View {
     }
 }
 
-/// The Sunday report, printed like a receipt: goal hit or missed, the week's numbers, and next
-/// week's goal. Only Lock In's own sessions are counted.
+/// The weekly report and the saved-weeks history, on the same paper as the main screen.
+/// Only Nogbox's own finished sessions are counted. The 3 most recent weeks are free; older
+/// saved weeks need Plus.
 struct WeekReportView: View {
     @ObservedObject var goals: GoalStore
     let weekStart: Date
+    var plus: PlusStore? = nil
     let onDone: () -> Void
 
     @State private var chosen: Int?
+    @State private var viewing: Date?
+    @State private var showHistory = false
+    @State private var showOffer = false
+    @State private var saved: [FocusLog.Week] = []
 
-    private var week: FocusLog.Week { FocusLog.week(of: weekStart) }
+    private static let freeWeeks = 3
+    private var current: Date { viewing ?? weekStart }
+    private var isReportedWeek: Bool { current == weekStart }
+    private var week: FocusLog.Week { FocusLog.week(of: current) }
     private var previous: FocusLog.Week? {
-        FocusLog.calendar.date(byAdding: .day, value: -7, to: weekStart).map { FocusLog.week(of: $0) }
+        FocusLog.calendar.date(byAdding: .day, value: -7, to: current).map { FocusLog.week(of: $0) }
     }
-    private var goal: Int? { goals.goal(forWeekOf: weekStart) }
+    private var goal: Int? { goals.goal(forWeekOf: current) }
     private var nextWeek: Date { FocusLog.calendar.date(byAdding: .day, value: 7, to: weekStart) ?? weekStart }
     private var hit: Bool { goal.map { week.minutes >= $0 * 60 } ?? false }
+    private var hasPlus: Bool { plus?.hasPlus ?? false }
 
-    private var range: String {
-        let end = FocusLog.calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+    private func range(_ start: Date, year: Bool) -> String {
+        let end = FocusLog.calendar.date(byAdding: .day, value: 6, to: start) ?? start
         let f = Date.FormatStyle().month(.abbreviated).day()
-        return "\(weekStart.formatted(f)) \u{2013} \(end.formatted(f))".uppercased()
+        let text = "\(start.formatted(f))\u{2013}\(end.formatted(.dateTime.day()))"
+        return year ? text + ", " + end.formatted(.dateTime.year()) : text
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                receipt
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                nextGoal
-                    .padding(24)
-            }
+        ZStack {
+            FocusPaper.page.ignoresSafeArea()
+            if showHistory { history } else { report }
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .background(GoalInk.bg.ignoresSafeArea())
         .preferredColorScheme(.light)
-        .onAppear { goals.markSeen(weekStart) }
-    }
-
-    private var headline: String {
-        guard let goal else { return "Your week." }
-        return hit ? "Goal smashed." : (week.minutes >= goal * 30 ? "So close." : "Fresh start next.")
-    }
-
-    private var line: String {
-        let done = FocusLog.format(minutes: week.minutes)
-        guard let goal else { return "You focused \(done). Pick a goal for next week below." }
-        let extra = week.minutes - goal * 60
-        if hit { return extra > 0 ? "You focused \(done) on a \(goal) h goal. That's \(FocusLog.format(minutes: extra)) extra." : "You focused exactly \(goal) h. Right on target." }
-        return "You focused \(done) of \(goal) h. Short by \(FocusLog.format(minutes: -extra)). Next week starts clean."
-    }
-
-    private var receipt: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("NOGBOX \u{00B7} YOUR WEEK")
-                Spacer()
-                Text(range)
+        .foregroundStyle(FocusPaper.ink)
+        .onAppear {
+            goals.markSeen(weekStart)
+            saved = (0..<60).compactMap { n in
+                FocusLog.calendar.date(byAdding: .day, value: -7 * n, to: FocusLog.weekStart(.now)).map { FocusLog.week(of: $0) }
             }
-            .font(PrintFont.mono(11, .heavy))
-            .foregroundStyle(Ink.soft)
-
-            // Two-ink "misprint": a sunflower copy sits just behind the black headline.
-            ZStack(alignment: .topLeading) {
-                Text(headline.uppercased())
-                    .foregroundStyle(GoalInk.tangerine)
-                    .offset(x: 3, y: 3)
-                    .accessibilityHidden(true)
-                Text(headline.uppercased())
-                    .foregroundStyle(Ink.ink)
-            }
-            .font(PrintFont.head(58))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(headline)
-            // The stamp gets its own space beside the line, so it never covers the numbers.
-            HStack(alignment: .center, spacing: 12) {
-                Text(line)
-                    .font(PrintFont.body(16))
-                    .foregroundStyle(Ink.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                if goal != nil {
-                    Stamp(text: hit ? "Goal hit" : "Not yet", color: hit ? GoalInk.tangerineText : GoalInk.soft, size: 18, tilt: hit ? -9 : 7, fill: GoalInk.panel)
-                        .fixedSize()
-                        .padding(.trailing, 4)
-                }
-            }
-
-            WeekBars(week: week, goal: goal)
-                .padding(.vertical, 6)
-
-            // A dashed tear line between the picture and the numbers, like a printed receipt.
-            Rectangle()
-                .stroke(Ink.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
-                .frame(height: 1)
-            VStack(spacing: 8) {
-                ReceiptRow(label: "Focused", value: FocusLog.format(minutes: week.minutes), bold: true)
-                ReceiptRow(label: "Sessions finished", value: "\(week.sessions)")
-                if let best = week.bestDay {
-                    ReceiptRow(label: "Best day", value: dayNames[best])
-                }
-                ReceiptRow(label: "Ended early", value: "\(week.quits)", color: Ink.ink)
-                if let previous, !previous.isEmpty {
-                    let diff = week.minutes - previous.minutes
-                    ReceiptRow(label: "Vs last week",
-                               value: diff == 0 ? "same" : (diff > 0 ? "+" : "\u{2212}") + FocusLog.format(minutes: abs(diff)))
-                }
-            }
-            Text("Counts finished Nogbox sessions only.")
-                .font(PrintFont.mono(10))
-                .foregroundStyle(Ink.soft)
-                .padding(.bottom, 14)
         }
-        .padding(20)
-        .padding(.bottom, 8)
-        .background(ReceiptEdge().fill(GoalInk.panel))
+        .sheet(isPresented: $showOffer) {
+            if let plus { PlusOfferStep(plus: plus, intro: false) { showOffer = false } }
+        }
+    }
+
+    // MARK: Report
+
+    private func bar(_ left: AnyView, _ title: String) -> some View {
+        HStack {
+            left.frame(width: 60, height: 44, alignment: .leading)
+            Spacer()
+            Text(title).font(.system(size: 17, weight: .semibold))
+            Spacer()
+            Button("Done", action: onDone)
+                .font(.system(size: 17, weight: .medium))
+                .frame(minWidth: 60, minHeight: 44, alignment: .trailing)
+                .accessibilityIdentifier("report-done")
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 6)
+    }
+
+    private var hoursText: Text {
+        let h = week.minutes / 60, m = week.minutes % 60
+        let big = Font.system(size: 84, weight: .heavy)
+        let small = Font.system(size: 34, weight: .semibold)
+        var t = Text("")
+        if h > 0 { t = t + Text("\(h)").font(big) + Text("h ").font(small).foregroundColor(FocusPaper.secondary) }
+        if m > 0 || h == 0 { t = t + Text("\(m)").font(big) + Text("m").font(small).foregroundColor(FocusPaper.secondary) }
+        return t
+    }
+
+    private var report: some View {
+        VStack(spacing: 0) {
+            bar(AnyView(Button { showHistory = true } label: {
+                Image(systemName: "clock.arrow.circlepath").font(.system(size: 22, weight: .regular))
+                    .frame(width: 44, height: 44, alignment: .leading)
+            }.accessibilityLabel("History").accessibilityIdentifier("report-history")), "Weekly report")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(isReportedWeek ? "Your week." : "That week.")
+                        .font(.system(size: 46, weight: .heavy)).tracking(-1.4)
+                        .padding(.top, 28)
+                    Text(range(current, year: true))
+                        .font(.system(size: 18)).foregroundStyle(FocusPaper.secondary).padding(.top, 10)
+                    hoursText.padding(.top, 26).accessibilityLabel(FocusLog.format(minutes: week.minutes))
+                    goalLine.padding(.top, 14)
+                    dailyFocus.padding(.top, 30)
+                    Rectangle().fill(FocusPaper.line).frame(height: 1).padding(.top, 22)
+                    VStack(spacing: 0) {
+                        row("Sessions finished", "\(week.sessions)")
+                        if let previous, !previous.isEmpty {
+                            let diff = week.minutes - previous.minutes
+                            row("Vs. previous week", diff == 0 ? "same" : (diff > 0 ? "+" : "\u{2212}") + short(abs(diff)))
+                        }
+                        row("Ended early", "\(week.quits)")
+                    }
+                    Text("Time from early endings is included.")
+                        .font(.system(size: 15)).foregroundStyle(FocusPaper.secondary).padding(.top, 4)
+                    if isReportedWeek { nextGoal.padding(.top, 30) }
+                    Spacer(minLength: 24)
+                }
+                .padding(.horizontal, 24)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+
+    private func short(_ minutes: Int) -> String {
+        let h = minutes / 60, m = minutes % 60
+        if h == 0 { return "\(m)m" }
+        return m == 0 ? "\(h)h" : "\(h)h \(m)m"
+    }
+
+    @ViewBuilder private var goalLine: some View {
+        if let goal {
+            let extra = week.minutes - goal * 60
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: hit ? "checkmark.circle" : "circle.dashed")
+                    .font(.system(size: 22)).foregroundStyle(FocusPaper.amber)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(hit ? "\(goal)-hour goal met" : "\(goal)-hour goal not met")
+                        .font(.system(size: 20, weight: .semibold))
+                    Text(hit ? (extra > 0 ? "\(extra) min beyond your goal" : "Right on target")
+                             : "Short by \(short(-extra)). Next week starts clean.")
+                        .font(.system(size: 17)).foregroundStyle(FocusPaper.secondary)
+                }
+            }
+        } else {
+            Text("No goal set. Pick one for next week below.")
+                .font(.system(size: 17)).foregroundStyle(FocusPaper.secondary)
+        }
+    }
+
+    private var dailyFocus: some View {
+        let best = week.bestDay
+        let names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        let tallest = Double(max(week.days.map(\.minutes).max() ?? 0, 1))
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Daily focus").font(.system(size: 18, weight: .semibold))
+                Spacer()
+                if let best { Text("\(names[best]) \u{00B7} \(short(week.days[best].minutes))").font(.system(size: 17)).foregroundStyle(FocusPaper.secondary) }
+            }
+            HStack(alignment: .bottom, spacing: 12) {
+                ForEach(0..<7, id: \.self) { i in
+                    VStack(spacing: 10) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(i == best ? FocusPaper.amber : (week.days[i].minutes == 0 ? FocusPaper.line : Color(hex: 0x3F3A33)))
+                            .frame(height: max(3, 150 * Double(week.days[i].minutes) / tallest))
+                        Text(["M", "T", "W", "T", "F", "S", "S"][i])
+                            .font(.system(size: 16, weight: i == best ? .bold : .regular))
+                            .foregroundStyle(i == best ? FocusPaper.ink : FocusPaper.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 184, alignment: .bottom)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel((0..<7).map { "\(names[$0]) \(FocusLog.format(minutes: week.days[$0].minutes))" }.joined(separator: ", "))
+    }
+
+    private func row(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).foregroundStyle(FocusPaper.secondary)
+            Spacer()
+            Text(value).fontWeight(.semibold)
+        }
+        .font(.system(size: 18)).frame(minHeight: 52)
     }
 
     private var nextGoal: some View {
         let base = goal ?? GoalStore.suggested
-        let other = hit ? min(base + 1, GoalStore.range.upperBound) : max(base - 1, GoalStore.range.lowerBound)
-        return VStack(alignment: .leading, spacing: 12) {
-            Text("NEXT WEEK")
-                .font(PrintFont.mono(13, .heavy)).tracking(2)
-                .foregroundStyle(GoalInk.tangerineText)
+        let up = min(base + 1, GoalStore.range.upperBound)
+        let down = max(base - 1, GoalStore.range.lowerBound)
+        return VStack(alignment: .leading, spacing: 14) {
+            Text("Next week").font(.system(size: 30, weight: .heavy)).tracking(-0.6)
             if let chosen {
-                Text("Set: \(chosen) hours. Go get it.")
-                    .font(PrintFont.bold(24))
-                    .foregroundStyle(GoalInk.cream)
+                Text("Set: \(chosen) hours. Go get it.").font(.system(size: 20, weight: .semibold))
+            } else if goal == nil {
+                pill("Start with \(base) hours", dark: true) { pick(base) }
+            } else if hit && up != base {
+                HStack(spacing: 12) {
+                    pill("Try \(up) hours", dark: true) { pick(up) }
+                    pill("Keep \(base) hours", dark: false) { pick(base) }
+                }
             } else {
-                if hit && other != base {
-                    // Goal hit: the bigger goal leads; staying put is the quiet choice.
-                    Button("GO BIGGER: \(other) HOURS") { pick(other) }
-                        .buttonStyle(PrintButtonStyle(fill: GoalInk.tangerine, text: GoalInk.cream))
-                    Button("STAY AT \(base) HOURS") { pick(base) }
-                        .buttonStyle(PrintButtonStyle(fill: GoalInk.panel, text: GoalInk.cream))
-                } else {
-                    Button(goal == nil ? "START WITH \(base) HOURS" : (hit ? "STAY AT \(base) HOURS" : "TRY \(base) HOURS AGAIN")) { pick(base) }
-                        .buttonStyle(PrintButtonStyle(fill: GoalInk.tangerine, text: GoalInk.cream))
-                    if goal != nil && other != base {
-                        Button("EASE OFF: \(other) HOURS") { pick(other) }
-                            .buttonStyle(PrintButtonStyle(fill: GoalInk.panel, text: GoalInk.cream))
-                    }
+                HStack(spacing: 12) {
+                    pill("Keep \(base) hours", dark: true) { pick(base) }
+                    if down != base { pill("Try \(down) hours", dark: false) { pick(down) } }
                 }
             }
             Button(chosen == nil ? "Decide later" : "Done", action: onDone)
-                .font(PrintFont.body(15))
-                .foregroundStyle(GoalInk.cream.opacity(0.65))
+                .font(.system(size: 17)).foregroundStyle(FocusPaper.secondary)
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
+    }
+
+    private func pill(_ title: String, dark: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(dark ? Color.white : FocusPaper.ink)
+                .frame(maxWidth: .infinity, minHeight: 60)
+                .background(Capsule().fill(dark ? FocusPaper.ink : FocusPaper.inset))
+        }
+        .buttonStyle(.plain)
     }
 
     private func pick(_ hours: Int) {
@@ -624,5 +688,102 @@ struct WeekReportView: View {
         goals.setGoal(hours, forWeekOf: nextWeek)
         if FocusLog.weekStart(.now) > nextWeek { goals.setGoal(hours, forWeekOf: .now) }
         chosen = hours
+    }
+
+    // MARK: History
+
+    private var shown: [FocusLog.Week] {
+        saved.enumerated().filter { $0.offset == 0 || !$0.element.isEmpty }.map(\.element)
+    }
+
+    private func title(_ w: FocusLog.Week) -> String {
+        let thisWeek = FocusLog.weekStart(.now)
+        if w.start == thisWeek { return "This week" }
+        if FocusLog.calendar.date(byAdding: .day, value: -7, to: thisWeek) == w.start { return "Last week" }
+        return range(w.start, year: false)
+    }
+
+    private var history: some View {
+        let weeks = shown
+        let scale = Double(max(weeks.map { max($0.minutes, (goals.goal(forWeekOf: $0.start) ?? 0) * 60) }.max() ?? 1, 1))
+        return VStack(spacing: 0) {
+            bar(AnyView(Button { showHistory = false } label: {
+                Image(systemName: "chevron.left").font(.system(size: 20, weight: .medium))
+                    .frame(width: 44, height: 44, alignment: .leading)
+            }.accessibilityLabel("Back")), "History")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Your weeks.").font(.system(size: 46, weight: .heavy)).tracking(-1.4).padding(.top, 28)
+                    Text(hasPlus ? "Every saved week is open." : "Your \(Self.freeWeeks) most recent saved weeks are free.")
+                        .font(.system(size: 18)).foregroundStyle(FocusPaper.secondary).padding(.top, 10)
+                    Rectangle().fill(FocusPaper.line).frame(height: 1).padding(.top, 36)
+                    ForEach(Array(weeks.enumerated()), id: \.element.start) { index, w in
+                        if hasPlus || index < Self.freeWeeks { openRow(w, scale: scale) } else { lockedRow(w) }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            if !hasPlus && weeks.count > Self.freeWeeks {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Every week counts.").font(.system(size: 30, weight: .heavy)).tracking(-0.6)
+                    Text("Open every report saved on this iPhone.").font(.system(size: 17)).foregroundStyle(FocusPaper.secondary)
+                    Button { showOffer = true } label: {
+                        Label("Unlock saved history", systemImage: "crown")
+                            .font(.system(size: 20, weight: .semibold)).foregroundStyle(.white)
+                            .frame(maxWidth: .infinity, minHeight: 64)
+                            .background(Capsule().fill(FocusPaper.ink))
+                    }
+                    .buttonStyle(.plain).padding(.top, 8)
+                    .accessibilityIdentifier("history-unlock")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(24)
+            }
+        }
+    }
+
+    private func openRow(_ w: FocusLog.Week, scale: Double) -> some View {
+        let g = goals.goal(forWeekOf: w.start)
+        let met = g.map { w.minutes >= $0 * 60 } ?? false
+        return Button {
+            viewing = w.start; showHistory = false
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(title(w)).font(.system(size: 21, weight: .semibold))
+                    Spacer()
+                    Text(short(w.minutes)).font(.system(size: 21, weight: .semibold))
+                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold))
+                }
+                Text("\(w.sessions) session\(w.sessions == 1 ? "" : "s")" + (met ? " \u{00B7} Goal met" : ""))
+                    .font(.system(size: 17)).foregroundStyle(FocusPaper.secondary)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(FocusPaper.line)
+                        Capsule().fill(FocusPaper.amber).frame(width: max(8, geo.size.width * min(Double(w.minutes) / scale, 1)))
+                    }
+                }
+                .frame(height: 10).padding(.top, 4)
+            }
+            .padding(.vertical, 22)
+            .overlay(alignment: .bottom) { Rectangle().fill(FocusPaper.line).frame(height: 1) }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title(w)), \(FocusLog.format(minutes: w.minutes))")
+    }
+
+    private func lockedRow(_ w: FocusLog.Week) -> some View {
+        HStack {
+            Text(title(w)).font(.system(size: 21, weight: .semibold))
+            Spacer()
+            Image(systemName: "lock").font(.system(size: 16))
+            Text("Plus").font(.system(size: 17, weight: .medium))
+        }
+        .foregroundStyle(FocusPaper.secondary)
+        .padding(.vertical, 30)
+        .overlay(alignment: .bottom) { Rectangle().fill(FocusPaper.line).frame(height: 1) }
+        .accessibilityLabel("\(title(w)), locked. Needs Plus.")
     }
 }

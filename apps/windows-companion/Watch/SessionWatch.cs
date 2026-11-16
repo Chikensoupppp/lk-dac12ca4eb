@@ -59,6 +59,10 @@ public sealed class SessionWatch : IDisposable
     private HashSet<string> allowed = new(StringComparer.OrdinalIgnoreCase);
     private int nudges;
     private string? app;
+    private string? appKey;
+    private string? partnerTitle;
+    /// <summary>Apps and sites the partner paused, by key ("youtube"), and until when.</summary>
+    private readonly Dictionary<string, DateTimeOffset> partnerPaused = new(StringComparer.OrdinalIgnoreCase);
     private bool onTask = true;
     private bool wasOff;
 
@@ -121,6 +125,9 @@ public sealed class SessionWatch : IDisposable
             wasOff = false;
             onTask = true;
             app = null;
+            appKey = null;
+            partnerTitle = null;
+            partnerPaused.Clear();
             asking = askName = declined = sayText = null;
             guard.Reset(clock.GetUtcNow(), remindAfterSeconds);
             browsers.ResetWarnings();
@@ -221,6 +228,38 @@ public sealed class SessionWatch : IDisposable
     }
 
     /// <summary>Status for the phone. Null when the id is not the running session.</summary>
+    /// <summary>
+    /// What the partner may see, for the phone to pass on: the window title, the key of the app (to pause
+    /// it) and any pause that is running. All null unless the user turned partner sharing on.
+    /// </summary>
+    public (string? Title, string? Key, string? PausedName, int? PausedLeft) PartnerView(string id)
+    {
+        lock (gate)
+        {
+            if (sessionId != id || !PartnerShare.On) return (null, null, null, null);
+            var now = clock.GetUtcNow();
+            var running = partnerPaused.Where(p => p.Value > now).OrderByDescending(p => p.Value).FirstOrDefault();
+            return (partnerTitle, appKey,
+                running.Key is null ? null : Distractions.FriendlyName(running.Key),
+                running.Key is null ? null : (int)Math.Ceiling((running.Value - now).TotalSeconds));
+        }
+    }
+
+    /// <summary>
+    /// The partner pauses an app or site for a while. Only works while the user's partner switch is on and
+    /// a session runs. Returns false otherwise. Minimizes the window; never closes it.
+    /// </summary>
+    public bool PartnerPause(string id, string key, int seconds)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        lock (gate)
+        {
+            if (sessionId != id || !PartnerShare.On) return false;
+            partnerPaused[key.Trim().ToLowerInvariant()] = clock.GetUtcNow() + TimeSpan.FromSeconds(Math.Clamp(seconds, 60, 3600));
+            return true;
+        }
+    }
+
     public (string? App, bool OnTask, int Nudges, string? Asking, int? BreakLeft)? StatusFor(string id)
     {
         lock (gate)
@@ -401,6 +440,12 @@ public sealed class SessionWatch : IDisposable
                 sayUntil = now + SayTime;
             }
             app = Distractions.NameOf(front);
+            appKey = key;
+            partnerTitle = PartnerShare.On ? PartnerShare.CleanTitle(front?.Title) : null;
+            // A pause the partner set: keep that app or site minimized until it runs out.
+            if (PartnerShare.On && key is not null && front is not null
+                && partnerPaused.TryGetValue(key, out var pausedTo) && now < pausedTo)
+                FrontWindow.Minimize(front.Handle);
             var off = isDistraction && key is not null && !allowed.Contains(key);
             work.Seen(front, ownProcessId);
 

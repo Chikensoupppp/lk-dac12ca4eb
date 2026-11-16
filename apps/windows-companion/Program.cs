@@ -60,6 +60,7 @@ using var single = new Mutex(true, "Nogbox.PC.Companion." + Environment.UserName
 if (!firstInstance && !args.Any(a => a.StartsWith("--draw") || a == "--browser-probe")) return;
 
 var stateStore = new CompanionStateStore(stateDir);
+LockIn.Companion.Watch.PartnerShare.Init(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
 var fingerprint = CompanionStateStore.Fingerprint(certificate);
 var pairing = new PairingService(stateStore, TimeProvider.System);
@@ -197,8 +198,15 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
 {
     var status = request.Id is null ? null : watch.StatusFor(request.Id);
     if (status is null) return Results.NotFound(new { error = "unknown-session" });
+    var partner = watch.PartnerView(request.Id!);
     return Results.Ok(new
     {
+        // Only filled while the user's partner switch is on.
+        title = partner.Title,
+        appKey = partner.Key,
+        pausedApp = partner.PausedName,
+        pausedSecondsLeft = partner.PausedLeft,
+        sharing = LockIn.Companion.Watch.PartnerShare.On,
         app = status.Value.App,
         onTask = status.Value.OnTask,
         nudges = status.Value.Nudges,
@@ -208,6 +216,12 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
         breakSecondsLeft = status.Value.BreakLeft
     });
 });
+
+// The partner paused an app or site. The phone forwards it; it only works while the PC's partner switch is on.
+app.MapPost("/session/partner-pause", (PartnerPauseRequest request, SessionWatch watch) =>
+    request.Id is not null && request.AppKey is not null && watch.PartnerPause(request.Id, request.AppKey, request.Seconds)
+        ? Results.Ok(new { paused = true })
+        : Results.Json(new { error = "not-allowed" }, statusCode: StatusCodes.Status403Forbidden));
 
 if (args.Contains("--browser-probe"))
 {
@@ -302,6 +316,7 @@ public sealed record StopSessionRequest(string? Id);
 public sealed record PairRequest(string? Code, string? DeviceName);
 
 public sealed record SessionStatusRequest(string? Id);
+public sealed record PartnerPauseRequest(string? Id, string? AppKey, int Seconds);
 
 public sealed record FocusSession(
     string Id,
