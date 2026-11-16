@@ -1,158 +1,113 @@
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using QRCoder;
 
 namespace LockIn.Companion.Watch;
 
 /// <summary>
-/// The PC app's one window: is it running, is a phone paired (with a QR code to pair right here),
-/// what the current session is, and the browser link. Closing it keeps Nogbox running in the tray.
-/// Same printed look as the phone: grey newsprint, riso blue, a sunflower edge on the main button.
+/// The PC app's one window. A calm card: the brain in a ring (the ring is the session's time left), one
+/// line of state under it, a row for the paired iPhone and a footer (start with Windows, saved for later,
+/// quit). Pairing shows the QR code in place of the brain. Closing it keeps Nogbox running in the tray.
+/// Warm paper, ink navy ring, an amber edge on the one main button.
 /// </summary>
 public sealed class HomeWindow : Form
 {
-    public static readonly Color Paper = Color.FromArgb(0xE7, 0xE8, 0xE3);
-    public static readonly Color Card = Color.FromArgb(0xF3, 0xF4, 0xF0);
-    public static readonly Color Ink = Color.FromArgb(0x1B, 0x1B, 0x1B);
-    public static readonly Color Soft = Color.FromArgb(0x55, 0x58, 0x52);
-    public static readonly Color Blue = Color.FromArgb(0x32, 0x55, 0xA4);
-    public static readonly Color Sun = Color.FromArgb(0xFF, 0xB5, 0x11);
+    private static readonly Color Paper = Color.FromArgb(0xF7, 0xF6, 0xF2);
+    private static readonly Color FooterPaper = Color.FromArgb(0xF0, 0xEE, 0xE8);
+    private static readonly Color Line = Color.FromArgb(0xE6, 0xE2, 0xD9);
+    private static readonly Color Ink = Color.FromArgb(0x1C, 0x1C, 0x1E);
+    private static readonly Color Soft = Color.FromArgb(0x66, 0x65, 0x61);
+    private static readonly Color Track = Color.FromArgb(0xDE, 0xD6, 0xC7);
+    private static readonly Color Navy = Color.FromArgb(0x22, 0x33, 0x5C);
+    private static readonly Color NavyHover = Color.FromArgb(0x2C, 0x41, 0x73);
+    private static readonly Color Amber = Color.FromArgb(0xE5, 0x9E, 0x37);
+    private static readonly Color Green = Color.FromArgb(0x2F, 0xA3, 0x6B);
+    private static readonly Color Off = Color.FromArgb(0xB9, 0xB6, 0xAE);
+    private static readonly Color Caption = Color.FromArgb(0x23, 0x26, 0x2B);
+
+    // Layout in 96-dpi units; scaled by Px() for drawing and placing.
+    private const int W = 440, HeroH = 392, RowH = 66, FooterH = 62;
+    private const int RingX = 220, RingY = 132, RingR = 84;
 
     private readonly Func<PairingOffer> openPairing;
     private readonly Func<IReadOnlyList<PairedDevice>> devices;
     private readonly Func<FocusSession> session;
-    private readonly Func<string> connectBrowsers;
+    private readonly Func<string?> taskName;
     private readonly string stateDir;
-    private readonly Func<(bool Alive, bool Incognito)> browserStatus;
-    private readonly CardPanel guide = new("SET UP  ·  2 STEPS");
-    private readonly StepRow stepInstall = new(1, "Install Nogbox");
-    private readonly StepRow stepPair = new(2, "Pair your phone");
-    private readonly StepRow stepBrowser = new(3, "Connect your browser (optional)");
-    private CardPanel? nowCard;
-    private CardPanel? browserCard;
-    private readonly LinkLabel skipBrowser = new() { Text = "Skip this step", AutoSize = true, LinkColor = Soft, ActiveLinkColor = Ink, Margin = new Padding(34, 0, 0, 4) };
 
-    private readonly Label phoneLine = Line();
-    private readonly PictureBox qr = new() { Size = new Size(220, 220), SizeMode = PictureBoxSizeMode.Zoom, Visible = false, Margin = new Padding(0, 10, 0, 4) };
-    private readonly Label qrHint = Line(Soft, 10);
-    private readonly PrimaryButton pairButton = new("Pair my phone");
-    private readonly Label sessionTitle = new() { AutoSize = true, Font = new Font("Segoe UI", 16, FontStyle.Bold), ForeColor = Ink, Margin = new Padding(0, 2, 0, 0) };
-    private readonly Label sessionLine = Line(Soft, 10);
-    private readonly Label browserLine = Line(Soft, 10);
+    private readonly Bitmap? brain;
+    private readonly PrimaryButton pairButton = new("Pair a phone");
+    private readonly QuietButton rowButton = new("Pair another");
+    private readonly Toggle startup = new();
+    private readonly LinkLabel later = FooterLink("Saved for later");
+    private readonly LinkLabel quit = FooterLink("Quit");
     private readonly NotifyIcon tray = new();
     private readonly System.Windows.Forms.Timer refresh = new() { Interval = 1000 };
+    private readonly float scale;
+
+    private Image? qr;
     private DateTimeOffset? qrUntil;
+    private int pairedWhenCodeMade;
     private bool quitting;
     private bool toldAboutTray;
 
+    // What the window shows; set by UpdateState, drawn by OnPaint.
+    private string title = "", subtitle = "";
+    private bool bigTime;
+    private double ring; // how much of the ring is navy, 0..1
+    private string rowTitle = "iPhone", rowStatus = "Not paired";
+    private bool rowOn;
+
     public HomeWindow(Func<PairingOffer> openPairing, Func<IReadOnlyList<PairedDevice>> devices,
-        Func<FocusSession> session, Func<string> connectBrowsers, string stateDir,
-        Func<(bool Alive, bool Incognito)>? browserStatus = null)
+        Func<FocusSession> session, string stateDir, Func<string?>? taskName = null)
     {
-        this.browserStatus = browserStatus ?? (() => (false, false));
         this.openPairing = openPairing;
         this.devices = devices;
         this.session = session;
-        this.connectBrowsers = connectBrowsers;
+        this.taskName = taskName ?? (() => null);
         this.stateDir = stateDir;
 
+        AutoScaleMode = AutoScaleMode.None;
+        scale = DeviceDpi / 96f;
         Text = "Nogbox";
-        ClientSize = new Size(420, 820);
-        MinimumSize = new Size(400, 520);
+        FormBorderStyle = FormBorderStyle.FixedSingle;
+        MaximizeBox = false;
+        ClientSize = new Size(Px(W), Px(HeroH + RowH + FooterH));
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Paper;
         ForeColor = Ink;
-        Font = new Font("Segoe UI", 11);
-        AutoScaleMode = AutoScaleMode.Dpi;
-        var brain = LoadBrain();
+        Font = new Font("Segoe UI", 10.5f);
+        DoubleBuffered = true;
+        brain = LoadBrain();
         if (brain is not null) Icon = Icon.FromHandle(new Bitmap(brain, new Size(64, 64)).GetHicon());
 
-        var page = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false,
-            AutoScroll = true, Padding = new Padding(22, 18, 22, 18), BackColor = Paper
-        };
-        Controls.Add(page);
-
-        // Header: the brain, the name, and one line that says it is working.
-        var header = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 0, 0, 14) };
-        if (brain is not null)
-            header.Controls.Add(new PictureBox { Image = brain, SizeMode = PictureBoxSizeMode.Zoom, Size = new Size(78, 64), Margin = new Padding(0, 0, 10, 0), AccessibleRole = AccessibleRole.Graphic, AccessibleName = "Nogbox brain" });
-        var titles = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(0, 4, 0, 0) };
-        titles.Controls.Add(new Label { Text = "Nogbox", AutoSize = true, Font = new Font("Segoe UI Black", 22), ForeColor = Ink, Margin = Padding.Empty });
-        titles.Controls.Add(new Label { Text = "●  Running on this PC", AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold), ForeColor = Color.FromArgb(0x2E, 0x7D, 0x4F), Margin = Padding.Empty });
-        header.Controls.Add(titles);
-        page.Controls.Add(header);
-
-        // Setup guide: ticks itself off from the real state (paired phone, extension heartbeat).
-        stepInstall.State = StepState.Done;
-        guide.Body.Controls.Add(stepInstall);
-        guide.Body.Controls.Add(stepPair);
-        skipBrowser.LinkClicked += (_, _) =>
-        {
-            try { File.WriteAllText(Path.Combine(this.stateDir, "setup-browser-skipped"), ""); } catch (Exception) { }
-            UpdateState();
-        };
-        guide.Visible = !File.Exists(Path.Combine(stateDir, "setup-done"));
-        page.Controls.Add(guide);
-
-        // Phone
-        var phone = new CardPanel("PHONE");
-        phone.Body.Controls.Add(phoneLine);
-        phone.Body.Controls.Add(qr);
-        phone.Body.Controls.Add(qrHint);
+        pairButton.Size = new Size(Px(156), Px(46));
+        pairButton.Location = new Point((ClientSize.Width - pairButton.Width) / 2, Px(318));
         pairButton.Click += (_, _) => ShowPairing();
-        phone.Body.Controls.Add(pairButton);
-        page.Controls.Add(phone);
+        Controls.Add(pairButton);
 
-        // Session
-        var now = nowCard = new CardPanel("RIGHT NOW");
-        now.Body.Controls.Add(sessionTitle);
-        now.Body.Controls.Add(sessionLine);
-        page.Controls.Add(now);
+        rowButton.Font = new Font("Segoe UI Semibold", 10f);
+        rowButton.Size = new Size(Px(118), Px(38));
+        rowButton.Location = new Point(ClientSize.Width - rowButton.Width - Px(22), Px(HeroH) + (Px(RowH) - rowButton.Height) / 2);
+        rowButton.Click += (_, _) => { if (qrUntil is not null) StopPairing(); else ShowPairing(); };
+        Controls.Add(rowButton);
 
-        // Browser
-        var browser = browserCard = new CardPanel("BROWSERS");
-        browserLine.Text = "Nogbox watches Chrome, Edge, Brave and Firefox by itself. Nothing to set up.";
-        browser.Body.Controls.Add(browserLine);
-        var connect = new SecondaryButton("Add Save for later (optional)");
-        connect.Click += (_, _) =>
-        {
-            try
-            {
-                connectBrowsers();
-                Installer.OpenExtensionHelp();
-                browserLine.Text = "Folder copied. In Chrome, type chrome://extensions in the address bar. Turn on Developer mode, press Load unpacked, press Ctrl+V, press Select Folder.";
-            }
-            catch (Exception) { browserLine.Text = "Couldn't connect. Try again."; }
-        };
-        browser.Body.Controls.Add(connect);
-        page.Controls.Add(browser);
+        var footerTop = Px(HeroH + RowH);
+        startup.Size = new Size(Px(44), Px(24));
+        startup.Location = new Point(Px(26), footerTop + (Px(FooterH) - startup.Height) / 2);
+        startup.On = Installer.StartsWithWindows();
+        startup.AccessibleName = "Start with Windows";
+        startup.Changed += on => { try { Installer.SetStartWithWindows(on); } catch (Exception) { } };
+        Controls.Add(startup);
 
-        // Footer
-        var footer = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 6, 0, 0) };
-        var later = new LinkLabel { Text = "Saved for later", AutoSize = true, LinkColor = Blue, ActiveLinkColor = Ink, Margin = new Padding(0, 12, 18, 0) };
+        quit.Location = new Point(ClientSize.Width - Px(24) - quit.PreferredWidth, footerTop + (Px(FooterH) - quit.PreferredHeight) / 2);
+        later.Location = new Point(quit.Left - Px(22) - later.PreferredWidth, quit.Top);
         later.LinkClicked += (_, _) => new LaterWindow(new LaterStore(this.stateDir)).Show();
-        var quit = new LinkLabel { Text = "Quit Nogbox", AutoSize = true, LinkColor = Soft, ActiveLinkColor = Ink, Margin = new Padding(0, 12, 0, 0) };
         quit.LinkClicked += (_, _) => Quit();
-        footer.Controls.Add(later);
-        footer.Controls.Add(quit);
-        page.Controls.Add(footer);
-        var startup = new CheckBox
-        {
-            Text = "Start Nogbox with Windows", AutoSize = true, ForeColor = Soft, Margin = new Padding(0, 14, 0, 0),
-            Checked = Installer.StartsWithWindows()
-        };
-        startup.CheckedChanged += (_, _) => { try { Installer.SetStartWithWindows(startup.Checked); } catch (Exception) { } };
-        page.Controls.Add(startup);
-
-        page.ClientSizeChanged += (_, _) =>
-        {
-            var width = page.ClientSize.Width - page.Padding.Horizontal;
-            foreach (var card in page.Controls.OfType<CardPanel>()) card.Width = width;
-        };
+        Controls.Add(later);
+        Controls.Add(quit);
 
         // Tray: closing the window keeps Nogbox working.
         tray.Icon = Icon ?? SystemIcons.Application;
@@ -169,6 +124,15 @@ public sealed class HomeWindow : Form
         UpdateState();
     }
 
+    private int Px(int v) => (int)Math.Round(v * scale);
+    private float Pf(float v) => v * scale;
+
+    private static LinkLabel FooterLink(string text) => new()
+    {
+        Text = text, AutoSize = true, BackColor = FooterPaper, LinkColor = Ink, ActiveLinkColor = Navy, VisitedLinkColor = Ink,
+        LinkBehavior = LinkBehavior.HoverUnderline, Font = new Font("Segoe UI Semibold", 10f)
+    };
+
     private static Bitmap? LoadBrain()
     {
         using var stream = typeof(HomeWindow).Assembly.GetManifestResourceStream("LockIn.Companion.Watch.Assets.BrainExact.png");
@@ -177,11 +141,19 @@ public sealed class HomeWindow : Form
         return new Bitmap(image);
     }
 
-    private static Label Line(Color? color = null, float size = 11) => new()
+    protected override void OnHandleCreated(EventArgs e)
     {
-        AutoSize = true, MaximumSize = new Size(330, 0), ForeColor = color ?? Ink,
-        Font = new Font("Segoe UI", size), Margin = new Padding(0, 2, 0, 6)
-    };
+        base.OnHandleCreated(e);
+        // Dark caption bar on Windows 11; older Windows ignores these and keeps its own.
+        var dark = 1;
+        _ = DwmSetWindowAttribute(Handle, 20, ref dark, sizeof(int));
+        var caption = Caption.R | (Caption.G << 8) | (Caption.B << 16);
+        _ = DwmSetWindowAttribute(Handle, 35, ref caption, sizeof(int));
+        var text = 0xFFFFFF;
+        _ = DwmSetWindowAttribute(Handle, 36, ref text, sizeof(int));
+    }
+
+    [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     private void ShowPairing()
     {
@@ -193,15 +165,21 @@ public sealed class HomeWindow : Form
             using var data = generator.CreateQrCode("nogbox://pair?d=" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(payload)).TrimEnd('=').Replace('+', '-').Replace('/', '_'), QRCodeGenerator.ECCLevel.L);
             var png = new PngByteQRCode(data).GetGraphic(8);
             using var ms = new MemoryStream(png);
-            qr.Image = Image.FromStream(ms);
-            qr.Visible = true;
+            qr?.Dispose();
+            qr = Image.FromStream(ms);
             qrUntil = offer.ExpiresAt;
-            pairButton.Text = "New code";
+            pairedWhenCodeMade = devices().Count;
         }
         catch (Exception)
         {
-            qrHint.Text = "Couldn't make a pairing code. Try again.";
+            qrUntil = null;
         }
+        UpdateState();
+    }
+
+    private void StopPairing()
+    {
+        qrUntil = null;
         UpdateState();
     }
 
@@ -209,49 +187,152 @@ public sealed class HomeWindow : Form
     {
         var paired = devices();
         var now = DateTimeOffset.UtcNow;
-        if (qrUntil is { } until && now < until)
-        {
-            var left = until - now;
-            phoneLine.Text = "Point your iPhone Camera at this and tap the Nogbox banner.";
-            qrHint.Text = $"Works for {(int)left.TotalMinutes}:{left.Seconds:00} and one phone.";
-            qrHint.Visible = true;
-        }
-        else
-        {
-            if (qr.Visible) { qr.Visible = false; pairButton.Text = paired.Count == 0 ? "Pair my phone" : "Pair another phone"; }
-            qrUntil = null;
-            qrHint.Visible = false;
-            phoneLine.Text = paired.Count == 0
-                ? "No phone paired yet."
-                : $"Paired with {paired[^1].Name}" + (paired.Count > 1 ? $" and {paired.Count - 1} more." : ".");
-            if (paired.Count > 0 && pairButton.Text == "Pair my phone") pairButton.Text = "Pair another phone";
-        }
-
-        UpdateGuide(paired.Count > 0);
-
         var current = session();
-        if (current.State == "active" && current.EndsAt is { } ends)
+        bigTime = false;
+
+        // The code stays up until it runs out or a new phone shows up.
+        if (qrUntil is { } until && (now >= until || paired.Count > pairedWhenCodeMade)) qrUntil = null;
+        var pairing = qrUntil is not null;
+
+        if (pairing)
+        {
+            var left = qrUntil!.Value - now;
+            title = "Scan with your iPhone Camera";
+            subtitle = $"Then tap the Nogbox banner. Works for {(int)left.TotalMinutes}:{left.Seconds:00}.";
+            ring = 0;
+        }
+        else if (paired.Count == 0)
+        {
+            title = "No phone yet";
+            subtitle = "Pair your phone to start sessions from it.";
+            ring = 0;
+        }
+        else if (current.State == "active" && current.EndsAt is { } ends)
         {
             var left = ends - now;
             if (left < TimeSpan.Zero) left = TimeSpan.Zero;
-            sessionTitle.Text = $"Focusing · {(int)left.TotalMinutes}:{left.Seconds:00} left";
-            sessionLine.Text = "Distracting apps get a nudge from the buddy.";
+            var total = Math.Max(1, current.DurationSeconds);
+            var startedAgo = current.StartedAt is { } s ? now - s : TimeSpan.MaxValue;
+            if (startedAgo < TimeSpan.FromSeconds(4))
+            {
+                title = "Locked in";
+                subtitle = $"{Math.Max(1, total / 60)} minutes.";
+                ring = 1;
+            }
+            else
+            {
+                bigTime = true;
+                title = $"{(int)left.TotalMinutes}:{left.Seconds:00}";
+                var task = taskName();
+                subtitle = string.IsNullOrWhiteSpace(task) ? "Focusing" : task.Trim();
+                ring = Math.Clamp(left.TotalSeconds / total, 0, 1);
+            }
         }
         else
         {
-            sessionTitle.Text = "No session";
-            sessionLine.Text = "Start one on your phone. This PC follows.";
+            title = "No session";
+            subtitle = "Start one on your phone — this PC follows.";
+            ring = 0;
         }
+
+        pairButton.Visible = paired.Count == 0 && !pairing;
+        rowOn = paired.Count > 0;
+        rowTitle = paired.Count == 0 ? "iPhone" : paired[^1].Name + (paired.Count > 1 ? $" +{paired.Count - 1}" : "");
+        rowStatus = pairing ? "Waiting for your phone" : paired.Count == 0 ? "Not paired" : "Paired";
+        rowButton.Visible = paired.Count > 0 || pairing;
+        rowButton.Text = pairing ? "Cancel" : "Pair another";
+        AccessibleDescription = $"{title}. {subtitle}. {rowTitle}: {rowStatus}.";
+        Invalidate(new Rectangle(0, 0, ClientSize.Width, Px(HeroH + RowH)));
     }
 
-    private void UpdateGuide(bool paired)
+    protected override void OnPaint(PaintEventArgs e)
     {
-        if (!guide.Visible) return;
-        stepPair.State = paired ? StepState.Done : StepState.Now;
-        stepPair.Detail = paired ? "" : "Press PAIR MY PHONE below. Point your iPhone Camera at the code. Tap the Nogbox banner.";
-        guide.Heading = paired ? "ALL SET" : "SET UP  ·  2 STEPS";
-        if (paired)
-            try { File.WriteAllText(Path.Combine(stateDir, "setup-done"), ""); } catch (Exception) { }
+        var g = e.Graphics;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        g.Clear(Paper);
+
+        if (qrUntil is not null && qr is not null)
+        {
+            var size = Px(184);
+            var box = new Rectangle((ClientSize.Width - size) / 2, Px(RingY) - size / 2, size, size);
+            using (var card = Rounded(Rectangle.Inflate(box, Px(10), Px(10)), Px(16)))
+            using (var white = new SolidBrush(Color.White))
+            using (var edge = new Pen(Line, Pf(1.5f)))
+            {
+                g.FillPath(white, card);
+                g.DrawPath(edge, card);
+            }
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.DrawImage(qr, box);
+            g.PixelOffsetMode = PixelOffsetMode.Default;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        }
+        else
+        {
+            var r = Pf(RingR);
+            var c = new PointF(Pf(RingX), Pf(RingY));
+            var rect = new RectangleF(c.X - r, c.Y - r, 2 * r, 2 * r);
+            using (var track = new Pen(Track, Pf(3.5f)))
+                g.DrawEllipse(track, rect);
+            if (ring > 0.001)
+            {
+                using var arc = new Pen(Navy, Pf(4.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                if (ring >= 0.999) g.DrawEllipse(arc, rect);
+                else g.DrawArc(arc, rect, -90, (float)(360 * ring));
+            }
+            if (brain is not null)
+            {
+                var bw = Pf(122);
+                var bh = bw * brain.Height / brain.Width;
+                g.DrawImage(brain, c.X - bw / 2, c.Y - bh / 2, bw, bh);
+            }
+        }
+
+        var top = Px(RingY + RingR + 24);
+        using (var titleFont = bigTime ? new Font("Segoe UI Semibold", 27f) : new Font("Segoe UI Semibold", 17f))
+        using (var subFont = new Font("Segoe UI", 10.5f))
+        {
+            var titleH = TextRenderer.MeasureText(g, title, titleFont, Size.Empty, TextFormatFlags.NoPadding).Height;
+            TextRenderer.DrawText(g, title, titleFont, new Rectangle(0, top, ClientSize.Width, titleH), Ink,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(g, subtitle, subFont, new Rectangle(Px(24), top + titleH + Px(bigTime ? 2 : 6), ClientSize.Width - Px(48), Px(40)), Soft,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
+        }
+
+        // iPhone row
+        var rowTop = Px(HeroH);
+        using (var line = new Pen(Line, 1))
+        {
+            g.DrawLine(line, 0, rowTop, ClientSize.Width, rowTop);
+            g.DrawLine(line, 0, rowTop + Px(RowH), ClientSize.Width, rowTop + Px(RowH));
+        }
+        var icon = new Rectangle(Px(28), rowTop + Px(RowH) / 2 - Px(11), Px(13), Px(22));
+        using (var ip = new Pen(Ink, Pf(1.6f)))
+        using (var phone = Rounded(icon, Px(3)))
+        {
+            g.DrawPath(ip, phone);
+            g.DrawLine(ip, icon.X + icon.Width / 2f - Pf(2), icon.Bottom - Pf(4), icon.X + icon.Width / 2f + Pf(2), icon.Bottom - Pf(4));
+        }
+        using (var rowFont = new Font("Segoe UI", 11f))
+        using (var statusFont = new Font("Segoe UI", 9.5f))
+        {
+            TextRenderer.DrawText(g, rowTitle, rowFont, new Point(Px(62), rowTop + Px(12)), Ink, TextFormatFlags.NoPadding);
+            var dotY = rowTop + Px(44);
+            using (var dot = new SolidBrush(rowOn ? Green : Off))
+                g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
+            TextRenderer.DrawText(g, rowStatus, statusFont, new Rectangle(Px(76), dotY - Px(10), Px(220), Px(20)), Soft,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        }
+
+        // Footer
+        using (var foot = new SolidBrush(FooterPaper))
+            g.FillRectangle(foot, 0, Px(HeroH + RowH) + 1, ClientSize.Width, Px(FooterH));
+        using (var footFont = new Font("Segoe UI", 10.5f))
+            TextRenderer.DrawText(g, "Start with Windows", footFont,
+                new Rectangle(startup.Right + Px(10), startup.Top - Px(2), Px(200), startup.Height + Px(4)), Ink,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
     }
 
     private void ShowFromTray()
@@ -287,172 +368,13 @@ public sealed class HomeWindow : Form
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { refresh.Dispose(); tray.Dispose(); }
+        if (disposing) { refresh.Dispose(); tray.Dispose(); qr?.Dispose(); brain?.Dispose(); }
         base.Dispose(disposing);
-    }
-
-    /// <summary>A rounded card with a small spaced-out heading.</summary>
-    private sealed class CardPanel : Panel
-    {
-        public FlowLayoutPanel Body { get; } = new()
-        {
-            AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.TopDown, WrapContents = false,
-            Location = new Point(18, 40), BackColor = Color.Transparent
-        };
-
-        private readonly Label headingLabel;
-        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public string Heading { get => headingLabel.Text; set => headingLabel.Text = value; }
-
-        public CardPanel(string heading)
-        {
-            DoubleBuffered = true;
-            BackColor = Paper;
-            Width = 376;
-            Margin = new Padding(0, 0, 0, 14);
-            headingLabel = new Label { Text = heading, AutoSize = true, UseMnemonic = false, Location = new Point(18, 14), Font = new Font("Consolas", 9, FontStyle.Bold), ForeColor = Soft, BackColor = Card };
-            Controls.Add(headingLabel);
-            Controls.Add(Body);
-            Body.SizeChanged += (_, _) => Height = Body.Bottom + 14;
-            Body.BackColor = Card;
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            using var path = Rounded(new Rectangle(0, 0, Width - 1, Height - 1), 16);
-            using var fill = new SolidBrush(Card);
-            e.Graphics.FillPath(fill, path);
-        }
-    }
-
-    private enum StepState { Later, Now, Done, Skipped }
-
-    /// <summary>One line of the setup guide: a numbered dot (blue now, green tick done) and what to do.</summary>
-    private sealed class StepRow : Control
-    {
-        private static readonly Color Green = Color.FromArgb(0x2E, 0x7D, 0x4F);
-        private readonly int number;
-        private StepState state = StepState.Later;
-        private string detail = "";
-        private readonly Font titleFont = new("Segoe UI", 11, FontStyle.Bold);
-        private readonly Font doneFont = new("Segoe UI", 11, FontStyle.Bold | FontStyle.Strikeout);
-        private readonly Font detailFont = new("Segoe UI", 10);
-
-        public StepRow(int number, string title)
-        {
-            this.number = number;
-            Text = title;
-            DoubleBuffered = true;
-            BackColor = Card;
-            Width = 330;
-            Margin = new Padding(0, 2, 0, 6);
-            AccessibleRole = AccessibleRole.StaticText;
-            Relayout();
-        }
-
-        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public StepState State { get => state; set { if (state == value) return; state = value; Relayout(); } }
-        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public string Detail { get => detail; set { if (detail == value) return; detail = value; Relayout(); } }
-
-        private void Relayout()
-        {
-            var h = 30;
-            if (detail.Length > 0)
-                h += TextRenderer.MeasureText(detail, detailFont, new Size(Width - 40, 0), TextFormatFlags.WordBreak).Height + 4;
-            Height = h;
-            AccessibleName = $"Step {number}: {Text}. " + state switch
-            {
-                StepState.Done => "Done.",
-                StepState.Now => "Do this now. " + detail,
-                StepState.Skipped => "Skipped.",
-                _ => "Later."
-            };
-            Invalidate();
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(Card);
-            var dot = new Rectangle(1, 2, 24, 24);
-            var fill = state switch { StepState.Done => Green, StepState.Now => Blue, _ => Card };
-            using (var b = new SolidBrush(fill)) g.FillEllipse(b, dot);
-            if (state is StepState.Later or StepState.Skipped)
-                using (var pen = new Pen(Color.FromArgb(0xB4, 0xB7, 0xB0), 2)) g.DrawEllipse(pen, dot);
-            var mark = state == StepState.Done ? "✓" : number.ToString();
-            var markColor = state is StepState.Done or StepState.Now ? Color.White : Soft;
-            TextRenderer.DrawText(g, mark, titleFont, dot, markColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-            var titleColor = state == StepState.Now ? Ink : Soft;
-            TextRenderer.DrawText(g, Text, titleFont, new Rectangle(34, 2, Width - 34, 24),
-                titleColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
-            if (detail.Length > 0)
-                TextRenderer.DrawText(g, detail, detailFont, new Rectangle(34, 30, Width - 40, Height - 30), Ink, TextFormatFlags.WordBreak);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) { titleFont.Dispose(); doneFont.Dispose(); detailFont.Dispose(); }
-            base.Dispose(disposing);
-        }
-    }
-
-    /// <summary>The main action: riso blue with a sunflower edge, like the phone's LOCK IN button.</summary>
-    private sealed class PrimaryButton : Button
-    {
-        public PrimaryButton(string text)
-        {
-            Text = text;
-            Size = new Size(220, 50);
-            FlatStyle = FlatStyle.Flat;
-            FlatAppearance.BorderSize = 0;
-            FlatAppearance.MouseOverBackColor = Card;
-            FlatAppearance.MouseDownBackColor = Card;
-            BackColor = Card;
-            Font = new Font("Segoe UI", 11, FontStyle.Bold);
-            Cursor = Cursors.Hand;
-            Margin = new Padding(0, 8, 0, 2);
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(Card);
-            using var shadow = Rounded(new Rectangle(4, 4, Width - 6, Height - 6), 14);
-            using var face = Rounded(new Rectangle(0, 0, Width - 5, Height - 5), 14);
-            using (var sun = new SolidBrush(Sun)) g.FillPath(sun, shadow);
-            using (var blue = new SolidBrush(ClientRectangle.Contains(PointToClient(MousePosition)) ? Color.FromArgb(0x29, 0x47, 0x8C) : Blue)) g.FillPath(blue, face);
-            TextRenderer.DrawText(g, Text.ToUpperInvariant(), Font, new Rectangle(0, 0, Width - 5, Height - 5), Color.White,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        }
-
-        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); Invalidate(); }
-        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); Invalidate(); }
-    }
-
-    /// <summary>A quiet outlined button.</summary>
-    private sealed class SecondaryButton : Button
-    {
-        public SecondaryButton(string text)
-        {
-            Text = text;
-            AutoSize = true;
-            MinimumSize = new Size(0, 44);
-            Padding = new Padding(10, 0, 10, 0);
-            FlatStyle = FlatStyle.Flat;
-            FlatAppearance.BorderColor = Ink;
-            FlatAppearance.BorderSize = 2;
-            BackColor = Card;
-            ForeColor = Ink;
-            Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            Cursor = Cursors.Hand;
-            Margin = new Padding(0, 6, 0, 2);
-        }
     }
 
     private static GraphicsPath Rounded(Rectangle r, int radius)
     {
-        var d = radius * 2;
+        var d = Math.Max(1, radius * 2);
         var path = new GraphicsPath();
         path.AddArc(r.X, r.Y, d, d, 180, 90);
         path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
@@ -462,7 +384,124 @@ public sealed class HomeWindow : Form
         return path;
     }
 
-    /// <summary>Test helper: draws the window in three states (new, pairing, paired with a session) to PNGs.</summary>
+    /// <summary>The one main action: ink navy with an amber edge underneath.</summary>
+    private sealed class PrimaryButton : Button
+    {
+        public PrimaryButton(string text)
+        {
+            Text = text;
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            BackColor = Paper;
+            Font = new Font("Segoe UI Semibold", 11f);
+            Cursor = Cursors.Hand;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(Paper);
+            var radius = Height / 7;
+            using (var edge = Rounded(new Rectangle(0, 4, Width - 1, Height - 5), radius))
+            using (var amber = new SolidBrush(Amber))
+                g.FillPath(amber, edge);
+            var hover = ClientRectangle.Contains(PointToClient(MousePosition));
+            using (var face = Rounded(new Rectangle(0, 0, Width - 1, Height - 5), radius))
+            using (var navy = new SolidBrush(hover ? NavyHover : Navy))
+                g.FillPath(navy, face);
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(0, 0, Width, Height - 5), Color.White,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            if (Focused && ShowFocusCues)
+                using (var pen = new Pen(Amber, 2) { DashStyle = DashStyle.Dot })
+                    g.DrawRectangle(pen, 3, 3, Width - 7, Height - 11);
+        }
+
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); Invalidate(); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); Invalidate(); }
+    }
+
+    /// <summary>A quiet rounded outline button for the iPhone row.</summary>
+    private sealed class QuietButton : Button
+    {
+        public QuietButton(string text)
+        {
+            Text = text;
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            BackColor = Paper;
+            Cursor = Cursors.Hand;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(Paper);
+            var hover = ClientRectangle.Contains(PointToClient(MousePosition));
+            using (var face = Rounded(new Rectangle(1, 1, Width - 3, Height - 3), 6))
+            using (var fill = new SolidBrush(hover ? Color.FromArgb(0xEC, 0xEA, 0xE3) : Color.FromArgb(0xFB, 0xFA, 0xF7)))
+            using (var edge = new Pen(Focused && ShowFocusCues ? Navy : Line, 1.5f))
+            {
+                g.FillPath(fill, face);
+                g.DrawPath(edge, face);
+            }
+            TextRenderer.DrawText(g, Text, Font, ClientRectangle, Ink, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        }
+
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); Invalidate(); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); Invalidate(); }
+    }
+
+    /// <summary>A pill switch, green when on. A click, Space or Enter flips it.</summary>
+    private sealed class Toggle : Control
+    {
+        private bool on;
+        public event Action<bool>? Changed;
+
+        public Toggle()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            BackColor = FooterPaper;
+            Cursor = Cursors.Hand;
+            TabStop = true;
+            AccessibleRole = AccessibleRole.CheckButton;
+        }
+
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public bool On
+        {
+            get => on;
+            set { on = value; AccessibleDescription = on ? "On" : "Off"; Invalidate(); }
+        }
+
+        private void Flip() { On = !On; Changed?.Invoke(On); }
+        protected override void OnClick(EventArgs e) { base.OnClick(e); Focus(); Flip(); }
+        protected override void OnKeyDown(KeyEventArgs e) { base.OnKeyDown(e); if (e.KeyCode is Keys.Space or Keys.Enter) Flip(); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(FooterPaper);
+            using (var pill = Rounded(new Rectangle(0, 0, Width - 1, Height - 1), (Height - 1) / 2))
+            using (var fill = new SolidBrush(on ? Green : Off))
+                g.FillPath(fill, pill);
+            var d = Height - 6;
+            var x = on ? Width - d - 4 : 3;
+            using (var knob = new SolidBrush(Color.White))
+                g.FillEllipse(knob, x, 3, d, d);
+            if (Focused && ShowFocusCues)
+                using (var pen = new Pen(Navy, 1.5f))
+                using (var ring = Rounded(new Rectangle(0, 0, Width - 1, Height - 1), (Height - 1) / 2))
+                    g.DrawPath(pen, ring);
+        }
+
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+    }
+
+    /// <summary>Test helper: draws the window in each state to PNGs.</summary>
     public static void DrawPreviews(string dir)
     {
         Directory.CreateDirectory(dir);
@@ -470,13 +509,12 @@ public sealed class HomeWindow : Form
         {
             var start = DateTimeOffset.UtcNow;
             var offer = new PairingOffer(1, new[] { "192.168.1.20" }, 47822, new string('A', 64), "123456", start.AddMinutes(5));
-            var phone = new PairedDevice("d1", "Brandon's iPhone", "x", start);
-            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, (bool, bool) browser = default)
+            var phone = new PairedDevice("d1", "iPhone", "x", start.AddDays(-1));
+            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, string? task = null)
             {
                 var state = Path.Combine(dir, name + "-state");
-                if (Directory.Exists(state)) Directory.Delete(state, true);
                 Directory.CreateDirectory(state);
-                using var form = new HomeWindow(() => offer, () => paired, () => now, () => "", state, () => browser);
+                using var form = new HomeWindow(() => offer, () => paired, () => now, state, () => task);
                 form.tray.Visible = false;
                 form.ShowInTaskbar = false;
                 form.StartPosition = FormStartPosition.Manual;
@@ -492,9 +530,9 @@ public sealed class HomeWindow : Form
             var idle = new FocusSession("none", "idle", 0, null, null);
             Draw("home-new", Array.Empty<PairedDevice>(), idle, false);
             Draw("home-pairing", Array.Empty<PairedDevice>(), idle, true);
-            Draw("home-browser", new[] { phone }, idle, false);
-            Draw("home-incognito", new[] { phone }, idle, false, (true, false));
-            Draw("home-session", new[] { phone }, new FocusSession("s", "active", 1500, start, start.AddMinutes(18).AddSeconds(42)), false, (true, true));
+            Draw("home-idle", new[] { phone }, idle, false);
+            Draw("home-session", new[] { phone }, new FocusSession("s", "active", 2700, start.AddMinutes(-20), start.AddMinutes(24).AddSeconds(18)), false, "Studying · library desk");
+            Draw("home-locked", new[] { phone }, new FocusSession("s", "active", 2700, start, start.AddMinutes(45)), false);
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();

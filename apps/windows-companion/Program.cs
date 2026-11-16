@@ -255,8 +255,8 @@ using var browserWatch = new BrowserWatch(signal => { if (!sessionWatch.BrowserS
 if (!args.Contains("--headless"))
 {
     var sessions = app.Services.GetRequiredService<SessionStore>();
-    HomeWindow.Start(() => new HomeWindow(OpenPairing, stateStore.Devices, () => sessions.Current,
-        () => BrowserRegistration.Register(stateDir, Environment.ProcessPath!), stateDir, sessionWatch.BrowserStatus), args.Contains("--tray"));
+    HomeWindow.Start(() => new HomeWindow(OpenPairing, stateStore.Devices, () => sessions.Current, stateDir, () => sessionWatch.TaskName),
+        args.Contains("--tray"));
 }
 
 app.Run();

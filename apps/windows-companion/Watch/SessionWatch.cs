@@ -207,6 +207,9 @@ public sealed class SessionWatch : IDisposable
         lock (gate) browsers.Heartbeat(clock.GetUtcNow(), beat);
     }
 
+    /// <summary>What the phone said this session is for ("Studying"), or null. Shown under the timer.</summary>
+    public string? TaskName { get { lock (gate) return sessionId is null ? null : task; } }
+
     /// <summary>The browser extension's state, for the setup guide in the window.</summary>
     public (bool Alive, bool Incognito) BrowserStatus()
     {
