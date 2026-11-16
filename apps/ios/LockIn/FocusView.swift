@@ -459,6 +459,13 @@ struct FocusView: View {
         // The brain widget watches the apps picked to lock; keep that watch in step.
         .onChange(of: restrictions.selection) { _, _ in updateBrainWatch() }
         .onChange(of: restrictions.status) { _, _ in updateBrainWatch(); runProofCheck() }
+        // A buddy break on the PC pauses the session here too: the end moves later, once per session.
+        .onChange(of: pc.activity) { _, activity in
+            guard let seconds = activity?.breakSeconds, seconds > 0, let sessionID, timing != nil,
+                  UserDefaults.standard.string(forKey: Self.breakKey) != sessionID.uuidString else { return }
+            UserDefaults.standard.set(sessionID.uuidString, forKey: Self.breakKey)
+            addBreak(seconds: TimeInterval(min(seconds, 600)))
+        }
         .onAppear {
             if onboardingDone && coachPending && timing == nil { coachStep = .task }
             updateBrainWatch()
@@ -806,6 +813,21 @@ struct FocusView: View {
             sessionID = record.id
             timing = session
         }
+    }
+
+    private static let breakKey = "lockin.pc.breakApplied.v1"
+
+    /// Moves the running session later by a break: same length, later end. Shields, the Lock Screen
+    /// countdown and the saved session all follow the new end.
+    private func addBreak(seconds: TimeInterval) {
+        guard let old = timing, let sessionID, !old.isFinished(at: .now) else { return }
+        let moved = SessionTiming(startedAt: old.startedAt.addingTimeInterval(seconds), duration: old.duration)
+        let record = SessionRecord(id: sessionID, timing: moved)
+        store.save(record)
+        let locked = QuitRules.isLocked(sessionID)
+        restrictions.begin(record, locked: locked)
+        LiveCountdown.start(record, locked: locked)
+        withAnimation(stateAnimation) { timing = moved }
     }
 
     private func endSession() {

@@ -7,6 +7,7 @@ struct PCStatusLine: View {
     let open: () -> Void
 
     private var label: String? {
+        if let left = pc.activity?.breakSecondsLeft, left > 0 { return "ON A BREAK \u{00B7} \(left / 60):\(String(format: "%02d", left % 60))" }
         switch pc.status {
         case .notPaired: return isLocked ? nil : "PAIR A PC"
         case .paired: return "PC PAIRED"

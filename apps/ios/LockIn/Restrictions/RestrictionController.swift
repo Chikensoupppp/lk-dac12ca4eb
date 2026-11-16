@@ -98,6 +98,8 @@ final class RestrictionController: ObservableObject {
             status = .skipped(reason)
         case .apply(let activity, let start, let end):
             do {
+                // A session moved later (a break) gets a new schedule; the old one must not end the shields early.
+                client.stopMonitoring()
                 try client.startMonitoring(activity: activity, from: start, to: end)
             } catch {
                 client.stopMonitoring()

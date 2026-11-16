@@ -159,6 +159,7 @@ public sealed class SessionWatch : IDisposable
             if (sessionId is null || pauseUsed) return false;
             pauseUsed = true;
             pausedUntil = clock.GetUtcNow() + BreakLength;
+            startedAt += BreakLength; // the session ends a break later, like on the phone
             asking = askName = declined = sayText = null;
             reminding = false;
             BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
@@ -220,12 +221,14 @@ public sealed class SessionWatch : IDisposable
     }
 
     /// <summary>Status for the phone. Null when the id is not the running session.</summary>
-    public (string? App, bool OnTask, int Nudges, string? Asking)? StatusFor(string id)
+    public (string? App, bool OnTask, int Nudges, string? Asking, int? BreakLeft)? StatusFor(string id)
     {
         lock (gate)
         {
             if (sessionId != id) return null;
-            return (app, onTask, nudges, askName);
+            int? breakLeft = pausedUntil is { } u && clock.GetUtcNow() < u
+                ? (int)Math.Ceiling((u - clock.GetUtcNow()).TotalSeconds) : null;
+            return (app, onTask, nudges, askName, breakLeft);
         }
     }
 

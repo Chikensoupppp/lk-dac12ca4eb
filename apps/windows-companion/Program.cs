@@ -202,7 +202,10 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
         app = status.Value.App,
         onTask = status.Value.OnTask,
         nudges = status.Value.Nudges,
-        asking = status.Value.Asking
+        asking = status.Value.Asking,
+        // A buddy break taken on the PC: the phone moves its session end later by breakSeconds, once.
+        breakSeconds = status.Value.BreakLeft is null ? (int?)null : (int)SessionWatch.BreakLength.TotalSeconds,
+        breakSecondsLeft = status.Value.BreakLeft
     });
 });
 
@@ -257,7 +260,13 @@ if (!args.Contains("--headless"))
     var sessions = app.Services.GetRequiredService<SessionStore>();
     HomeWindow.Start(() => new HomeWindow(OpenPairing, stateStore.Devices, () => sessions.Current, stateDir, () => sessionWatch.TaskName,
         () => sessionWatch.BuddyOn, on => sessionWatch.BuddyOn = on, id => stateStore.RemoveDevice(id),
-        () => sessionWatch.PauseState, sessionWatch.PauseBuddy),
+        () => sessionWatch.PauseState, () =>
+        {
+            var id = sessions.Current.Id;
+            if (!sessionWatch.PauseBuddy()) return false;
+            sessions.Shift(id, SessionWatch.BreakLength);
+            return true;
+        }),
         args.Contains("--tray"));
 }
 
@@ -349,6 +358,19 @@ public sealed class SessionStore
             current = new(id, "active", durationSeconds, startedAt, endsAt);
             session = current;
             return StartOutcome.Started;
+        }
+    }
+
+    /// <summary>
+    /// A break: the session moves later by <paramref name="by"/> (start and end), so the break is not focus
+    /// time and the session still runs its full length. The phone does the same when it hears of the break.
+    /// </summary>
+    public void Shift(string id, TimeSpan by)
+    {
+        lock (gate)
+        {
+            if (current.Id != id || current.State != "active") return;
+            current = current with { StartedAt = current.StartedAt + by, EndsAt = current.EndsAt + by };
         }
     }
 

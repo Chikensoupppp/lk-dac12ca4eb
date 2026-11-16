@@ -87,6 +87,10 @@ struct PCActivity: Codable, Equatable {
     let onTask: Bool
     /// Times the buddy nudged the user back this session.
     let nudges: Int
+    /// A buddy break taken on the PC: how long it is. The phone moves the session end later by this, once.
+    var breakSeconds: Int? = nil
+    /// Seconds left in that break, while it runs.
+    var breakSecondsLeft: Int? = nil
 }
 
 @MainActor
