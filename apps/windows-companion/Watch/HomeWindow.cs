@@ -168,7 +168,7 @@ public sealed class HomeWindow : Form
             var offer = openPairing();
             var payload = System.Text.Json.JsonSerializer.Serialize(offer, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
             using var generator = new QRCodeGenerator();
-            using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.L);
+            using var data = generator.CreateQrCode("nogbox://pair?d=" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(payload)).TrimEnd('=').Replace('+', '-').Replace('/', '_'), QRCodeGenerator.ECCLevel.L);
             var png = new PngByteQRCode(data).GetGraphic(8);
             using var ms = new MemoryStream(png);
             qr.Image = Image.FromStream(ms);
@@ -190,7 +190,7 @@ public sealed class HomeWindow : Form
         if (qrUntil is { } until && now < until)
         {
             var left = until - now;
-            phoneLine.Text = "Open the Nogbox app, tap SCAN QR CODE, and scan this. Do not use the iPhone Camera app.";
+            phoneLine.Text = "Point your iPhone Camera at this and tap the Nogbox banner.";
             qrHint.Text = $"Works for {(int)left.TotalMinutes}:{left.Seconds:00} and one phone.";
             qrHint.Visible = true;
         }

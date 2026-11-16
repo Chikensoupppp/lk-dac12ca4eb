@@ -198,6 +198,12 @@ final class PCModelsTests: XCTestCase {
 
     func testRejectsAnythingThatIsNotALockInOffer() {
         XCTAssertNil(PCPairingOffer.decode("https://example.com"))
+        XCTAssertNil(PCPairingOffer.decode("nogbox://pair?d=%%%"))
+        // The Camera-app link: nogbox://pair?d=<base64url of the same JSON>.
+        let b64 = Data(validJSON.utf8).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        XCTAssertEqual(PCPairingOffer.decode("nogbox://pair?d=\(b64)"), offer)
         XCTAssertNil(PCPairingOffer.decode("{}"))
         XCTAssertNil(PCPairingOffer.decode(validJSON.replacingOccurrences(of: "\"v\":1", with: "\"v\":2")))
         XCTAssertNil(PCPairingOffer.decode(validJSON.replacingOccurrences(of: "172.20.10.2", with: "evil.example.com")))

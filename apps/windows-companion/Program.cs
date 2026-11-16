@@ -251,7 +251,7 @@ static void ShowPairingQr(PairingOffer offer, string dir)
 {
     var payload = JsonSerializer.Serialize(offer, new JsonSerializerOptions(JsonSerializerDefaults.Web));
     using var generator = new QRCodeGenerator();
-    using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.L);
+    using var data = generator.CreateQrCode("nogbox://pair?d=" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(payload)).TrimEnd('=').Replace('+', '-').Replace('/', '_'), QRCodeGenerator.ECCLevel.L);
     var png = new PngByteQRCode(data).GetGraphic(12);
     Directory.CreateDirectory(dir);
     var path = Path.Combine(dir, "pair-phone.png");

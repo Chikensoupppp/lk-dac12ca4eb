@@ -381,6 +381,12 @@ struct FocusView: View {
             RestrictionsSheet(restrictions: restrictions)
         }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .onOpenURL { url in
+            // The PC's QR code, scanned with the Camera app, lands here.
+            guard let offer = PCPairingOffer.decode(url.absoluteString) else { return }
+            showPC = true
+            Task { await pc.pair(offer: offer) }
+        }
         .sheet(isPresented: $showTasks) {
             WorkTaskSheet(tasks: tasks, done: { showTasks = false }, onSelection: {
                 if coachStep == .task { showTasks = false; coachStep = .minutes; coachReward = "Nice." }

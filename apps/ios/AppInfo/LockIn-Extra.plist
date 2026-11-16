@@ -9,6 +9,17 @@
 		<string>_lockin-key._tcp</string>
 		<string>_lockin-key._udp</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.brandon132199.lockin.pair</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>nogbox</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>RevenueCatAPIKey</key>

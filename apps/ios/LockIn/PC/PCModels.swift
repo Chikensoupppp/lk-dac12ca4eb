@@ -11,9 +11,18 @@ struct PCPairingOffer: Codable, Equatable {
     let code: String
     let expiresAt: String
 
-    /// Returns nil unless the text is a well-formed Lock In offer.
+    /// Returns nil unless the text is a well-formed Nogbox offer. Accepts the plain JSON and the
+    /// `nogbox://pair?d=<base64url JSON>` link the PC's QR code carries (so the Camera app opens Nogbox).
     static func decode(_ text: String) -> PCPairingOffer? {
-        guard let data = text.data(using: .utf8),
+        var json = text
+        if let url = URL(string: text), url.scheme == "nogbox", url.host == "pair",
+           let d = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "d" })?.value {
+            var b64 = d.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+            while b64.count % 4 != 0 { b64 += "=" }
+            guard let raw = Data(base64Encoded: b64), let decoded = String(data: raw, encoding: .utf8) else { return nil }
+            json = decoded
+        }
+        guard let data = json.data(using: .utf8),
               let offer = try? JSONDecoder().decode(PCPairingOffer.self, from: data),
               offer.v == 1,
               !offer.hosts.isEmpty,
