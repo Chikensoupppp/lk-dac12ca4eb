@@ -351,7 +351,7 @@ public sealed class HomeWindow : Form
             var dotY = buddyTop + Px(44);
             using (var dot = new SolidBrush(on ? Green : Off))
                 g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
-            TextRenderer.DrawText(g, on ? "On · speaks up when you doomscroll" : "Off", statusFont,
+            TextRenderer.DrawText(g, on ? "On" : "Off", statusFont,
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
