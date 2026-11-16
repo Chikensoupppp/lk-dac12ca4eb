@@ -8,12 +8,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>LockIn.Companion</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- UI Automation (UIAutomationClient) for reading the browser's address bar. -->
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Watch/Assets/*.png" />
     <EmbeddedResource Include="../browser-extension/manifest.json" LogicalName="ext/manifest.json" />
     <EmbeddedResource Include="../browser-extension/background.js" LogicalName="ext/background.js" />
     <EmbeddedResource Include="../browser-extension/content.js" LogicalName="ext/content.js" />
+    <!-- UseWPF drops these from the implicit usings. -->
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Http" />
     <PackageReference Include="QRCoder" Version="1.8.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
   </ItemGroup>

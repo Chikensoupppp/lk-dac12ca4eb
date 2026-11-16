@@ -26,7 +26,7 @@ public sealed class HomeWindow : Form
     private readonly Func<string> connectBrowsers;
     private readonly string stateDir;
     private readonly Func<(bool Alive, bool Incognito)> browserStatus;
-    private readonly CardPanel guide = new("SET UP  ·  3 STEPS");
+    private readonly CardPanel guide = new("SET UP  ·  2 STEPS");
     private readonly StepRow stepInstall = new(1, "Install Nogbox");
     private readonly StepRow stepPair = new(2, "Pair your phone");
     private readonly StepRow stepBrowser = new(3, "Connect your browser (optional)");
@@ -90,13 +90,11 @@ public sealed class HomeWindow : Form
         stepInstall.State = StepState.Done;
         guide.Body.Controls.Add(stepInstall);
         guide.Body.Controls.Add(stepPair);
-        guide.Body.Controls.Add(stepBrowser);
         skipBrowser.LinkClicked += (_, _) =>
         {
             try { File.WriteAllText(Path.Combine(this.stateDir, "setup-browser-skipped"), ""); } catch (Exception) { }
             UpdateState();
         };
-        guide.Body.Controls.Add(skipBrowser);
         guide.Visible = !File.Exists(Path.Combine(stateDir, "setup-done"));
         page.Controls.Add(guide);
 
@@ -116,17 +114,17 @@ public sealed class HomeWindow : Form
         page.Controls.Add(now);
 
         // Browser
-        var browser = browserCard = new CardPanel("CHROME & EDGE");
-        browserLine.Text = "Lets the buddy see when scrolling takes over.";
+        var browser = browserCard = new CardPanel("BROWSERS");
+        browserLine.Text = "Nogbox watches Chrome, Edge, Brave and Firefox by itself. Nothing to set up.";
         browser.Body.Controls.Add(browserLine);
-        var connect = new SecondaryButton("Connect browsers");
+        var connect = new SecondaryButton("Add Save for later (optional)");
         connect.Click += (_, _) =>
         {
             try
             {
                 connectBrowsers();
                 Installer.OpenExtensionHelp();
-                browserLine.Text = "Connected. In the browser: turn on Developer mode, click Load unpacked, paste (Ctrl+V) in the folder box, press Select Folder. Then allow Incognito.";
+                browserLine.Text = "Folder copied. In Chrome, type chrome://extensions in the address bar. Turn on Developer mode, press Load unpacked, press Ctrl+V, press Select Folder.";
             }
             catch (Exception) { browserLine.Text = "Couldn't connect. Try again."; }
         };
@@ -249,38 +247,10 @@ public sealed class HomeWindow : Form
     private void UpdateGuide(bool paired)
     {
         if (!guide.Visible) return;
-        var (alive, incognito) = browserStatus();
-        var skipped = File.Exists(Path.Combine(stateDir, "setup-browser-skipped"));
-        var browserDone = alive && incognito;
-
         stepPair.State = paired ? StepState.Done : StepState.Now;
         stepPair.Detail = paired ? "" : "Press PAIR MY PHONE below. Point your iPhone Camera at the code. Tap the Nogbox banner.";
-
-        if (browserDone) { stepBrowser.State = StepState.Done; stepBrowser.Detail = ""; }
-        else if (skipped) { stepBrowser.State = StepState.Skipped; stepBrowser.Detail = "Skipped. Press Connect browsers any time."; }
-        else if (!paired) { stepBrowser.State = StepState.Later; stepBrowser.Detail = ""; }
-        else
-        {
-            stepBrowser.State = StepState.Now;
-            stepBrowser.Detail = alive
-                ? "Almost. In Chrome, open the Nogbox card, press Details, turn on Allow in Incognito."
-                : "Press Connect browsers below. In Chrome: turn on Developer mode, press Load unpacked, press Ctrl+V, press Select Folder.";
-        }
-        skipBrowser.Visible = stepBrowser.State == StepState.Now;
-
-        // While the browser step is the one to do, its card sits right under the phone card.
-        if (nowCard?.Parent is { } page && browserCard is not null)
-        {
-            var want = stepBrowser.State == StepState.Now;
-            var nowIndex = page.Controls.GetChildIndex(nowCard);
-            var browserIndex = page.Controls.GetChildIndex(browserCard);
-            if (want && browserIndex > nowIndex) page.Controls.SetChildIndex(browserCard, nowIndex);
-            else if (!want && browserIndex < nowIndex) page.Controls.SetChildIndex(nowCard, browserIndex);
-        }
-
-        var allDone = paired && (browserDone || skipped);
-        guide.Heading = allDone ? "ALL SET" : "SET UP  ·  3 STEPS";
-        if (allDone)
+        guide.Heading = paired ? "ALL SET" : "SET UP  ·  2 STEPS";
+        if (paired)
             try { File.WriteAllText(Path.Combine(stateDir, "setup-done"), ""); } catch (Exception) { }
     }
 

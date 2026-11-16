@@ -98,6 +98,8 @@ public static class Distractions
     }
 
     /// <summary>True when the front window is a browser.</summary>
+    public static bool IsBrowserProcess(string processName) => Browsers.Contains(processName.ToLowerInvariant());
+
     public static bool IsBrowser(FrontWindow.Snapshot? front) =>
         front is not null && Browsers.Contains(front.Process.ToLowerInvariant());
 

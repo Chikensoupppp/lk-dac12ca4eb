@@ -43,9 +43,8 @@ public static class Installer
         var dir = ExtractExtension();
         // The folder path goes on the clipboard, so the Load unpacked dialog only needs a paste.
         try { System.Windows.Forms.Clipboard.SetText(dir); } catch (Exception) { }
-        try { Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true }); } catch (Exception) { }
-        foreach (var (exe, url) in new[] { ("chrome", "chrome://extensions"), ("msedge", "edge://extensions") })
-            try { Process.Start(new ProcessStartInfo(exe, url) { UseShellExecute = true }); break; } catch (Exception) { }
+        // Browsers refuse to open their own extensions page from another app, so the window tells the user
+        // to type it; the folder path is already on the clipboard for the Load unpacked box.
     }
 
     /// <summary>True when this process is the installed copy.</summary>

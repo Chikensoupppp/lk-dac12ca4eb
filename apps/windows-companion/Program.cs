@@ -57,7 +57,7 @@ if (args.Length == 0 && Environment.GetEnvironmentVariable("LOCKIN_STATE_DIR") i
 
 // One Nogbox per PC: a second launch (say, a double-click while it runs in the tray) just leaves.
 using var single = new Mutex(true, "Nogbox.PC.Companion." + Environment.UserName, out var firstInstance);
-if (!firstInstance && !args.Any(a => a.StartsWith("--draw"))) return;
+if (!firstInstance && !args.Any(a => a.StartsWith("--draw") || a == "--browser-probe")) return;
 
 var stateStore = new CompanionStateStore(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
@@ -206,6 +206,18 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
     });
 });
 
+if (args.Contains("--browser-probe"))
+{
+    // Test helper: logs what the browser watcher sees for 40 seconds, then exits.
+    var probeLog = Path.Combine(stateDir, "browser-probe.log");
+    File.WriteAllText(probeLog, "");
+    using (new BrowserWatch(
+        s => File.AppendAllText(probeLog, $"REPORT site={s.Site} items={s.Items} screens={s.Screens:F2} scrolls={s.Scrolls}\n"),
+        line => File.AppendAllText(probeLog, DateTime.Now.ToString("HH:mm:ss ") + line + "\n")))
+        Thread.Sleep(TimeSpan.FromSeconds(40));
+    return;
+}
+
 if (args.Contains("--draw-home"))
 {
     // Test helper: writes pictures of the window and exits.
@@ -235,6 +247,8 @@ if (args.Contains("--pair"))
 // Browser activity arrives through a private pipe, not through either HTTP door.
 var sessionWatch = app.Services.GetRequiredService<SessionWatch>();
 using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat, sessionWatch.HandleLater);
+// No extension needed: the PC reads the front browser itself. When the extension is running it reports instead, so nothing counts twice.
+using var browserWatch = new BrowserWatch(signal => { if (!sessionWatch.BrowserStatus().Alive) sessionWatch.Report(signal); });
 
 // The window: status, pairing with a QR code, the browser link. --headless runs without it (tests),
 // --tray starts it hidden in the tray (for starting with Windows).
