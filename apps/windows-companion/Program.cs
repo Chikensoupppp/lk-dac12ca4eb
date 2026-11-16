@@ -42,6 +42,10 @@ if (args.Contains("--later"))
     ui.Join();
     return;
 }
+// One Nogbox per PC: a second launch (say, a double-click while it runs in the tray) just leaves.
+using var single = new Mutex(true, "Nogbox.PC.Companion." + Environment.UserName, out var firstInstance);
+if (!firstInstance) return;
+
 var stateStore = new CompanionStateStore(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
 var fingerprint = CompanionStateStore.Fingerprint(certificate);
@@ -189,6 +193,13 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
     });
 });
 
+if (args.Contains("--draw-home"))
+{
+    // Test helper: writes pictures of the window and exits.
+    HomeWindow.DrawPreviews(Path.Combine(stateDir, "home"));
+    return;
+}
+
 if (args.Contains("--draw-poses"))
 {
     // Test helper: writes still brain poses (look, keen, cheer) and exits.
@@ -211,6 +222,15 @@ if (args.Contains("--pair"))
 // Browser activity arrives through a private pipe, not through either HTTP door.
 var sessionWatch = app.Services.GetRequiredService<SessionWatch>();
 using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat, sessionWatch.HandleLater);
+
+// The window: status, pairing with a QR code, the browser link. --headless runs without it (tests),
+// --tray starts it hidden in the tray (for starting with Windows).
+if (!args.Contains("--headless"))
+{
+    var sessions = app.Services.GetRequiredService<SessionStore>();
+    HomeWindow.Start(() => new HomeWindow(OpenPairing, stateStore.Devices, () => sessions.Current,
+        () => BrowserRegistration.Register(stateDir, Environment.ProcessPath!), stateDir), args.Contains("--tray"));
+}
 
 app.Run();
 
