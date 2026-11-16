@@ -129,6 +129,13 @@ public sealed class BrowserGuard
         catch (UnauthorizedAccessException) { }
     }
 
+    /// <summary>For the setup guide: is any browser's extension running now, and may it run in private windows?</summary>
+    public (bool Alive, bool Incognito) Status(DateTimeOffset now)
+    {
+        var live = alive.Values.Where(a => now - a.At <= AliveFor).ToList();
+        return (live.Count > 0, live.Count > 0 && live.All(a => a.Incognito));
+    }
+
     /// <summary>Forget the warnings (a new session). Heartbeats are kept: browsers keep running between sessions.</summary>
     public void ResetWarnings() => warnedSince.Clear();
 

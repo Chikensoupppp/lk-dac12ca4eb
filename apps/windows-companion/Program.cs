@@ -242,7 +242,7 @@ if (!args.Contains("--headless"))
 {
     var sessions = app.Services.GetRequiredService<SessionStore>();
     HomeWindow.Start(() => new HomeWindow(OpenPairing, stateStore.Devices, () => sessions.Current,
-        () => BrowserRegistration.Register(stateDir, Environment.ProcessPath!), stateDir), args.Contains("--tray"));
+        () => BrowserRegistration.Register(stateDir, Environment.ProcessPath!), stateDir, sessionWatch.BrowserStatus), args.Contains("--tray"));
 }
 
 app.Run();

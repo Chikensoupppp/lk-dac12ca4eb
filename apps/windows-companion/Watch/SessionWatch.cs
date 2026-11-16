@@ -207,6 +207,12 @@ public sealed class SessionWatch : IDisposable
         lock (gate) browsers.Heartbeat(clock.GetUtcNow(), beat);
     }
 
+    /// <summary>The browser extension's state, for the setup guide in the window.</summary>
+    public (bool Alive, bool Incognito) BrowserStatus()
+    {
+        lock (gate) return browsers.Status(clock.GetUtcNow());
+    }
+
     /// <summary>Request/response stays on the same user's native pipe; only a click can save a URL.</summary>
     public string? HandleLater(string browser, LaterMessage message)
     {

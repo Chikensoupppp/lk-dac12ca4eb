@@ -49,6 +49,9 @@ struct PCSheet: View {
     /// The desk buddy is on unless the user turned it off.
     static var buddyOn: Bool { UserDefaults.standard.object(forKey: buddyKey) as? Bool ?? true }
 
+    /// The PC setup page. The PC app's window takes over from there with its own guide.
+    static let setupURL = URL(string: "https://chikensoupppp.github.io/lk-dac12ca4eb/pc/")!
+
     static let remindKey = "lockin.pc.remindMinutes.v1"
     static let remindDefault = 3
     static let remindRange = 1...10
@@ -61,7 +64,7 @@ struct PCSheet: View {
     private var headline: String {
         if pc.isPairing { return "Pairing with your PC..." }
         switch pc.status {
-        case .notPaired: return "No PC is paired."
+        case .notPaired: return "Continue on your PC."
         case .paired: return "PC paired."
         case .connected: return "Connected to your PC."
         case .offline: return "The PC is not answering."
@@ -87,8 +90,29 @@ struct PCSheet: View {
                                 .accessibilityIdentifier("pc-problem")
                         }
 
+                        if !pc.isPaired && !pc.isPairing {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Open this link on your PC:")
+                                    .font(Cream.rounded(15, .medium))
+                                    .foregroundStyle(Matte.textSoft)
+                                Text("chikensoupppp.github.io/lk-dac12ca4eb/pc")
+                                    .font(Cream.rounded(16, .semibold))
+                                    .foregroundStyle(Matte.text)
+                                    .textSelection(.enabled)
+                                Text("The Nogbox PC app guides you from there.")
+                                    .font(Cream.rounded(15, .medium))
+                                    .foregroundStyle(Matte.textSoft)
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityIdentifier("pc-continue")
+
+                            ShareLink(item: PCSheet.setupURL) { Text("SEND LINK TO MY PC") }
+                                .buttonStyle(MatteButtonStyle(prominent: true))
+                                .accessibilityIdentifier("pc-send-link")
+                        }
+
                         Button { scanning = true } label: { Text("SCAN QR CODE") }
-                            .buttonStyle(MatteButtonStyle(prominent: !pc.isPaired))
+                            .buttonStyle(MatteButtonStyle(prominent: false))
                             .disabled(pc.isPairing)
                             .accessibilityLabel("Scan the pairing QR code")
 

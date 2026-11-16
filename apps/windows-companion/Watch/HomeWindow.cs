@@ -25,6 +25,14 @@ public sealed class HomeWindow : Form
     private readonly Func<FocusSession> session;
     private readonly Func<string> connectBrowsers;
     private readonly string stateDir;
+    private readonly Func<(bool Alive, bool Incognito)> browserStatus;
+    private readonly CardPanel guide = new("SET UP  ·  3 STEPS");
+    private readonly StepRow stepInstall = new(1, "Install Nogbox");
+    private readonly StepRow stepPair = new(2, "Pair your phone");
+    private readonly StepRow stepBrowser = new(3, "Connect your browser (optional)");
+    private CardPanel? nowCard;
+    private CardPanel? browserCard;
+    private readonly LinkLabel skipBrowser = new() { Text = "Skip this step", AutoSize = true, LinkColor = Soft, ActiveLinkColor = Ink, Margin = new Padding(34, 0, 0, 4) };
 
     private readonly Label phoneLine = Line();
     private readonly PictureBox qr = new() { Size = new Size(220, 220), SizeMode = PictureBoxSizeMode.Zoom, Visible = false, Margin = new Padding(0, 10, 0, 4) };
@@ -40,8 +48,10 @@ public sealed class HomeWindow : Form
     private bool toldAboutTray;
 
     public HomeWindow(Func<PairingOffer> openPairing, Func<IReadOnlyList<PairedDevice>> devices,
-        Func<FocusSession> session, Func<string> connectBrowsers, string stateDir)
+        Func<FocusSession> session, Func<string> connectBrowsers, string stateDir,
+        Func<(bool Alive, bool Incognito)>? browserStatus = null)
     {
+        this.browserStatus = browserStatus ?? (() => (false, false));
         this.openPairing = openPairing;
         this.devices = devices;
         this.session = session;
@@ -49,7 +59,7 @@ public sealed class HomeWindow : Form
         this.stateDir = stateDir;
 
         Text = "Nogbox";
-        ClientSize = new Size(420, 700);
+        ClientSize = new Size(420, 820);
         MinimumSize = new Size(400, 520);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Paper;
@@ -76,6 +86,20 @@ public sealed class HomeWindow : Form
         header.Controls.Add(titles);
         page.Controls.Add(header);
 
+        // Setup guide: ticks itself off from the real state (paired phone, extension heartbeat).
+        stepInstall.State = StepState.Done;
+        guide.Body.Controls.Add(stepInstall);
+        guide.Body.Controls.Add(stepPair);
+        guide.Body.Controls.Add(stepBrowser);
+        skipBrowser.LinkClicked += (_, _) =>
+        {
+            try { File.WriteAllText(Path.Combine(this.stateDir, "setup-browser-skipped"), ""); } catch (Exception) { }
+            UpdateState();
+        };
+        guide.Body.Controls.Add(skipBrowser);
+        guide.Visible = !File.Exists(Path.Combine(stateDir, "setup-done"));
+        page.Controls.Add(guide);
+
         // Phone
         var phone = new CardPanel("PHONE");
         phone.Body.Controls.Add(phoneLine);
@@ -86,13 +110,13 @@ public sealed class HomeWindow : Form
         page.Controls.Add(phone);
 
         // Session
-        var now = new CardPanel("RIGHT NOW");
+        var now = nowCard = new CardPanel("RIGHT NOW");
         now.Body.Controls.Add(sessionTitle);
         now.Body.Controls.Add(sessionLine);
         page.Controls.Add(now);
 
         // Browser
-        var browser = new CardPanel("CHROME & EDGE");
+        var browser = browserCard = new CardPanel("CHROME & EDGE");
         browserLine.Text = "Lets the buddy see when scrolling takes over.";
         browser.Body.Controls.Add(browserLine);
         var connect = new SecondaryButton("Connect browsers");
@@ -205,6 +229,8 @@ public sealed class HomeWindow : Form
             if (paired.Count > 0 && pairButton.Text == "Pair my phone") pairButton.Text = "Pair another phone";
         }
 
+        UpdateGuide(paired.Count > 0);
+
         var current = session();
         if (current.State == "active" && current.EndsAt is { } ends)
         {
@@ -218,6 +244,44 @@ public sealed class HomeWindow : Form
             sessionTitle.Text = "No session";
             sessionLine.Text = "Start one on your phone. This PC follows.";
         }
+    }
+
+    private void UpdateGuide(bool paired)
+    {
+        if (!guide.Visible) return;
+        var (alive, incognito) = browserStatus();
+        var skipped = File.Exists(Path.Combine(stateDir, "setup-browser-skipped"));
+        var browserDone = alive && incognito;
+
+        stepPair.State = paired ? StepState.Done : StepState.Now;
+        stepPair.Detail = paired ? "" : "Press PAIR MY PHONE below. Point your iPhone Camera at the code. Tap the Nogbox banner.";
+
+        if (browserDone) { stepBrowser.State = StepState.Done; stepBrowser.Detail = ""; }
+        else if (skipped) { stepBrowser.State = StepState.Skipped; stepBrowser.Detail = "Skipped. Press Connect browsers any time."; }
+        else if (!paired) { stepBrowser.State = StepState.Later; stepBrowser.Detail = ""; }
+        else
+        {
+            stepBrowser.State = StepState.Now;
+            stepBrowser.Detail = alive
+                ? "Almost. In Chrome, open the Nogbox card, press Details, turn on Allow in Incognito."
+                : "Press Connect browsers below. In Chrome: turn on Developer mode, press Load unpacked, press Ctrl+V, press Select Folder.";
+        }
+        skipBrowser.Visible = stepBrowser.State == StepState.Now;
+
+        // While the browser step is the one to do, its card sits right under the phone card.
+        if (nowCard?.Parent is { } page && browserCard is not null)
+        {
+            var want = stepBrowser.State == StepState.Now;
+            var nowIndex = page.Controls.GetChildIndex(nowCard);
+            var browserIndex = page.Controls.GetChildIndex(browserCard);
+            if (want && browserIndex > nowIndex) page.Controls.SetChildIndex(browserCard, nowIndex);
+            else if (!want && browserIndex < nowIndex) page.Controls.SetChildIndex(nowCard, browserIndex);
+        }
+
+        var allDone = paired && (browserDone || skipped);
+        guide.Heading = allDone ? "ALL SET" : "SET UP  ·  3 STEPS";
+        if (allDone)
+            try { File.WriteAllText(Path.Combine(stateDir, "setup-done"), ""); } catch (Exception) { }
     }
 
     private void ShowFromTray()
@@ -266,13 +330,17 @@ public sealed class HomeWindow : Form
             Location = new Point(18, 40), BackColor = Color.Transparent
         };
 
+        private readonly Label headingLabel;
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public string Heading { get => headingLabel.Text; set => headingLabel.Text = value; }
+
         public CardPanel(string heading)
         {
             DoubleBuffered = true;
             BackColor = Paper;
             Width = 376;
             Margin = new Padding(0, 0, 0, 14);
-            Controls.Add(new Label { Text = heading, AutoSize = true, UseMnemonic = false, Location = new Point(18, 14), Font = new Font("Consolas", 9, FontStyle.Bold), ForeColor = Soft, BackColor = Card });
+            headingLabel = new Label { Text = heading, AutoSize = true, UseMnemonic = false, Location = new Point(18, 14), Font = new Font("Consolas", 9, FontStyle.Bold), ForeColor = Soft, BackColor = Card };
+            Controls.Add(headingLabel);
             Controls.Add(Body);
             Body.SizeChanged += (_, _) => Height = Body.Bottom + 14;
             Body.BackColor = Card;
@@ -284,6 +352,77 @@ public sealed class HomeWindow : Form
             using var path = Rounded(new Rectangle(0, 0, Width - 1, Height - 1), 16);
             using var fill = new SolidBrush(Card);
             e.Graphics.FillPath(fill, path);
+        }
+    }
+
+    private enum StepState { Later, Now, Done, Skipped }
+
+    /// <summary>One line of the setup guide: a numbered dot (blue now, green tick done) and what to do.</summary>
+    private sealed class StepRow : Control
+    {
+        private static readonly Color Green = Color.FromArgb(0x2E, 0x7D, 0x4F);
+        private readonly int number;
+        private StepState state = StepState.Later;
+        private string detail = "";
+        private readonly Font titleFont = new("Segoe UI", 11, FontStyle.Bold);
+        private readonly Font doneFont = new("Segoe UI", 11, FontStyle.Bold | FontStyle.Strikeout);
+        private readonly Font detailFont = new("Segoe UI", 10);
+
+        public StepRow(int number, string title)
+        {
+            this.number = number;
+            Text = title;
+            DoubleBuffered = true;
+            BackColor = Card;
+            Width = 330;
+            Margin = new Padding(0, 2, 0, 6);
+            AccessibleRole = AccessibleRole.StaticText;
+            Relayout();
+        }
+
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public StepState State { get => state; set { if (state == value) return; state = value; Relayout(); } }
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public string Detail { get => detail; set { if (detail == value) return; detail = value; Relayout(); } }
+
+        private void Relayout()
+        {
+            var h = 30;
+            if (detail.Length > 0)
+                h += TextRenderer.MeasureText(detail, detailFont, new Size(Width - 40, 0), TextFormatFlags.WordBreak).Height + 4;
+            Height = h;
+            AccessibleName = $"Step {number}: {Text}. " + state switch
+            {
+                StepState.Done => "Done.",
+                StepState.Now => "Do this now. " + detail,
+                StepState.Skipped => "Skipped.",
+                _ => "Later."
+            };
+            Invalidate();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(Card);
+            var dot = new Rectangle(1, 2, 24, 24);
+            var fill = state switch { StepState.Done => Green, StepState.Now => Blue, _ => Card };
+            using (var b = new SolidBrush(fill)) g.FillEllipse(b, dot);
+            if (state is StepState.Later or StepState.Skipped)
+                using (var pen = new Pen(Color.FromArgb(0xB4, 0xB7, 0xB0), 2)) g.DrawEllipse(pen, dot);
+            var mark = state == StepState.Done ? "✓" : number.ToString();
+            var markColor = state is StepState.Done or StepState.Now ? Color.White : Soft;
+            TextRenderer.DrawText(g, mark, titleFont, dot, markColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            var titleColor = state == StepState.Now ? Ink : Soft;
+            TextRenderer.DrawText(g, Text, titleFont, new Rectangle(34, 2, Width - 34, 24),
+                titleColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+            if (detail.Length > 0)
+                TextRenderer.DrawText(g, detail, detailFont, new Rectangle(34, 30, Width - 40, Height - 30), Ink, TextFormatFlags.WordBreak);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) { titleFont.Dispose(); doneFont.Dispose(); detailFont.Dispose(); }
+            base.Dispose(disposing);
         }
     }
 
@@ -362,9 +501,12 @@ public sealed class HomeWindow : Form
             var start = DateTimeOffset.UtcNow;
             var offer = new PairingOffer(1, new[] { "192.168.1.20" }, 47822, new string('A', 64), "123456", start.AddMinutes(5));
             var phone = new PairedDevice("d1", "Brandon's iPhone", "x", start);
-            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing)
+            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, (bool, bool) browser = default)
             {
-                using var form = new HomeWindow(() => offer, () => paired, () => now, () => "", dir);
+                var state = Path.Combine(dir, name + "-state");
+                if (Directory.Exists(state)) Directory.Delete(state, true);
+                Directory.CreateDirectory(state);
+                using var form = new HomeWindow(() => offer, () => paired, () => now, () => "", state, () => browser);
                 form.tray.Visible = false;
                 form.ShowInTaskbar = false;
                 form.StartPosition = FormStartPosition.Manual;
@@ -380,7 +522,9 @@ public sealed class HomeWindow : Form
             var idle = new FocusSession("none", "idle", 0, null, null);
             Draw("home-new", Array.Empty<PairedDevice>(), idle, false);
             Draw("home-pairing", Array.Empty<PairedDevice>(), idle, true);
-            Draw("home-session", new[] { phone }, new FocusSession("s", "active", 1500, start, start.AddMinutes(18).AddSeconds(42)), false);
+            Draw("home-browser", new[] { phone }, idle, false);
+            Draw("home-incognito", new[] { phone }, idle, false, (true, false));
+            Draw("home-session", new[] { phone }, new FocusSession("s", "active", 1500, start, start.AddMinutes(18).AddSeconds(42)), false, (true, true));
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
