@@ -190,7 +190,7 @@ public sealed class HomeWindow : Form
         if (qrUntil is { } until && now < until)
         {
             var left = until - now;
-            phoneLine.Text = "Open Nogbox on your phone, tap PAIR A PC, and scan this.";
+            phoneLine.Text = "Open the Nogbox app, tap SCAN QR CODE, and scan this. Do not use the iPhone Camera app.";
             qrHint.Text = $"Works for {(int)left.TotalMinutes}:{left.Seconds:00} and one phone.";
             qrHint.Visible = true;
         }
