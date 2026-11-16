@@ -66,12 +66,12 @@ public static class BuddyWords
 
     /// <summary>A browser without the Lock In extension (or without it in private windows), before and after the grace time.</summary>
     public static string BrowserWarning(string browser, bool privateOff) => privateOff
-        ? $"Let Lock In run in private windows in {browser} too."
-        : $"Lock In isn't on in {browser}. Turn it on to keep using it.";
+        ? $"Let Nogbox run in private windows in {browser} too."
+        : $"Nogbox isn't on in {browser}. Turn it on to keep using it.";
 
     public static string BrowserPaused(string browser, bool privateOff) => privateOff
-        ? $"{browser} is paused until Lock In works in private windows."
-        : $"{browser} is paused until Lock In is back on.";
+        ? $"{browser} is paused until Nogbox works in private windows."
+        : $"{browser} is paused until Nogbox is back on.";
 
     /// <summary>How the buddy moves while it says this line: a question tilts its head, a cheer hops.</summary>
     public static BuddyGesture GestureFor(BuddyMood mood, string text) => mood switch

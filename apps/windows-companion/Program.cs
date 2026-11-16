@@ -24,7 +24,7 @@ if (NativeHost.IsLaunch(args))
 }
 if (args.Contains("--register-browser"))
 {
-    Console.WriteLine("Chrome and Edge can now reach Lock In. Host file: "
+    Console.WriteLine("Chrome and Edge can now reach Nogbox. Host file: "
         + BrowserRegistration.Register(stateDir, Environment.ProcessPath!));
     return;
 }
@@ -221,7 +221,7 @@ static void ShowPairingQr(PairingOffer offer, string dir)
     var path = Path.Combine(dir, "pair-phone.png");
     File.WriteAllBytes(path, png);
     Console.WriteLine();
-    Console.WriteLine("Pair your phone: scan the QR code in this picture with the Lock In app.");
+    Console.WriteLine("Pair your phone: scan the QR code in this picture with the Nogbox app.");
     Console.WriteLine(path);
     Console.WriteLine($"It works for 5 minutes and one phone. Addresses: {string.Join(", ", offer.Hosts)}");
     try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
