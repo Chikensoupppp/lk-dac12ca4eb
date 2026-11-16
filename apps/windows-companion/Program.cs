@@ -256,7 +256,8 @@ if (!args.Contains("--headless"))
 {
     var sessions = app.Services.GetRequiredService<SessionStore>();
     HomeWindow.Start(() => new HomeWindow(OpenPairing, stateStore.Devices, () => sessions.Current, stateDir, () => sessionWatch.TaskName,
-        () => sessionWatch.BuddyOn, on => sessionWatch.BuddyOn = on),
+        () => sessionWatch.BuddyOn, on => sessionWatch.BuddyOn = on, id => stateStore.RemoveDevice(id),
+        () => sessionWatch.PauseState, sessionWatch.PauseBuddy),
         args.Contains("--tray"));
 }
 

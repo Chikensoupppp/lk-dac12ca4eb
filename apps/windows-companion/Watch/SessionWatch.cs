@@ -45,6 +45,10 @@ public sealed class SessionWatch : IDisposable
     private bool buddy;
     /// <summary>What the phone asked for this session; the PC's own switch can still turn the buddy off.</summary>
     private bool phoneBuddy;
+    /// <summary>One break per session: the buddy rests, nothing is nudged or counted until it ends.</summary>
+    private DateTimeOffset? pausedUntil;
+    private bool pauseUsed;
+    public static readonly TimeSpan BreakLength = TimeSpan.FromMinutes(5);
     private readonly string? buddyOffFile;
     /// <summary>A Locked session from a Plus user: no "is it for work?" question, distractions go straight down.</summary>
     private bool strict;
@@ -103,6 +107,8 @@ public sealed class SessionWatch : IDisposable
             savedThisSession = false;
             cheerUntil = null;
             phoneBuddy = showBuddy;
+            pausedUntil = null;
+            pauseUsed = false;
             showBuddy = showBuddy && BuddyOn;
             buddy = showBuddy;
             task = taskName;
@@ -128,6 +134,35 @@ public sealed class SessionWatch : IDisposable
             }
             BuddyWindow.Instance.SetMood(MoodFor(0, false, 0), showBuddy);
             timer.Change(TimeSpan.Zero, Interval);
+        }
+    }
+
+    /// <summary>For the window: is a session on, may the buddy still take its one break, and when the break ends.</summary>
+    public (bool Active, bool CanPause, DateTimeOffset? BreakEnds) PauseState
+    {
+        get
+        {
+            lock (gate)
+            {
+                var active = sessionId is not null;
+                var onBreak = pausedUntil is { } u && clock.GetUtcNow() < u;
+                return (active, active && !pauseUsed, onBreak ? pausedUntil : null);
+            }
+        }
+    }
+
+    /// <summary>Starts the session's one break. False when there is no session or the break was used.</summary>
+    public bool PauseBuddy()
+    {
+        lock (gate)
+        {
+            if (sessionId is null || pauseUsed) return false;
+            pauseUsed = true;
+            pausedUntil = clock.GetUtcNow() + BreakLength;
+            asking = askName = declined = sayText = null;
+            reminding = false;
+            BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
+            return true;
         }
     }
 
@@ -216,6 +251,7 @@ public sealed class SessionWatch : IDisposable
         lock (gate)
         {
             if (sessionId is null || !buddy) return;
+            if (pausedUntil is { } pu && clock.GetUtcNow() < pu) return; // a break is not scrolling time
             guard.Report(clock.GetUtcNow(), signal);
         }
     }
@@ -328,6 +364,12 @@ public sealed class SessionWatch : IDisposable
                     BuddyWindow.Instance.SetMood(BuddyMood.Fresh, false);
                 }
                 return;
+            }
+            if (pausedUntil is { } breakEnds)
+            {
+                if (observedAt < breakEnds) return; // on a break: no nudges, no minimizing, buddy stays hidden
+                pausedUntil = null;
+                if (buddy) BuddyWindow.Instance.SetMood(MoodFor(0, false, 0), true, "Break's over. Back to it!");
             }
             id = sessionId;
             showBuddy = buddy;

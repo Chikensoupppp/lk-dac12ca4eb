@@ -36,6 +36,12 @@ public sealed class HomeWindow : Form
     private readonly Func<string?> taskName;
     private readonly Func<bool> buddyOn;
     private readonly Action<bool> setBuddy;
+    private readonly Action<string> removeDevice;
+    private readonly Func<(bool Active, bool CanPause, DateTimeOffset? BreakEnds)> pauseState;
+    private readonly Func<bool> pauseBuddy;
+    private readonly QuietButton pauseButton = new("Pause 5 min");
+    private readonly ContextMenuStrip phoneMenu = new() { ShowImageMargin = false };
+    private string buddyStatus = "On";
     private readonly string stateDir;
 
     private readonly Bitmap? brain;
@@ -57,14 +63,19 @@ public sealed class HomeWindow : Form
     // What the window shows; set by UpdateState, drawn by OnPaint.
     private string title = "", subtitle = "";
     private bool bigTime;
+    private bool onBreak;
     private double ring; // how much of the ring is navy, 0..1
     private string rowTitle = "iPhone", rowStatus = "Not paired";
     private bool rowOn;
 
     public HomeWindow(Func<PairingOffer> openPairing, Func<IReadOnlyList<PairedDevice>> devices,
         Func<FocusSession> session, string stateDir, Func<string?>? taskName = null,
-        Func<bool>? buddyOn = null, Action<bool>? setBuddy = null)
+        Func<bool>? buddyOn = null, Action<bool>? setBuddy = null, Action<string>? removeDevice = null,
+        Func<(bool Active, bool CanPause, DateTimeOffset? BreakEnds)>? pauseState = null, Func<bool>? pauseBuddy = null)
     {
+        this.removeDevice = removeDevice ?? (_ => { });
+        this.pauseState = pauseState ?? (() => (false, false, null));
+        this.pauseBuddy = pauseBuddy ?? (() => false);
         this.buddyOn = buddyOn ?? (() => true);
         this.setBuddy = setBuddy ?? (_ => { });
         this.openPairing = openPairing;
@@ -95,7 +106,14 @@ public sealed class HomeWindow : Form
         rowButton.Font = new Font("Segoe UI Semibold", 10f);
         rowButton.Size = new Size(Px(118), Px(38));
         rowButton.Location = new Point(ClientSize.Width - rowButton.Width - Px(22), Px(HeroH) + (Px(RowH) - rowButton.Height) / 2);
-        rowButton.Click += (_, _) => { if (qrUntil is not null) StopPairing(); else ShowPairing(); };
+        rowButton.Click += (_, _) =>
+        {
+            if (qrUntil is not null) { StopPairing(); return; }
+            BuildPhoneMenu();
+            phoneMenu.Show(rowButton, new Point(rowButton.Width - phoneMenu.Width, rowButton.Height + Px(4)));
+        };
+        phoneMenu.Renderer = new MenuLook();
+        phoneMenu.Font = new Font("Segoe UI", 10.5f);
         Controls.Add(rowButton);
 
         buddySwitch.Size = new Size(Px(44), Px(24));
@@ -108,6 +126,13 @@ public sealed class HomeWindow : Form
             _ = Task.Run(() => { try { this.setBuddy(on); } catch (Exception) { } });
         };
         Controls.Add(buddySwitch);
+
+        pauseButton.Font = new Font("Segoe UI Semibold", 9.5f);
+        pauseButton.Size = new Size(Px(104), Px(34));
+        pauseButton.Location = new Point(buddySwitch.Left - pauseButton.Width - Px(14), Px(HeroH + RowH) + (Px(RowH) - pauseButton.Height) / 2);
+        pauseButton.AccessibleDescription = "Rests the buddy for 5 minutes. Once per session.";
+        pauseButton.Click += (_, _) => { if (this.pauseBuddy()) UpdateState(); };
+        Controls.Add(pauseButton);
 
         var footerTop = Px(HeroH + RowH * Rows);
         startup.Size = new Size(Px(44), Px(24));
@@ -201,16 +226,18 @@ public sealed class HomeWindow : Form
         var now = DateTimeOffset.UtcNow;
         var current = session();
         bigTime = false;
+        onBreak = false;
 
         // The code stays up until it runs out or a new phone shows up.
-        if (qrUntil is { } until && (now >= until || paired.Count > pairedWhenCodeMade)) qrUntil = null;
+        if (qrUntil is not null && paired.Count > pairedWhenCodeMade) qrUntil = null;
+        else if (qrUntil is { } until && now >= until) { ShowPairing(); return; }
         var pairing = qrUntil is not null;
 
         if (pairing)
         {
             var left = qrUntil!.Value - now;
             title = "Scan with your iPhone Camera";
-            subtitle = $"Then tap the Nogbox banner. Works for {(int)left.TotalMinutes}:{left.Seconds:00}.";
+            subtitle = $"Then tap the Nogbox banner. New code in {(int)left.TotalMinutes}:{left.Seconds:00}.";
             ring = 0;
         }
         else if (paired.Count == 0)
@@ -218,6 +245,15 @@ public sealed class HomeWindow : Form
             title = "No phone yet";
             subtitle = "Pair your phone to start sessions from it.";
             ring = 0;
+        }
+        else if (current.State == "active" && pauseState().BreakEnds is { } breakEnds)
+        {
+            var left = breakEnds - now;
+            if (left < TimeSpan.Zero) left = TimeSpan.Zero;
+            onBreak = true;
+            title = "On a break";
+            subtitle = $"The buddy is resting. Back in {(int)left.TotalMinutes}:{left.Seconds:00}.";
+            ring = Math.Clamp(left.TotalSeconds / HomeWindowBreakSeconds, 0, 1);
         }
         else if (current.State == "active" && current.EndsAt is { } ends)
         {
@@ -252,7 +288,12 @@ public sealed class HomeWindow : Form
         rowTitle = paired.Count == 0 ? "iPhone" : paired[^1].Name + (paired.Count > 1 ? $" +{paired.Count - 1}" : "");
         rowStatus = pairing ? "Waiting for your phone" : paired.Count == 0 ? "Not paired" : "Paired";
         rowButton.Visible = paired.Count > 0 || pairing;
-        rowButton.Text = pairing ? "Cancel" : "Pair another";
+        rowButton.Text = pairing ? "Cancel" : "Manage";
+        var pause = pauseState();
+        pauseButton.Visible = pause.CanPause && buddySwitch.On && current.State == "active";
+        buddyStatus = !buddySwitch.On ? "Off"
+            : pause.BreakEnds is { } b ? $"Resting \u00b7 back in {(int)(b - now).TotalMinutes}:{(b - now).Seconds:00}"
+            : pause.Active && !pause.CanPause ? "On \u00b7 break used" : "On";
         AccessibleDescription = $"{title}. {subtitle}. {rowTitle}: {rowStatus}.";
         Invalidate(new Rectangle(0, 0, ClientSize.Width, Px(HeroH + RowH * Rows)));
     }
@@ -290,7 +331,7 @@ public sealed class HomeWindow : Form
                 g.DrawEllipse(track, rect);
             if (ring > 0.001)
             {
-                using var arc = new Pen(Navy, Pf(4.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                using var arc = new Pen(onBreak ? Amber : Navy, Pf(4.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
                 if (ring >= 0.999) g.DrawEllipse(arc, rect);
                 else g.DrawArc(arc, rect, -90, (float)(360 * ring));
             }
@@ -355,7 +396,7 @@ public sealed class HomeWindow : Form
             var dotY = buddyTop + Px(44);
             using (var dot = new SolidBrush(on ? Green : Off))
                 g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
-            TextRenderer.DrawText(g, on ? "On" : "Off", statusFont,
+            TextRenderer.DrawText(g, buddyStatus, statusFont,
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
@@ -366,6 +407,51 @@ public sealed class HomeWindow : Form
             TextRenderer.DrawText(g, "Start with Windows", footFont,
                 new Rectangle(startup.Right + Px(10), startup.Top - Px(2), Px(200), startup.Height + Px(4)), Ink,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+    }
+
+    private const double HomeWindowBreakSeconds = 300;
+
+    /// <summary>The iPhone row's menu: pair another phone, or unpair one (after a yes).</summary>
+    private void BuildPhoneMenu()
+    {
+        phoneMenu.Items.Clear();
+        phoneMenu.Items.Add("Pair another phone", null, (_, _) => ShowPairing());
+        var paired = devices();
+        if (paired.Count > 0) phoneMenu.Items.Add(new ToolStripSeparator());
+        foreach (var device in paired)
+        {
+            var item = new ToolStripMenuItem($"Unpair {device.Name}") { ForeColor = Color.FromArgb(0xA8, 0x2A, 0x22) };
+            item.Click += (_, _) =>
+            {
+                var sure = MessageBox.Show(this, $"Unpair {device.Name}? This PC stops following it. You can pair it again any time.",
+                    "Unpair phone", MessageBoxButtons.OKCancel, MessageBoxIcon.None, MessageBoxDefaultButton.Button2);
+                if (sure != DialogResult.OK) return;
+                try { removeDevice(device.Id); } catch (Exception) { }
+                UpdateState();
+            };
+            phoneMenu.Items.Add(item);
+        }
+    }
+
+    /// <summary>Paper menu with a soft hover, to match the window.</summary>
+    private sealed class MenuLook : ToolStripProfessionalRenderer
+    {
+        public MenuLook() : base(new Palette()) { RoundedEdges = true; }
+
+        private sealed class Palette : ProfessionalColorTable
+        {
+            public override Color ToolStripDropDownBackground => Paper;
+            public override Color MenuItemSelected => Color.FromArgb(0xEC, 0xEA, 0xE3);
+            public override Color MenuItemSelectedGradientBegin => Color.FromArgb(0xEC, 0xEA, 0xE3);
+            public override Color MenuItemSelectedGradientEnd => Color.FromArgb(0xEC, 0xEA, 0xE3);
+            public override Color MenuItemBorder => Color.FromArgb(0xEC, 0xEA, 0xE3);
+            public override Color MenuBorder => Line;
+            public override Color SeparatorDark => Line;
+            public override Color SeparatorLight => Paper;
+            public override Color ImageMarginGradientBegin => Paper;
+            public override Color ImageMarginGradientMiddle => Paper;
+            public override Color ImageMarginGradientEnd => Paper;
+        }
     }
 
     private void ShowFromTray()
@@ -401,7 +487,7 @@ public sealed class HomeWindow : Form
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { refresh.Dispose(); tray.Dispose(); qr?.Dispose(); brain?.Dispose(); }
+        if (disposing) { refresh.Dispose(); tray.Dispose(); qr?.Dispose(); brain?.Dispose(); phoneMenu.Dispose(); }
         base.Dispose(disposing);
     }
 
@@ -590,11 +676,11 @@ public sealed class HomeWindow : Form
             var start = DateTimeOffset.UtcNow;
             var offer = new PairingOffer(1, new[] { "192.168.1.20" }, 47822, new string('A', 64), "123456", start.AddMinutes(5));
             var phone = new PairedDevice("d1", "iPhone", "x", start.AddDays(-1));
-            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, string? task = null, bool buddy = true)
+            void Draw(string name, IReadOnlyList<PairedDevice> paired, FocusSession now, bool pairing, string? task = null, bool buddy = true, (bool, bool, DateTimeOffset?) pause = default)
             {
                 var state = Path.Combine(dir, name + "-state");
                 Directory.CreateDirectory(state);
-                using var form = new HomeWindow(() => offer, () => paired, () => now, state, () => task, () => buddy);
+                using var form = new HomeWindow(() => offer, () => paired, () => now, state, () => task, () => buddy, null, null, () => pause);
                 form.tray.Visible = false;
                 form.ShowInTaskbar = false;
                 form.StartPosition = FormStartPosition.Manual;
@@ -612,6 +698,9 @@ public sealed class HomeWindow : Form
             Draw("home-pairing", Array.Empty<PairedDevice>(), idle, true);
             Draw("home-idle", new[] { phone }, idle, false);
             Draw("home-session", new[] { phone }, new FocusSession("s", "active", 2700, start.AddMinutes(-20), start.AddMinutes(24).AddSeconds(18)), false, "Studying · library desk");
+            var running = new FocusSession("s", "active", 2700, start.AddMinutes(-20), start.AddMinutes(24).AddSeconds(18));
+            Draw("home-canpause", new[] { phone }, running, false, "Studying", true, (true, true, null));
+            Draw("home-break", new[] { phone }, running, false, "Studying", true, (true, false, start.AddMinutes(4).AddSeconds(12)));
             Draw("home-buddyoff", new[] { phone }, idle, false, null, false);
             Draw("home-locked", new[] { phone }, new FocusSession("s", "active", 2700, start, start.AddMinutes(45)), false);
         });
