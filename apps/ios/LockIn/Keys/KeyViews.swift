@@ -153,12 +153,8 @@ struct KeysSheet: View {
     private func rows(_ people: [KeyPerson], empty: String, role: PairView.Role, remove: @escaping (String) -> Void) -> some View {
         if people.isEmpty {
             row(mark: Image(systemName: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(PInk.soft),
-                dashed: true, title: "Nobody yet", detail: empty) {
-                Button("Invite") { startPairing(role) }
-                    .font(.system(size: 19))
-                    .foregroundStyle(PInk.ink)
-                    .underline()
-                    .frame(minWidth: 44, minHeight: 44)
+                dashed: true, title: empty, detail: "", titleColor: PInk.soft) {
+                EmptyView()
             }
         }
         ForEach(people) { person in
@@ -172,7 +168,7 @@ struct KeysSheet: View {
         }
     }
 
-    private func row<Mark: View, Action: View>(mark: Mark, dashed: Bool, title: String, detail: String,
+    private func row<Mark: View, Action: View>(mark: Mark, dashed: Bool, title: String, detail: String, titleColor: Color = PInk.ink,
                                                @ViewBuilder action: () -> Action) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 22) {
@@ -184,8 +180,8 @@ struct KeysSheet: View {
                 }
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.system(size: 22, weight: .semibold)).foregroundStyle(PInk.ink)
-                    Text(detail).font(.system(size: 17)).foregroundStyle(PInk.soft)
+                    Text(title).font(.system(size: 22, weight: detail.isEmpty ? .regular : .semibold)).foregroundStyle(titleColor)
+                    if !detail.isEmpty { Text(detail).font(.system(size: 17)).foregroundStyle(PInk.soft) }
                 }
                 Spacer(minLength: 8)
                 action()
