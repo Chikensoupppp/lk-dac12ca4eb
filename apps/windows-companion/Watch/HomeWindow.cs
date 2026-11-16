@@ -8,8 +8,7 @@ namespace LockIn.Companion.Watch;
 
 /// <summary>
 /// The PC app's one window. A calm card: the brain in a ring (the ring is the session's time left), one
-/// line of state under it, a row for the paired iPhone and a footer (start with Windows, saved for later,
-/// quit). Pairing shows the QR code in place of the brain. Closing it keeps Nogbox running in the tray.
+/// line of state under it, a row for the paired iPhone and a footer (start with Windows, quit). Pairing shows the QR code in place of the brain. Closing it keeps Nogbox running in the tray.
 /// Warm paper, ink navy ring, an amber edge on the one main button.
 /// </summary>
 public sealed class HomeWindow : Form
@@ -41,7 +40,6 @@ public sealed class HomeWindow : Form
     private readonly PrimaryButton pairButton = new("Pair a phone");
     private readonly QuietButton rowButton = new("Pair another");
     private readonly Toggle startup = new();
-    private readonly LinkLabel later = FooterLink("Saved for later");
     private readonly LinkLabel quit = FooterLink("Quit");
     private readonly NotifyIcon tray = new();
     private readonly System.Windows.Forms.Timer refresh = new() { Interval = 1000 };
@@ -103,10 +101,7 @@ public sealed class HomeWindow : Form
         Controls.Add(startup);
 
         quit.Location = new Point(ClientSize.Width - Px(24) - quit.PreferredWidth, footerTop + (Px(FooterH) - quit.PreferredHeight) / 2);
-        later.Location = new Point(quit.Left - Px(22) - later.PreferredWidth, quit.Top);
-        later.LinkClicked += (_, _) => new LaterWindow(new LaterStore(this.stateDir)).Show();
         quit.LinkClicked += (_, _) => Quit();
-        Controls.Add(later);
         Controls.Add(quit);
 
         // Tray: closing the window keeps Nogbox working.
