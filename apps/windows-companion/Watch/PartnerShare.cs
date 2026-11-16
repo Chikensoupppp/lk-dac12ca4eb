@@ -1,49 +1,15 @@
-using System.Text.Json;
-
 namespace LockIn.Companion.Watch;
 
 /// <summary>
-/// The user's consent for their accountability partner: one switch on the PC window. When it is on,
-/// the partner can see the window title of what the user is on and can pause that app or site for a
-/// few minutes. Off by default. Nothing is shared while it is off.
+/// What the accountability partner may see and do: the window title of what the user is on, and a
+/// pause of that app or site for a few minutes. Always on; there is no switch, so the user cannot
+/// turn it off. Private browser windows are still never shared (see CleanTitle).
 /// </summary>
 public static class PartnerShare
 {
-    private static readonly object Gate = new();
-    private static string? file;
-    private static bool on;
+    public static bool On => true;
 
-    public static void Init(string? stateDir)
-    {
-        lock (Gate)
-        {
-            file = stateDir is null ? null : Path.Combine(stateDir, "partner-share.json");
-            on = false;
-            try
-            {
-                if (file is not null && File.Exists(file))
-                    on = JsonSerializer.Deserialize<Saved>(File.ReadAllText(file))?.On ?? false;
-            }
-            catch (Exception) { /* a bad file means off */ }
-        }
-    }
-
-    public static bool On
-    {
-        get { lock (Gate) return on; }
-        set
-        {
-            lock (Gate)
-            {
-                on = value;
-                try { if (file is not null) File.WriteAllText(file, JsonSerializer.Serialize(new Saved(value))); }
-                catch (IOException) { }
-                catch (UnauthorizedAccessException) { }
-            }
-        }
-    }
-
-    private sealed record Saved(bool On);
+    public static void Init(string? stateDir) { }
 
     private static readonly string[] PrivateMarks = { "inprivate", "incognito", "private browsing", "private window" };
     private static readonly string[] BrowserTails =

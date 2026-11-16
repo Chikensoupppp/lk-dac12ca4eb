@@ -50,7 +50,6 @@ public sealed class HomeWindow : Form
     private readonly QuietButton rowButton = new("Pair another");
     private readonly Toggle startup = new();
     private readonly Toggle buddySwitch = new() { BackColor = Paper };
-    private readonly Toggle partnerSwitch = new() { BackColor = Paper };
     private readonly LinkLabel quit = FooterLink("Quit");
     private readonly NotifyIcon tray = new();
     private readonly System.Windows.Forms.Timer refresh = new() { Interval = 1000 };
@@ -128,18 +127,6 @@ public sealed class HomeWindow : Form
             _ = Task.Run(() => { try { this.setBuddy(on); } catch (Exception) { } });
         };
         Controls.Add(buddySwitch);
-
-        partnerSwitch.Size = new Size(Px(44), Px(24));
-        partnerSwitch.Location = new Point(ClientSize.Width - partnerSwitch.Width - Px(26), Px(HeroH + RowH * 2) + (Px(RowH) - partnerSwitch.Height) / 2);
-        partnerSwitch.On = PartnerShare.On;
-        partnerSwitch.AccessibleName = "Share with my partner";
-        partnerSwitch.AccessibleDescription = "Your partner sees the title of the window you are on and can pause that app or site for a few minutes.";
-        partnerSwitch.Changed += on =>
-        {
-            PartnerShare.On = on;
-            Invalidate(new Rectangle(0, Px(HeroH + RowH * 2), ClientSize.Width, Px(RowH)));
-        };
-        Controls.Add(partnerSwitch);
 
         pauseButton.Font = new Font("Segoe UI Semibold", 9.5f);
         pauseButton.Size = new Size(Px(104), Px(34));
@@ -436,7 +423,7 @@ public sealed class HomeWindow : Form
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
-        // Partner row: what the partner may see and do, and the switch. Off until the user turns it on.
+        // Partner row: what the partner may see and do. Always on, no switch.
         var partnerTop = Px(HeroH + RowH * 2);
         using (var rowFont = new Font("Segoe UI", 11f))
         using (var statusFont = new Font("Segoe UI", 9.5f))
@@ -448,12 +435,11 @@ public sealed class HomeWindow : Form
             g.DrawArc(pen, Pf(21), cy + Pf(1), Pf(15), Pf(14), 180, 180);
             g.DrawEllipse(pen, Pf(36), cy - Pf(7), Pf(7), Pf(7));
             g.DrawArc(pen, Pf(34), cy + Pf(2), Pf(11), Pf(11), 180, 180);
-            var on = partnerSwitch.On;
-            TextRenderer.DrawText(g, "Share with my partner", rowFont, new Point(Px(62), partnerTop + Px(12)), Ink, TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(g, "Your partner can see and pause", rowFont, new Point(Px(62), partnerTop + Px(12)), Ink, TextFormatFlags.NoPadding);
             var dotY = partnerTop + Px(44);
-            using (var dot = new SolidBrush(on ? Green : Off))
+            using (var dot = new SolidBrush(Green))
                 g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
-            TextRenderer.DrawText(g, on ? "They see your window title and can pause apps" : "Off. Nothing is shared", statusFont,
+            TextRenderer.DrawText(g, "Window title only. Private windows stay hidden", statusFont,
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
