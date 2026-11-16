@@ -1,96 +1,176 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Get Nogbox for PC</title>
+<title>Set up Nogbox on your PC</title>
 <style>
-:root{--bg:#090b0e;--ink:#f3f5f8;--soft:#8e97a3;--ice:#b5dcfc;--ice2:#4c8ee0;--edge:#232932;--ok:#8fe3b0}
-*{box-sizing:border-box}
-html,body{margin:0}
-body{min-height:100vh;display:grid;place-items:center;color:var(--ink);font:17px/1.5 ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
- background:radial-gradient(55% 45% at 50% 22%,#173553 0,#0d1a28 45%,transparent 75%),radial-gradient(40% 30% at 85% 90%,#1d1636aa,transparent 70%),var(--bg)}
-main{width:min(460px,100% - 32px);padding:36px 0 44px;text-align:center}
-.clock{position:relative;width:min(260px,70vw);aspect-ratio:1;margin:0 auto 18px}
-.clock svg{position:absolute;inset:0;width:100%;height:100%}
-.clock img{position:absolute;left:50%;top:50%;width:46%;height:auto;transform:translate(-50%,-48%);filter:drop-shadow(0 8px 14px #0008);animation:bob 5s ease-in-out infinite}
-@keyframes bob{50%{transform:translate(-50%,-52%)}}
-#arc{transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 7px #4c8ee0aa)}
-#glint{transform-origin:100px 100px;animation:spin 9s linear infinite;opacity:.9}
-@keyframes spin{to{transform:rotate(360deg)}}
-h1{font-size:2.1rem;line-height:1.1;margin:0;letter-spacing:-.01em;font-weight:700}
-.sub{margin:.45em 0 1.6em;color:var(--soft);font-size:1rem}
-button{width:100%;min-height:76px;border:0;border-radius:22px;font-family:inherit;font-weight:800;font-size:1.05rem;letter-spacing:.2em;color:#10151b;cursor:pointer;position:relative;overflow:hidden;
- background:linear-gradient(180deg,#f4f8fc 0,#dbe4ee 48%,#aebccc 100%);box-shadow:inset 0 1px 0 #fff,inset 0 -3px 0 #8d9cae,0 18px 40px -14px #4c8ee0cc,0 0 0 1.5px #ffffff22;transition:transform .15s,box-shadow .3s,background .4s}
-button::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,#ffffffaa,transparent);animation:sweep 3.6s ease-in-out infinite}
-@keyframes sweep{60%,100%{left:130%}}
-button:hover{transform:translateY(-1px)}button:active{transform:translateY(1px) scale(.99)}
-button:focus-visible{outline:3px solid var(--ice);outline-offset:4px}
-button.copied{background:linear-gradient(180deg,#c9f5da,var(--ok) 55%,#68c58d);box-shadow:inset 0 1px 0 #fff8,inset 0 -3px 0 #4aa46f,0 18px 40px -14px #4fd08a99}
-button.copied::after{display:none}
-.keys{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 12px;margin-top:0;max-height:0;opacity:0;overflow:hidden;padding:0 8px;transition:max-height .6s,opacity .5s,margin .5s}
-.keys.show{padding:8px;max-height:200px;opacity:1;margin-top:24px}
-.combo{display:flex;align-items:center;gap:6px;padding:8px;border-radius:18px;border:1.5px solid transparent;transition:border-color .3s,background .3s,box-shadow .3s}
-.combo.next{border-color:var(--ice2);background:#4c8ee022;box-shadow:0 0 26px -6px #4c8ee0;animation:nudge 1.6s ease-in-out infinite}
-@keyframes nudge{50%{box-shadow:0 0 34px -2px #4c8ee0}}
-.combo.hit{border-color:#4aa46f;background:#8fe3b01c}
-.combo.hit kbd{border-color:#4aa46f;color:var(--ok)}
-kbd.on{border-color:var(--ok);color:var(--ok);transform:translateY(2px);border-bottom-width:2px}
-.say{margin:18px 0 0;min-height:3.2em;color:var(--ink);font-size:1.05rem}
-.say b{color:var(--ice)}
-kbd{display:inline-grid;place-items:center;min-width:3em;height:2.9em;padding:0 .9em;border-radius:12px;border:1.5px solid #3b4551;border-bottom-width:4px;background:linear-gradient(#222a33,#171c22);color:var(--ink);font:700 .9rem ui-monospace,Consolas,monospace}
-.plus{color:var(--soft);font-weight:700}.then{color:var(--soft);font-size:1.1rem}
-.phone{display:none;margin:0 auto 18px;padding:14px 16px;border-radius:18px;background:#14181d;border:1.5px solid var(--ice2);text-align:left}
-.phone b{display:block}body.mobile .phone{display:block}
-body.mobile .keys{display:none}
+:root{--bg:#090b0e;--panel:#12161b;--ink:#f3f5f8;--soft:#8e97a3;--ice:#b5dcfc;--ice2:#4c8ee0;--edge:#262c34;--ok:#8fe3b0;--sun:#ffb511}
+*{box-sizing:border-box}html,body{margin:0}
+body{min-height:100vh;color:var(--ink);font:17px/1.5 ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
+ background:radial-gradient(55% 40% at 50% 0,#173553 0,#0d1a28 45%,transparent 75%),radial-gradient(40% 30% at 90% 95%,#1d1636aa,transparent 70%),var(--bg)}
+main{width:min(1000px,100% - 32px);margin:0 auto;padding:28px 0 56px}
+header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.mini{position:relative;width:84px;height:84px;flex:none}.mini svg{width:100%;height:100%}
+.mini img{position:absolute;left:50%;top:50%;width:46%;transform:translate(-50%,-50%)}
+#parc{transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 5px #4c8ee0aa)}
+h1{font-size:1.7rem;line-height:1.1;margin:0}header p{margin:.25em 0 0;color:var(--soft);font-size:.95rem}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+nav button{all:unset;cursor:pointer;padding:10px 12px;border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);display:flex;gap:10px;align-items:center;font-size:.9rem;color:var(--soft);transition:.3s}
+nav button i{font-style:normal;flex:none;width:26px;height:26px;border-radius:50%;background:var(--edge);display:grid;place-items:center;font-weight:800;font-size:.8rem}
+nav button.cur{border-color:var(--ice2);color:var(--ink)}nav button.cur i{background:var(--ice);color:#0b0d10}
+nav button.ok i{background:var(--ok);color:#0b0d10}nav button:focus-visible{outline:3px solid var(--ice)}
+.panel{display:none;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:26px;align-items:start}
+.panel.on{display:grid;animation:in .45s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.kick{color:var(--ice);letter-spacing:.2em;font-size:.75rem;font-weight:800}
+h2{font-size:2.1rem;line-height:1.1;margin:.2em 0 .5em}
+.opt{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:99px;border:1.5px solid var(--edge);color:var(--soft);font-size:.72rem;letter-spacing:.1em;vertical-align:middle}
+ol.todo{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+.todo li{display:flex;gap:12px;align-items:flex-start;padding:13px 15px;border-radius:16px;border:1.5px solid var(--edge);background:var(--panel);opacity:.5;cursor:pointer;transition:.35s}
+.todo li.cur{opacity:1;border-color:var(--ice2);box-shadow:0 0 28px -10px #4c8ee0}
+.todo li.done{opacity:.8;border-color:#2c6b47}
+.todo li i{font-style:normal;flex:none;width:28px;height:28px;border-radius:50%;background:var(--edge);display:grid;place-items:center;font-weight:800;font-size:.85rem;margin-top:1px}
+.todo li.cur i{background:var(--ice);color:#0b0d10}.todo li.done i{background:var(--ok);color:#0b0d10}
+.todo b{color:var(--ice)}
+kbd{display:inline-block;min-width:2em;padding:0 .5em;border-radius:7px;border:1.5px solid #3b4551;border-bottom-width:3px;background:#1b2027;font:700 .8rem/1.7 ui-monospace,Consolas,monospace;text-align:center}
+.stuck{padding:12px 15px;border-radius:14px;background:#1a1426;border:1.5px solid #3a2d58;color:#cfc6e6;font-size:.92rem}.stuck b{color:#fff}
+.go{display:flex;gap:10px;margin-top:16px}
+.go button{flex:1;min-height:54px;border-radius:16px;border:1.5px solid var(--edge);background:transparent;color:var(--ink);font:700 .95rem inherit;font-family:inherit;cursor:pointer;letter-spacing:.06em}
+.go button.main{border:0;color:#10151b;background:linear-gradient(#f4f8fc,#aebccc);box-shadow:inset 0 1px 0 #fff,inset 0 -3px 0 #8d9cae,0 14px 30px -14px #4c8ee0cc}
+.go button.main:disabled{opacity:.4;cursor:default}.go button:focus-visible{outline:3px solid var(--ice);outline-offset:3px}
+.get{width:100%;min-height:68px;border:0;border-radius:20px;margin:0 0 14px;font-family:inherit;font-weight:800;font-size:1rem;letter-spacing:.18em;color:#10151b;cursor:pointer;position:relative;overflow:hidden;
+ background:linear-gradient(#f4f8fc,#dbe4ee 48%,#aebccc);box-shadow:inset 0 1px 0 #fff,inset 0 -3px 0 #8d9cae,0 16px 36px -14px #4c8ee0cc;transition:.3s}
+.get.copied{background:linear-gradient(#c9f5da,var(--ok) 55%,#68c58d);box-shadow:inset 0 1px 0 #fff8,inset 0 -3px 0 #4aa46f,0 16px 36px -14px #4fd08a99}
+.get::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,#ffffffaa,transparent);animation:sw 3.6s ease-in-out infinite}.get.copied::after{display:none}
+@keyframes sw{60%,100%{left:130%}}
+/* mocks */
+.mock{position:relative;padding-top:10px;min-height:420px;display:grid;place-items:center}
+.win{border-radius:14px;background:#1b1f25;border:1.5px solid #2f3640;box-shadow:0 30px 60px -22px #000c;overflow:hidden;width:100%}
+.bar{height:32px;background:#242a32;display:flex;align-items:center;gap:7px;padding:0 12px;font-size:.78rem;color:var(--soft)}.bar b{width:10px;height:10px;border-radius:50%;background:#3a424d}
+.paper{background:#e7e8e3;color:#1b1b1b}.paper .bar{background:#d6d8d1;color:#555}.paper .bar b{background:#aaa}
+.card{background:#f3f4f0;border-radius:14px;padding:12px 14px}
+.blue{display:inline-block;padding:10px 16px;border-radius:12px;background:#3255a4;color:#fff;font-weight:800;font-size:.8rem;letter-spacing:.08em;box-shadow:4px 4px 0 var(--sun)}
+.hl{animation:hl 1.4s ease-in-out infinite;outline:3px solid #4c8ee0;outline-offset:3px;border-radius:12px}
+@keyframes hl{50%{outline-color:#b5dcfc;box-shadow:0 0 24px #4c8ee088}}
+.tog{display:inline-block;width:42px;height:23px;border-radius:12px;background:#9aa0a6;position:relative;vertical-align:middle;transition:.3s}
+.tog::after{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.3s}.tog.on{background:#1a73e8}.tog.on::after{left:22px}
+.phone{position:relative;width:230px;height:440px;border-radius:36px;border:7px solid #2a2f37;background:#0b0e12;box-shadow:0 30px 60px -22px #000c;overflow:hidden;flex:none}
+.phone .n{position:absolute;top:8px;left:50%;width:76px;height:20px;margin-left:-38px;border-radius:12px;background:#000}
+.row2{display:flex;gap:18px;align-items:center;justify-content:center;width:100%}
+.finish{display:none;text-align:center;padding:30px 10px}.finish.on{display:block}.finish h2{font-size:2.4rem}
+@media (max-width:820px){.panel.on{grid-template-columns:1fr}nav button span{display:none}nav{grid-template-columns:repeat(4,1fr)}.mock{min-height:0}h2{font-size:1.8rem}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.cmd{position:absolute!important;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0}
-@media (max-width:480px){.then{display:none}}</style></head><body><main>
-<div class="clock" aria-hidden="true">
-<svg viewBox="0 0 200 200"><defs>
-<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b5dcfc"/><stop offset="1" stop-color="#4c8ee0"/></linearGradient>
-<radialGradient id="f" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#1a212a"/><stop offset="1" stop-color="#0b0e12"/></radialGradient>
-<linearGradient id="bz" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39414c"/><stop offset=".5" stop-color="#12161b"/><stop offset="1" stop-color="#2c333c"/></linearGradient></defs>
-<circle cx="100" cy="100" r="97" fill="url(#bz)"/><circle cx="100" cy="100" r="92" fill="url(#f)"/>
-<g id="ticks" stroke="#3a434e" stroke-width="1.2" stroke-linecap="round"></g>
-<circle cx="100" cy="100" r="68" fill="none" stroke="#1c232b" stroke-width="10"/>
-<circle id="arc" cx="100" cy="100" r="68" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" transform="rotate(-90 100 100)" stroke-dasharray="427.3" stroke-dashoffset="330"/>
-<circle id="glint" cx="100" cy="32" r="3" fill="#fff"/></svg>
-<img src="brain.png" alt="" width="120" height="100"></div>
-<div class="phone" id="phone"><b>Open this page on your PC.</b>Send yourself the link, then press the button there.</div>
-<h1>Nogbox for PC</h1>
-<p class="sub">One button. No Windows warning.</p>
-<button id="b">GET NOGBOX</button>
-<div class="keys" id="keys" aria-live="polite">
- <div class="combo" id="c1"><kbd data-k="meta">Win</kbd><span class="plus">+</span><kbd data-k="r">R</kbd></div><span class="then">›</span>
- <div class="combo" id="c2"><kbd data-k="control">Ctrl</kbd><span class="plus">+</span><kbd data-k="v">V</kbd></div><span class="then">›</span>
- <div class="combo" id="c3"><kbd data-k="enter">Enter</kbd></div>
-</div>
-<p class="say" id="say" aria-live="polite"></p>
+.cmd{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0}
+</style></head><body><main>
+<header><div class="mini" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#12161b" stroke="#2b323b" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#1c232b" stroke-width="6"/><circle id="parc" cx="50" cy="50" r="35" fill="none" stroke="#6fb0f0" stroke-width="6" stroke-linecap="round" stroke-dasharray="219.9" stroke-dashoffset="219.9" transform="rotate(-90 50 50)"/></svg><img src="brain.png" alt="" width="40" height="33"></div>
+<div><h1>Set up Nogbox on your PC</h1><p>4 short steps. No Windows warning. About 5 minutes.</p></div></header>
+<nav id="nav" aria-label="Steps"></nav>
+
+<!-- 1 -->
+<section class="panel" id="p0">
+ <div><div class="kick">STEP 1 OF 4 · ON YOUR PC</div><h2>Install Nogbox</h2>
+  <button class="get" id="get">GET NOGBOX</button>
+  <ol class="todo"><li><i>1</i><span>Press <b>GET NOGBOX</b> above. It copies the install command for you.</span></li>
+   <li><i>2</i><span>On your keyboard, press <kbd>Win</kbd> + <kbd>R</kbd>. A small box called <b>Run</b> opens.</span></li>
+   <li><i>3</i><span>Press <kbd>Ctrl</kbd> + <kbd>V</kbd>, then <kbd>Enter</kbd>. Wait while it downloads. A Nogbox window opens.</span></li></ol>
+  <div class="stuck"><b>Stuck?</b> The Run box only opens with the <kbd>Win</kbd> key (the Windows logo key, bottom left of your keyboard). No Run box? Press Start, type <b>Run</b>, press Enter.</div>
+  <div class="go"><button data-back disabled>BACK</button><button class="main" data-next>NEXT STEP</button></div></div>
+ <div class="mock"><div class="win" style="max-width:430px;background:#2a2f37"><div class="bar" style="background:#323843">Run</div>
+  <div style="padding:20px"><div style="color:var(--soft);font-size:.9rem">Type the name of a program, folder, document, or Internet resource.</div>
+  <div id="mrun" style="margin-top:14px;padding:12px;background:#12161b;border:1.5px solid #3b4551;border-radius:6px;color:var(--ice);font:.8rem/1.4 Consolas,monospace;min-height:70px">Open: <span id="mtxt" style="color:#555">(empty)</span></div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><kbd style="padding:0 18px;line-height:2.2" id="menter">OK</kbd><kbd style="padding:0 18px;line-height:2.2;color:#777">Cancel</kbd></div></div></div></div>
+</section>
+
+<!-- 2 -->
+<section class="panel" id="p1">
+ <div><div class="kick">STEP 2 OF 4 · PC AND PHONE</div><h2>Pair your phone</h2>
+  <ol class="todo"><li data-hl="m2btn"><i>1</i><span>In the Nogbox window on your PC, press <b>PAIR MY PHONE</b>. A square code appears.</span></li>
+   <li data-hl="m2qr"><i>2</i><span>Open the <b>Camera</b> app on your iPhone. Point it at the square code.</span></li>
+   <li data-hl="m2ban"><i>3</i><span>Tap the <b>Nogbox</b> banner that pops up on your phone. Nogbox opens and says it is paired.</span></li></ol>
+  <div class="stuck"><b>Stuck?</b> Your phone and PC must be on the <b>same Wi-Fi</b>. The code runs out after a few minutes. Press <b>NEW CODE</b> to get another.</div>
+  <div class="go"><button data-back>BACK</button><button class="main" data-next>NEXT STEP</button></div></div>
+ <div class="mock"><div class="row2">
+  <div class="win paper" style="max-width:300px"><div class="bar"><b></b><b></b>Nogbox</div><div style="padding:14px"><div style="font-size:1.4rem;font-weight:900">Nogbox</div><div style="color:#2e7d4f;font-weight:700;font-size:.8rem;margin-bottom:10px">● Running on this PC</div>
+   <div class="card"><div style="font:700 .65rem Consolas;color:#555;margin-bottom:4px">PHONE</div><div style="font-size:.85rem;margin-bottom:8px" id="m2t">No phone paired yet.</div>
+   <canvas id="qr" width="120" height="120" style="display:none;margin:0 auto 8px"></canvas><span class="blue" id="m2btn">PAIR MY PHONE</span></div></div></div>
+  <div class="phone"><div class="n"></div><div style="position:absolute;inset:0;background:linear-gradient(#1b2a1b,#0f1a12)"><div id="m2qr" style="position:absolute;left:38px;top:150px;width:140px;height:140px;border:3px solid #ffd60a;border-radius:16px"></div>
+   <div id="m2ban" style="position:absolute;left:12px;right:12px;top:46px;padding:11px;border-radius:15px;background:#2b2f36ee;font-size:.8rem"><b>Nogbox</b><br><span style="color:#aab">Open in “Nogbox”</span></div></div></div></div></div>
+</section>
+
+<!-- 3 -->
+<section class="panel" id="p2">
+ <div><div class="kick">STEP 3 OF 4 · IN YOUR BROWSER</div><h2>Connect your browser <span class="opt">OPTIONAL</span></h2>
+  <p style="margin:0 0 14px;color:var(--soft)">This lets your buddy see when scrolling takes over. You can skip it and do it later.</p>
+  <ol class="todo"><li data-hl="m3conn"><i>1</i><span>In the Nogbox window, press <b>CONNECT BROWSERS</b>. Chrome opens its extensions page.</span></li>
+   <li data-hl="m3dev"><i>2</i><span>Turn on <b>Developer mode</b>. It is the switch at the top right.</span></li>
+   <li data-hl="m3lu"><i>3</i><span>Press <b>Load unpacked</b>.</span></li>
+   <li data-hl="m3dlg"><i>4</i><span>Click the folder box and press <kbd>Ctrl</kbd> + <kbd>V</kbd>. Nogbox already copied the folder for you. Then press <b>Select Folder</b>.</span></li>
+   <li data-hl="m3inc"><i>5</i><span>Find the <b>Nogbox buddy</b> card. Press <b>Details</b>, then turn on <b>Allow in Incognito</b>.</span></li></ol>
+  <div class="stuck"><b>Stuck?</b> No Developer mode switch? You are on the wrong page. The address must say <b>chrome://extensions</b> (or <b>edge://extensions</b> in Edge).</div>
+  <div class="go"><button data-back>BACK</button><button class="main" data-next>NEXT STEP</button></div></div>
+ <div class="mock"><div class="win" style="background:#fff;color:#202124;position:relative;min-height:400px"><div class="bar" style="background:#dfe1e5;color:#555"><b style="background:#aaa"></b><b style="background:#aaa"></b>&nbsp;chrome://extensions</div>
+  <div style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:1.2rem;font-weight:600">Extensions <span style="font-size:.78rem;font-weight:400" id="m3dev">Developer mode &nbsp;<span class="tog" id="tdev"></span></span></div>
+   <div style="margin:14px 0;display:flex;gap:8px"><span id="m3lu" style="padding:8px 13px;border:1.5px solid #dadce0;border-radius:18px;font-size:.8rem;color:#1a73e8;font-weight:600">Load unpacked</span><span style="padding:8px 13px;border:1.5px solid #dadce0;border-radius:18px;font-size:.8rem;color:#1a73e8">Pack extension</span></div>
+   <div id="m3dlg" style="padding:14px;border:1.5px solid #c9ccd1;border-radius:12px;box-shadow:0 14px 34px #0004;margin-bottom:12px"><div style="font-weight:600;font-size:.85rem;margin-bottom:8px">Select the extension directory</div><div style="padding:8px;border:1.5px solid #1a73e8;border-radius:6px;font:.72rem Consolas;color:#333;word-break:break-all">…\AppData\Local\Programs\Nogbox\extension</div><div style="text-align:right;margin-top:10px"><span style="padding:7px 14px;background:#1a73e8;color:#fff;border-radius:18px;font-size:.78rem">Select Folder</span></div></div>
+   <div style="padding:13px;border:1.5px solid #dadce0;border-radius:12px;max-width:290px"><div style="font-weight:600">Nogbox buddy</div><div style="font-size:.74rem;color:#5f6368;margin:3px 0 8px">Lets the buddy see when scrolling takes over.</div><div style="font-size:.78rem" id="m3inc">Allow in Incognito &nbsp;<span class="tog" id="tinc"></span></div></div></div>
+  </div><div id="m3conn" class="win paper" style="position:absolute;right:-12px;bottom:-26px;width:190px;transform:rotate(-2deg)"><div class="bar"><b></b><b></b>Nogbox</div><div style="padding:10px 12px"><span class="blue" style="font-size:.66rem;padding:8px 10px">CONNECT BROWSERS</span></div></div></div>
+</section>
+
+<!-- 4 -->
+<section class="panel" id="p3">
+ <div><div class="kick">STEP 4 OF 4 · ON YOUR PHONE</div><h2>Start focusing</h2>
+  <ol class="todo"><li data-hl="m4lock"><i>1</i><span>Open Nogbox on your iPhone. Pick your minutes. <b>Hold</b> the <b>LOCK IN</b> button.</span></li>
+   <li data-hl="m4pc"><i>2</i><span>Look at your PC. The Nogbox window shows the same timer. If you scroll or open a distracting app, your buddy nudges you.</span></li></ol>
+  <div class="stuck"><b>Stuck?</b> The PC window says <b>No session</b>? Check that the phone still says <b>Paired</b>. If not, go back to step 2.</div>
+  <div class="go"><button data-back>BACK</button><button class="main" id="finish">I AM DONE</button></div></div>
+ <div class="mock"><div class="row2"><div class="phone"><div class="n"></div><div style="text-align:center;padding-top:62px"><div style="color:var(--soft);font-size:.7rem;letter-spacing:.2em">FOCUS</div>
+  <svg viewBox="0 0 200 200" width="150" style="margin:10px 0"><circle cx="100" cy="100" r="68" fill="none" stroke="#1c232b" stroke-width="12"/><circle cx="100" cy="100" r="68" fill="none" stroke="#7fc0f5" stroke-width="12" stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="30" transform="rotate(-90 100 100)"/><text x="100" y="112" text-anchor="middle" font-size="36" fill="#f3f5f8" font-weight="600">24:59</text></svg>
+  <span id="m4lock" style="display:inline-block;width:150px;padding:13px 0;border-radius:14px;font-weight:800;letter-spacing:.12em;font-size:.8rem;color:#10151b;background:linear-gradient(#f4f8fc,#aebccc)">HOLD · LOCK IN</span></div></div>
+  <div class="win paper" id="m4pc" style="max-width:290px"><div class="bar"><b></b><b></b>Nogbox</div><div style="padding:14px"><div style="font-size:1.3rem;font-weight:900">Nogbox</div><div class="card" style="margin-top:10px"><div style="font:700 .65rem Consolas;color:#555">RIGHT NOW</div><div style="font-size:1.1rem;font-weight:700;margin-top:4px">Focusing · 24:59 left</div><div style="font-size:.78rem;color:#555;margin-top:2px">Distracting apps get a nudge from the buddy.</div></div></div></div></div></div>
+</section>
+
+<section class="finish" id="fin"><h2>All set.</h2><p style="color:var(--soft);font-size:1.15rem">Nogbox is on your PC and paired with your phone.<br>Close this page. Nogbox keeps working in your tray.</p></section>
 <div class="cmd" id="c">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Chikensoupppp/lk-dac12ca4eb/ios/native-clock-ci/apps/windows-companion/get-nogbox.ps1 | iex"</div>
 </main><script>
-const $=id=>document.getElementById(id);
-const cmd=$('c').textContent.trim();
-for(let i=0;i<60;i++){const a=i/60*2*Math.PI,r1=i%5?82:79,r2=86;const l=document.createElementNS('http://www.w3.org/2000/svg','line');
- l.setAttribute('x1',100+Math.sin(a)*r1);l.setAttribute('y1',100-Math.cos(a)*r1);l.setAttribute('x2',100+Math.sin(a)*r2);l.setAttribute('y2',100-Math.cos(a)*r2);if(!(i%5))l.setAttribute('stroke','#566170');$('ticks').appendChild(l)}
-if(/iPhone|iPad|Android/i.test(navigator.userAgent))document.body.classList.add('mobile');
-let t,stage=0,poll,wasUp=false;
-const say=h=>{$('say').innerHTML=h};
-const combos=[$('c1'),$('c2'),$('c3')];
-function setStage(n){stage=n;combos.forEach((c,i)=>{c.classList.toggle('hit',i<n);c.classList.toggle('next',i===n)})}
+const $=id=>document.getElementById(id),Q=(s,r=document)=>[...r.querySelectorAll(s)];
+const names=['Install','Pair','Browser','Focus'];let cur=0,doneSteps=new Set();
+$('nav').innerHTML=names.map((n,i)=>`<button data-i="${i}"><i>${i+1}</i><span>${n}</span></button>`).join('');
+function paint(){Q('#nav button').forEach((b,i)=>{b.classList.toggle('cur',i===cur);b.classList.toggle('ok',doneSteps.has(i))});
+ Q('.panel').forEach((p,i)=>p.classList.toggle('on',i===cur&&!$('fin').classList.contains('on')));
+ $('parc').style.strokeDashoffset=219.9*(1-doneSteps.size/4);
+ Q('.panel').forEach((p,pi)=>{const li=Q('.todo li',p);let c=li.findIndex(l=>!l.classList.contains('done'));li.forEach((l,i)=>l.classList.toggle('cur',i===c));
+  Q('.hl').forEach(e=>e.classList.remove('hl'));});
+ hlCur();}
+function hlCur(){Q('.hl').forEach(e=>e.classList.remove('hl'));const p=$('p'+cur);const l=Q('.todo li.cur',p)[0];if(l&&l.dataset.hl)$(l.dataset.hl).classList.add('hl')}
+function stepDone(i){doneSteps.add(i);paint()}
+Q('.todo li').forEach(li=>li.onclick=()=>{li.classList.toggle('done');const p=li.closest('.panel'),pi=+p.id.slice(1);const all=Q('.todo li',p).every(l=>l.classList.contains('done'));
+ if(all)doneSteps.add(pi);else doneSteps.delete(pi);
+ // interactive mock bits
+ if(pi===1){const d=Q('.todo li',p).map(l=>l.classList.contains('done'));$('qr').style.display=d[0]?'block':'none';$('m2t').textContent=d[2]?'Paired with your iPhone.':(d[0]?'Point your iPhone Camera at this.':'No phone paired yet.')}
+ if(pi===2){const d=Q('.todo li',p).map(l=>l.classList.contains('done'));$('tdev').classList.toggle('on',d[1]);$('tinc').classList.toggle('on',d[4])}
+ paint()});
+Q('[data-next]').forEach(b=>b.onclick=()=>{doneSteps.add(cur);cur=Math.min(3,cur+1);paint();scrollTo({top:0,behavior:'smooth'})});
+Q('[data-back]').forEach(b=>b.onclick=()=>{cur=Math.max(0,cur-1);paint()});
+Q('#nav button').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;paint()});
+$('finish').onclick=()=>{[0,1,2,3].forEach(i=>doneSteps.add(i));$('fin').classList.add('on');Q('.panel').forEach(p=>p.classList.remove('on'));$('nav').style.display='none';paint()};
+// QR
+(function(){const c=$('qr'),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,120,120);x.fillStyle='#111';let s=7;const r=()=>(s=s*16807%2147483647)/2147483647;
+ for(let i=0;i<25;i++)for(let j=0;j<25;j++)if(r()>.52)x.fillRect(4+i*4.4,4+j*4.4,4.4,4.4);
+ for(const [a,b] of [[0,0],[18,0],[0,18]]){x.fillStyle='#fff';x.fillRect(2+a*4.4,2+b*4.4,35,35);x.fillStyle='#111';x.fillRect(4+a*4.4,4+b*4.4,31,31);x.fillStyle='#fff';x.fillRect(8+a*4.4,8+b*4.4,23,23);x.fillStyle='#111';x.fillRect(13+a*4.4,13+b*4.4,13,13)}})();
+// step 1 live logic
+const cmd=$('c').textContent.trim();let stage=0,poll,wasUp=false;
+const li0=Q('#p0 .todo li');
+function mark(n){li0.forEach((l,i)=>l.classList.toggle('done',i<n));if(n>=3)doneSteps.add(0);paint()}
 function ping(){return fetch('http://127.0.0.1:47821/health',{mode:'no-cors',cache:'no-store'}).then(()=>true,()=>false)}
-function done(){clearInterval(poll);setStage(3);$('arc').style.strokeDashoffset='0';$('b').textContent='NOGBOX IS RUNNING';$('b').classList.add('copied');clearTimeout(t);say('<b>Done.</b> Open Nogbox on your iPhone and pair it with the code in the new window.')}
-function runOpened(){if(stage>=1)return;setStage(1);say('Run box is open. Press <b>Ctrl + V</b>, then <b>Enter</b>.');
- clearInterval(poll);poll=setInterval(async()=>{if(!wasUp&&await ping())done()},1500)}
-$('b').onclick=async()=>{
- try{await navigator.clipboard.writeText(cmd)}catch(e){const r=document.createRange();r.selectNodeContents($('c'));getSelection().removeAllRanges();getSelection().addRange(r);document.execCommand('copy')}
- wasUp=false;ping().then(u=>{wasUp=u});
- $('b').textContent='COPIED';$('b').classList.add('copied');$('arc').style.strokeDashoffset='140';$('keys').classList.add('show');
- setStage(0);say('Now press <b>Win + R</b>.');
- clearTimeout(t);t=setTimeout(()=>{if(stage<3){$('b').textContent='GET NOGBOX AGAIN';$('b').classList.remove('copied')}},7000);
-};
-addEventListener('keydown',e=>{if(!$('keys').classList.contains('show'))return;
- const k=e.key.toLowerCase();const el=document.querySelector('kbd[data-k="'+k+'"]');if(el)el.classList.add('on');
- if(k==='r'&&e.metaKey&&stage===0)runOpened();
-});
-addEventListener('keyup',e=>{const el=document.querySelector('kbd[data-k="'+e.key.toLowerCase()+'"]');if(el)el.classList.remove('on')});
-addEventListener('blur',()=>{if($('keys').classList.contains('show')&&stage===0)runOpened()});
-addEventListener('focus',()=>{if(stage===1)say('Back? If a Nogbox window opened, you are done. If not, press <b>Ctrl + V</b>, then <b>Enter</b> in the Run box.')});
+function installed(){clearInterval(poll);mark(3);stage=3;$('get').textContent='NOGBOX IS RUNNING';$('get').classList.add('copied');$('mtxt').textContent='Opening Nogbox…'}
+function runOpened(){if(stage>=1)return;stage=1;mark(2);$('mtxt').textContent='';$('mtxt').style.color='var(--ice)';
+ clearInterval(poll);poll=setInterval(async()=>{if(!wasUp&&await ping())installed()},1500)}
+$('get').onclick=async()=>{try{await navigator.clipboard.writeText(cmd)}catch(e){const r=document.createRange();r.selectNodeContents($('c'));getSelection().removeAllRanges();getSelection().addRange(r);document.execCommand('copy')}
+ wasUp=false;ping().then(u=>{wasUp=u});stage=0;$('get').textContent='COPIED';$('get').classList.add('copied');mark(1);$('mtxt').textContent='(press Ctrl + V)';
+ setTimeout(()=>{if(stage<3){$('get').textContent='GET NOGBOX AGAIN';$('get').classList.remove('copied')}},7000)};
+addEventListener('keydown',e=>{if(cur!==0||!li0[0].classList.contains('done'))return;if(e.key.toLowerCase()==='r'&&e.metaKey)runOpened()});
+addEventListener('blur',()=>{if(cur===0&&li0[0].classList.contains('done')&&stage===0)runOpened()});
+addEventListener('focus',()=>{if(stage===1)$('mtxt').textContent='…did the Nogbox window open?'});
+// show the pasted command on the mock after step 3 hint
+li0[2].addEventListener('click',()=>{$('mtxt').textContent='powershell -NoProfile … | iex';$('mtxt').style.color='var(--ice)'});
+if(/iPhone|iPad|Android/i.test(navigator.userAgent)){const n=document.createElement('div');n.className='stuck';n.style.cssText='margin-bottom:16px;border-color:var(--ice2);background:#14181d;color:var(--ink)';n.innerHTML='<b>You are on a phone.</b> Open this page on your PC to install. You can read the steps here first.';document.querySelector('header').after(n);const g=$('get');g.textContent='COPY LINK FOR MY PC';g.onclick=async()=>{try{await navigator.clipboard.writeText(location.href)}catch(e){}g.textContent='LINK COPIED';g.classList.add('copied')}}
+paint();
 </script></body></html>
