@@ -57,7 +57,7 @@ if (args.Length == 0 && Environment.GetEnvironmentVariable("LOCKIN_STATE_DIR") i
 
 // One Nogbox per PC: a second launch (say, a double-click while it runs in the tray) just leaves.
 using var single = new Mutex(true, "Nogbox.PC.Companion." + Environment.UserName, out var firstInstance);
-if (!firstInstance) return;
+if (!firstInstance && !args.Any(a => a.StartsWith("--draw"))) return;
 
 var stateStore = new CompanionStateStore(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
