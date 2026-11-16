@@ -42,13 +42,19 @@ private func approved(_ answer: UnlockAnswer, for ask: UnlockAsk, by holder: Key
 
 // MARK: - Accountability partner sheet (from the main screen)
 
-/// The warm paper look of the partner sheet (2026-11-15 design): cream page, near-black ink, one black pill.
+/// Warm paper partner sheet (2026-11-16 design): cream-to-sand page, brown ink, one amber pill.
 private enum PInk {
-    static let page = Color(hex: 0xF4F1EA)
-    static let ink = Color(hex: 0x171513)
-    static let soft = Color(hex: 0x6F6A60)
-    static let line = Color(hex: 0xE4DED3)
-    static let dash = Color(hex: 0xC4BDB0)
+    static let top = Color(hex: 0xFFFAF1)
+    static let bottom = Color(hex: 0xF8EAD5)
+    static let ink = Color(hex: 0x3D2B1A)
+    static let soft = Color(hex: 0x7A6450)
+    static let label = Color(hex: 0x9A7B5A)
+    static let line = Color(hex: 0xEDE0CC)
+    static let border = Color(hex: 0xEAD9BF)
+    static let card = Color(hex: 0xFFFCF6)
+    static let dash = Color(hex: 0xE2CBA8)
+    static let chip = Color(hex: 0xF1E3CC)
+    static let amber = Color(hex: 0xF0C78E)
     static let alarm = Color(hex: 0xB3402E)
 }
 
@@ -65,59 +71,129 @@ struct KeysSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Accountability partner.")
-                        .font(.system(size: 44, weight: .heavy))
-                        .tracking(-1.4)
-                        .foregroundStyle(PInk.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("A friend who can let you out of a lock-in.")
-                        .font(.system(size: 20))
-                        .foregroundStyle(PInk.soft)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 14)
+            GeometryReader { geo in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack {
+                            Spacer()
+                            Button(action: done) {
+                                Text("Done")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(PInk.ink)
+                                    .padding(.horizontal, 20)
+                                    .frame(minHeight: 46)
+                                    .background(Capsule().fill(PInk.card.opacity(0.6)))
+                                    .overlay(Capsule().stroke(PInk.border, lineWidth: 2))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.top, 8)
 
-                    Button { startPairing(.holder) } label: {
-                        Text("PAIR A FRIEND")
-                            .font(.system(size: 18, weight: .medium))
-                            .tracking(2.4)
-                            .foregroundStyle(PInk.page)
-                            .frame(maxWidth: .infinity, minHeight: 64)
-                            .background(Capsule().fill(PInk.ink))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 28)
-                    .accessibilityIdentifier("partner-pair")
+                        Text("Accountability partner.")
+                            .font(.system(size: 44, weight: .heavy))
+                            .tracking(-1.2)
+                            .foregroundStyle(PInk.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 2)
+                            .accessibilityAddTraits(.isHeader)
+                        Text("A friend who can let you out of a lock-in.")
+                            .font(.system(size: 19))
+                            .foregroundStyle(PInk.soft)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 14)
 
-                    Rectangle().fill(PInk.line).frame(height: 1).padding(.top, 28)
-                    rows(keys.holders, empty: "Can let you out", role: .holder, remove: keys.removeHolder)
-                    rows(keys.friends, empty: "You can let them out", role: .friend, remove: keys.removeFriend)
-
-                    if !keys.friends.isEmpty {
-                        Button { helping = true } label: {
-                            Text("LET A FRIEND OUT")
-                                .font(.system(size: 16, weight: .medium))
-                                .tracking(2)
+                        Button { startPairing(.holder) } label: {
+                            Text("PAIR A FRIEND")
+                                .font(.system(size: 17, weight: .medium))
+                                .tracking(2.6)
                                 .foregroundStyle(PInk.ink)
-                                .frame(maxWidth: .infinity, minHeight: 56)
-                                .overlay(Capsule().stroke(PInk.ink, lineWidth: 1.5))
+                                .frame(maxWidth: .infinity, minHeight: 60)
+                                .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(PInk.amber))
+                                .shadow(color: Color(hex: 0xB98A4A).opacity(0.25), radius: 10, y: 6)
                         }
                         .buttonStyle(.plain)
-                        .padding(.top, 24)
-                        ForEach(pending) { p in
-                            PendingAskCard(keys: keys, pending: p) { pending.removeAll { $0.id == p.id } }
-                                .padding(.top, 12)
+                        .padding(.top, 26)
+                        .accessibilityIdentifier("partner-pair")
+
+                        Text("YOUR PARTNER")
+                            .font(.system(size: 13, weight: .semibold))
+                            .tracking(2.6)
+                            .foregroundStyle(PInk.label)
+                            .padding(.top, 30)
+                            .accessibilityAddTraits(.isHeader)
+                        card {
+                            if keys.holders.isEmpty {
+                                personRow(mark: Image(systemName: "plus").font(.system(size: 13, weight: .semibold)).foregroundStyle(PInk.soft),
+                                          dashed: true, title: "Nobody yet", detail: "Pair in person, one tap each") {
+                                    Button { startPairing(.holder) } label: {
+                                        Text("Invite").font(.system(size: 17)).foregroundStyle(PInk.ink).underline()
+                                    }
+                                    .buttonStyle(.plain)
+                                    .frame(minWidth: 44, minHeight: 44)
+                                }
+                            }
+                            ForEach(Array(keys.holders.enumerated()), id: \.element.id) { index, person in
+                                if index > 0 { Rectangle().fill(PInk.line).frame(height: 1) }
+                                personRow(mark: initial(person.name), dashed: false, title: person.name, detail: "Can let you out") {
+                                    removeButton { keys.removeHolder(person.id) }
+                                }
+                            }
                         }
+                        .padding(.top, 12)
+
+                        card {
+                            step(1, bold: "Pair in person", rest: " \u{2014} one tap each")
+                            Rectangle().fill(PInk.line).frame(height: 1)
+                            step(2, bold: "Ask", rest: " from the lock screen")
+                            Rectangle().fill(PInk.line).frame(height: 1)
+                            step(3, bold: "They approve", rest: " \u{2014} you\u{2019}re out")
+                        }
+                        .padding(.top, 22)
+
+                        if !keys.friends.isEmpty {
+                            Text("YOU CAN LET OUT")
+                                .font(.system(size: 13, weight: .semibold))
+                                .tracking(2.6)
+                                .foregroundStyle(PInk.label)
+                                .padding(.top, 30)
+                            card {
+                                ForEach(Array(keys.friends.enumerated()), id: \.element.id) { index, person in
+                                    if index > 0 { Rectangle().fill(PInk.line).frame(height: 1) }
+                                    personRow(mark: initial(person.name), dashed: false, title: person.name, detail: "You can let them out") {
+                                        removeButton { keys.removeFriend(person.id) }
+                                    }
+                                }
+                            }
+                            .padding(.top, 12)
+                            Button { helping = true } label: {
+                                Text("LET A FRIEND OUT")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .tracking(2)
+                                    .foregroundStyle(PInk.ink)
+                                    .frame(maxWidth: .infinity, minHeight: 56)
+                                    .overlay(Capsule().stroke(PInk.ink, lineWidth: 1.5))
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 18)
+                            ForEach(pending) { p in
+                                PendingAskCard(keys: keys, pending: p) { pending.removeAll { $0.id == p.id } }
+                                    .padding(.top, 12)
+                            }
+                        }
+
+                        Spacer(minLength: 40)
+                        Text("One partner at a time. You can unpair without asking them.")
+                            .font(.system(size: 16))
+                            .foregroundStyle(PInk.soft)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 28)
+                    .frame(minHeight: geo.size.height, alignment: .top)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
             }
-            .background(PInk.page.ignoresSafeArea())
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: done) } }
+            .background(LinearGradient(colors: [PInk.top, PInk.bottom], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $pairRole) { role in PairView(keys: keys, role: role) }
             .navigationDestination(isPresented: $helping) { HelpNearbyView(keys: keys) }
             .task { pending = (try? await RemoteKeys.pending(for: keys)) ?? [] }
@@ -149,46 +225,58 @@ struct KeysSheet: View {
         }
     }
 
-    @ViewBuilder
-    private func rows(_ people: [KeyPerson], empty: String, role: PairView.Role, remove: @escaping (String) -> Void) -> some View {
-        if people.isEmpty && role == .holder {
-            row(mark: Image(systemName: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(PInk.soft),
-                dashed: true, title: empty, detail: "", titleColor: PInk.soft) {
-                EmptyView()
-            }
-        }
-        ForEach(people) { person in
-            row(mark: Text(String(person.name.prefix(1)).uppercased()).font(.system(size: 20, weight: .semibold)).foregroundStyle(PInk.ink),
-                dashed: false, title: person.name, detail: empty) {
-                Button("Remove") { remove(person.id) }
-                    .font(.system(size: 17))
-                    .foregroundStyle(PInk.alarm)
-                    .frame(minWidth: 44, minHeight: 44)
-            }
-        }
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(spacing: 0) { content() }
+            .padding(.horizontal, 18)
+            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(PInk.card))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(PInk.border, lineWidth: 1.5))
     }
 
-    private func row<Mark: View, Action: View>(mark: Mark, dashed: Bool, title: String, detail: String, titleColor: Color = PInk.ink,
-                                               @ViewBuilder action: () -> Action) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 22) {
-                ZStack {
-                    Circle()
-                        .strokeBorder(PInk.dash, style: StrokeStyle(lineWidth: 1.2, dash: dashed ? [3, 3] : []))
-                        .frame(width: 58, height: 58)
-                    mark
-                }
-                .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.system(size: 22, weight: detail.isEmpty ? .regular : .semibold)).foregroundStyle(titleColor)
-                    if !detail.isEmpty { Text(detail).font(.system(size: 17)).foregroundStyle(PInk.soft) }
-                }
-                Spacer(minLength: 8)
-                action()
+    private func initial(_ name: String) -> some View {
+        Text(String(name.prefix(1)).uppercased()).font(.system(size: 17, weight: .semibold)).foregroundStyle(PInk.ink)
+    }
+
+    private func removeButton(_ run: @escaping () -> Void) -> some View {
+        Button("Remove", action: run)
+            .font(.system(size: 16))
+            .foregroundStyle(PInk.alarm)
+            .frame(minWidth: 44, minHeight: 44)
+    }
+
+    private func personRow<Mark: View, Action: View>(mark: Mark, dashed: Bool, title: String, detail: String,
+                                                     @ViewBuilder action: () -> Action) -> some View {
+        HStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .fill(dashed ? Color.clear : PInk.chip)
+                    .overlay(Circle().strokeBorder(PInk.dash, style: StrokeStyle(lineWidth: 1.5, dash: dashed ? [3, 3] : [])))
+                    .frame(width: 40, height: 40)
+                mark
             }
-            .padding(.vertical, 20)
-            Rectangle().fill(PInk.line).frame(height: 1)
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.system(size: 22, weight: .semibold)).foregroundStyle(PInk.ink)
+                Text(detail).font(.system(size: 16)).foregroundStyle(PInk.soft)
+            }
+            Spacer(minLength: 8)
+            action()
         }
+        .padding(.vertical, 18)
+    }
+
+    private func step(_ number: Int, bold: String, rest: String) -> some View {
+        HStack(spacing: 18) {
+            Text("\(number)")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(PInk.ink)
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(PInk.chip))
+                .accessibilityHidden(true)
+            (Text(bold).fontWeight(.semibold).foregroundColor(PInk.ink) + Text(rest).foregroundColor(PInk.soft))
+                .font(.system(size: 19))
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 18)
     }
 }
 

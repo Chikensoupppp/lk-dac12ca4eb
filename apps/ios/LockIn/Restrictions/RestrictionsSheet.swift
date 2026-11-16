@@ -29,11 +29,10 @@ struct RestrictionsSheet: View {
     /// Rows stay on screen when switched off, so they can be switched back on.
     @State private var rows: [Shielded] = []
 
-    private var hasAccess: Bool {
-        switch restrictions.status {
-        case .needsAuthorization, .denied, .failed: return false
-        default: return true
-        }
+    /// "Access granted" is the normal state and says nothing new; only problems and shield news show.
+    private var showHeadline: Bool {
+        if case .ready = restrictions.status { return false }
+        return true
     }
 
     private var headline: String {
@@ -86,20 +85,16 @@ struct RestrictionsSheet: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 18)
                             .accessibilityAddTraits(.isHeader)
-                        HStack(spacing: 12) {
-                            if hasAccess {
-                                Image(systemName: "checkmark").font(.system(size: 18, weight: .medium))
-                            }
+                        if showHeadline {
                             Text(headline)
                                 .font(.system(size: 21))
+                                .foregroundStyle(SInk.soft)
+                                .padding(.top, 26)
                                 .accessibilityIdentifier("restrictions-status")
                         }
-                        .foregroundStyle(SInk.soft)
-                        .padding(.top, 26)
-                        .padding(.bottom, 24)
-
-                        Rectangle().fill(SInk.line).frame(height: 1)
-                        if rows.isEmpty { emptyRow }
+                        if !rows.isEmpty {
+                            Rectangle().fill(SInk.line).frame(height: 1).padding(.top, 24)
+                        }
                         ForEach(rows, id: \.self) { item in row(item) }
                     }
                 }
@@ -158,27 +153,6 @@ struct RestrictionsSheet: View {
         case .app(let t): Label(t).labelStyle(.titleAndIcon)
         case .category(let t): Label(t).labelStyle(.titleAndIcon)
         case .site(let t): Label(t).labelStyle(.titleAndIcon)
-        }
-    }
-
-    /// Same empty row as the Accountability partner sheet: dashed circle, plus, one line.
-    private var emptyRow: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 22) {
-                ZStack {
-                    Circle()
-                        .strokeBorder(Color(hex: 0xC4BDB0), style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
-                        .frame(width: 58, height: 58)
-                    Image(systemName: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(SInk.soft)
-                }
-                .accessibilityHidden(true)
-                Text("Nobody selected yet")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(SInk.ink)
-                Spacer(minLength: 8)
-            }
-            .padding(.vertical, 20)
-            Rectangle().fill(SInk.line).frame(height: 1)
         }
     }
 
