@@ -42,6 +42,19 @@ if (args.Contains("--later"))
     ui.Join();
     return;
 }
+if (args.Contains("--uninstall"))
+{
+    Installer.Uninstall(BrowserRegistration.Unregister);
+    System.Windows.Forms.MessageBox.Show("Nogbox was removed from this PC.", "Nogbox");
+    return;
+}
+// A plain double-click on the downloaded file installs it (Start menu, desktop, start with Windows)
+// and opens the installed copy. Test runs set LOCKIN_STATE_DIR or pass flags, and skip this.
+if (args.Length == 0 && Environment.GetEnvironmentVariable("LOCKIN_STATE_DIR") is null
+    && Environment.ProcessPath is { } exePath && !Installer.IsInstalledCopy(exePath)
+    && Installer.InstallAndLaunch(exePath))
+    return;
+
 // One Nogbox per PC: a second launch (say, a double-click while it runs in the tray) just leaves.
 using var single = new Mutex(true, "Nogbox.PC.Companion." + Environment.UserName, out var firstInstance);
 if (!firstInstance) return;

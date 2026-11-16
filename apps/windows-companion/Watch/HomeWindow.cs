@@ -113,6 +113,13 @@ public sealed class HomeWindow : Form
         footer.Controls.Add(later);
         footer.Controls.Add(quit);
         page.Controls.Add(footer);
+        var startup = new CheckBox
+        {
+            Text = "Start Nogbox with Windows", AutoSize = true, ForeColor = Soft, Margin = new Padding(0, 14, 0, 0),
+            Checked = Installer.StartsWithWindows()
+        };
+        startup.CheckedChanged += (_, _) => { try { Installer.SetStartWithWindows(startup.Checked); } catch (Exception) { } };
+        page.Controls.Add(startup);
 
         page.ClientSizeChanged += (_, _) =>
         {
