@@ -339,9 +339,9 @@ public sealed class HomeWindow : Form
         var buddyTop = Px(HeroH + RowH);
         if (brain is not null)
         {
-            var bw = Pf(24);
+            var bw = Pf(34);
             var bh = bw * brain.Height / brain.Width;
-            g.DrawImage(brain, Pf(23), buddyTop + Pf(RowH) / 2 - bh / 2, bw, bh);
+            g.DrawImage(brain, Pf(18), buddyTop + Pf(RowH) / 2 - bh / 2, bw, bh);
         }
         using (var rowFont = new Font("Segoe UI", 11f))
         using (var statusFont = new Font("Segoe UI", 9.5f))
