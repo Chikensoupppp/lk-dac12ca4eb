@@ -102,7 +102,11 @@ public sealed class HomeWindow : Form
         buddySwitch.Location = new Point(ClientSize.Width - buddySwitch.Width - Px(26), Px(HeroH + RowH) + (Px(RowH) - buddySwitch.Height) / 2);
         buddySwitch.On = this.buddyOn();
         buddySwitch.AccessibleName = "Desk buddy";
-        buddySwitch.Changed += on => { try { this.setBuddy(on); } catch (Exception) { } Invalidate(); };
+        buddySwitch.Changed += on =>
+        {
+            Invalidate(new Rectangle(0, Px(HeroH + RowH), Px(300), Px(RowH)));
+            _ = Task.Run(() => { try { this.setBuddy(on); } catch (Exception) { } });
+        };
         Controls.Add(buddySwitch);
 
         var footerTop = Px(HeroH + RowH * Rows);
@@ -110,7 +114,7 @@ public sealed class HomeWindow : Form
         startup.Location = new Point(Px(26), footerTop + (Px(FooterH) - startup.Height) / 2);
         startup.On = Installer.StartsWithWindows();
         startup.AccessibleName = "Start with Windows";
-        startup.Changed += on => { try { Installer.SetStartWithWindows(on); } catch (Exception) { } };
+        startup.Changed += on => _ = Task.Run(() => { try { Installer.SetStartWithWindows(on); } catch (Exception) { } });
         Controls.Add(startup);
 
         quit.Location = new Point(ClientSize.Width - Px(24) - quit.PreferredWidth, footerTop + (Px(FooterH) - quit.PreferredHeight) / 2);
@@ -482,30 +486,69 @@ public sealed class HomeWindow : Form
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); Invalidate(); }
     }
 
-    /// <summary>A pill switch, green when on. A click, Space or Enter flips it.</summary>
+    /// <summary>
+    /// A pill switch, green when on. It flips on mouse down (no wait for the click, and fast taps never count
+    /// as a double-click), then the knob slides over in about a tenth of a second.
+    /// </summary>
     private sealed class Toggle : Control
     {
         private bool on;
+        private float pos; // 0 = off, 1 = on; where the knob is drawn
+        private readonly System.Windows.Forms.Timer slide = new() { Interval = 10 };
+        private DateTime slideStart;
+        private float slideFrom;
         public event Action<bool>? Changed;
 
         public Toggle()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            SetStyle(ControlStyles.StandardDoubleClick, false);
             BackColor = FooterPaper;
             Cursor = Cursors.Hand;
             TabStop = true;
             AccessibleRole = AccessibleRole.CheckButton;
+            slide.Tick += (_, _) =>
+            {
+                var t = (float)Math.Min(1, (DateTime.UtcNow - slideStart).TotalMilliseconds / 120);
+                var eased = 1 - (1 - t) * (1 - t) * (1 - t);
+                var target = on ? 1f : 0f;
+                pos = slideFrom + (target - slideFrom) * eased;
+                if (t >= 1) { pos = target; slide.Stop(); }
+                Invalidate();
+            };
         }
 
+        /// <summary>Sets the state without animation or a Changed event (for loading the saved value).</summary>
         [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
         public bool On
         {
             get => on;
-            set { on = value; AccessibleDescription = on ? "On" : "Off"; Invalidate(); }
+            set { on = value; pos = on ? 1 : 0; slide.Stop(); AccessibleDescription = on ? "On" : "Off"; Invalidate(); }
         }
 
-        private void Flip() { On = !On; Changed?.Invoke(On); }
-        protected override void OnClick(EventArgs e) { base.OnClick(e); Focus(); Flip(); }
+        private void Flip()
+        {
+            on = !on;
+            AccessibleDescription = on ? "On" : "Off";
+            if (SystemInformation.UIEffectsEnabled)
+            {
+                slideFrom = pos;
+                slideStart = DateTime.UtcNow;
+                slide.Start();
+            }
+            else pos = on ? 1 : 0;
+            Invalidate();
+            Changed?.Invoke(on);
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left) return;
+            Focus();
+            Flip();
+        }
+
         protected override void OnKeyDown(KeyEventArgs e) { base.OnKeyDown(e); if (e.KeyCode is Keys.Space or Keys.Enter) Flip(); }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -513,11 +556,13 @@ public sealed class HomeWindow : Form
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(BackColor);
+            var fillColor = Color.FromArgb(
+                (int)(Off.R + (Green.R - Off.R) * pos), (int)(Off.G + (Green.G - Off.G) * pos), (int)(Off.B + (Green.B - Off.B) * pos));
             using (var pill = Rounded(new Rectangle(0, 0, Width - 1, Height - 1), (Height - 1) / 2))
-            using (var fill = new SolidBrush(on ? Green : Off))
+            using (var fill = new SolidBrush(fillColor))
                 g.FillPath(fill, pill);
             var d = Height - 6;
-            var x = on ? Width - d - 4 : 3;
+            var x = 3 + (Width - d - 7) * pos;
             using (var knob = new SolidBrush(Color.White))
                 g.FillEllipse(knob, x, 3, d, d);
             if (Focused && ShowFocusCues)
@@ -528,6 +573,12 @@ public sealed class HomeWindow : Form
 
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) slide.Dispose();
+            base.Dispose(disposing);
+        }
     }
 
     /// <summary>Test helper: draws the window in each state to PNGs.</summary>
