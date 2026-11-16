@@ -21,6 +21,31 @@ public static class Installer
     private static string DesktopLink =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), AppName + ".lnk");
 
+    public static string ExtensionDir => Path.Combine(InstallDir, "extension");
+
+    /// <summary>Writes the browser extension next to the app (always the version built into this exe).</summary>
+    public static string ExtractExtension()
+    {
+        Directory.CreateDirectory(ExtensionDir);
+        var asm = typeof(Installer).Assembly;
+        foreach (var name in new[] { "manifest.json", "background.js", "content.js" })
+        {
+            using var src = asm.GetManifestResourceStream("ext/" + name) ?? throw new InvalidOperationException(name);
+            using var dst = File.Create(Path.Combine(ExtensionDir, name));
+            src.CopyTo(dst);
+        }
+        return ExtensionDir;
+    }
+
+    /// <summary>Opens the extension folder and the browser's extensions page so the user can click Load unpacked.</summary>
+    public static void OpenExtensionHelp()
+    {
+        var dir = ExtractExtension();
+        try { Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true }); } catch (Exception) { }
+        foreach (var (exe, url) in new[] { ("chrome", "chrome://extensions"), ("msedge", "edge://extensions") })
+            try { Process.Start(new ProcessStartInfo(exe, url) { UseShellExecute = true }); break; } catch (Exception) { }
+    }
+
     /// <summary>True when this process is the installed copy.</summary>
     public static bool IsInstalledCopy(string exePath) =>
         string.Equals(Path.GetFullPath(exePath), Path.GetFullPath(InstalledExe), StringComparison.OrdinalIgnoreCase);
@@ -48,6 +73,7 @@ public static class Installer
             }
             Directory.CreateDirectory(InstallDir);
             File.Copy(exePath, InstalledExe, overwrite: true);
+            try { ExtractExtension(); } catch (Exception) { }
             CreateShortcut(StartMenuLink, InstalledExe, "");
             CreateShortcut(DesktopLink, InstalledExe, "");
             SetStartWithWindows(true);

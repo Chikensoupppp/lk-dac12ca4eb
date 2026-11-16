@@ -98,7 +98,12 @@ public sealed class HomeWindow : Form
         var connect = new SecondaryButton("Connect browsers");
         connect.Click += (_, _) =>
         {
-            try { connectBrowsers(); browserLine.Text = "Connected. Turn on the Nogbox extension in your browser."; }
+            try
+            {
+                connectBrowsers();
+                Installer.OpenExtensionHelp();
+                browserLine.Text = "Connected. In the browser: turn on Developer mode, click Load unpacked, pick the folder that just opened, then allow Incognito.";
+            }
             catch (Exception) { browserLine.Text = "Couldn't connect. Try again."; }
         };
         browser.Body.Controls.Add(connect);
