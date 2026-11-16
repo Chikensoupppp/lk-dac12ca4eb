@@ -2,6 +2,18 @@ using LockIn.Companion.Watch;
 
 LaterChecks.Run(Check);
 
+// Plus on the PC: RevenueCat's subscriber JSON decides, never the phone's word.
+var plusNow = new DateTimeOffset(2026, 11, 16, 12, 0, 0, TimeSpan.Zero);
+Check(PlusCheck.IsActive("{\"subscriber\":{\"entitlements\":{\"nogbox_pro\":{\"expires_date\":\"2027-11-16T12:00:00Z\"}}}}", plusNow),
+    "plus: entitlement with a future expiry is active");
+Check(!PlusCheck.IsActive("{\"subscriber\":{\"entitlements\":{\"nogbox_pro\":{\"expires_date\":\"2026-11-01T12:00:00Z\"}}}}", plusNow),
+    "plus: an expired entitlement is not active");
+Check(PlusCheck.IsActive("{\"subscriber\":{\"entitlements\":{\"nogbox_pro\":{\"expires_date\":null}}}}", plusNow),
+    "plus: no expiry (lifetime) is active");
+Check(!PlusCheck.IsActive("{\"subscriber\":{\"entitlements\":{}}}", plusNow), "plus: no entitlement is not active");
+Check(!PlusCheck.IsActive("not json", plusNow), "plus: bad JSON is not active");
+Check(!new PlusCheck(TimeProvider.System, null).HasPlusAsync(null).GetAwaiter().GetResult(), "plus: no user id means no Plus");
+
 var completionStart = new DateTimeOffset(2026, 1, 1, 0, 1, 0, TimeSpan.Zero);
 var cheerUntil = completionStart + CompletionTiming.CheerDuration;
 Check(CompletionTiming.Evaluate(completionStart.AddTicks(-1), completionStart, null) == CompletionTiming.Phase.Running,

@@ -11,6 +11,8 @@ struct PCStartRequest: Encodable {
     let buddy: Bool
     let allow: [String]
     let guardianSeconds: Int?
+    let locked: Bool
+    let rcUserId: String?
 
     init(record: SessionRecord, extras: PCSessionExtras) {
         id = record.id.uuidString
@@ -20,6 +22,8 @@ struct PCStartRequest: Encodable {
         buddy = extras.buddy
         allow = extras.allow
         guardianSeconds = extras.remindAfterMinutes.map { $0 * 60 }
+        locked = extras.locked
+        rcUserId = extras.rcUserId
     }
 }
 

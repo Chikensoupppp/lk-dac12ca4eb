@@ -45,6 +45,9 @@ public static class BuddyWords
     /// <summary>What the buddy says after the user taps "It's for work".</summary>
     public static string Allowed(string? friendly) => $"Got it. I'll leave {friendly ?? "that"} alone.";
 
+    /// <summary>Locked session (Plus): a distraction was closed without asking.</summary>
+    public static string LockedOut(string? friendly) => $"Locked session. {friendly ?? "That"} waits till you're done.";
+
     /// <summary>The scrolling reminder. Gentle, and about the project, not about the site.</summary>
     private static readonly string[] Scrolling =
     {

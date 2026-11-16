@@ -62,6 +62,10 @@ struct PCSessionExtras: Equatable {
     var allow: [String] = []
     /// Minutes of steady Shorts or Reddit scrolling before the buddy gives a gentle reminder (nil: the PC's default).
     var remindAfterMinutes: Int? = nil
+    /// A Locked session (Plus). The PC only acts on it after checking Plus with RevenueCat itself.
+    var locked: Bool = false
+    /// This phone's RevenueCat user id, so the PC can check Plus. Nil when RevenueCat is off.
+    var rcUserId: String? = nil
 
     static let none = PCSessionExtras(task: nil, buddy: false)
 }

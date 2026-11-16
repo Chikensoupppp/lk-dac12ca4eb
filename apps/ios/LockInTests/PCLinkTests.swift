@@ -48,6 +48,15 @@ final class PCLinkTests: XCTestCase {
         XCTAssertEqual(json["buddy"] as? Bool, true)
         XCTAssertEqual(json["allow"] as? [String], ["youtube"])
         XCTAssertEqual(json["guardianSeconds"] as? Int, 300)
+        XCTAssertEqual(json["locked"] as? Bool, false)
+    }
+
+    func testSessionStartPayloadCarriesLockedAndRevenueCatUser() throws {
+        let extras = PCSessionExtras(task: nil, buddy: false, locked: true, rcUserId: "$RCAnonymousID:abc")
+        let data = try JSONEncoder().encode(PCStartRequest(record: session(), extras: extras))
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(json["locked"] as? Bool, true)
+        XCTAssertEqual(json["rcUserId"] as? String, "$RCAnonymousID:abc")
     }
 
     private func session(minutes: Double = 15) -> SessionRecord {

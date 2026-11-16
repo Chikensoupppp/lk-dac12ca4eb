@@ -51,6 +51,9 @@ final class PlusStore: ObservableObject {
 
     deinit { updates?.cancel() }
 
+    /// This phone's RevenueCat user id, sent to the PC so it can check Plus for itself. Nil when off.
+    static var revenueCatUserID: String? { Purchases.isConfigured ? Purchases.shared.appUserID : nil }
+
     /// Turns RevenueCat on when the build has a public key (see project.yml, REVENUECAT_API_KEY).
     static func configureRevenueCat() {
         guard !Purchases.isConfigured,

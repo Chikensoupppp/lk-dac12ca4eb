@@ -59,6 +59,7 @@ builder.Services.AddSingleton(new AllowStore(stateDir));
 builder.Services.AddSingleton(sp => new SessionWatch(sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<AllowStore>(),
     GuardianOptions.Load(stateDir), stateDir));
 builder.Services.AddSingleton(pairing);
+builder.Services.AddSingleton(sp => new PlusCheck(sp.GetRequiredService<TimeProvider>(), stateDir));
 var app = builder.Build();
 
 var pairingWindow = TimeSpan.FromMinutes(5);
@@ -132,7 +133,7 @@ app.MapGet("/pairing/devices", () =>
 app.MapDelete("/pairing/devices/{id}", (string id) =>
     stateStore.RemoveDevice(id) ? Results.NoContent() : Results.NotFound());
 
-app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, SessionWatch watch, TimeProvider time) =>
+app.MapPost("/session/start", async (StartSessionRequest request, SessionStore store, SessionWatch watch, PlusCheck plus, TimeProvider time) =>
 {
     if (request.DurationSeconds is < 60 or > 86400)
         return Results.BadRequest(new { error = "durationSeconds must be between 60 and 86400" });
@@ -141,9 +142,11 @@ app.MapPost("/session/start", (StartSessionRequest request, SessionStore store, 
         return Results.BadRequest(new { error = "id must be 1-64 letters, digits or dashes" });
     var startedAt = request.StartedAt ?? time.GetUtcNow();
 
+    // Locked on the PC is a Plus feature, and the PC asks RevenueCat itself rather than trusting the phone.
+    var locked = request.Locked && await plus.HasPlusAsync(request.RcUserId);
     var outcome = store.TryStart(id, request.DurationSeconds, startedAt, out var session);
     if (outcome is StartOutcome.Started or StartOutcome.Existing)
-        watch.Begin(session.Id, request.Buddy, session.StartedAt ?? time.GetUtcNow(), session.DurationSeconds, request.Task, request.Allow, request.GuardianSeconds);
+        watch.Begin(session.Id, request.Buddy, session.StartedAt ?? time.GetUtcNow(), session.DurationSeconds, request.Task, request.Allow, request.GuardianSeconds, locked);
     return outcome switch
     {
         StartOutcome.Started or StartOutcome.Existing => Results.Ok(session),
@@ -231,8 +234,10 @@ static void ShowPairingQr(PairingOffer offer, string dir)
 // Task, Buddy and Allow come from the phone (all optional; old phones send none of them).
 // Allow: apps or sites already known to be fine for this session, e.g. ["youtube", "discord"].
 // GuardianSeconds: the phone's "remind me after" slider, how long steady scrolling lasts before the buddy speaks.
+// Locked + RcUserId: a Locked session and the phone's RevenueCat user id, for Plus on the PC (checked here).
 public sealed record StartSessionRequest(int DurationSeconds, string? Id = null, DateTimeOffset? StartedAt = null,
-    string? Task = null, bool Buddy = false, string[]? Allow = null, int? GuardianSeconds = null);
+    string? Task = null, bool Buddy = false, string[]? Allow = null, int? GuardianSeconds = null,
+    bool Locked = false, string? RcUserId = null);
 
 public sealed record StopSessionRequest(string? Id);
 

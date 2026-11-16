@@ -43,6 +43,8 @@ public sealed class SessionWatch : IDisposable
 
     private string? sessionId;
     private bool buddy;
+    /// <summary>A Locked session from a Plus user: no "is it for work?" question, distractions go straight down.</summary>
+    private bool strict;
     private string? task;
     private DateTimeOffset startedAt;
     private TimeSpan length;
@@ -86,12 +88,13 @@ public sealed class SessionWatch : IDisposable
     /// apps the phone already knows are fine for this session; the PC adds what this task remembered.
     /// </summary>
     public void Begin(string id, bool showBuddy, DateTimeOffset started, int durationSeconds,
-        string? taskName = null, IEnumerable<string>? allow = null, int? remindAfterSeconds = null)
+        string? taskName = null, IEnumerable<string>? allow = null, int? remindAfterSeconds = null, bool locked = false)
     {
         lock (gate)
         {
             if (sessionId == id) return;
             sessionId = id;
+            strict = locked;
             capture.Clear();
             savedThisSession = false;
             cheerUntil = null;
@@ -367,6 +370,19 @@ public sealed class SessionWatch : IDisposable
                     minimize = DeclineLocked();
                     stayedHidden = true;
                 }
+            }
+            else if (strict)
+            {
+                // Locked session (Plus): the user chose no way out, so there is nothing to ask.
+                nudges++;
+                declined = key;
+                wasOff = true;
+                onTask = false;
+                minimize = front!.Handle;
+                stayedHidden = true;
+                sayText = BuddyWords.LockedOut(Distractions.FriendlyName(Distractions.NameOf(front)));
+                sayMood = BuddyMood.Droopy;
+                sayUntil = now + SayTime;
             }
             else
             {
