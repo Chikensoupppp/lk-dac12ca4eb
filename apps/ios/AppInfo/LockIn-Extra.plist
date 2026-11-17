@@ -26,6 +26,6 @@
 	<key>RevenueCatAPIKey</key>
 	<string>$(REVENUECAT_API_KEY)</string>
 	<key>NSNearbyInteractionUsageDescription</key>
-	<string>Nogbox checks that your Key Holder's phone is right next to yours before they can end your session.</string>
+	<string>SwipeLater checks that your Key Holder's phone is right next to yours before they can end your session.</string>
 </dict>
 </plist>

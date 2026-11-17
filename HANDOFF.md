@@ -182,3 +182,5 @@ The work is committed and pushed to `origin/ios/native-clock-ci`; it has not bee
 ## Weekly report, history and partner view · 2026-11-16
 
 Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved weeks, rest Plus). Partner view: PC partner sharing is always on, no switch (PartnerShare.cs); record types now deployed to production, phone seals status to partners through CloudKit (Keys/PartnerWatch.swift), partner can pause the app on the PC. Deployed to CloudKit production 2026-11-16: record types PartnerStatus (ownerID, holderID, payload, signature, updatedAt) and PartnerCommand (commandID, ownerID, holderID, payload, signature, createdAt) to the CloudKit production schema, with ownerID, holderID and createdAt queryable. Not built or run on iOS yet; compile happens in CI.
+
+> **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.

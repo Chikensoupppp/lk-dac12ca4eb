@@ -239,7 +239,7 @@ struct ProofBrokenSheet: View {
                     .foregroundStyle(QuitInk.cream.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
                 if failed {
-                    Text("Still off. Allow Nogbox when iPhone asks.")
+                    Text("Still off. Allow SwipeLater when iPhone asks.")
                         .font(PrintFont.mono(12))
                         .foregroundStyle(QuitInk.alarm)
                 }

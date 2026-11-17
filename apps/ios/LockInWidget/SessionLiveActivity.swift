@@ -85,7 +85,7 @@ private struct LockScreenCountdown: View {
                     .tracking(1)
                     .foregroundStyle(context.state.locked ? BrainDrawing.alarm : BrainDrawing.green)
                 Spacer()
-                Text(context.isStale ? "open Nogbox"
+                Text(context.isStale ? "open SwipeLater"
                                      : "ends \(context.state.endsAt.formatted(date: .omitted, time: .shortened))")
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundStyle(BrainDrawing.cream.opacity(0.7))

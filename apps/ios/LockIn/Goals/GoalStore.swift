@@ -111,7 +111,7 @@ enum GoalReminders {
                 let weekday = cal.component(.weekday, from: day)
                 if weekdaysOnly && (weekday == 1 || weekday == 7) { continue }
                 let content = UNMutableNotificationContent()
-                content.title = "Nogbox"
+                content.title = "SwipeLater"
                 content.body = nudgeText(percent: percent, goal: goal, left: goalMinutes - done, lastDay: weekday == 1)
                 content.sound = .default
                 let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)

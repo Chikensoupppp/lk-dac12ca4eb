@@ -560,11 +560,13 @@ struct FocusView: View {
     /// Session setup tools are available from the idle header.
     private var topBar: some View {
         HStack(spacing: 0) {
-            Text("Nogbox.")
-                .font(AppFont.font(34, .heavy))
+            Text("SwipeLater.")
+                .font(AppFont.font(32, .heavy))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .tracking(-1.8)
                 .foregroundStyle(FocusPaper.ink)
-                .accessibilityLabel("NOGBOX")
+                .accessibilityLabel("SWIPELATER")
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             if !isLocked {

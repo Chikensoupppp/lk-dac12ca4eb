@@ -95,8 +95,10 @@ struct PlusOfferStep: View {
                 .frame(width: 180, height: 180)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 .offset(x: 40, y: 60)
-            Text("LOCK IN\nPLUS")
+            Text("SWIPELATER\nPLUS")
                 .font(PrintFont.head(40))
+                .lineLimit(2)
+                .minimumScaleFactor(0.6)
                 .lineSpacing(-6)
                 .foregroundStyle(.white)
                 .padding(20)
@@ -111,7 +113,7 @@ struct PlusOfferStep: View {
         .shadow(color: .black.opacity(0.6), radius: 20, y: 18)
         .padding(.horizontal, 12)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Nogbox Plus card")
+        .accessibilityLabel("SwipeLater Plus card")
     }
 
     /// Yearly (with the free trial) or monthly. Prices come from the App Store.

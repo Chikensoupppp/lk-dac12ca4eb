@@ -250,7 +250,7 @@ struct CheckStep: View {
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
                       secondaryTitle: access == .on ? nil : "Not now (keep my guess)", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {
-                Text("See how much time you spend on your phone and choose which apps Nogbox can pause.")
+                Text("See how much time you spend on your phone and choose which apps SwipeLater can pause.")
                     .font(PrintFont.body(16))
                     .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -258,7 +258,7 @@ struct CheckStep: View {
                 if access == .on {
                     Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
                 } else if access == .off {
-                    Text("Screen Time is off for Nogbox. iPhone only asks once, so turn it on in Settings > Screen Time > Apps with Screen Time Access.")
+                    Text("Screen Time is off for SwipeLater. iPhone only asks once, so turn it on in Settings > Screen Time > Apps with Screen Time Access.")
                         .font(PrintFont.body(15))
                         .foregroundStyle(Ink.red)
                         .fixedSize(horizontal: false, vertical: true)
@@ -304,7 +304,7 @@ struct CheckStep: View {
         VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Ink.ink)
-                Text("LOCK IN \u{00B7} PRINTER")
+                Text("SWIPELATER \u{00B7} PRINTER")
                     .font(PrintFont.mono(11)).tracking(2)
                     .foregroundStyle(Ink.paper.opacity(0.7))
                     .padding(.leading, 22).padding(.top, 18)

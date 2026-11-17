@@ -7,3 +7,5 @@
 - Keep session state transitions explicit and recoverable: `idle -> starting -> active -> ending -> idle`, with `failed` available from any non-idle state.
 - Validate changed code with the narrowest relevant build or test command before widening scope.
 - Update `PROJECT_STATUS.md` and `HANDOFF.md` when a milestone changes.
+
+> **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.

@@ -45,9 +45,9 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
-        INFOPLIST_KEY_CFBundleDisplayName: Nogbox
-        INFOPLIST_KEY_NSCameraUsageDescription: Nogbox uses the camera once, to scan the QR code that pairs your PC.
-        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Nogbox talks to your PC and to your Key Holder's phone nearby, so a session can start on both or a friend can let you out.
+        INFOPLIST_KEY_CFBundleDisplayName: SwipeLater
+        INFOPLIST_KEY_NSCameraUsageDescription: SwipeLater uses the camera once, to scan the QR code that pairs your PC.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: SwipeLater talks to your PC and to your Key Holder's phone nearby, so a session can start on both or a friend can let you out.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
   LockInMonitor:
@@ -62,7 +62,7 @@ targets:
     info:
       path: Config/LockInMonitor-Info.plist
       properties:
-        CFBundleDisplayName: Nogbox Monitor
+        CFBundleDisplayName: SwipeLater Monitor
         NSExtension:
           NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).LockInMonitor
@@ -84,7 +84,7 @@ targets:
     info:
       path: Config/LockInWidget-Info.plist
       properties:
-        CFBundleDisplayName: Nogbox Brain
+        CFBundleDisplayName: SwipeLater Brain
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:

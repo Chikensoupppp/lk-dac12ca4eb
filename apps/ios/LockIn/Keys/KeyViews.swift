@@ -369,7 +369,7 @@ struct InPersonUnlockView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 KTitle(text: "Ask your\npartner.")
-                KBody(text: "They open Nogbox, go to Accountability partner, and tap \u{201C}Let a friend out\u{201D}. Phones close together.")
+                KBody(text: "They open SwipeLater, go to Accountability partner, and tap \u{201C}Let a friend out\u{201D}. Phones close together.")
                 TextField("Why do you need out?", text: $reason, axis: .vertical)
                     .font(PrintFont.body(17))
                     .padding(14)
