@@ -156,7 +156,7 @@ public sealed class HomeWindow : Form
             var deny = new TaskDialogButton("Don't allow");
             var page = new TaskDialogPage
             {
-                Caption = "Nogbox",
+                Caption = "SwipeLater",
                 Heading = $"Connect {ask.Device}?",
                 Text = $"Your phone shows the code {ask.Code}.\nAllow only if it matches.",
                 Buttons = { allow, deny },
@@ -233,7 +233,7 @@ public sealed class HomeWindow : Form
 
         AutoScaleMode = AutoScaleMode.None;
         scale = DeviceDpi / 96f;
-        Text = "Nogbox";
+        Text = "SwipeLater";
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         week = WeekStore.Current;
@@ -302,10 +302,10 @@ public sealed class HomeWindow : Form
 
         // Tray: closing the window keeps Nogbox working.
         tray.Icon = Icon ?? SystemIcons.Application;
-        tray.Text = "Nogbox";
+        tray.Text = "SwipeLater";
         tray.Visible = true;
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Open Nogbox", null, (_, _) => ShowFromTray());
+        menu.Items.Add("Open SwipeLater", null, (_, _) => ShowFromTray());
         menu.Items.Add("Quit", null, (_, _) => Quit());
         tray.ContextMenuStrip = menu;
         tray.DoubleClick += (_, _) => ShowFromTray();
@@ -429,13 +429,13 @@ public sealed class HomeWindow : Form
         {
             var left = qrUntil!.Value - now;
             title = "Scan with your iPhone Camera";
-            subtitle = $"Then tap the Nogbox banner. New code in {(int)left.TotalMinutes}:{left.Seconds:00}.";
+            subtitle = $"Then tap the SwipeLater banner. New code in {(int)left.TotalMinutes}:{left.Seconds:00}.";
             ring = 0;
         }
         else if (paired.Count == 0)
         {
             title = "";
-            subtitle = "Looking for your phone. Open Nogbox on it.";
+            subtitle = "Looking for your phone. Open SwipeLater on it.";
             ring = 0;
         }
         else if (current.State == "active" && pauseState().BreakEnds is { } breakEnds)
@@ -867,7 +867,7 @@ public sealed class HomeWindow : Form
         // In a Locked session there is no way out through Quit; Nogbox keeps watching until the timer ends.
         if (lockedNow())
         {
-            tray.ShowBalloonTip(3000, "You are locked in", "Nogbox stays on until the timer ends.", ToolTipIcon.None);
+            tray.ShowBalloonTip(3000, "You are locked in", "SwipeLater stays on until the timer ends.", ToolTipIcon.None);
             return;
         }
         quitting = true;
@@ -885,7 +885,7 @@ public sealed class HomeWindow : Form
             if (!toldAboutTray)
             {
                 toldAboutTray = true;
-                tray.ShowBalloonTip(3000, "Nogbox is still on", "It keeps working in the tray. Right-click the icon to quit.", ToolTipIcon.None);
+                tray.ShowBalloonTip(3000, "SwipeLater is still on", "It keeps working in the tray. Right-click the icon to quit.", ToolTipIcon.None);
             }
             return;
         }

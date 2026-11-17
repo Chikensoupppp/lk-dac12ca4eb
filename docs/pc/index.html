@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Set up Nogbox on your PC</title>
+<title>Set up SwipeLater on your PC</title>
 <style>
 :root{--bg:#090b0e;--panel:#12161b;--ink:#f3f5f8;--soft:#8e97a3;--ice:#b5dcfc;--ice2:#4c8ee0;--edge:#262c34;--ok:#8fe3b0;--sun:#ffb511}
 *{box-sizing:border-box}html,body{margin:0}
@@ -61,16 +61,16 @@ kbd{display:inline-block;min-width:2em;padding:0 .5em;border-radius:7px;border:1
 .cmd{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0}
 </style></head><body><main>
 <header><div class="mini" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#12161b" stroke="#2b323b" stroke-width="3"/><circle cx="50" cy="50" r="35" fill="none" stroke="#1c232b" stroke-width="6"/><circle id="parc" cx="50" cy="50" r="35" fill="none" stroke="#6fb0f0" stroke-width="6" stroke-linecap="round" stroke-dasharray="219.9" stroke-dashoffset="219.9" transform="rotate(-90 50 50)"/></svg><img src="brain.png" alt="" width="40" height="33"></div>
-<div><h1>Set up Nogbox on your PC</h1><p>4 short steps. No Windows warning. About 5 minutes.</p></div></header>
+<div><h1>Set up SwipeLater on your PC</h1><p>4 short steps. No Windows warning. About 5 minutes.</p></div></header>
 <nav id="nav" aria-label="Steps"></nav>
 
 <!-- 1 -->
 <section class="panel" id="p0">
- <div><div class="kick">STEP 1 OF 4 · ON YOUR PC</div><h2>Install Nogbox</h2>
-  <button class="get" id="get">GET NOGBOX</button>
-  <ol class="todo"><li><i>1</i><span>Press <b>GET NOGBOX</b> above. It copies the install command for you.</span></li>
+ <div><div class="kick">STEP 1 OF 4 · ON YOUR PC</div><h2>Install SwipeLater</h2>
+  <button class="get" id="get">GET SWIPELATER</button>
+  <ol class="todo"><li><i>1</i><span>Press <b>GET SWIPELATER</b> above. It copies the install command for you.</span></li>
    <li><i>2</i><span>On your keyboard, press <kbd>Win</kbd> + <kbd>R</kbd>. A small box called <b>Run</b> opens.</span></li>
-   <li><i>3</i><span>Press <kbd>Ctrl</kbd> + <kbd>V</kbd>, then <kbd>Enter</kbd>. Wait while it downloads. A Nogbox window opens.</span></li></ol>
+   <li><i>3</i><span>Press <kbd>Ctrl</kbd> + <kbd>V</kbd>, then <kbd>Enter</kbd>. Wait while it downloads. A SwipeLater window opens.</span></li></ol>
   <div class="stuck"><b>Stuck?</b> The Run box only opens with the <kbd>Win</kbd> key (the Windows logo key, bottom left of your keyboard). No Run box? Press Start, type <b>Run</b>, press Enter.</div>
   <div class="go"><button data-back disabled>BACK</button><button class="main" data-next>NEXT STEP</button></div></div>
  <div class="mock"><div class="win" style="max-width:430px;background:#2a2f37"><div class="bar" style="background:#323843">Run</div>
@@ -82,52 +82,52 @@ kbd{display:inline-block;min-width:2em;padding:0 .5em;border-radius:7px;border:1
 <!-- 2 -->
 <section class="panel" id="p1">
  <div><div class="kick">STEP 2 OF 4 · PC AND PHONE</div><h2>Pair your phone</h2>
-  <ol class="todo"><li data-hl="m2btn"><i>1</i><span>In the Nogbox window on your PC, press <b>PAIR MY PHONE</b>. A square code appears.</span></li>
+  <ol class="todo"><li data-hl="m2btn"><i>1</i><span>In the SwipeLater window on your PC, press <b>PAIR MY PHONE</b>. A square code appears.</span></li>
    <li data-hl="m2qr"><i>2</i><span>Open the <b>Camera</b> app on your iPhone. Point it at the square code.</span></li>
-   <li data-hl="m2ban"><i>3</i><span>Tap the <b>Nogbox</b> banner that pops up on your phone. Nogbox opens and says it is paired.</span></li></ol>
+   <li data-hl="m2ban"><i>3</i><span>Tap the <b>SwipeLater</b> banner that pops up on your phone. SwipeLater opens and says it is paired.</span></li></ol>
   <div class="stuck"><b>Stuck?</b> Your phone and PC must be on the <b>same Wi-Fi</b>. The code runs out after a few minutes. Press <b>NEW CODE</b> to get another.</div>
   <div class="go"><button data-back>BACK</button><button class="main" data-next>NEXT STEP</button></div></div>
  <div class="mock"><div class="row2">
-  <div class="win paper" style="max-width:300px"><div class="bar"><b></b><b></b>Nogbox</div><div style="padding:14px"><div style="font-size:1.4rem;font-weight:900">Nogbox</div><div style="color:#2e7d4f;font-weight:700;font-size:.8rem;margin-bottom:10px">● Running on this PC</div>
+  <div class="win paper" style="max-width:300px"><div class="bar"><b></b><b></b>SwipeLater</div><div style="padding:14px"><div style="font-size:1.4rem;font-weight:900">SwipeLater</div><div style="color:#2e7d4f;font-weight:700;font-size:.8rem;margin-bottom:10px">● Running on this PC</div>
    <div class="card"><div style="font:700 .65rem Consolas;color:#555;margin-bottom:4px">PHONE</div><div style="font-size:.85rem;margin-bottom:8px" id="m2t">No phone paired yet.</div>
    <canvas id="qr" width="120" height="120" style="display:none;margin:0 auto 8px"></canvas><span class="blue" id="m2btn">PAIR MY PHONE</span></div></div></div>
   <div class="phone"><div class="n"></div><div style="position:absolute;inset:0;background:linear-gradient(#1b2a1b,#0f1a12)"><div id="m2qr" style="position:absolute;left:38px;top:150px;width:140px;height:140px;border:3px solid #ffd60a;border-radius:16px"></div>
-   <div id="m2ban" style="position:absolute;left:12px;right:12px;top:46px;padding:11px;border-radius:15px;background:#2b2f36ee;font-size:.8rem"><b>Nogbox</b><br><span style="color:#aab">Open in “Nogbox”</span></div></div></div></div></div>
+   <div id="m2ban" style="position:absolute;left:12px;right:12px;top:46px;padding:11px;border-radius:15px;background:#2b2f36ee;font-size:.8rem"><b>SwipeLater</b><br><span style="color:#aab">Open in “SwipeLater”</span></div></div></div></div></div>
 </section>
 
 <!-- 3 -->
 <section class="panel" id="p2">
  <div><div class="kick">STEP 3 OF 4 · IN YOUR BROWSER</div><h2>Connect your browser <span class="opt">OPTIONAL</span></h2>
   <p style="margin:0 0 14px;color:var(--soft)">This lets your buddy see when scrolling takes over. You can skip it and do it later.</p>
-  <ol class="todo"><li data-hl="m3conn"><i>1</i><span>In the Nogbox window, press <b>CONNECT BROWSERS</b>. Chrome opens its extensions page.</span></li>
+  <ol class="todo"><li data-hl="m3conn"><i>1</i><span>In the SwipeLater window, press <b>CONNECT BROWSERS</b>. Chrome opens its extensions page.</span></li>
    <li data-hl="m3dev"><i>2</i><span>Turn on <b>Developer mode</b>. It is the switch at the top right.</span></li>
    <li data-hl="m3lu"><i>3</i><span>Press <b>Load unpacked</b>.</span></li>
-   <li data-hl="m3dlg"><i>4</i><span>Click the folder box and press <kbd>Ctrl</kbd> + <kbd>V</kbd>. Nogbox already copied the folder for you. Then press <b>Select Folder</b>.</span></li>
-   <li data-hl="m3inc"><i>5</i><span>Find the <b>Nogbox buddy</b> card. Press <b>Details</b>, then turn on <b>Allow in Incognito</b>.</span></li></ol>
+   <li data-hl="m3dlg"><i>4</i><span>Click the folder box and press <kbd>Ctrl</kbd> + <kbd>V</kbd>. SwipeLater already copied the folder for you. Then press <b>Select Folder</b>.</span></li>
+   <li data-hl="m3inc"><i>5</i><span>Find the <b>SwipeLater buddy</b> card. Press <b>Details</b>, then turn on <b>Allow in Incognito</b>.</span></li></ol>
   <div class="stuck"><b>Stuck?</b> No Developer mode switch? You are on the wrong page. The address must say <b>chrome://extensions</b> (or <b>edge://extensions</b> in Edge).</div>
   <div class="go"><button data-back>BACK</button><button class="main" data-next>NEXT STEP</button></div></div>
  <div class="mock"><div class="win" style="background:#fff;color:#202124;position:relative;min-height:400px"><div class="bar" style="background:#dfe1e5;color:#555"><b style="background:#aaa"></b><b style="background:#aaa"></b>&nbsp;chrome://extensions</div>
   <div style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:1.2rem;font-weight:600">Extensions <span style="font-size:.78rem;font-weight:400" id="m3dev">Developer mode &nbsp;<span class="tog" id="tdev"></span></span></div>
    <div style="margin:14px 0;display:flex;gap:8px"><span id="m3lu" style="padding:8px 13px;border:1.5px solid #dadce0;border-radius:18px;font-size:.8rem;color:#1a73e8;font-weight:600">Load unpacked</span><span style="padding:8px 13px;border:1.5px solid #dadce0;border-radius:18px;font-size:.8rem;color:#1a73e8">Pack extension</span></div>
-   <div id="m3dlg" style="padding:14px;border:1.5px solid #c9ccd1;border-radius:12px;box-shadow:0 14px 34px #0004;margin-bottom:12px"><div style="font-weight:600;font-size:.85rem;margin-bottom:8px">Select the extension directory</div><div style="padding:8px;border:1.5px solid #1a73e8;border-radius:6px;font:.72rem Consolas;color:#333;word-break:break-all">…\AppData\Local\Programs\Nogbox\extension</div><div style="text-align:right;margin-top:10px"><span style="padding:7px 14px;background:#1a73e8;color:#fff;border-radius:18px;font-size:.78rem">Select Folder</span></div></div>
-   <div style="padding:13px;border:1.5px solid #dadce0;border-radius:12px;max-width:290px"><div style="font-weight:600">Nogbox buddy</div><div style="font-size:.74rem;color:#5f6368;margin:3px 0 8px">Lets the buddy see when scrolling takes over.</div><div style="font-size:.78rem" id="m3inc">Allow in Incognito &nbsp;<span class="tog" id="tinc"></span></div></div></div>
-  </div><div id="m3conn" class="win paper" style="position:absolute;right:-12px;bottom:-26px;width:190px;transform:rotate(-2deg)"><div class="bar"><b></b><b></b>Nogbox</div><div style="padding:10px 12px"><span class="blue" style="font-size:.66rem;padding:8px 10px">CONNECT BROWSERS</span></div></div></div>
+   <div id="m3dlg" style="padding:14px;border:1.5px solid #c9ccd1;border-radius:12px;box-shadow:0 14px 34px #0004;margin-bottom:12px"><div style="font-weight:600;font-size:.85rem;margin-bottom:8px">Select the extension directory</div><div style="padding:8px;border:1.5px solid #1a73e8;border-radius:6px;font:.72rem Consolas;color:#333;word-break:break-all">…\AppData\Local\Programs\SwipeLater\extension</div><div style="text-align:right;margin-top:10px"><span style="padding:7px 14px;background:#1a73e8;color:#fff;border-radius:18px;font-size:.78rem">Select Folder</span></div></div>
+   <div style="padding:13px;border:1.5px solid #dadce0;border-radius:12px;max-width:290px"><div style="font-weight:600">SwipeLater buddy</div><div style="font-size:.74rem;color:#5f6368;margin:3px 0 8px">Lets the buddy see when scrolling takes over.</div><div style="font-size:.78rem" id="m3inc">Allow in Incognito &nbsp;<span class="tog" id="tinc"></span></div></div></div>
+  </div><div id="m3conn" class="win paper" style="position:absolute;right:-12px;bottom:-26px;width:190px;transform:rotate(-2deg)"><div class="bar"><b></b><b></b>SwipeLater</div><div style="padding:10px 12px"><span class="blue" style="font-size:.66rem;padding:8px 10px">CONNECT BROWSERS</span></div></div></div>
 </section>
 
 <!-- 4 -->
 <section class="panel" id="p3">
  <div><div class="kick">STEP 4 OF 4 · ON YOUR PHONE</div><h2>Start focusing</h2>
-  <ol class="todo"><li data-hl="m4lock"><i>1</i><span>Open Nogbox on your iPhone. Pick your minutes. <b>Hold</b> the <b>LOCK IN</b> button.</span></li>
-   <li data-hl="m4pc"><i>2</i><span>Look at your PC. The Nogbox window shows the same timer. If you scroll or open a distracting app, your buddy nudges you.</span></li></ol>
+  <ol class="todo"><li data-hl="m4lock"><i>1</i><span>Open SwipeLater on your iPhone. Pick your minutes. <b>Hold</b> the <b>LOCK IN</b> button.</span></li>
+   <li data-hl="m4pc"><i>2</i><span>Look at your PC. The SwipeLater window shows the same timer. If you scroll or open a distracting app, your buddy nudges you.</span></li></ol>
   <div class="stuck"><b>Stuck?</b> The PC window says <b>No session</b>? Check that the phone still says <b>Paired</b>. If not, go back to step 2.</div>
   <div class="go"><button data-back>BACK</button><button class="main" id="finish">I AM DONE</button></div></div>
  <div class="mock"><div class="row2"><div class="phone"><div class="n"></div><div style="text-align:center;padding-top:62px"><div style="color:var(--soft);font-size:.7rem;letter-spacing:.2em">FOCUS</div>
   <svg viewBox="0 0 200 200" width="150" style="margin:10px 0"><circle cx="100" cy="100" r="68" fill="none" stroke="#1c232b" stroke-width="12"/><circle cx="100" cy="100" r="68" fill="none" stroke="#7fc0f5" stroke-width="12" stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="30" transform="rotate(-90 100 100)"/><text x="100" y="112" text-anchor="middle" font-size="36" fill="#f3f5f8" font-weight="600">24:59</text></svg>
   <span id="m4lock" style="display:inline-block;width:150px;padding:13px 0;border-radius:14px;font-weight:800;letter-spacing:.12em;font-size:.8rem;color:#10151b;background:linear-gradient(#f4f8fc,#aebccc)">HOLD · LOCK IN</span></div></div>
-  <div class="win paper" id="m4pc" style="max-width:290px"><div class="bar"><b></b><b></b>Nogbox</div><div style="padding:14px"><div style="font-size:1.3rem;font-weight:900">Nogbox</div><div class="card" style="margin-top:10px"><div style="font:700 .65rem Consolas;color:#555">RIGHT NOW</div><div style="font-size:1.1rem;font-weight:700;margin-top:4px">Focusing · 24:59 left</div><div style="font-size:.78rem;color:#555;margin-top:2px">Distracting apps get a nudge from the buddy.</div></div></div></div></div></div>
+  <div class="win paper" id="m4pc" style="max-width:290px"><div class="bar"><b></b><b></b>SwipeLater</div><div style="padding:14px"><div style="font-size:1.3rem;font-weight:900">SwipeLater</div><div class="card" style="margin-top:10px"><div style="font:700 .65rem Consolas;color:#555">RIGHT NOW</div><div style="font-size:1.1rem;font-weight:700;margin-top:4px">Focusing · 24:59 left</div><div style="font-size:.78rem;color:#555;margin-top:2px">Distracting apps get a nudge from the buddy.</div></div></div></div></div></div>
 </section>
 
-<section class="finish" id="fin"><h2>All set.</h2><p style="color:var(--soft);font-size:1.15rem">Nogbox is on your PC and paired with your phone.<br>Close this page. Nogbox keeps working in your tray.</p></section>
+<section class="finish" id="fin"><h2>All set.</h2><p style="color:var(--soft);font-size:1.15rem">SwipeLater is on your PC and paired with your phone.<br>Close this page. SwipeLater keeps working in your tray.</p></section>
 <div class="cmd" id="c">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Chikensoupppp/lk-dac12ca4eb/ios/native-clock-ci/apps/windows-companion/get-nogbox.ps1 | iex"</div>
 </main><script>
 const $=id=>document.getElementById(id),Q=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -160,15 +160,15 @@ const cmd=$('c').textContent.trim();let stage=0,poll,wasUp=false;
 const li0=Q('#p0 .todo li');
 function mark(n){li0.forEach((l,i)=>l.classList.toggle('done',i<n));if(n>=3)doneSteps.add(0);paint()}
 function ping(){return fetch('http://127.0.0.1:47821/health',{mode:'no-cors',cache:'no-store'}).then(()=>true,()=>false)}
-function installed(){clearInterval(poll);mark(3);stage=3;$('get').textContent='NOGBOX IS RUNNING';$('get').classList.add('copied');$('mtxt').textContent='Opening Nogbox…'}
+function installed(){clearInterval(poll);mark(3);stage=3;$('get').textContent='SWIPELATER IS RUNNING';$('get').classList.add('copied');$('mtxt').textContent='Opening SwipeLater…'}
 function runOpened(){if(stage>=1)return;stage=1;mark(2);$('mtxt').textContent='';$('mtxt').style.color='var(--ice)';
  clearInterval(poll);poll=setInterval(async()=>{if(!wasUp&&await ping())installed()},1500)}
 $('get').onclick=async()=>{try{await navigator.clipboard.writeText(cmd)}catch(e){const r=document.createRange();r.selectNodeContents($('c'));getSelection().removeAllRanges();getSelection().addRange(r);document.execCommand('copy')}
  wasUp=false;ping().then(u=>{wasUp=u});stage=0;$('get').textContent='COPIED';$('get').classList.add('copied');mark(1);$('mtxt').textContent='(press Ctrl + V)';
- setTimeout(()=>{if(stage<3){$('get').textContent='GET NOGBOX AGAIN';$('get').classList.remove('copied')}},7000)};
+ setTimeout(()=>{if(stage<3){$('get').textContent='GET SWIPELATER AGAIN';$('get').classList.remove('copied')}},7000)};
 addEventListener('keydown',e=>{if(cur!==0||!li0[0].classList.contains('done'))return;if(e.key.toLowerCase()==='r'&&e.metaKey)runOpened()});
 addEventListener('blur',()=>{if(cur===0&&li0[0].classList.contains('done')&&stage===0)runOpened()});
-addEventListener('focus',()=>{if(stage===1)$('mtxt').textContent='…did the Nogbox window open?'});
+addEventListener('focus',()=>{if(stage===1)$('mtxt').textContent='…did the SwipeLater window open?'});
 // show the pasted command on the mock after step 3 hint
 li0[2].addEventListener('click',()=>{$('mtxt').textContent='powershell -NoProfile … | iex';$('mtxt').style.color='var(--ice)'});
 if(/iPhone|iPad|Android/i.test(navigator.userAgent)){const n=document.createElement('div');n.className='stuck';n.style.cssText='margin-bottom:16px;border-color:var(--ice2);background:#14181d;color:var(--ink)';n.innerHTML='<b>You are on a phone.</b> Open this page on your PC to install. You can read the steps here first.';document.querySelector('header').after(n);const g=$('get');g.textContent='COPY LINK FOR MY PC';g.onclick=async()=>{try{await navigator.clipboard.writeText(location.href)}catch(e){}g.textContent='LINK COPIED';g.classList.add('copied')}}

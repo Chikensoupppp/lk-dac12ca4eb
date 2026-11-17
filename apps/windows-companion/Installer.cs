@@ -3,15 +3,18 @@ using Microsoft.Win32;
 
 /// <summary>
 /// Makes the one downloaded file behave like an installed app, for this Windows user only (no admin):
-/// the first double-click copies it to %LOCALAPPDATA%\Programs\Nogbox, adds Start menu and desktop
-/// shortcuts, starts it with Windows (in the tray), adds "Nogbox" to Settings &gt; Apps for uninstalling,
+/// the first double-click copies it to %LOCALAPPDATA%\Programs\SwipeLater, adds Start menu and desktop
+/// shortcuts, starts it with Windows (in the tray), adds "SwipeLater" to Settings &gt; Apps for uninstalling,
 /// and opens the installed copy. Running it again updates the installed copy the same way.
 /// </summary>
 public static class Installer
 {
-    public const string AppName = "Nogbox";
+    public const string AppName = "SwipeLater";
+    /// <summary>The app's old name. An install under it is moved over, so the PC never runs two copies.</summary>
+    private const string LegacyName = "Nogbox";
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\Nogbox";
+    private const string UninstallRoot = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\";
+    private const string UninstallKey = UninstallRoot + AppName;
 
     public static string InstallDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", AppName);
@@ -72,6 +75,7 @@ public static class Installer
                 }
                 catch (Exception) { /* not ours to touch, or already gone */ }
             }
+            RemoveLegacyInstall();
             Directory.CreateDirectory(InstallDir);
             File.Copy(exePath, InstalledExe, overwrite: true);
             try { ExtractExtension(); } catch (Exception) { }
@@ -95,6 +99,39 @@ public static class Installer
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Closes and removes a copy installed under the old name: its process, startup entry, shortcuts,
+    /// Settings &gt; Apps entry and folder. Settings and pairing live in %LOCALAPPDATA%\LockIn and stay.
+    /// </summary>
+    private static void RemoveLegacyInstall()
+    {
+        var legacyDir = Path.Combine(Path.GetDirectoryName(InstallDir)!, LegacyName);
+        var legacyExe = Path.Combine(legacyDir, LegacyName + ".exe");
+        foreach (var running in Process.GetProcessesByName(LegacyName))
+        {
+            try
+            {
+                if (running.Id != Environment.ProcessId && running.MainModule?.FileName is { } file
+                    && string.Equals(Path.GetFullPath(file), Path.GetFullPath(legacyExe), StringComparison.OrdinalIgnoreCase))
+                {
+                    running.Kill();
+                    running.WaitForExit(5000);
+                }
+            }
+            catch (Exception) { }
+        }
+        try
+        {
+            using var run = Registry.CurrentUser.CreateSubKey(RunKey);
+            run.DeleteValue(LegacyName, throwOnMissingValue: false);
+        }
+        catch (Exception) { }
+        foreach (var folder in new[] { Environment.SpecialFolder.Programs, Environment.SpecialFolder.DesktopDirectory })
+            try { var link = Path.Combine(Environment.GetFolderPath(folder), LegacyName + ".lnk"); if (File.Exists(link)) File.Delete(link); } catch (Exception) { }
+        try { Registry.CurrentUser.DeleteSubKeyTree(UninstallRoot + LegacyName, throwOnMissingSubKey: false); } catch (Exception) { }
+        try { if (Directory.Exists(legacyDir)) Directory.Delete(legacyDir, recursive: true); } catch (Exception) { /* a locked file: harmless leftovers */ }
     }
 
     public static bool StartsWithWindows()
@@ -138,7 +175,7 @@ public static class Installer
             link.Arguments = arguments;
             link.WorkingDirectory = Path.GetDirectoryName(target);
             link.IconLocation = target + ",0";
-            link.Description = "Nogbox focus buddy";
+            link.Description = "SwipeLater focus buddy";
             link.Save();
         }
         finally

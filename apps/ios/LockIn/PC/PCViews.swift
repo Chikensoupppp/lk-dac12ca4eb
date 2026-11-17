@@ -108,7 +108,7 @@ struct PCSheet: View {
                         if !pc.isPaired && !pc.isPairing && pc.nearbyCode == nil && finder.found.isEmpty {
                             VStack(spacing: 8) {
                                 SonarBrain()
-                                Text("Looking for your PC. Open Nogbox on it.")
+                                Text("Looking for your PC. Open SwipeLater on it.")
                                     .font(Cream.rounded(15, .medium))
                                     .foregroundStyle(Matte.textSoft)
                                     .multilineTextAlignment(.center)
@@ -153,7 +153,7 @@ struct PCSheet: View {
                                     .font(Cream.rounded(16, .semibold))
                                     .foregroundStyle(Matte.text)
                                     .textSelection(.enabled)
-                                Text("The Nogbox PC app guides you from there.")
+                                Text("The SwipeLater PC app guides you from there.")
                                     .font(Cream.rounded(15, .medium))
                                     .foregroundStyle(Matte.textSoft)
                             }
@@ -239,7 +239,7 @@ struct PCSheet: View {
                     onCode: { text in
                         scanning = false
                         guard let offer = PCPairingOffer.decode(text) else {
-                            pc.report("That QR code is not from Nogbox.")
+                            pc.report("That QR code is not from SwipeLater.")
                             return
                         }
                         Task { await pc.pair(offer: offer) }

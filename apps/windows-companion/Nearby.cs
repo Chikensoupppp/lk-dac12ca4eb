@@ -139,7 +139,7 @@ public sealed class BonjourAdvertiser : IDisposable
         try
         {
             var label = new string(pcName.Where(c => char.IsLetterOrDigit(c) || c == '-').Take(40).ToArray());
-            if (label.Length == 0) label = "Nogbox-PC";
+            if (label.Length == 0) label = "SwipeLater-PC";
             var keys = new[] { "v", "name", "fp", "hosts", "port" };
             var values = new[] { "1", pcName.Length > 40 ? pcName[..40] : pcName, fingerprint, string.Join(",", hosts.Take(4)), port.ToString() };
             instance = DnsServiceConstructInstance($"{label}._nogbox._tcp.local", $"{Environment.MachineName}.local",

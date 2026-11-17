@@ -43,7 +43,7 @@ public sealed class BrowserWatch : IDisposable
     {
         this.report = report;
         this.log = log;
-        loop = new Thread(Run) { IsBackground = true, Name = "Nogbox browser watch" };
+        loop = new Thread(Run) { IsBackground = true, Name = "SwipeLater browser watch" };
         loop.SetApartmentState(ApartmentState.MTA);
         loop.Start();
     }
@@ -221,7 +221,7 @@ public sealed class BrowserWatch : IDisposable
                 var hook = SetWindowsHookEx(WhMouseLl, proc, GetModuleHandle(null), 0);
                 while (GetMessage(out var msg, IntPtr.Zero, 0, 0) > 0) { TranslateMessage(ref msg); DispatchMessage(ref msg); }
                 if (hook != IntPtr.Zero) UnhookWindowsHookEx(hook);
-            }) { IsBackground = true, Name = "Nogbox wheel count" };
+            }) { IsBackground = true, Name = "SwipeLater wheel count" };
             thread.Start();
         }
 

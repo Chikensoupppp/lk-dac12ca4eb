@@ -5,8 +5,8 @@
     <ApplicationIcon>nogbox.ico</ApplicationIcon>
     <AssemblyName>LockIn.Companion</AssemblyName>
     <!-- Windows shows these as the app name, for example on notifications. -->
-    <Product>Nogbox</Product>
-    <AssemblyTitle>Nogbox</AssemblyTitle>
+    <Product>SwipeLater</Product>
+    <AssemblyTitle>SwipeLater</AssemblyTitle>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>LockIn.Companion</RootNamespace>

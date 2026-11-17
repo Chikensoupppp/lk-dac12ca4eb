@@ -24,7 +24,7 @@ if (NativeHost.IsLaunch(args))
 }
 if (args.Contains("--register-browser"))
 {
-    Console.WriteLine("Chrome and Edge can now reach Nogbox. Host file: "
+    Console.WriteLine("Chrome and Edge can now reach SwipeLater. Host file: "
         + BrowserRegistration.Register(stateDir, Environment.ProcessPath!));
     return;
 }
@@ -45,7 +45,7 @@ if (args.Contains("--later"))
 if (args.Contains("--uninstall"))
 {
     Installer.Uninstall(BrowserRegistration.Unregister);
-    System.Windows.Forms.MessageBox.Show("Nogbox was removed from this PC.", "Nogbox");
+    System.Windows.Forms.MessageBox.Show("SwipeLater was removed from this PC.", "SwipeLater");
     return;
 }
 // A plain double-click on the downloaded file installs it (Start menu, desktop, start with Windows)
@@ -322,7 +322,7 @@ static void ShowPairingQr(PairingOffer offer, string dir)
     var path = Path.Combine(dir, "pair-phone.png");
     File.WriteAllBytes(path, png);
     Console.WriteLine();
-    Console.WriteLine("Pair your phone: scan the QR code in this picture with the Nogbox app.");
+    Console.WriteLine("Pair your phone: scan the QR code in this picture with the SwipeLater app.");
     Console.WriteLine(path);
     Console.WriteLine($"It works for 5 minutes and one phone. Addresses: {string.Join(", ", offer.Hosts)}");
     try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }

@@ -258,7 +258,7 @@ public static class BrowserRegistration
         File.WriteAllText(manifest, JsonSerializer.Serialize(new
         {
             name = NativeHost.Name,
-            description = "Nogbox focus buddy",
+            description = "SwipeLater focus buddy",
             path = exePath,
             type = "stdio",
             allowed_origins = new[] { NativeHost.AllowedOrigin },
@@ -273,7 +273,7 @@ public static class BrowserRegistration
         File.WriteAllText(firefoxManifest, JsonSerializer.Serialize(new
         {
             name = NativeHost.Name,
-            description = "Nogbox focus buddy",
+            description = "SwipeLater focus buddy",
             path = exePath,
             type = "stdio",
             allowed_extensions = new[] { NativeHost.FirefoxId },
