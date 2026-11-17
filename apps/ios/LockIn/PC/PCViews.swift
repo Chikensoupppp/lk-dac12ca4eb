@@ -105,6 +105,17 @@ struct PCSheet: View {
                                 .accessibilityIdentifier("pc-problem")
                         }
 
+                        if !pc.isPaired && !pc.isPairing && pc.nearbyCode == nil && finder.found.isEmpty {
+                            VStack(spacing: 8) {
+                                SonarBrain()
+                                Text("Looking for your PC. Open Nogbox on it.")
+                                    .font(Cream.rounded(15, .medium))
+                                    .foregroundStyle(Matte.textSoft)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+
                         if let code = pc.nearbyCode {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Click Allow on the PC if it shows this code:")
