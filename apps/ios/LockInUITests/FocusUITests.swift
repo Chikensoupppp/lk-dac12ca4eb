@@ -260,6 +260,12 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["coach-choose-apps"].exists)
         capture("coach-apps")
         skipApps.tap()
+        // The tour: Locked mode, weekly goal, partner, PC, lock screen, widget, streak, report, quitting and Plus, each with a Next.
+        for step in 0..<10 {
+            XCTAssertTrue(app.buttons["coach-next"].waitForExistence(timeout: 5))
+            if step == 0 { capture("coach-tour-mode") }
+            app.buttons["coach-next"].tap()
+        }
         let start = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
         capture("coach-hold")
@@ -323,6 +329,12 @@ final class FocusUITests: XCTestCase {
         app.buttons["25 minutes"].tap()
         XCTAssertTrue(app.buttons["coach-skip-apps"].waitForExistence(timeout: 5))
         app.buttons["coach-skip-apps"].tap()
+        // The tour: Locked mode, weekly goal, partner, PC, lock screen, widget, streak, report, quitting and Plus, each with a Next.
+        for step in 0..<10 {
+            XCTAssertTrue(app.buttons["coach-next"].waitForExistence(timeout: 5))
+            if step == 0 { capture("coach-tour-mode") }
+            app.buttons["coach-next"].tap()
+        }
         let hold = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(hold.waitForExistence(timeout: 5))
         capture("coach-reduce-motion")

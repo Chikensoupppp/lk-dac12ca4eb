@@ -12,27 +12,49 @@ struct CountdownClockView: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
 
+    /// When a session starts, the arc eases from the idle length to the live length instead of jumping,
+    /// and the brain hops. With the one-hour dial both lengths match, so only the hop shows today.
+    /// The sweep is computed from the clock (like the countdown), so it cannot drift from the timer.
+    @State private var sweepFrom: Double?
+    @State private var sweepStart: Date?
+    private static let sweepSeconds = 0.9
+
+    private var sweeping: Bool { sweepStart != nil }
+
+    /// The arc length during the start sweep, eased in and out.
+    private func swept(_ live: Double, at date: Date) -> Double {
+        guard let sweepFrom, let sweepStart else { return live }
+        let t = min(max(date.timeIntervalSince(sweepStart) / Self.sweepSeconds, 0), 1)
+        let eased = t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2
+        return sweepFrom + (live - sweepFrom) * eased
+    }
+
     var body: some View {
         GeometryReader { proxy in
             let side = min(proxy.size.width, proxy.size.height)
             let ring = side * 0.92
             ZStack {
-                Circle().stroke(FocusPaper.line, lineWidth: side * 0.01)
-                    .frame(width: ring, height: ring)
+                // No grey track ring: the tick marks draw the dial, and the amber arc alone shows time.
                 dialMarks
                 if showsMascot {
                     Image("BrainExact")
                         .resizable().scaledToFit()
                         .accessibilityHidden(true)
-                        .frame(width: side * 0.56)
-                        .offset(y: side * (timing == nil ? -0.14 : -0.15))
+                        .frame(width: side * 0.44)
+                        .offset(y: side * (timing == nil ? -0.19 : -0.20))
+                        // A small happy hop as the session starts.
+                        .scaleEffect(sweeping ? 1.06 : 1)
+                        .animation(motionLimited(systemReduceMotion) ? nil : .spring(response: 0.45, dampingFraction: 0.6), value: sweeping)
                         .animation(motionLimited(systemReduceMotion) ? nil : .spring(response: 0.36, dampingFraction: 1), value: timing == nil)
                 }
-                TimelineView(.animation(minimumInterval: 1, paused: timing == nil)) { context in
+                // Every frame during the start sweep, then once a second.
+                TimelineView(.animation(minimumInterval: sweeping ? nil : 1, paused: timing == nil)) { context in
                     let remaining = timing?.remaining(at: context.date) ?? duration
                     let seconds = Int(remaining.rounded(.up))
-                    let fraction = timing.map { $0.fractionRemaining(at: context.date) } ?? idleFraction
-                    let value = min(max(fraction, 0), 1)
+                    // Kitchen-timer dial: the full ring is one hour, so 25 minutes fills 25/60 of it.
+                    // Sessions longer than an hour keep a full ring until an hour is left.
+                    let fraction = timing.map { _ in remaining / 3600 } ?? idleFraction
+                    let value = swept(min(max(fraction, 0), 1), at: context.date)
                     ZStack {
                         Circle().trim(from: 0, to: value)
                             .stroke(flash == .endedEarly ? FocusPaper.secondary : FocusPaper.amber,
@@ -41,20 +63,20 @@ struct CountdownClockView: View {
                             .frame(width: ring, height: ring)
                             .animation(timing == nil && !motionLimited(systemReduceMotion) ? .spring(response: 0.34, dampingFraction: 1) : nil, value: idleFraction)
                         Text(SessionTiming.display(seconds: seconds))
-                            .font(AppFont.font(side * 0.23, .bold).monospacedDigit())
+                            .font(AppFont.font(side * 0.22, .bold).monospacedDigit())
                             .tracking(-side * 0.013)
                             .foregroundStyle(FocusPaper.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                             .frame(width: side * 0.82)
-                            .offset(y: side * (showsMascot ? 0.16 : -0.02))
+                            .offset(y: side * (showsMascot ? 0.09 : -0.02))
                         if !typeSize.isAccessibilitySize {
                             Text(caption)
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(FocusPaper.secondary)
                                 .multilineTextAlignment(.center)
                                 .frame(width: side * 0.7)
-                                .offset(y: side * (showsMascot ? 0.30 : 0.14))
+                                .offset(y: side * (showsMascot ? 0.27 : 0.14))
                         }
                     }
                     .accessibilityElement(children: .ignore)
@@ -67,6 +89,17 @@ struct CountdownClockView: View {
             .frame(width: side, height: side)
             .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
         }
+        .onChange(of: timing == nil) { wasIdle, isIdle in
+            guard wasIdle, !isIdle, !motionLimited(systemReduceMotion) else { return }
+            sweepFrom = min(max(idleFraction, 0), 1)
+            sweepStart = .now
+        }
+        .task(id: sweepStart) {
+            guard sweepStart != nil else { return }
+            do { try await Task.sleep(for: .seconds(Self.sweepSeconds)) } catch { return }
+            sweepStart = nil
+            sweepFrom = nil
+        }
     }
 
     private var dialMarks: some View {
@@ -74,11 +107,12 @@ struct CountdownClockView: View {
             var context = drawing
             let scale = size.width / 300
             context.scaleBy(x: scale, y: scale)
-            for tick in 0..<36 {
-                let major = tick.isMultiple(of: 3)
+            // One tick per minute; a long tick every 5 minutes.
+            for tick in 0..<60 {
+                let major = tick.isMultiple(of: 5)
                 var hand = context
                 hand.translateBy(x: 150, y: 150)
-                hand.rotate(by: .degrees(Double(tick) * 10))
+                hand.rotate(by: .degrees(Double(tick) * 6))
                 var mark = Path()
                 mark.move(to: CGPoint(x: 0, y: -129))
                 mark.addLine(to: CGPoint(x: 0, y: major ? -122 : -126))

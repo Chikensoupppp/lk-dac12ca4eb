@@ -26,6 +26,23 @@ enum OnboardingStore {
         defaults.set(categories.sorted(), forKey: categoriesKey)
         defaults.set(goals.sorted(), forKey: goalsKey)
         defaults.set(true, forKey: doneKey)
+        seedFromAnswers(goals: goals, defaults: defaults)
+    }
+
+    /// The task names the "what is worth your time" answers turn into. Sleep and People have no task.
+    private static let taskForGoal: [(goal: String, task: String)] = [
+        ("Study", "Studying"), ("Train", "Working out"), ("Create", "Creating"), ("Read", "Reading")
+    ]
+
+    /// Makes the answers do something: the chosen activities go to the top of the task list, and the
+    /// first session starts at the 25 minutes the plan slide showed.
+    static func seedFromAnswers(goals: Set<String>, defaults: UserDefaults = .standard) {
+        let mine = taskForGoal.filter { goals.contains($0.goal) }.map(\.task)
+        if !mine.isEmpty {
+            let current = defaults.stringArray(forKey: "lockin.tasks.v1") ?? ["Studying", "Homework", "Work", "Writing", "Reading"]
+            defaults.set(mine + current.filter { !mine.contains($0) }, forKey: "lockin.tasks.v1")
+        }
+        defaults.set(25, forKey: "lockin.minutes.v1")
     }
 }
 

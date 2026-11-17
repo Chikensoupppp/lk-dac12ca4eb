@@ -276,13 +276,19 @@ struct FocusView: View {
                 GeometryReader { upper in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            if coachStep == nil {
-                                topBar
+                            if coachStep == nil || isTourStep {
+                                topBar.allowsHitTesting(!isTourStep)
                                 toolsHintBubble.frame(maxWidth: .infinity, alignment: .trailing)
-                                PCStatusLine(pc: pc, finder: finder, isLocked: isLocked, open: { showPC = true }, connect: { near in
-                                    showPC = true
-                                    Task { await pc.pairNearby(near) }
-                                })
+                                if coachStep == .pc && !pc.isPaired {
+                                    tourPCRow
+                                } else {
+                                    PCStatusLine(pc: pc, finder: finder, isLocked: isLocked, open: { showPC = true }, connect: { near in
+                                        showPC = true
+                                        Task { await pc.pairNearby(near) }
+                                    })
+                                    .coachGlow(coachStep == .pc, reduceMotion: reduceMotion)
+                                    .allowsHitTesting(!isTourStep)
+                                }
                             } else {
                                 coachOverlay
                             }
@@ -291,7 +297,7 @@ struct FocusView: View {
                             VStack(spacing: 4) {
                                 CountdownClockView(duration: TimeInterval(selectedMinutes * 60),
                                                    timing: timing, caption: clockCaption,
-                                                   idleFraction: flash == .finished ? 1 : Double(selectedMinutes) / 90,
+                                                   idleFraction: flash == .finished ? 1 : min(Double(selectedMinutes) / 60, 1),
                                                    flash: flash, showsMascot: coachStep == nil)
                                     .frame(width: side, height: side)
                                 if dynamicTypeSize.isAccessibilitySize {
@@ -304,6 +310,7 @@ struct FocusView: View {
                             Spacer(minLength: 8)
                             if !isLocked {
                                 WorkTaskPill(tasks: tasks) { showTasks = true }
+                                    .opacity(tourCardBelow ? 0 : 1)
                                     .overlay(Capsule().strokeBorder(coachStep == .task ? FocusPaper.ink : .clear, lineWidth: 2))
                                     .opacity(coachStep == nil || coachStep == .task ? 1 : 0.3)
                                     .disabled(coachStep != nil && coachStep != .task)
@@ -313,20 +320,27 @@ struct FocusView: View {
                     }
                     .scrollBounceBehavior(.basedOnSize)
                 }
-                if !isLocked {
-                    durationControls
+                // While the tour card sits at the bottom, it takes this space; the controls fade out under it.
+                Group {
+                    if !isLocked {
+                        durationControls
+                    }
+                    focusButton
                 }
-                focusButton
+                .opacity(tourCardBelow ? 0 : 1)
+                .allowsHitTesting(!tourCardBelow)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: tourCardBelow)
             }
             .padding(.horizontal, gutter)
             .padding(.top, compact ? 4 : 12)
             .padding(.bottom, compact ? 8 : 14)
         }
         .background(FocusPaper.page.ignoresSafeArea())
-        .sheet(isPresented: $showRestrictions, onDismiss: { if coachStep == .apps { coachStep = .hold } }) {
+        .overlay(alignment: coachStep == .mode ? .top : .bottom) { tourCard }
+        .sheet(isPresented: $showRestrictions, onDismiss: { if coachStep == .apps { coachStep = .mode } }) {
             RestrictionsSheet(restrictions: restrictions)
         }
-        .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .sheet(isPresented: $showPC, onDismiss: { if coachStep == .pc { coachStep = .hold } }) { PCSheet(pc: pc) }
         .task { if !pc.isPaired { finder.start() } }
         .onChange(of: pc.status) { _, status in
             if status == .notPaired { finder.start() } else { finder.stop() }
@@ -421,7 +435,7 @@ struct FocusView: View {
                 }
             }
             DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
-                if coachStep == .minutes { coachStep = restrictions.hasSelection ? .hold : .apps; coachReward = "NICE!" }
+                if coachStep == .minutes { coachStep = restrictions.hasSelection ? .mode : .apps; coachReward = "NICE!" }
             }
             .disabled(coachStep != nil && coachStep != .minutes)
             .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
@@ -436,8 +450,10 @@ struct FocusView: View {
     }
 
     @ViewBuilder private var modeControl: some View {
-        if coachStep == nil {
+        if coachStep == nil || coachStep == .mode {
             lockedToggle
+                .coachGlow(coachStep == .mode, reduceMotion: reduceMotion)
+                .allowsHitTesting(coachStep == nil)
         }
     }
 
@@ -576,14 +592,14 @@ struct FocusView: View {
                 }
                 .accessibilityIdentifier("test-menu")
                 #endif
-                roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
-                roundButton("person.2", size: 15, label: "Accountability partner") { showKeys = true }
+                roundButton("target", size: 17, label: "Weekly goal", glow: coachStep == .goal) { showGoals = true }
+                roundButton("person.2", size: 15, label: "Accountability partner", glow: coachStep == .partner) { showKeys = true }
                 roundButton("shield", size: 17, label: "Restrictions") { showRestrictions = true }
             }
         }
     }
 
-    private func roundButton(_ icon: String, size: CGFloat, label: String, action: @escaping () -> Void) -> some View {
+    private func roundButton(_ icon: String, size: CGFloat, label: String, glow: Bool = false, action: @escaping () -> Void) -> some View {
         Button { showToolsHint = false; action() } label: {
             Image(systemName: icon)
                 .font(.system(size: size))
@@ -592,61 +608,32 @@ struct FocusView: View {
                 .contentShape(Rectangle())
         }
         .accessibilityLabel(label)
+        .coachGlow(glow, reduceMotion: reduceMotion)
     }
 
     // MARK: Session transitions
 
     @ViewBuilder private var focusButton: some View {
         if coachStep == .hold {
-            VStack(spacing: 6) {
-                Text("Keep holding to start.")
-                    .font(.footnote)
-                    .foregroundStyle(FocusPaper.secondary)
-                Text("HOLD TO START")
-                    .font(.headline.weight(.heavy))
-                    .tracking(2)
-                    .foregroundStyle(FocusPaper.page)
-                    .frame(maxWidth: .infinity, minHeight: 60)
-                    .background(RoundedRectangle(cornerRadius: 17).fill(FocusPaper.ink))
-                    .contentShape(RoundedRectangle(cornerRadius: 17))
-                    .overlay(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 17)
-                            .fill(FocusPaper.page.opacity(0.20))
-                            .scaleEffect(x: coachPressing ? 1 : 0, anchor: .leading)
-                            .animation(reduceMotion ? nil : .linear(duration: 1.5), value: coachPressing)
-                            .allowsHitTesting(false)
-                    }
-                    .onLongPressGesture(minimumDuration: 1.5, maximumDistance: 60, perform: startCoachedSession, onPressingChanged: { coachPressing = $0 })
-                    // A quick tap must never feel dead: it starts too. Holding is the nicer way, not the only way.
-                    .simultaneousGesture(TapGesture().onEnded { startCoachedSession() })
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Hold to start")
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityAction { startCoachedSession() }
-                    .accessibilityAction(named: "Start now") { startCoachedSession() }
-                    .accessibilityHint("Hold to start. VoiceOver: double tap to start.")
-                    .accessibilityIdentifier("coach-hold-to-start")
-            }
-        } else {
-            if firstSessionHint && !isLocked && coachStep == nil {
+            SlideToLockIn(glow: true, identifier: "coach-hold-to-start", action: startCoachedSession)
+                .frame(maxWidth: .infinity)
+        } else if !isLocked {
+            if firstSessionHint && coachStep == nil {
                 Text("Start your first 25 minutes?")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(FocusPaper.secondary)
+                    .frame(maxWidth: .infinity)
                     .accessibilityLabel("Suggested: start your first 25 minute session now")
             }
-            Button(action: isLocked ? askToEnd : startFromButton) {
-                HStack {
-                    Text(isLocked ? (QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION") : "LOCK IN")
-                    Spacer(minLength: 6)
-                    if !isLocked {
-                        FocusArrow().stroke(style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
-                            .frame(width: 46, height: 24)
-                            .accessibilityHidden(true)
-                    }
-                }
+            SlideToLockIn(action: startFromButton)
+                .frame(maxWidth: .infinity)
+        } else {
+            Button(action: askToEnd) {
+                Text(QuitRules.isLocked(sessionID) ? "GET OUT EARLY" : "END SESSION")
+                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(FocusActionStyle(prominent: !isLocked))
-            .accessibilityHint(isLocked ? "Ends the focus session" : "Starts a focus session")
+            .buttonStyle(FocusActionStyle(prominent: false))
+            .accessibilityHint("Ends the focus session")
         }
     }
 
@@ -665,13 +652,64 @@ struct FocusView: View {
         }
     }
 
+    /// The tour steps explain a control the user cannot try yet. The brain talks, Next moves on.
+    private var isTourStep: Bool {
+        guard let coachStep else { return false }
+        switch coachStep {
+        case .mode, .goal, .partner, .pc, .live, .widget, .streak, .report, .quit, .plus: return true
+        default: return false
+        }
+    }
+
+    /// The tour card is at the bottom for every tour step except Locked mode (that control is down there).
+    private var tourCardBelow: Bool { isTourStep && coachStep != .mode }
+
+    /// The card for a tour step. Locked mode sits in the lower half, so its card goes to the top.
+    @ViewBuilder private var tourCard: some View {
+        if isTourStep, let step = coachStep, let place = FocusCoachStep.tour.firstIndex(of: step) {
+            TourCard(step: step, number: place + 4, total: FocusCoachStep.tour.count + 4,
+                     reduceMotion: reduceMotion, next: { tourNext() }, skip: { skipCoach() })
+                .padding(.horizontal, 12)
+                .padding(step == .mode ? .top : .bottom, step == .mode ? 76 : 12)
+                .transition(.opacity)
+        }
+    }
+
+    private func tourNext() {
+        switch coachStep {
+        case .mode: coachStep = .goal
+        case .goal: coachStep = .partner
+        case .partner: coachStep = .pc
+        case .pc: coachStep = .live
+        case .live: coachStep = .widget
+        case .widget: coachStep = .streak
+        case .streak: coachStep = .report
+        case .report: coachStep = .quit
+        case .quit: coachStep = .plus
+        case .plus: coachStep = .hold
+        default: break
+        }
+    }
+
+    /// The PC tour step when no PC is paired: a glowing "Connect a PC" that opens the real PC sheet.
+    private var tourPCRow: some View {
+        Button { showPC = true } label: {
+            Label("Connect a PC", systemImage: "desktopcomputer")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(FocusPaper.ink)
+                .frame(minHeight: 44)
+        }
+        .coachGlow(true, reduceMotion: reduceMotion)
+        .accessibilityIdentifier("coach-connect-pc")
+    }
+
     /// The coach's apps step: choose the apps to quiet, or go on without them.
     private var coachAppsButtons: some View {
         HStack(spacing: 12) {
             Button("Choose apps") { showRestrictions = true }
                 .buttonStyle(FocusActionStyle(prominent: true))
                 .accessibilityIdentifier("coach-choose-apps")
-            Button("Skip apps") { coachStep = .hold }
+            Button("Skip apps") { coachStep = .mode }
                 .buttonStyle(FocusActionStyle(prominent: false))
                 .accessibilityIdentifier("coach-skip-apps")
         }
@@ -1021,22 +1059,6 @@ private struct FocusActionStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed && !motionLimited(reduceMotion) ? 0.985 : 1)
             .animation(motionLimited(reduceMotion) ? nil : .spring(response: 0.30, dampingFraction: 1),
                        value: configuration.isPressed)
-    }
-}
-
-private struct FocusArrow: Shape {
-    func path(in rect: CGRect) -> Path {
-        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: rect.minX + rect.width * x / 46, y: rect.minY + rect.height * y / 24)
-        }
-        var arrow = Path()
-        arrow.move(to: point(2, 16))
-        arrow.addQuadCurve(to: point(20, 13), control: point(12, 19))
-        arrow.addQuadCurve(to: point(42, 8), control: point(29, 6))
-        arrow.move(to: point(33, 3))
-        arrow.addLine(to: point(42, 8))
-        arrow.addLine(to: point(35, 15))
-        return arrow
     }
 }
 
