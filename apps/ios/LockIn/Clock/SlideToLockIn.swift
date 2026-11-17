@@ -24,6 +24,12 @@ struct SlideToLockIn: View {
         ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") })
     }
 
+    private var labelText: Text {
+        Text(verbatim: label)
+            .font(AppFont.font(15, .heavy))
+            .tracking(2)
+    }
+
     var body: some View {
         let progress = travel > 0 ? drag / travel : 0
         ZStack(alignment: .leading) {
@@ -31,9 +37,7 @@ struct SlideToLockIn: View {
             Capsule().fill(FocusPaper.page.opacity(0.14))
                 .frame(width: knob + pad * 2 + drag)
                 .opacity(drag > 0 ? 1 : 0)
-            Text(label)
-                .tracking(2)
-                .environment(\.font, AppFont.font(15, .heavy))
+            labelText
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .foregroundStyle(FocusPaper.page)
