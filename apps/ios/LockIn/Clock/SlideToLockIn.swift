@@ -32,7 +32,7 @@ struct SlideToLockIn: View {
                 .frame(width: knob + pad * 2 + drag)
                 .opacity(drag > 0 ? 1 : 0)
             Text(label)
-                .font(.subheadline.weight(.heavy))
+                .font(AppFont.font(15, .heavy))
                 .tracking(2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
