@@ -31,7 +31,8 @@ struct SlideToLockIn: View {
     }
 
     var body: some View {
-        let progress = travel > 0 ? drag / travel : 0
+        let progress: CGFloat = travel > 0 ? drag / travel : 0
+        let labelFade: Double = Double(1 - min(progress * 2, 1))
         ZStack(alignment: .leading) {
             Capsule().fill(FocusPaper.ink)
             Capsule().fill(FocusPaper.page.opacity(0.14))
@@ -41,7 +42,7 @@ struct SlideToLockIn: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .foregroundStyle(FocusPaper.page)
-                .opacity(1 - min(progress * 2, 1))
+                .opacity(labelFade)
                 .frame(maxWidth: .infinity)
                 .padding(.leading, knob + pad)
                 .padding(.trailing, 14)
