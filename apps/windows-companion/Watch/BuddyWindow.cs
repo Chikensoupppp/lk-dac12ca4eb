@@ -63,10 +63,29 @@ public sealed class BuddyWindow : Form
     /// <summary>Raised on the buddy's thread when the user taps a button on its question.</summary>
     public event Action<AskChoice>? Chosen;
 
+    // Dragging: press on the brain (not on a button) and move. The spot is saved and used next time.
+    // Clicks on see-through pixels already fall through to the window behind, so only the drawn
+    // brain and bubble can be grabbed.
+    private Point? dragFrom;
+    private Point dragStart;
+    private bool dragged;
+
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        Cursor = scene.HitTest(e.Location) == AskChoice.None ? Cursors.Default : Cursors.Hand;
+        if (dragFrom is { } from && (e.Button & MouseButtons.Left) != 0)
+        {
+            var dx = Cursor.Position.X - from.X;
+            var dy = Cursor.Position.Y - from.Y;
+            if (dragged || Math.Abs(dx) + Math.Abs(dy) > 4)
+            {
+                dragged = true;
+                Location = Clamp(new Point(dragStart.X + dx, dragStart.Y + dy));
+                Render();
+            }
+            return;
+        }
+        Cursor = scene.HitTest(e.Location) == AskChoice.None ? Cursors.SizeAll : Cursors.Hand;
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -74,7 +93,58 @@ public sealed class BuddyWindow : Form
         base.OnMouseDown(e);
         if (e.Button != MouseButtons.Left) return;
         var choice = scene.HitTest(e.Location);
-        if (choice != AskChoice.None) Chosen?.Invoke(choice);
+        if (choice != AskChoice.None) { Chosen?.Invoke(choice); return; }
+        dragFrom = Cursor.Position;
+        dragStart = Location;
+        dragged = false;
+        Capture = true;
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (dragFrom is not null && dragged) SavePosition(Location);
+        dragFrom = null;
+        dragged = false;
+        Capture = false;
+    }
+
+    /// <summary>Keeps the whole buddy inside the work area of the screen it is on.</summary>
+    private Point Clamp(Point p)
+    {
+        var area = Screen.FromPoint(new Point(p.X + Width / 2, p.Y + Height / 2)).WorkingArea;
+        return new Point(Math.Clamp(p.X, area.Left, area.Right - Width), Math.Clamp(p.Y, area.Top, area.Bottom - Height));
+    }
+
+    private static string PositionFile => Path.Combine(
+        Environment.GetEnvironmentVariable("LOCKIN_STATE_DIR")
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockIn"),
+        "buddy-position.txt");
+
+    private static void SavePosition(Point p)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(PositionFile)!);
+            File.WriteAllText(PositionFile, $"{p.X},{p.Y}");
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    /// <summary>The saved spot, if it is still on a screen (a monitor may have been unplugged).</summary>
+    private static Point? LoadPosition(Size size)
+    {
+        try
+        {
+            if (!File.Exists(PositionFile)) return null;
+            var parts = File.ReadAllText(PositionFile).Split(',');
+            if (parts.Length != 2 || !int.TryParse(parts[0], out var x) || !int.TryParse(parts[1], out var y)) return null;
+            var rect = new Rectangle(x, y, size.Width, size.Height);
+            return Screen.AllScreens.Any(s => s.WorkingArea.IntersectsWith(rect)) ? new Point(x, y) : null;
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
     }
 
     public BuddyWindow()
@@ -84,7 +154,7 @@ public sealed class BuddyWindow : Form
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
         Size = new Size(BuddyScene.Width, BuddyScene.Height);
-        Location = new Point(
+        Location = LoadPosition(Size) ?? new Point(
             Screen.PrimaryScreen!.WorkingArea.Right - Width - 12,
             Screen.PrimaryScreen.WorkingArea.Bottom - Height - 12);
         Visible = false;

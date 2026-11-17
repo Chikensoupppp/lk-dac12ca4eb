@@ -61,6 +61,7 @@ if (!firstInstance && !args.Any(a => a.StartsWith("--draw") || a == "--browser-p
 
 var stateStore = new CompanionStateStore(stateDir);
 LockIn.Companion.Watch.PartnerShare.Init(stateDir);
+LockIn.Companion.Watch.WeekStore.Init(stateDir);
 var certificate = stateStore.LoadOrCreateCertificate();
 var fingerprint = CompanionStateStore.Fingerprint(certificate);
 var pairing = new PairingService(stateStore, TimeProvider.System);
@@ -216,6 +217,12 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
         breakSecondsLeft = status.Value.BreakLeft
     });
 });
+
+// The phone's week, for the "This week" row on the PC window. Sent when a session ends.
+app.MapPost("/session/week", (LockIn.Companion.Watch.WeekSummary summary) =>
+    LockIn.Companion.Watch.WeekStore.Set(summary)
+        ? Results.Ok(new { saved = true })
+        : Results.BadRequest(new { error = "daySeconds must have 7 numbers" }));
 
 // The partner paused an app or site. The phone forwards it; it works while a session runs.
 app.MapPost("/session/partner-pause", (PartnerPauseRequest request, SessionWatch watch) =>

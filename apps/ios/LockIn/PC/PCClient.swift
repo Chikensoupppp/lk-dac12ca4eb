@@ -79,6 +79,13 @@ final class PCClient: PCTransport {
         guard status == 200 else { throw PCError.rejected(status) }
     }
 
+    func sendWeek(_ week: PCWeek, link: PCLinkRecord) async throws {
+        let (_, status) = try await send(
+            hosts: link.hosts, port: link.port, fingerprint: link.fingerprint,
+            path: "/session/week", token: link.token, body: week)
+        guard status == 200 else { throw PCError.rejected(status) }
+    }
+
     func stopSession(id: UUID, link: PCLinkRecord) async throws {
         struct Body: Encodable { let id: String }
         let (_, status) = try await send(

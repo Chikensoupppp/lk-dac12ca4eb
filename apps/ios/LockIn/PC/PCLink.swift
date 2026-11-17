@@ -144,6 +144,12 @@ final class PCLink: ObservableObject {
         enqueue { [self] in try? await transport.partnerPause(id: id, appKey: appKey, seconds: seconds, link: link) }
     }
 
+    /// Sends the week summary for the PC window's "This week" row. Does nothing without a paired PC.
+    func sendWeek(_ week: PCWeek) {
+        guard let link else { return }
+        enqueue { [self] in try? await transport.sendWeek(week, link: link) }
+    }
+
     /// Call when a session ends early or finishes. Safe to call more than once.
     func sessionEnded(_ id: UUID) {
         guard let link else { return }

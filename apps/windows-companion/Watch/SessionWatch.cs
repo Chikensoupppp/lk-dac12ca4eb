@@ -80,6 +80,7 @@ public sealed class SessionWatch : IDisposable
 
     // A short line that overrides the clock mood for a few seconds ("Got it. I'll leave YouTube alone.").
     private string? sayText;
+    private DateTimeOffset partnerSayAt;
     private BuddyMood sayMood;
     private DateTimeOffset sayUntil;
 
@@ -451,7 +452,17 @@ public sealed class SessionWatch : IDisposable
             // A pause the partner set: keep that app or site minimized until it runs out.
             if (PartnerShare.On && key is not null && front is not null
                 && partnerPaused.TryGetValue(key, out var pausedTo) && now < pausedTo)
+            {
                 FrontWindow.Minimize(front.Handle);
+                if (now >= partnerSayAt)
+                {
+                    // Say why the window went away, so it is not a silent surprise.
+                    sayText = $"Your partner paused {Distractions.FriendlyName(key)}. Back in {Math.Max(1, (int)Math.Ceiling((pausedTo - now).TotalMinutes))} min.";
+                    sayMood = BuddyMood.Curious;
+                    sayUntil = now + SayTime;
+                    partnerSayAt = now + TimeSpan.FromSeconds(30);
+                }
+            }
             var off = isDistraction && key is not null && !allowed.Contains(key);
             work.Seen(front, ownProcessId);
 

@@ -491,6 +491,7 @@ struct FocusView: View {
                 // The streak screen is not shown for it.
                 StreakStore.record()
                 FocusLog.recordFinished(minutes: expiredMinutes)
+                sendWeekToPC()
             }
             goals.reschedule()
             checkReport()
@@ -815,6 +816,23 @@ struct FocusView: View {
         Task { await PartnerCloud.publish(status, keys: keys) }
     }
 
+    /// The "This week" row on the PC: this week's minutes per day (Monday first), the goal, the streak
+    /// and last week's total. Sent after every session; does nothing without a paired PC.
+    private func sendWeekToPC() {
+        let now = Date.now
+        let cal = FocusLog.calendar
+        let week = FocusLog.week(of: now)
+        let last = FocusLog.week(of: cal.date(byAdding: .day, value: -7, to: now) ?? now)
+        let today = min(max(cal.dateComponents([.day], from: week.start, to: cal.startOfDay(for: now)).day ?? 0, 0), 6)
+        pc.sendWeek(PCWeek(
+            daySeconds: week.days.map { $0.minutes * 60 },
+            goalSeconds: (goals.goal(forWeekOf: now) ?? 0) * 3600,
+            streak: StreakStore.current(now: now),
+            todaySeconds: week.days[today].minutes * 60,
+            todayIndex: today,
+            lastWeekSeconds: last.minutes * 60))
+    }
+
     private func checkKeyRequests() {
         guard !keys.friends.isEmpty else { return }
         Task {
@@ -872,6 +890,7 @@ struct FocusView: View {
         let focused = focusedMinutesSoFar
         QuitRules.recordEarlyEnd()
         FocusLog.recordQuit(minutes: focused)
+        sendWeekToPC()
         QuitRules.markLocked(nil)
         store.clear()
         restrictions.end()
@@ -907,6 +926,7 @@ struct FocusView: View {
         FocusLog.recordFinished(minutes: Int((session.duration / 60).rounded()))
         goals.reschedule()
         let firstToday = StreakStore.record()
+        sendWeekToPC()
         let minutes = Int((session.duration / 60).rounded())
         streakMinutes = minutes
         pendingStreak = firstToday && streakScreenAllowed

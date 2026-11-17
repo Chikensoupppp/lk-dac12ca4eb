@@ -80,6 +80,16 @@ struct PCSessionExtras: Equatable {
 }
 
 /// What the PC sees during a session, for the line under the clock.
+/// The phone's week for the PC window's "This week" row. Seconds; Monday first.
+struct PCWeek: Codable, Equatable {
+    var daySeconds: [Int]
+    var goalSeconds: Int
+    var streak: Int
+    var todaySeconds: Int
+    var todayIndex: Int
+    var lastWeekSeconds: Int
+}
+
 struct PCActivity: Codable, Equatable {
     /// The app in front on the PC, by its plain name ("Docs", "YouTube").
     let app: String?
@@ -109,6 +119,8 @@ protocol PCTransport {
     func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity?
     /// The partner paused an app or site on this PC.
     func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws
+    /// The week summary for the PC window.
+    func sendWeek(_ week: PCWeek, link: PCLinkRecord) async throws
 }
 
 extension PCTransport {
@@ -118,4 +130,5 @@ extension PCTransport {
 
     func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity? { nil }
     func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws {}
+    func sendWeek(_ week: PCWeek, link: PCLinkRecord) async throws {}
 }

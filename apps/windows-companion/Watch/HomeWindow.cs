@@ -29,7 +29,115 @@ public sealed class HomeWindow : Form
 
     // Layout in 96-dpi units; scaled by Px() for drawing and placing.
     private const int W = 440, HeroH = 344, RowH = 66, FooterH = 62, Rows = 3;
-    private const int RingX = 220, RingY = 148, RingR = 112;
+    private const int RingX = 220, RingY = 148, RingR = 112, WeekOpenH = 232;
+
+    /// <summary>The phone's week, once the phone has sent it. Adds a row above the footer.</summary>
+    private WeekSummary? week;
+    /// <summary>Whether the week row is folded open. Remembered between runs; shut at first.</summary>
+    private bool weekOpen;
+    /// <summary>Preview pictures set this to draw the row open or shut.</summary>
+    internal static bool? PreviewWeekOpen;
+    private readonly WeekTab weekTab = new();
+    private int WeekRowH => week is null ? 0 : weekOpen ? WeekOpenH : RowH;
+    private int BodyH => HeroH + RowH * Rows + WeekRowH;
+    private string WeekOpenFile => Path.Combine(stateDir, "week-open");
+
+    /// <summary>Picks up a new week from the phone: grows the window and moves the footer controls.</summary>
+    private void SyncWeek()
+    {
+        var latest = WeekStore.Current;
+        var changed = (latest is null) != (week is null);
+        week = latest;
+        if (changed) LayoutWeek();
+        Invalidate();
+    }
+
+    private void ToggleWeek()
+    {
+        weekOpen = !weekOpen;
+        try
+        {
+            if (weekOpen) File.WriteAllText(WeekOpenFile, "1");
+            else File.Delete(WeekOpenFile);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        LayoutWeek();
+        Invalidate();
+    }
+
+    /// <summary>Sizes the window for the week row and puts the tab and the footer controls in place.</summary>
+    private void LayoutWeek()
+    {
+        ClientSize = new Size(Px(W), Px(BodyH + FooterH));
+        var footerTop = Px(BodyH);
+        startup.Location = new Point(Px(26), footerTop + (Px(FooterH) - startup.Height) / 2);
+        quit.Location = new Point(ClientSize.Width - Px(24) - quit.PreferredWidth, footerTop + (Px(FooterH) - quit.PreferredHeight) / 2);
+        weekTab.Open = weekOpen;
+        weekTab.Visible = week is not null;
+        weekTab.Size = new Size(Px(30), Px(30));
+        weekTab.Location = new Point(ClientSize.Width - Px(24) - weekTab.Width, Px(HeroH + RowH * 3) + (Px(RowH) - weekTab.Height) / 2);
+        weekTab.AccessibleName = weekOpen ? "Hide this week" : "Show this week";
+        weekTab.Invalidate();
+    }
+
+    /// <summary>The round tab on the week row. Click, Enter or Space folds the chart open or shut.</summary>
+    private sealed class WeekTab : Control
+    {
+        public bool Open;
+        private bool hover;
+        public event Action? Toggled;
+
+        public WeekTab()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            BackColor = Paper;
+            Cursor = Cursors.Hand;
+            TabStop = true;
+            AccessibleRole = AccessibleRole.PushButton;
+        }
+
+        protected override void OnClick(EventArgs e) { base.OnClick(e); Toggled?.Invoke(); }
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (e.KeyCode is Keys.Enter or Keys.Space) { e.Handled = true; Toggled?.Invoke(); }
+        }
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hover = true; Invalidate(); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover = false; Invalidate(); }
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var r = new RectangleF(1, 1, Width - 3, Height - 3);
+            using (var fill = new SolidBrush(hover ? Color.FromArgb(0xE9, 0xE3, 0xD7) : Color.FromArgb(0xEF, 0xEA, 0xE0)))
+                g.FillEllipse(fill, r);
+            using (var edge = new Pen(Focused ? Ink : Line, Focused ? 1.6f : 1f))
+                g.DrawEllipse(edge, r);
+            var cx = Width / 2f; var cy = Height / 2f; var s = Width * 0.16f;
+            using var pen = new Pen(Ink, Math.Max(1.6f, Width / 18f)) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+            if (Open) g.DrawLines(pen, new[] { new PointF(cx - s, cy + s / 2), new PointF(cx, cy - s / 2), new PointF(cx + s, cy + s / 2) });
+            else g.DrawLines(pen, new[] { new PointF(cx - s, cy - s / 2), new PointF(cx, cy + s / 2), new PointF(cx + s, cy - s / 2) });
+        }
+    }
+
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        // The whole week header folds the chart too, not only the small tab.
+        if (week is not null && e.Button == MouseButtons.Left
+            && e.Y >= Px(HeroH + RowH * 3) && e.Y < Px(HeroH + RowH * 4))
+            ToggleWeek();
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        Cursor = week is not null && e.Y >= Px(HeroH + RowH * 3) && e.Y < Px(HeroH + RowH * 4) ? Cursors.Hand : Cursors.Default;
+    }
 
     private readonly Func<PairingOffer> openPairing;
     private readonly Func<IReadOnlyList<PairedDevice>> devices;
@@ -93,7 +201,9 @@ public sealed class HomeWindow : Form
         Text = "Nogbox";
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
-        ClientSize = new Size(Px(W), Px(HeroH + RowH * Rows + FooterH));
+        week = WeekStore.Current;
+        weekOpen = PreviewWeekOpen ?? File.Exists(WeekOpenFile);
+        ClientSize = new Size(Px(W), Px(BodyH + FooterH));
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Paper;
         ForeColor = Ink;
@@ -138,7 +248,7 @@ public sealed class HomeWindow : Form
         pauseButton.Click += (_, _) => { if (this.pauseBuddy()) UpdateState(); };
         Controls.Add(pauseButton);
 
-        var footerTop = Px(HeroH + RowH * Rows);
+        var footerTop = Px(BodyH);
         startup.Size = new Size(Px(44), Px(24));
         startup.Location = new Point(Px(26), footerTop + (Px(FooterH) - startup.Height) / 2);
         startup.On = Installer.StartsWithWindows();
@@ -149,6 +259,10 @@ public sealed class HomeWindow : Form
         quit.Location = new Point(ClientSize.Width - Px(24) - quit.PreferredWidth, footerTop + (Px(FooterH) - quit.PreferredHeight) / 2);
         quit.LinkClicked += (_, _) => Quit();
         Controls.Add(quit);
+
+        weekTab.Toggled += ToggleWeek;
+        Controls.Add(weekTab);
+        LayoutWeek();
 
         // Tray: closing the window keeps Nogbox working.
         tray.Icon = Icon ?? SystemIcons.Application;
@@ -224,11 +338,48 @@ public sealed class HomeWindow : Form
         UpdateState();
     }
 
+    // Finish toast: remembers the running session, and when it runs out shows "Done. 25 minutes locked in."
+    // It waits up to 15 s for the phone's fresh week so the second line is up to date. Early ends get none.
+    private string? watchedId;
+    private DateTimeOffset watchedEnds;
+    private int watchedMinutes;
+    private DateTimeOffset? toastDue;
+    private int toastMinutes;
+    private DateTimeOffset weekBefore;
+
+    private void CheckFinished(FocusSession current, DateTimeOffset now)
+    {
+        if (current.State == "active" && current.EndsAt is { } ends && now < ends)
+        {
+            watchedId = current.Id;
+            watchedEnds = ends;
+            watchedMinutes = Math.Max(1, (int)Math.Round(current.DurationSeconds / 60.0));
+        }
+        else if (watchedId is not null)
+        {
+            if (now >= watchedEnds - TimeSpan.FromSeconds(15))
+            {
+                toastDue = now + TimeSpan.FromSeconds(15);
+                toastMinutes = watchedMinutes;
+                weekBefore = WeekStore.LastSet;
+            }
+            watchedId = null;
+        }
+        if (toastDue is { } due && (now >= due || WeekStore.LastSet > weekBefore))
+        {
+            toastDue = null;
+            var w = WeekStore.Current;
+            var line = w is null ? "Nice work." : $"Today {WeekStore.Hours(w.TodaySeconds)} · {WeekStore.Hours(w.TotalSeconds)} this week";
+            tray.ShowBalloonTip(6000, toastMinutes == 1 ? "Done. 1 minute locked in." : $"Done. {toastMinutes} minutes locked in.", line, ToolTipIcon.None);
+        }
+    }
+
     private void UpdateState()
     {
         var paired = devices();
         var now = DateTimeOffset.UtcNow;
         var current = session();
+        CheckFinished(current, now);
         bigTime = false;
         onBreak = false;
 
@@ -299,7 +450,7 @@ public sealed class HomeWindow : Form
             : pause.BreakEnds is { } b ? $"Resting \u00b7 back in {(int)(b - now).TotalMinutes}:{(b - now).Seconds:00}"
             : pause.Active && !pause.CanPause ? "On \u00b7 break used" : "On";
         AccessibleDescription = $"{title}. {subtitle}. {rowTitle}: {rowStatus}.";
-        Invalidate(new Rectangle(0, 0, ClientSize.Width, Px(HeroH + RowH * Rows)));
+        SyncWeek();
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -363,14 +514,14 @@ public sealed class HomeWindow : Form
             }
             if (brain is not null)
             {
-                var bw = Pf(104);
+                var bw = Pf(92);
                 var bh = bw * brain.Height / brain.Width;
-                g.DrawImage(brain, c.X - bw / 2, c.Y - Pf(88), bw, bh);
+                g.DrawImage(brain, c.X - bw / 2, c.Y - bh / 2 - Pf(8), bw, bh);
             }
-            using (var timeFont = bigTime ? new Font("Segoe UI Semibold", 30f) : new Font("Segoe UI Semibold", 15f))
+            using (var timeFont = bigTime ? new Font("Segoe UI Semibold", 26f) : new Font("Segoe UI Semibold", 15f))
             {
                 var timeH = TextRenderer.MeasureText(g, title, timeFont, Size.Empty, TextFormatFlags.NoPadding).Height;
-                TextRenderer.DrawText(g, title, timeFont, new Rectangle((int)(c.X - r * 0.8f), (int)(c.Y + Pf(30)), (int)(r * 1.6f), timeH), Ink,
+                TextRenderer.DrawText(g, title, timeFont, new Rectangle((int)(c.X - r * 0.8f), (int)(c.Y + Pf(34)), (int)(r * 1.6f), timeH), Ink,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
             }
         }
@@ -446,9 +597,143 @@ public sealed class HomeWindow : Form
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
+        // This week, sent by the phone. A header row that is always there, with a small round tab that
+        // folds the chart open and shut. Shut: total, daily average and a tiny 7-bar sparkline. Open:
+        // the total against the goal, then the full chart (plain bars, time above each, dashed average).
+        if (week is { } wk)
+        {
+            var wTop = Px(HeroH + RowH * 3);
+            using (var line = new Pen(Line, 1))
+                g.DrawLine(line, 0, wTop, ClientSize.Width, wTop);
+            using var rowFont = new Font("Segoe UI", 11f);
+            using var smallFont = new Font("Segoe UI", 9.5f);
+            using var totalFont = new Font("Segoe UI Semibold", 18f);
+            using var valueFont = new Font("Segoe UI", 8.5f);
+            var faint = Color.FromArgb(0xE4, 0xDE, 0xD3);
+            var tan = Color.FromArgb(0xE6, 0xC4, 0x93);
+            var right = ClientSize.Width - Px(24);
+            var most = Math.Max(1, wk.DaySeconds.Max());
+            var avg = wk.TotalSeconds / (wk.TodayIndex + 1);
+
+            // Row mark: three small pills, like the chart.
+            using (var markBrush = new SolidBrush(Ink))
+            {
+                var by = wTop + Pf(40);
+                foreach (var (dx, h) in new[] { (0f, 8f), (6f, 15f), (12f, 11f) })
+                    using (var p = Pill(Pf(23) + Pf(dx), by - Pf(h), Pf(3.5f), Pf(h)))
+                        g.FillPath(markBrush, p);
+            }
+            TextRenderer.DrawText(g, "This week", rowFont, new Point(Px(62), wTop + Px(12)), Ink, TextFormatFlags.NoPadding);
+
+            string sub;
+            if (!weekOpen)
+                sub = $"{WeekStore.Hours(wk.TotalSeconds)} · daily avg {WeekStore.Hours(avg)}";
+            else
+            {
+                // Like Screen Time: the daily average so far, against the one from last week.
+                sub = $"Daily avg {WeekStore.Hours(avg)}";
+                if (wk.LastWeekSeconds > 0)
+                {
+                    var lastAvg = wk.LastWeekSeconds / 7.0;
+                    var pct = (int)Math.Round((avg - lastAvg) / lastAvg * 100);
+                    sub += pct == 0 ? " · same as last week" : $" · {(pct > 0 ? "↑" : "↓")} {Math.Abs(pct)}% from last week";
+                }
+            }
+            TextRenderer.DrawText(g, sub, smallFont, new Point(Px(62), wTop + Px(36)), Soft, TextFormatFlags.NoPadding);
+
+            if (!weekOpen)
+            {
+                // Sparkline: seven tiny bars just left of the tab, today in deep amber.
+                var sw = Pf(4); var sg = Pf(3); var sh = Pf(20);
+                var sx = weekTab.Left - Pf(14) - 7 * sw - 6 * sg;
+                var sb = wTop + Pf(RowH) / 2 + sh / 2;
+                for (var i = 0; i < 7; i++)
+                {
+                    var future = i > wk.TodayIndex;
+                    var h = future || wk.DaySeconds[i] <= 0 ? Pf(2) : Math.Max(Pf(3), sh * (float)(wk.DaySeconds[i] / (double)most));
+                    using var b = new SolidBrush(future ? faint : i == wk.TodayIndex ? Accent : tan);
+                    using var p = TopRounded(sx + i * (sw + sg), sb - h, sw, h, Pf(2));
+                    g.FillPath(b, p);
+                }
+            }
+            else
+            {
+                // Total against the goal.
+                var y0 = wTop + Px(RowH) + Px(4);
+                var total = WeekStore.Hours(wk.TotalSeconds);
+                var tw = TextRenderer.MeasureText(g, total, totalFont, Size.Empty, TextFormatFlags.NoPadding).Width;
+                TextRenderer.DrawText(g, total, totalFont, new Point(Px(62), y0), Ink, TextFormatFlags.NoPadding);
+                if (wk.GoalSeconds > 0)
+                {
+                    TextRenderer.DrawText(g, $"of {WeekStore.Hours(wk.GoalSeconds)}", smallFont,
+                        new Point(Px(62) + tw + Px(6), y0 + Px(11)), Soft, TextFormatFlags.NoPadding);
+                    var barLen = Pf(120);
+                    var bx = right - barLen;
+                    var byy = y0 + Pf(18);
+                    var done = (float)Math.Min(1, wk.TotalSeconds / (double)wk.GoalSeconds);
+                    using (var trackB = new SolidBrush(faint))
+                    using (var t = Pill(bx, byy, barLen, Pf(6)))
+                        g.FillPath(trackB, t);
+                    if (done > 0)
+                        using (var fillB = new SolidBrush(Accent))
+                        using (var f = Pill(bx, byy, Math.Max(Pf(6), barLen * done), Pf(6)))
+                            g.FillPath(fillB, f);
+                    var label = done >= 1 ? "Goal met" : $"{(int)(done * 100)}% of goal";
+                    var lw = TextRenderer.MeasureText(g, label, valueFont, Size.Empty, TextFormatFlags.NoPadding).Width;
+                    TextRenderer.DrawText(g, label, valueFont, new Point(right - lw, (int)byy - Px(17)), done >= 1 ? Accent : Soft, TextFormatFlags.NoPadding);
+                }
+
+                // The chart.
+                var left = Px(62);
+                var colW = (right - left) / 7f;
+                var barW = Pf(18);
+                var maxH = Pf(56);
+                var floor = wTop + Px(WeekOpenH) - Px(28);
+                var letters = "MTWTFSS";
+                using (var basePen = new Pen(faint, Pf(1f)))
+                    g.DrawLine(basePen, left, floor, right, floor);
+                if (avg > 0)
+                {
+                    var ay = floor - maxH * (float)(avg / (double)most);
+                    using (var dash = new Pen(Soft, Pf(1.2f)) { DashPattern = new[] { 3f, 3f } })
+                        g.DrawLine(dash, left, ay, right - Pf(22), ay);
+                    using var avgFont = new Font("Segoe UI", 8f);
+                    TextRenderer.DrawText(g, "avg", avgFont, new Point((int)(right - Pf(19)), (int)(ay - Pf(7))), Soft, TextFormatFlags.NoPadding);
+                }
+                for (var i = 0; i < 7; i++)
+                {
+                    var cx = left + colW * i + colW / 2;
+                    var isToday = i == wk.TodayIndex;
+                    var future = i > wk.TodayIndex;
+                    if (!future)
+                    {
+                        var secs = wk.DaySeconds[i];
+                        var h = secs <= 0 ? 0 : Math.Max(Pf(6), maxH * (float)(secs / (double)most));
+                        if (h > 0)
+                            using (var fill = new SolidBrush(isToday ? Accent : tan))
+                            using (var shape = TopRounded(cx - barW / 2, floor - h, barW, h, Pf(5)))
+                                g.FillPath(fill, shape);
+                        // A paper patch behind the number, so the average line never runs through it.
+                        var text = secs <= 0 ? "0" : WeekStore.Hours(secs);
+                        var txw = TextRenderer.MeasureText(g, text, valueFont, Size.Empty, TextFormatFlags.NoPadding).Width + Px(4);
+                        var tr = new Rectangle((int)(cx - txw / 2f), (int)(floor - h) - Px(17), txw, Px(14));
+                        using (var patch = new SolidBrush(Paper))
+                            g.FillRectangle(patch, tr);
+                        TextRenderer.DrawText(g, text, valueFont, tr, isToday ? Accent : Soft,
+                            TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
+                    }
+                    using var dayFont = new Font("Segoe UI", 8.5f, isToday ? FontStyle.Bold : FontStyle.Regular);
+                    TextRenderer.DrawText(g, letters[i].ToString(), dayFont,
+                        new Rectangle((int)(cx - colW / 2), (int)floor + Px(6), (int)colW, Px(14)),
+                        future ? Color.FromArgb(0xB9, 0xB2, 0xA4) : isToday ? Ink : Soft,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
+                }
+            }
+        }
+
         // Footer
         using (var foot = new SolidBrush(FooterPaper))
-            g.FillRectangle(foot, 0, Px(HeroH + RowH * Rows) + 1, ClientSize.Width, Px(FooterH));
+            g.FillRectangle(foot, 0, Px(BodyH) + 1, ClientSize.Width, Px(FooterH));
         using (var footFont = new Font("Segoe UI", 10.5f))
             TextRenderer.DrawText(g, "Start with Windows", footFont,
                 new Rectangle(startup.Right + Px(10), startup.Top - Px(2), Px(200), startup.Height + Px(4)), Ink,
@@ -541,6 +826,37 @@ public sealed class HomeWindow : Form
     {
         if (disposing) { refresh.Dispose(); tray.Dispose(); qr?.Dispose(); brain?.Dispose(); phoneMenu.Dispose(); }
         base.Dispose(disposing);
+    }
+
+    /// <summary>A bar with round top corners and a flat bottom, so it stands on the baseline.</summary>
+    private static GraphicsPath TopRounded(float x, float y, float w, float h, float r)
+    {
+        r = Math.Min(r, Math.Min(w / 2, h));
+        var p = new GraphicsPath();
+        p.AddArc(x, y, 2 * r, 2 * r, 180, 90);
+        p.AddArc(x + w - 2 * r, y, 2 * r, 2 * r, 270, 90);
+        p.AddLine(x + w, y + h, x, y + h);
+        p.CloseFigure();
+        return p;
+    }
+
+    /// <summary>A rectangle with fully round ends (a capsule), vertical or horizontal.</summary>
+    private static GraphicsPath Pill(float x, float y, float w, float h)
+    {
+        var p = new GraphicsPath();
+        var d = Math.Min(w, h);
+        if (h >= w)
+        {
+            p.AddArc(x, y, d, d, 180, 180);
+            p.AddArc(x, y + h - d, d, d, 0, 180);
+        }
+        else
+        {
+            p.AddArc(x, y, d, d, 90, 180);
+            p.AddArc(x + w - d, y, d, d, 270, 180);
+        }
+        p.CloseFigure();
+        return p;
     }
 
     private static GraphicsPath Rounded(Rectangle r, int radius)
@@ -755,6 +1071,15 @@ public sealed class HomeWindow : Form
             Draw("home-break", new[] { phone }, running, false, "Studying", true, (true, false, start.AddMinutes(4).AddSeconds(12)));
             Draw("home-buddyoff", new[] { phone }, idle, false, null, false);
             Draw("home-locked", new[] { phone }, new FocusSession("s", "active", 2700, start, start.AddMinutes(45)), false);
+            // Last: the week row, with sample numbers (Mon..Thu so far, Thursday is today).
+            WeekStore.Set(new WeekSummary(new[] { 3900, 5400, 6300, 2400, 0, 0, 0 }, 36000, 3, 2400, 3, 30000));
+            PreviewWeekOpen = false;
+            Draw("home-week-shut", new[] { phone }, running, false, "Studying · library desk");
+            PreviewWeekOpen = true;
+            Draw("home-week-open", new[] { phone }, running, false, "Studying · library desk");
+            WeekStore.Set(new WeekSummary(new[] { 9000, 21600, 3600, 0, 14400, 0, 0 }, 72000, 0, 14400, 4));
+            Draw("home-week-long", new[] { phone }, running, false, "Studying");
+            PreviewWeekOpen = null;
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
