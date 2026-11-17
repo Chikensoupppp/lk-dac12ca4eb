@@ -38,7 +38,7 @@ public sealed class HomeWindow : Form
     /// <summary>Preview pictures set this to draw the row open or shut.</summary>
     internal static bool? PreviewWeekOpen;
     private readonly WeekTab weekTab = new();
-    private int WeekRowH => week is null ? 0 : weekOpen ? WeekOpenH : RowH;
+    private int WeekRowH => weekOpen ? WeekOpenH : RowH;
     private int BodyH => HeroH + RowH * Rows + WeekRowH;
     private string WeekOpenFile => Path.Combine(stateDir, "week-open");
 
@@ -74,7 +74,7 @@ public sealed class HomeWindow : Form
         startup.Location = new Point(Px(26), footerTop + (Px(FooterH) - startup.Height) / 2);
         quit.Location = new Point(ClientSize.Width - Px(24) - quit.PreferredWidth, footerTop + (Px(FooterH) - quit.PreferredHeight) / 2);
         weekTab.Open = weekOpen;
-        weekTab.Visible = week is not null;
+        weekTab.Visible = true;
         weekTab.Size = new Size(Px(30), Px(30));
         weekTab.Location = new Point(ClientSize.Width - Px(24) - weekTab.Width, Px(HeroH + RowH * 3) + (Px(RowH) - weekTab.Height) / 2);
         weekTab.AccessibleName = weekOpen ? "Hide this week" : "Show this week";
@@ -128,7 +128,7 @@ public sealed class HomeWindow : Form
     {
         base.OnMouseClick(e);
         // The whole week header folds the chart too, not only the small tab.
-        if (week is not null && e.Button == MouseButtons.Left
+        if (e.Button == MouseButtons.Left
             && e.Y >= Px(HeroH + RowH * 3) && e.Y < Px(HeroH + RowH * 4))
             ToggleWeek();
     }
@@ -136,7 +136,7 @@ public sealed class HomeWindow : Form
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        Cursor = week is not null && e.Y >= Px(HeroH + RowH * 3) && e.Y < Px(HeroH + RowH * 4) ? Cursors.Hand : Cursors.Default;
+        Cursor = e.Y >= Px(HeroH + RowH * 3) && e.Y < Px(HeroH + RowH * 4) ? Cursors.Hand : Cursors.Default;
     }
 
     private readonly Func<PairingOffer> openPairing;
@@ -600,7 +600,9 @@ public sealed class HomeWindow : Form
         // This week, sent by the phone. A header row that is always there, with a small round tab that
         // folds the chart open and shut. Shut: total, daily average and a tiny 7-bar sparkline. Open:
         // the total against the goal, then the full chart (plain bars, time above each, dashed average).
-        if (week is { } wk)
+        // With no week from the phone yet, the row still shows, empty, and says so.
+        var noData = week is null;
+        var wk = week ?? new WeekSummary(new int[7], 0, 0, 0, ((int)DateTime.Now.DayOfWeek + 6) % 7);
         {
             var wTop = Px(HeroH + RowH * 3);
             using (var line = new Pen(Line, 1))
@@ -626,7 +628,9 @@ public sealed class HomeWindow : Form
             TextRenderer.DrawText(g, "This week", rowFont, new Point(Px(62), wTop + Px(12)), Ink, TextFormatFlags.NoPadding);
 
             string sub;
-            if (!weekOpen)
+            if (noData)
+                sub = weekOpen ? "" : "No data yet";
+            else if (!weekOpen)
                 sub = $"{WeekStore.Hours(wk.TotalSeconds)} · daily avg {WeekStore.Hours(avg)}";
             else
             {
@@ -647,7 +651,7 @@ public sealed class HomeWindow : Form
                 var sw = Pf(4); var sg = Pf(3); var sh = Pf(20);
                 var sx = weekTab.Left - Pf(14) - 7 * sw - 6 * sg;
                 var sb = wTop + Pf(RowH) / 2 + sh / 2;
-                for (var i = 0; i < 7; i++)
+                for (var i = 0; i < (noData ? 0 : 7); i++)
                 {
                     var future = i > wk.TodayIndex;
                     var h = future || wk.DaySeconds[i] <= 0 ? Pf(2) : Math.Max(Pf(3), sh * (float)(wk.DaySeconds[i] / (double)most));
@@ -658,7 +662,9 @@ public sealed class HomeWindow : Form
             }
             else
             {
-                // Total against the goal.
+                // Total against the goal (nothing to show before the phone sends a week).
+                if (!noData)
+                {
                 var y0 = wTop + Px(RowH) + Px(4);
                 var total = WeekStore.Hours(wk.TotalSeconds);
                 var tw = TextRenderer.MeasureText(g, total, totalFont, Size.Empty, TextFormatFlags.NoPadding).Width;
@@ -682,6 +688,7 @@ public sealed class HomeWindow : Form
                     var lw = TextRenderer.MeasureText(g, label, valueFont, Size.Empty, TextFormatFlags.NoPadding).Width;
                     TextRenderer.DrawText(g, label, valueFont, new Point(right - lw, (int)byy - Px(17)), done >= 1 ? Accent : Soft, TextFormatFlags.NoPadding);
                 }
+                }
 
                 // The chart.
                 var left = Px(62);
@@ -692,6 +699,10 @@ public sealed class HomeWindow : Form
                 var letters = "MTWTFSS";
                 using (var basePen = new Pen(faint, Pf(1f)))
                     g.DrawLine(basePen, left, floor, right, floor);
+                if (noData)
+                    TextRenderer.DrawText(g, "No data yet", smallFont,
+                        new Rectangle(left, (int)floor - Px(60), right - left, Px(20)), Soft,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
                 if (avg > 0)
                 {
                     var ay = floor - maxH * (float)(avg / (double)most);
@@ -705,7 +716,7 @@ public sealed class HomeWindow : Form
                     var cx = left + colW * i + colW / 2;
                     var isToday = i == wk.TodayIndex;
                     var future = i > wk.TodayIndex;
-                    if (!future)
+                    if (!future && !noData)
                     {
                         var secs = wk.DaySeconds[i];
                         var h = secs <= 0 ? 0 : Math.Max(Pf(6), maxH * (float)(secs / (double)most));
@@ -1072,6 +1083,8 @@ public sealed class HomeWindow : Form
             Draw("home-buddyoff", new[] { phone }, idle, false, null, false);
             Draw("home-locked", new[] { phone }, new FocusSession("s", "active", 2700, start, start.AddMinutes(45)), false);
             // Last: the week row, with sample numbers (Mon..Thu so far, Thursday is today).
+            PreviewWeekOpen = true;
+            Draw("home-week-empty-open", new[] { phone }, running, false, "Studying");
             WeekStore.Set(new WeekSummary(new[] { 3900, 5400, 6300, 2400, 0, 0, 0 }, 36000, 3, 2400, 3, 30000));
             PreviewWeekOpen = false;
             Draw("home-week-shut", new[] { phone }, running, false, "Studying · library desk");
