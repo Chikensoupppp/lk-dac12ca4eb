@@ -62,6 +62,8 @@ final class PCLink: ObservableObject {
     /// Plain-language reason for the last problem, or nil.
     @Published private(set) var problem: String?
     @Published private(set) var isPairing = false
+    /// While a "Find nearby PC" ask waits for the owner's Allow: the code the PC shows too.
+    @Published private(set) var nearbyCode: String?
     /// What the PC reports during a session (front app, nudges), or nil.
     @Published private(set) var activity: PCActivity?
 
@@ -120,6 +122,39 @@ final class PCLink: ObservableObject {
         } catch {
             problem = "Pairing failed. Make a new QR code."
         }
+    }
+
+    /// "Find nearby PC": asks the PC to pair, shows a 4-digit code here (the PC shows the same one),
+    /// waits up to a minute for the owner to click Allow, then pairs like the QR code does.
+    func pairNearby(_ pc: NearbyPC, deviceName: String = "iPhone") async {
+        guard !isPairing, nearbyCode == nil else { return }
+        problem = nil
+        let code = String(format: "%04d", Int.random(in: 0...9999))
+        nearbyCode = code
+        var offer: PCPairingOffer?
+        do {
+            let id = try await transport.askNearby(pc, device: deviceName, code: code)
+            let deadline = Date.now.addingTimeInterval(65)
+            waiting: while Date.now < deadline {
+                try await Task.sleep(for: .milliseconds(1500))
+                let answer = try await transport.nearbyStatus(pc, id: id)
+                switch answer.state {
+                case "allowed": offer = answer.offer; break waiting
+                case "denied": problem = "The PC said no."; break waiting
+                case "expired", "done": problem = "No answer on the PC. Try again."; break waiting
+                default: continue
+                }
+            }
+            if offer == nil && problem == nil { problem = "No answer on the PC. Try again." }
+        } catch PCError.rejected(429) {
+            problem = "The PC is already asking. Answer it there first."
+        } catch PCError.unreachable {
+            problem = "Could not reach the PC."
+        } catch {
+            problem = "Could not connect. Try again."
+        }
+        nearbyCode = nil
+        if let offer { await pair(offer: offer, deviceName: deviceName) }
     }
 
     func forget() {

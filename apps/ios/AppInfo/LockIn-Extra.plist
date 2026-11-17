@@ -8,6 +8,7 @@
 	<array>
 		<string>_lockin-key._tcp</string>
 		<string>_lockin-key._udp</string>
+		<string>_nogbox._tcp</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>

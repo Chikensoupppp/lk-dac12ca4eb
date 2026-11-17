@@ -121,6 +121,10 @@ protocol PCTransport {
     func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws
     /// The week summary for the PC window.
     func sendWeek(_ week: PCWeek, link: PCLinkRecord) async throws
+    /// "Find nearby PC": asks the PC to pair. Returns the ask id; the PC owner then clicks Allow.
+    func askNearby(_ pc: NearbyPC, device: String, code: String) async throws -> String
+    /// "pending", "allowed" (with the offer), "denied", "expired" or "done".
+    func nearbyStatus(_ pc: NearbyPC, id: String) async throws -> (state: String, offer: PCPairingOffer?)
 }
 
 extension PCTransport {
@@ -131,4 +135,6 @@ extension PCTransport {
     func sessionStatus(id: UUID, link: PCLinkRecord) async throws -> PCActivity? { nil }
     func partnerPause(id: UUID, appKey: String, seconds: Int, link: PCLinkRecord) async throws {}
     func sendWeek(_ week: PCWeek, link: PCLinkRecord) async throws {}
+    func askNearby(_ pc: NearbyPC, device: String, code: String) async throws -> String { throw PCError.unreachable }
+    func nearbyStatus(_ pc: NearbyPC, id: String) async throws -> (state: String, offer: PCPairingOffer?) { ("expired", nil) }
 }

@@ -31,6 +31,8 @@ struct FocusView: View {
     @State private var showKeys = false
     @State private var showPlusOffer = false
     @State private var showPC = false
+    /// Looks for a Nogbox PC on the Wi-Fi while the phone is not paired ("Connect to ...").
+    @StateObject private var finder = PCFinder()
     @StateObject private var tasks = WorkTaskStore()
     @State private var showTasks = false
     /// Right after the intro (promise signed): 25 minutes are picked and a note suggests starting
@@ -277,7 +279,10 @@ struct FocusView: View {
                             if coachStep == nil {
                                 topBar
                                 toolsHintBubble.frame(maxWidth: .infinity, alignment: .trailing)
-                                PCStatusLine(pc: pc, isLocked: isLocked) { showPC = true }
+                                PCStatusLine(pc: pc, finder: finder, isLocked: isLocked, open: { showPC = true }, connect: { near in
+                                    showPC = true
+                                    Task { await pc.pairNearby(near) }
+                                })
                             } else {
                                 coachOverlay
                             }
@@ -322,6 +327,10 @@ struct FocusView: View {
             RestrictionsSheet(restrictions: restrictions)
         }
         .sheet(isPresented: $showPC) { PCSheet(pc: pc) }
+        .task { if !pc.isPaired { finder.start() } }
+        .onChange(of: pc.status) { _, status in
+            if status == .notPaired { finder.start() } else { finder.stop() }
+        }
         .onOpenURL { url in
             // The PC's QR code, scanned with the Camera app, lands here.
             guard let offer = PCPairingOffer.decode(url.absoluteString) else { return }

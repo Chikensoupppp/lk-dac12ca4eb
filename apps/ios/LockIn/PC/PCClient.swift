@@ -86,6 +86,28 @@ final class PCClient: PCTransport {
         guard status == 200 else { throw PCError.rejected(status) }
     }
 
+    func askNearby(_ pc: NearbyPC, device: String, code: String) async throws -> String {
+        struct Body: Encodable { let device: String; let code: String }
+        struct Reply: Decodable { let id: String }
+        let (data, status) = try await send(
+            hosts: pc.hosts, port: pc.port, fingerprint: pc.fp,
+            path: "/pair/ask", token: nil, body: Body(device: device, code: code))
+        guard status == 200 else { throw PCError.rejected(status) }
+        guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else { throw PCError.badResponse }
+        return reply.id
+    }
+
+    func nearbyStatus(_ pc: NearbyPC, id: String) async throws -> (state: String, offer: PCPairingOffer?) {
+        struct Body: Encodable { let id: String }
+        struct Reply: Decodable { let state: String; let offer: PCPairingOffer? }
+        let (data, status) = try await send(
+            hosts: pc.hosts, port: pc.port, fingerprint: pc.fp,
+            path: "/pair/ask/status", token: nil, body: Body(id: id))
+        guard status == 200 else { throw PCError.rejected(status) }
+        guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else { throw PCError.badResponse }
+        return (reply.state, reply.offer)
+    }
+
     func stopSession(id: UUID, link: PCLinkRecord) async throws {
         struct Body: Encodable { let id: String }
         let (_, status) = try await send(

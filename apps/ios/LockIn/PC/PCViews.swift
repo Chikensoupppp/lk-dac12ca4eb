@@ -3,8 +3,11 @@ import SwiftUI
 /// One quiet line under the title. Idle: a tappable "PAIR A PC" or the PC's state. In a session: state only.
 struct PCStatusLine: View {
     @ObservedObject var pc: PCLink
+    @ObservedObject var finder: PCFinder
     let isLocked: Bool
     let open: () -> Void
+    /// Not paired, and a Nogbox PC is on this Wi-Fi: one tap asks it to connect.
+    let connect: (NearbyPC) -> Void
 
     private var label: String? {
         if let left = pc.activity?.breakSecondsLeft, left > 0 { return "ON A BREAK \u{00B7} \(left / 60):\(String(format: "%02d", left % 60))" }
@@ -17,7 +20,16 @@ struct PCStatusLine: View {
     }
 
     var body: some View {
-        if let label {
+        if pc.status == .notPaired, !isLocked, let near = finder.found.first {
+            Button { connect(near) } label: {
+                Label("Connect to \(near.name)", systemImage: "desktopcomputer")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(FocusPaper.ink)
+                    .frame(minHeight: 44)
+            }
+            .accessibilityLabel("Connect to \(near.name), a PC on this Wi-Fi")
+            .accessibilityIdentifier("pc-nearby")
+        } else if let label {
             if isLocked {
                 Text(label)
                     .font(.footnote.weight(.medium))
@@ -43,6 +55,7 @@ struct PCSheet: View {
     @ObservedObject var pc: PCLink
     @Environment(\.dismiss) private var dismiss
     @State private var scanning = false
+    @StateObject private var finder = PCFinder()
     @AppStorage(PCSheet.buddyKey) private var buddy = true
     @AppStorage(PCSheet.remindKey) private var remindMinutes = PCSheet.remindDefault
 
@@ -63,6 +76,7 @@ struct PCSheet: View {
     }
 
     private var headline: String {
+        if pc.nearbyCode != nil { return "Check your PC." }
         if pc.isPairing { return "Pairing with your PC..." }
         switch pc.status {
         case .notPaired: return "Continue on your PC."
@@ -91,7 +105,35 @@ struct PCSheet: View {
                                 .accessibilityIdentifier("pc-problem")
                         }
 
-                        if !pc.isPaired && !pc.isPairing {
+                        if let code = pc.nearbyCode {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Click Allow on the PC if it shows this code:")
+                                    .font(Cream.rounded(15, .medium))
+                                    .foregroundStyle(Matte.textSoft)
+                                Text(code)
+                                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                                    .tracking(8)
+                                    .monospacedDigit()
+                                    .foregroundStyle(Matte.text)
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityIdentifier("pc-nearby-code")
+                        } else if !pc.isPaired && !pc.isPairing && !finder.found.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("On this Wi-Fi")
+                                    .font(Cream.rounded(15, .medium))
+                                    .foregroundStyle(Matte.textSoft)
+                                ForEach(finder.found) { near in
+                                    Button { Task { await pc.pairNearby(near) } } label: {
+                                        Text("CONNECT TO \(near.name.uppercased())")
+                                    }
+                                    .buttonStyle(MatteButtonStyle(prominent: true))
+                                    .accessibilityIdentifier("pc-nearby-connect")
+                                }
+                            }
+                        }
+
+                        if !pc.isPaired && !pc.isPairing && pc.nearbyCode == nil {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Open this link on your PC:")
                                     .font(Cream.rounded(15, .medium))
@@ -168,6 +210,9 @@ struct PCSheet: View {
                     .padding(.bottom, 32)
                 }
             }
+            .onAppear { if !pc.isPaired { finder.start() } }
+            .onDisappear { finder.stop() }
+            .onChange(of: pc.status) { _, status in if status != .notPaired { finder.stop() } }
             .navigationTitle("PC")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)

@@ -140,6 +140,37 @@ public sealed class HomeWindow : Form
     }
 
     private readonly Func<PairingOffer> openPairing;
+
+    /// <summary>
+    /// A phone on the Wi-Fi asks to pair ("Find nearby PC"). Shows Allow / Don't allow, with the
+    /// 4-digit code the phone shows too. Comes from a web request thread, so it hops to this window's.
+    /// </summary>
+    private void OnNearbyAsk(NearbyPairing.Ask ask)
+    {
+        if (IsDisposed || !IsHandleCreated) return;
+        BeginInvoke(() =>
+        {
+            if (!Visible) ShowFromTray();
+            Activate();
+            var allow = new TaskDialogButton("Allow");
+            var deny = new TaskDialogButton("Don't allow");
+            var page = new TaskDialogPage
+            {
+                Caption = "Nogbox",
+                Heading = $"Connect {ask.Device}?",
+                Text = $"Your phone shows the code {ask.Code}.\nAllow only if it matches.",
+                Buttons = { allow, deny },
+                DefaultButton = deny,
+                AllowCancel = true,
+            };
+            var left = ask.Expires - DateTimeOffset.UtcNow;
+            using var timeout = new System.Windows.Forms.Timer { Interval = (int)Math.Max(1000, left.TotalMilliseconds) };
+            timeout.Tick += (_, _) => { timeout.Stop(); page.BoundDialog?.Close(); };
+            timeout.Start();
+            var answer = TaskDialog.ShowDialog(this, page);
+            NearbyPairing.Answer(ask.Id, answer == allow, openPairing, DateTimeOffset.UtcNow);
+        });
+    }
     private readonly Func<IReadOnlyList<PairedDevice>> devices;
     private readonly Func<FocusSession> session;
     private readonly Func<string?> taskName;
@@ -177,6 +208,10 @@ public sealed class HomeWindow : Form
     private double ring; // how much of the ring is navy, 0..1
     private string rowTitle = "iPhone", rowStatus = "Not paired";
     private bool rowOn;
+    // "Looking for your phone": sonar rings grow out of the brain while no phone is paired.
+    private bool searching;
+    private readonly System.Windows.Forms.Timer sonar = new() { Interval = 33 };
+    private readonly System.Diagnostics.Stopwatch sonarClock = System.Diagnostics.Stopwatch.StartNew();
 
     public HomeWindow(Func<PairingOffer> openPairing, Func<IReadOnlyList<PairedDevice>> devices,
         Func<FocusSession> session, string stateDir, Func<string?>? taskName = null,
@@ -261,6 +296,7 @@ public sealed class HomeWindow : Form
         Controls.Add(quit);
 
         weekTab.Toggled += ToggleWeek;
+        NearbyPairing.Asked += OnNearbyAsk;
         Controls.Add(weekTab);
         LayoutWeek();
 
@@ -274,6 +310,7 @@ public sealed class HomeWindow : Form
         tray.ContextMenuStrip = menu;
         tray.DoubleClick += (_, _) => ShowFromTray();
 
+        sonar.Tick += (_, _) => Invalidate(new Rectangle(0, 0, ClientSize.Width, Px(HeroH)));
         refresh.Tick += (_, _) => UpdateState();
         refresh.Start();
         UpdateState();
@@ -397,8 +434,8 @@ public sealed class HomeWindow : Form
         }
         else if (paired.Count == 0)
         {
-            title = "No phone yet";
-            subtitle = "Pair your phone to start sessions from it.";
+            title = "";
+            subtitle = "Looking for your phone. Open Nogbox on it.";
             ring = 0;
         }
         else if (current.State == "active" && pauseState().BreakEnds is { } breakEnds)
@@ -438,6 +475,8 @@ public sealed class HomeWindow : Form
             ring = 0;
         }
 
+        searching = paired.Count == 0 && !pairing && SystemInformation.UIEffectsEnabled;
+        if (searching != sonar.Enabled) sonar.Enabled = searching;
         pairButton.Visible = paired.Count == 0 && !pairing;
         rowOn = paired.Count > 0;
         rowTitle = paired.Count == 0 ? "iPhone" : paired[^1].Name + (paired.Count > 1 ? $" +{paired.Count - 1}" : "");
@@ -499,6 +538,23 @@ public sealed class HomeWindow : Form
                         c.X + (float)Math.Sin(a) * r2, c.Y - (float)Math.Cos(a) * r2);
                 }
             }
+            if (searching)
+            {
+                // Three rings leave the brain one after another, slow at the end, fading as they grow.
+                var t = (sonarClock.ElapsedMilliseconds + 3600 - 600) % 3600 / 3600.0;
+                var r0 = r * 0.26f;
+                var r1 = r - Pf(14);
+                for (var k = 0; k < 3; k++)
+                {
+                    var q = (t + k / 3.0) % 1.0;
+                    var grow = 1 - Math.Pow(1 - q, 2.2);
+                    var rr = r0 + (r1 - r0) * (float)grow;
+                    var alpha = (int)(235 * (1 - q) * Math.Min(1, q / 0.1));
+                    if (alpha < 4) continue;
+                    using var pulse = new Pen(Color.FromArgb(alpha, Amber), Pf(3.2f));
+                    g.DrawEllipse(pulse, c.X - rr, c.Y - rr, 2 * rr, 2 * rr);
+                }
+            }
             if (ring > 0.001)
             {
                 using var arc = new Pen(onBreak ? Amber : Accent, Pf(5.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
@@ -516,7 +572,10 @@ public sealed class HomeWindow : Form
             {
                 var bw = Pf(92);
                 var bh = bw * brain.Height / brain.Width;
-                g.DrawImage(brain, c.X - bw / 2, c.Y - bh / 2 - Pf(8), bw, bh);
+                // While searching, the brain sways up and down, one smooth swing per ring. A ring leaves
+                // (every 1200 ms) at the moment the brain comes back down to the middle (600 ms into each swing).
+                var bob = searching ? (float)Math.Sin(sonarClock.ElapsedMilliseconds % 1200 / 1200.0 * 2 * Math.PI) * Pf(6) : 0f;
+                g.DrawImage(brain, c.X - bw / 2, c.Y - bh / 2 - Pf(8) - bob, bw, bh);
             }
             using (var timeFont = bigTime ? new Font("Segoe UI Semibold", 26f) : new Font("Segoe UI Semibold", 15f))
             {
@@ -835,7 +894,8 @@ public sealed class HomeWindow : Form
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { refresh.Dispose(); tray.Dispose(); qr?.Dispose(); brain?.Dispose(); phoneMenu.Dispose(); }
+        if (disposing) NearbyPairing.Asked -= OnNearbyAsk;
+        if (disposing) { sonar.Dispose(); refresh.Dispose(); tray.Dispose(); qr?.Dispose(); brain?.Dispose(); phoneMenu.Dispose(); }
         base.Dispose(disposing);
     }
 

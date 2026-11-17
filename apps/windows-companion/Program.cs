@@ -101,7 +101,8 @@ app.Use(async (ctx, next) =>
         ctx.Response.StatusCode = StatusCodes.Status404NotFound;
         return;
     }
-    if (onLan && path != "/health" && path != "/pair"
+    // Open on the LAN: health, pairing by code, and "find nearby PC" asks (those need the owner's Allow).
+    if (onLan && path != "/health" && path != "/pair" && path != "/pair/ask" && path != "/pair/ask/status"
         && !pairing.IsAuthorized(ctx.Request.Headers.Authorization.ToString()))
     {
         ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -143,6 +144,22 @@ app.MapPost("/pair", (PairRequest request, PairingService service, SessionWatch 
     return result.Error == "pairing-closed"
         ? Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status403Forbidden)
         : Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status401Unauthorized);
+});
+
+// "Find nearby PC": the phone asks, the PC owner clicks Allow, the phone collects a pairing offer.
+app.MapPost("/pair/ask", (NearbyAskRequest request, TimeProvider time) =>
+{
+    var ask = NearbyPairing.Start(request.Device, request.Code, time.GetUtcNow());
+    return ask is null
+        ? Results.Json(new { error = "busy-or-invalid" }, statusCode: StatusCodes.Status429TooManyRequests)
+        : Results.Ok(new { id = ask.Id, expiresAt = ask.Expires });
+});
+app.MapPost("/pair/ask/status", (NearbyStatusRequest request, TimeProvider time) =>
+{
+    var ask = NearbyPairing.Status(request.Id, time.GetUtcNow());
+    if (ask is null) return Results.NotFound(new { error = "unknown-ask" });
+    var offer = ask.State == "allowed" ? NearbyPairing.TakeOffer(ask) : null;
+    return Results.Ok(new { state = offer is not null ? "allowed" : ask.State, offer });
 });
 
 // Loopback only (see middleware): open a pairing window, list paired phones, remove one.
@@ -270,6 +287,8 @@ if (args.Contains("--pair"))
 
 // Browser activity arrives through a private pipe, not through either HTTP door.
 var sessionWatch = app.Services.GetRequiredService<SessionWatch>();
+// Lets the phone find this PC on the Wi-Fi ("Find nearby PC"). Pairing still needs the owner's Allow.
+using var bonjour = new BonjourAdvertiser(Environment.MachineName, LanPort, fingerprint, LanAddresses.Find());
 using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat, sessionWatch.HandleLater);
 // No extension needed: the PC reads the front browser itself. When the extension is running it reports instead, so nothing counts twice.
 using var browserWatch = new BrowserWatch(signal => { if (!sessionWatch.BrowserStatus().Alive) sessionWatch.Report(signal); });
