@@ -225,7 +225,7 @@ final class FocusUITests: XCTestCase {
         step("onboarding-7-lock", tap: "Skip for now")
         step("onboarding-8-year", tap: "LET\u{2019}S DO IT")
         step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
-        step("onboarding-10-slide", tap: "NEXT")
+        step("onboarding-10-slide", tap: "NEXT", pre: { app.buttons["onboarding-slide-knob"].tap() })
         step("onboarding-11-apps-wait", tap: "NEXT")
         step("onboarding-12-come-back", tap: "NEXT")
         // "Your first session" moves on by itself and ends the introduction. No promise to sign,
@@ -388,9 +388,10 @@ final class FocusUITests: XCTestCase {
         tap("Skip for now")              // lock apps
         XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
         tap("Skip")                      // goals
-        tap("NEXT")                      // slide to lock in
-        tap("NEXT")                      // distractions wait outside
-        tap("NEXT")                      // come back tomorrow
+        tap("onboarding-slide-knob")     // one slide, you're in (NEXT unlocks after the slide)
+        tap("NEXT")
+        tap("NEXT")                      // swipe later (the sign)
+        tap("NEXT")                      // stack up the days (punch card)
         // The plan prints, then the introduction ends by itself and the coach starts.
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         app.buttons["skip-focus-coach"].tap()
