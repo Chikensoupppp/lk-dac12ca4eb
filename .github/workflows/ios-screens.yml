@@ -47,6 +47,8 @@ jobs:
           if [[ "${GITHUB_REF_NAME:-}" == screens-new* ]]; then
             SHOTS="coach-goal coach-partner coach-try coach-caught"
           fi
+          # A `screens-pick*` tag photographs only the app picker sheet.
+          if [[ "${GITHUB_REF_NAME:-}" == screens-pick* ]]; then SHOTS="restrictions"; fi
           for spec in "${SPECS[@]}"; do
             label="${spec%%:*}"; names="${spec#*:}"
             IFS=: read -ra list <<< "$names"
@@ -54,7 +56,7 @@ jobs:
             xcrun simctl boot "$id"; xcrun simctl bootstatus "$id" -b >/dev/null
             xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100
             for s in $SHOTS; do shoot "$id" "$label" "$s"; done
-            if [[ "${GITHUB_REF_NAME:-}" != screens-new* ]]; then
+            if [[ "${GITHUB_REF_NAME:-}" != screens-new* && "${GITHUB_REF_NAME:-}" != screens-pick* ]]; then
               xcrun simctl ui "$id" content_size accessibility-extra-large
               for s in idle goals quit-type; do shoot "$id" "$label-bigtext" "$s"; done
             fi
