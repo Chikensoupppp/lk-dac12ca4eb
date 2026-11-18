@@ -2,15 +2,6 @@ import FamilyControls
 import ManagedSettings
 import SwiftUI
 
-/// The warm paper look of the Shielded apps sheet (2026-11-16 design).
-private enum SInk {
-    static let page = Color(hex: 0xF4F1EA)
-    static let ink = Color(hex: 0x171513)
-    static let soft = Color(hex: 0x6F6A60)
-    static let line = Color(hex: 0xE4DED3)
-    static let trackOff = Color(hex: 0xDDD7CB)
-}
-
 /// One row: a thing the user chose in Apple's picker. Apple shows the real name and icon only
 /// through a Label, so the row uses it; the app never sees the names itself.
 private enum Shielded: Hashable {
@@ -21,6 +12,8 @@ private enum Shielded: Hashable {
 
 /// Screen Time controls: which apps stay closed during a lock-in. Reports only what the framework
 /// reported; it never claims enforcement it has not applied.
+/// Same printed look and same words as the onboarding "Pick what to pause" slide (LockAppsStep),
+/// so the app has one way of choosing apps.
 struct RestrictionsSheet: View {
     @ObservedObject var restrictions: RestrictionController
     @Environment(\.dismiss) private var dismiss
@@ -29,7 +22,7 @@ struct RestrictionsSheet: View {
     /// Rows stay on screen when switched off, so they can be switched back on.
     @State private var rows: [Shielded] = []
 
-    /// "Access granted" is the normal state and says nothing new; only problems and shield news show.
+    /// "Access granted" is the normal state and says nothing new; only problems and lock news show.
     private var showHeadline: Bool {
         if case .ready = restrictions.status { return false }
         return true
@@ -37,14 +30,14 @@ struct RestrictionsSheet: View {
 
     private var headline: String {
         switch restrictions.status {
-        case .needsAuthorization: return "Screen Time access is off"
-        case .denied: return "Screen Time access was denied"
-        case .ready: return "Access granted"
-        case .active: return "Shields are on for this session"
-        case .skipped(.tooShort): return "Sessions under 15 minutes run without shields"
-        case .skipped(.notAuthorized): return "Shields were skipped: no access"
-        case .skipped(.noSelection): return "Shields were skipped: no apps chosen"
-        case .skipped(.alreadyExpired): return "Shields were skipped: session already over"
+        case .needsAuthorization: return "Screen Time is off. Allow it so SwipeLater can lock your apps."
+        case .denied: return "Screen Time access is blocked. Turn it on in Settings."
+        case .ready: return "Screen Time is on."
+        case .active: return "Your apps are locked right now."
+        case .skipped(.tooShort): return "Sessions under 15 minutes don\u{2019}t lock apps."
+        case .skipped(.notAuthorized): return "Your apps weren\u{2019}t locked: Screen Time is off."
+        case .skipped(.noSelection): return "Your apps weren\u{2019}t locked: you haven\u{2019}t picked any yet."
+        case .skipped(.alreadyExpired): return "Your apps weren\u{2019}t locked: the session was already over."
         case .failed(let message): return "Screen Time problem: \(message)"
         }
     }
@@ -54,60 +47,63 @@ struct RestrictionsSheet: View {
         return s.applicationTokens.count + s.categoryTokens.count + s.webDomainTokens.count
     }
 
+    private var titleSize: CGFloat { UIScreen.main.bounds.height < 700 ? 42 : 52 }
+
     var body: some View {
         ZStack(alignment: .top) {
-            SInk.page.ignoresSafeArea()
+            Ink.paper.ignoresSafeArea()
+            Grain(color: Ink.ink.opacity(0.09)).ignoresSafeArea().allowsHitTesting(false)
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Spacer()
                     Button("Done") { dismiss() }
-                        .font(.system(size: 17))
-                        .foregroundStyle(SInk.ink)
+                        .font(PrintFont.bold(17))
+                        .tracking(1.5)
+                        .foregroundStyle(Ink.ink)
                         .padding(.horizontal, 20)
                         .frame(minHeight: 44)
-                        .background(Capsule().fill(Color.white.opacity(0.7)))
-                        .overlay(Capsule().stroke(SInk.line, lineWidth: 1))
+                        .background(Capsule().fill(Ink.receipt))
+                        .overlay(Capsule().stroke(Ink.ink, lineWidth: 2))
                 }
                 .padding(.top, 8)
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("RESTRICTIONS")
-                            .font(.system(size: 17, weight: .semibold))
-                            .tracking(3.4)
-                            .foregroundStyle(SInk.soft)
-                            .padding(.top, 18)
-                            .accessibilityHidden(true)
-                        Text("Shielded apps.")
-                            .font(.system(size: 46, weight: .heavy))
-                            .tracking(-1.6)
-                            .foregroundStyle(SInk.ink)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text((chosenCount == 0 ? "Pick what\nto pause." : "Locked.").uppercased())
+                            .font(PrintFont.head(titleSize))
+                            .foregroundStyle(Ink.ink)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 18)
+                            .padding(.top, 14)
                             .accessibilityAddTraits(.isHeader)
+                        Text(chosenCount == 0
+                             ? "Choose the apps you want to block while you\u{2019}re focusing."
+                             : "They\u{2019}re blocked while your timer runs.")
+                            .font(PrintFont.mono(14))
+                            .foregroundStyle(Ink.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("You can change your selection anytime.")
+                            .font(PrintFont.mono(12))
+                            .foregroundStyle(Ink.soft)
                         if showHeadline {
                             Text(headline)
-                                .font(.system(size: 21))
-                                .foregroundStyle(SInk.soft)
-                                .padding(.top, 26)
+                                .font(PrintFont.mono(14))
+                                .foregroundStyle(Ink.red)
+                                .fixedSize(horizontal: false, vertical: true)
                                 .accessibilityIdentifier("restrictions-status")
-                        }
-                        if !rows.isEmpty {
-                            Rectangle().fill(SInk.line).frame(height: 1).padding(.top, 24)
                         }
                         ForEach(rows, id: \.self) { item in row(item) }
                     }
+                    .padding(.bottom, 16)
                 }
                 .scrollIndicators(.hidden)
+                .scrollBounceBehavior(.basedOnSize)
 
-                Spacer(minLength: 12)
                 action
-                Text("Shielded apps stay closed during a lock-in, on this phone.")
-                    .font(.system(size: 18))
-                    .foregroundStyle(SInk.soft)
+                Text("Locked apps stay closed during a lock-in, on this phone.")
+                    .font(PrintFont.mono(12))
+                    .foregroundStyle(Ink.soft)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 22)
-                    .padding(.bottom, 12)
+                    .padding(.vertical, 12)
             }
             .padding(.horizontal, 24)
         }
@@ -160,13 +156,13 @@ struct RestrictionsSheet: View {
         VStack(spacing: 0) {
             HStack(spacing: 18) {
                 label(item)
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(SInk.ink)
+                    .font(PrintFont.body(20))
+                    .foregroundStyle(Ink.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 SwitchPill(on: Binding(get: { isOn(item) }, set: { set(item, on: $0) }))
             }
-            .padding(.vertical, 20)
-            Rectangle().fill(SInk.line).frame(height: 1)
+            .padding(.vertical, 14)
+            Rectangle().fill(Ink.ink.opacity(0.15)).frame(height: 1)
         }
     }
 
@@ -180,43 +176,35 @@ struct RestrictionsSheet: View {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
         default:
-            pill(chosenCount == 0 ? "CHOOSE APPS" : "SHIELD \(chosenCount) APP\(chosenCount == 1 ? "" : "S")",
+            pill(chosenCount == 0 ? "CHOOSE APPS" : "CHANGE APPS",
                  id: chosenCount == 0 ? "Choose apps to shield" : "Change chosen apps") { picking = true }
         }
     }
 
     private func pill(_ title: String, id: String, _ run: @escaping () -> Void) -> some View {
-        Button(action: run) {
-            Text(title)
-                .font(.system(size: 22, weight: .medium))
-                .tracking(3)
-                .foregroundStyle(SInk.page)
-                .frame(maxWidth: .infinity, minHeight: 68)
-                .background(Capsule().fill(SInk.ink))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(id)
+        Button(action: run) { Text(title) }
+            .buttonStyle(PrintButtonStyle())
+            .accessibilityLabel(id)
     }
 }
 
-/// The black switch from the design: a pill track with a white knob.
+/// The black switch: a pill track with a paper knob, in the printed ink.
 private struct SwitchPill: View {
     @Binding var on: Bool
 
     var body: some View {
         Button { on.toggle() } label: {
             Capsule()
-                .fill(on ? SInk.ink : SInk.trackOff)
-                .frame(width: 88, height: 52)
+                .fill(on ? Ink.ink : Ink.ink.opacity(0.18))
+                .frame(width: 76, height: 44)
                 .overlay(alignment: on ? .trailing : .leading) {
-                    Circle().fill(Color.white).frame(width: 44, height: 44).padding(4)
-                        .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
+                    Circle().fill(Ink.receipt).frame(width: 36, height: 36).padding(4)
                 }
                 .animation(.easeOut(duration: 0.16), value: on)
         }
         .buttonStyle(.plain)
         .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel("Shield")
+        .accessibilityLabel("Lock")
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
     }
