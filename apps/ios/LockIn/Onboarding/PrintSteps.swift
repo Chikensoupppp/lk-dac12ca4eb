@@ -21,8 +21,8 @@ struct HookStep: View {
 
     var body: some View {
         PrintScaffold(step: 1, background: Ink.orange, foreground: Ink.paper, title: "Where does\nthe time go?", titleSize: 58, grain: true,
-                      primaryTitle: "START NOW", primaryAction: startNow,
-                      secondaryTitle: "See why first", secondaryAction: next) {
+                      primaryTitle: "LET\u{2019}S GO", primaryAction: next,
+                      secondaryTitle: "Skip intro", secondaryAction: startNow) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number)
                     .font(PrintFont.head(128))
@@ -826,7 +826,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 10, title: "Your first\nsession.", grain: true) {
+        PrintScaffold(step: 13, title: "Your first\nsession.", grain: true) {
             VStack(spacing: 0) {
                 Capsule().fill(Color.black).frame(height: 14)
                     .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))

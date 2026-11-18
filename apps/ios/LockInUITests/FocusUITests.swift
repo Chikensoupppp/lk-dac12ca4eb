@@ -210,8 +210,8 @@ final class FocusUITests: XCTestCase {
             button.tap()
         }
 
-        // The long introduction is optional: "See why first" opens it.
-        step("onboarding-1-hook", tap: "See why first")
+        // The long introduction is the default: "LET'S GO" opens it ("Skip intro" ends it).
+        step("onboarding-1-hook", tap: "LET\u{2019}S GO")
         step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
         step("onboarding-3-check", tap: "ENABLE SCREEN TIME")
@@ -225,18 +225,21 @@ final class FocusUITests: XCTestCase {
         step("onboarding-7-lock", tap: "Skip for now")
         step("onboarding-8-year", tap: "LET\u{2019}S DO IT")
         step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
+        step("onboarding-10-slide", tap: "NEXT")
+        step("onboarding-11-apps-wait", tap: "NEXT")
+        step("onboarding-12-come-back", tap: "NEXT")
         // "Your first session" moves on by itself and ends the introduction. No promise to sign,
         // no Plus offer here. The coach takes over on the real Focus screen.
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         runCoachToSession(app)
     }
 
-    /// The short way: one tap on the first slide goes straight to the coach.
+    /// The short way: "Skip intro" on the first slide goes straight to the coach.
     func testStartNowSkipsTheLongIntroduction() {
         let app = XCUIApplication()
         app.launchArguments += ["-ui-testing-calm-background", "-ui-testing-reset-state", "-ui-testing-onboarding"]
         app.launch()
-        let start = app.buttons["START NOW"]
+        let start = app.buttons["Skip intro"]
         XCTAssertTrue(start.waitForExistence(timeout: 10))
         sleep(2)
         capture("quick-1-hook")
@@ -378,13 +381,16 @@ final class FocusUITests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label)")
             button.tap()
         }
-        tap("See why first")
+        tap("LET\u{2019}S GO")
         tap("Skip")                      // guess
         tap("Not now (keep my guess)")   // Screen Time
         tap("Skip")                      // what pulls you in
         tap("Skip for now")              // lock apps
         XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
         tap("Skip")                      // goals
+        tap("NEXT")                      // slide to lock in
+        tap("NEXT")                      // distractions wait outside
+        tap("NEXT")                      // come back tomorrow
         // The plan prints, then the introduction ends by itself and the coach starts.
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         app.buttons["skip-focus-coach"].tap()
@@ -401,6 +407,6 @@ final class FocusUITests: XCTestCase {
         let replay = app.buttons["Replay intro"]
         XCTAssertTrue(replay.waitForExistence(timeout: 5))
         replay.tap()
-        XCTAssertTrue(app.buttons["START NOW"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["LET\u{2019}S GO"].waitForExistence(timeout: 10))
     }
 }

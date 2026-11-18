@@ -2,19 +2,19 @@ import SwiftUI
 
 /// First-run flow, "printed" version (docs/ONBOARDING_V2.md, mock docs/design/ob-v2.html).
 ///
-/// The short way is the default: the first slide's main button ends the flow, and the Focus screen's
-/// coach takes over (task, minutes, distracting apps, one hold to start). The longer introduction is
-/// optional ("See why first"): guess, why we ask, real hours, brain, what pulls you in, lock apps,
-/// your year, goals, making your plan. There is no promise to sign and no Plus offer here; Plus is
+/// The long way is the default: the first slide opens it, and "Skip intro" ends it so the Focus screen's
+/// coach takes over (task, minutes, distracting apps, one hold to start). The introduction goes:
+/// guess, why we ask, real hours, brain, what pulls you in, lock apps,
+/// your year, goals, three how-it-works slides, making your plan. There is no promise to sign and no Plus offer here; Plus is
 /// shown once, after the first finished free session.
 /// The real hours can only be drawn by Apple's report extension (Lock In can never read them), so
 /// the user taps the band that matches what they see. Without Screen Time access, or without the
 /// extension, the rest of the flow uses the guess.
 struct OnboardingFlow: View {
-    static let stepCount = 10
+    static let stepCount = 13
 
     enum Step: Int {
-        case hook = 1, guess, check, reveal, brain, pulls, lock, year, goals, plan
+        case hook = 1, guess, check, reveal, brain, pulls, lock, year, goals, slide, appsWait, comeBack, plan
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
@@ -78,7 +78,10 @@ struct OnboardingFlow: View {
         case .pulls: advance(to: .lock)
         case .lock: advance(to: hoursIndex == nil ? .goals : .year)
         case .year: advance(to: .goals)
-        case .goals: advance(to: .plan)
+        case .goals: advance(to: .slide)
+        case .slide: advance(to: .appsWait)
+        case .appsWait: advance(to: .comeBack)
+        case .comeBack: advance(to: .plan)
         case .plan: finish()
         }
     }
@@ -108,6 +111,9 @@ struct OnboardingFlow: View {
                 case .lock: LockAppsStep(restrictions: restrictions, next: next)
                 case .year: YearStep(hoursIndex: hoursIndex ?? 1, next: next)
                 case .goals: GoalsStep(goals: $goals, next: next)
+                case .slide: SlideToLockStep(next: next)
+                case .appsWait: AppsWaitStep(next: next)
+                case .comeBack: ComeBackStep(next: next)
                 case .plan: PlanStep(hoursIndex: hoursIndex, categories: categories, goals: goals, next: next)
                 }
             }
