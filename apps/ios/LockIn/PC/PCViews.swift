@@ -149,7 +149,7 @@ struct PCSheet: View {
                                 Text("Open this link on your PC:")
                                     .font(Cream.rounded(15, .medium))
                                     .foregroundStyle(Matte.textSoft)
-                                Text("chikensoupppp.github.io/lk-dac12ca4eb/pc")
+                                Text("swipelater.app/pc")
                                     .font(Cream.rounded(16, .semibold))
                                     .foregroundStyle(Matte.text)
                                     .textSelection(.enabled)
