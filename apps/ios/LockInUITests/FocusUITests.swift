@@ -260,12 +260,7 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["coach-choose-apps"].exists)
         capture("coach-apps")
         skipApps.tap()
-        // The tour: Locked mode, weekly goal, partner, PC, lock screen, widget, streak, report, quitting and Plus, each with a Next.
-        for step in 0..<10 {
-            XCTAssertTrue(app.buttons["coach-next"].waitForExistence(timeout: 5))
-            if step == 0 { capture("coach-tour-mode") }
-            app.buttons["coach-next"].tap()
-        }
+        passGoalAndFriend(app)
         let start = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
         capture("coach-hold")
@@ -275,6 +270,22 @@ final class FocusUITests: XCTestCase {
         capture("coach-session-running")
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    /// The hands-on steps after the apps: one tap sets the real weekly goal, then the friend step
+    /// (skipped here; adding one needs a second phone). There are no Next-only cards. The simulator
+    /// sees no PC, so the PC step is left out.
+    private func passGoalAndFriend(_ app: XCUIApplication) {
+        let goal = app.buttons["coach-goal-4"]
+        XCTAssertTrue(goal.waitForExistence(timeout: 5))
+        capture("coach-goal")
+        goal.tap()
+        let later = app.buttons["coach-skip-friend"]
+        XCTAssertTrue(later.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["coach-add-friend"].exists)
+        capture("coach-friend")
+        later.tap()
+        XCTAssertFalse(app.buttons["coach-next"].exists, "no talk-only cards")
     }
 
     /// Ending early is one calm choice: the time focused still counts, nothing to type or wait out.
@@ -329,12 +340,7 @@ final class FocusUITests: XCTestCase {
         app.buttons["25 minutes"].tap()
         XCTAssertTrue(app.buttons["coach-skip-apps"].waitForExistence(timeout: 5))
         app.buttons["coach-skip-apps"].tap()
-        // The tour: Locked mode, weekly goal, partner, PC, lock screen, widget, streak, report, quitting and Plus, each with a Next.
-        for step in 0..<10 {
-            XCTAssertTrue(app.buttons["coach-next"].waitForExistence(timeout: 5))
-            if step == 0 { capture("coach-tour-mode") }
-            app.buttons["coach-next"].tap()
-        }
+        passGoalAndFriend(app)
         let hold = app.buttons["coach-hold-to-start"]
         XCTAssertTrue(hold.waitForExistence(timeout: 5))
         capture("coach-reduce-motion")

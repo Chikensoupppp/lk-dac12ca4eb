@@ -46,6 +46,8 @@ struct FocusView: View {
     @State private var coachStep: FocusCoachStep?
     @State private var coachPressing = false
     @State private var coachReward: String?
+    /// The user left the app while the brain dared them to open a locked app.
+    @State private var leftToTry = false
     /// After a finished session: the "time focused" card, then the streak screen, then (once) the Plus offer.
     @State private var completion: CompletionInfo?
     @State private var pendingStreak = false
@@ -154,6 +156,11 @@ struct FocusView: View {
                 for name in ["Spotify", "notion.so", "Docs"] { AllowedApps.add(name, for: "Studying") }
                 showTasks = true
             case "restrictions": showRestrictions = true
+            // The coach's hands-on steps and the dare after the first start.
+            case "coach-goal": tasks.add("Studying"); selectedMinutes = 25; coachStep = .goal
+            case "coach-partner": tasks.add("Studying"); selectedMinutes = 25; coachStep = .partner
+            case "coach-try": tasks.add("Studying"); selectedMinutes = 25; startSession(); coachStep = .tryIt
+            case "coach-caught": tasks.add("Studying"); selectedMinutes = 25; startSession(); coachStep = .caught
             default: break
             }
         }
@@ -276,19 +283,13 @@ struct FocusView: View {
                 GeometryReader { upper in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            if coachStep == nil || isTourStep {
-                                topBar.allowsHitTesting(!isTourStep)
+                            if coachStep == nil {
+                                topBar
                                 toolsHintBubble.frame(maxWidth: .infinity, alignment: .trailing)
-                                if coachStep == .pc && !pc.isPaired {
-                                    tourPCRow
-                                } else {
-                                    PCStatusLine(pc: pc, finder: finder, isLocked: isLocked, open: { showPC = true }, connect: { near in
-                                        showPC = true
-                                        Task { await pc.pairNearby(near) }
-                                    })
-                                    .coachGlow(coachStep == .pc, reduceMotion: reduceMotion)
-                                    .allowsHitTesting(!isTourStep)
-                                }
+                                PCStatusLine(pc: pc, finder: finder, isLocked: isLocked, open: { showPC = true }, connect: { near in
+                                    showPC = true
+                                    Task { await pc.pairNearby(near) }
+                                })
                             } else {
                                 coachOverlay
                             }
@@ -310,7 +311,6 @@ struct FocusView: View {
                             Spacer(minLength: 8)
                             if !isLocked {
                                 WorkTaskPill(tasks: tasks) { showTasks = true }
-                                    .opacity(tourCardBelow ? 0 : 1)
                                     .overlay(Capsule().strokeBorder(coachStep == .task ? FocusPaper.ink : .clear, lineWidth: 2))
                                     .opacity(coachStep == nil || coachStep == .task ? 1 : 0.3)
                                     .disabled(coachStep != nil && coachStep != .task)
@@ -320,24 +320,21 @@ struct FocusView: View {
                     }
                     .scrollBounceBehavior(.basedOnSize)
                 }
-                // While the tour card sits at the bottom, it takes this space; the controls fade out under it.
-                Group {
-                    if !isLocked {
-                        durationControls
-                    }
-                    focusButton
+                if !isLocked {
+                    durationControls
                 }
-                .opacity(tourCardBelow ? 0 : 1)
-                .allowsHitTesting(!tourCardBelow)
-                .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: tourCardBelow)
+                focusButton
             }
             .padding(.horizontal, gutter)
             .padding(.top, compact ? 4 : 12)
             .padding(.bottom, compact ? 8 : 14)
         }
         .background(FocusPaper.page.ignoresSafeArea())
-        .overlay(alignment: coachStep == .mode ? .top : .bottom) { tourCard }
-        .sheet(isPresented: $showRestrictions, onDismiss: { if coachStep == .apps { coachStep = .mode } }) {
+        .sheet(isPresented: $showRestrictions, onDismiss: {
+            guard coachStep == .apps else { return }
+            if restrictions.hasSelection { coachReward = "GOT 'EM!" }
+            coachStep = .goal
+        }) {
             RestrictionsSheet(restrictions: restrictions)
         }
         .sheet(isPresented: $showPC, onDismiss: { if coachStep == .pc { coachStep = .hold } }) { PCSheet(pc: pc) }
@@ -366,7 +363,11 @@ struct FocusView: View {
             } : nil)
         }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id, plus: plus) { report = nil } }
-        .sheet(isPresented: $showKeys) { KeysSheet(keys: keys) { showKeys = false } }
+        .sheet(isPresented: $showKeys, onDismiss: {
+            guard coachStep == .partner else { return }
+            if !keys.holders.isEmpty { coachReward = "NICE!" }
+            coachStep = stepAfterPartner
+        }) { KeysSheet(keys: keys) { showKeys = false } }
         .sheet(isPresented: $showPlusOffer, onDismiss: advanceAfterSession) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
         .sheet(item: $completion, onDismiss: advanceAfterSession) { info in
             CompletionCard(info: info, keep: { completion = nil }, change: { pendingTaskPicker = true; completion = nil })
@@ -435,12 +436,12 @@ struct FocusView: View {
                 }
             }
             DurationSelector(options: Self.durationOptions, selection: $selectedMinutes) {
-                if coachStep == .minutes { coachStep = restrictions.hasSelection ? .mode : .apps; coachReward = "NICE!" }
+                if coachStep == .minutes { coachStep = restrictions.hasSelection ? .goal : .apps; coachReward = "NICE!" }
             }
             .disabled(coachStep != nil && coachStep != .minutes)
             .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
             .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(coachStep == .minutes ? FocusPaper.ink : .clear, lineWidth: 2))
-            if coachStep == .apps { coachAppsButtons }
+            coachActions
         }
     }
 
@@ -450,10 +451,8 @@ struct FocusView: View {
     }
 
     @ViewBuilder private var modeControl: some View {
-        if coachStep == nil || coachStep == .mode {
+        if coachStep == nil {
             lockedToggle
-                .coachGlow(coachStep == .mode, reduceMotion: reduceMotion)
-                .allowsHitTesting(coachStep == nil)
         }
     }
 
@@ -484,7 +483,22 @@ struct FocusView: View {
         // A buddy break on the PC pauses the session here too: the end moves later, once per session.
         // Tell my partners how the lock-in is going (sealed, through iCloud), and carry out a pause they ask for.
         .onChange(of: pc.activity) { _, _ in publishPartnerStatus() }
-        .onChange(of: timing) { _, _ in publishPartnerStatus() }
+        .onChange(of: timing) { _, newTiming in
+            publishPartnerStatus()
+            if newTiming == nil, coachStep?.duringSession == true { coachStep = nil }
+        }
+        // The dare waits a minute and a half, then steps aside; "caught" cheers for a few seconds.
+        .task(id: coachStep) {
+            let wait: Duration
+            switch coachStep {
+            case .tryIt: wait = .seconds(90)
+            case .caught: wait = .seconds(6)
+            default: return
+            }
+            let step = coachStep
+            do { try await Task.sleep(for: wait) } catch { return }
+            if coachStep == step { coachStep = nil }
+        }
         .task(id: timing?.startedAt) {
             var round = 0
             while timing != nil, !Task.isCancelled {
@@ -544,7 +558,14 @@ struct FocusView: View {
         }
         // The task above can be suspended in the background; re-check on return.
         .onChange(of: scenePhase) { _, phase in
+            if phase == .background, coachStep == .tryIt { leftToTry = true }
             guard phase == .active else { return }
+            // Back from trying a locked app: the shield said no, so the brain gloats.
+            if coachStep == .tryIt, leftToTry, timing != nil {
+                leftToTry = false
+                coachReward = "LOCKED!"
+                coachStep = .caught
+            }
             checkKeyRequests()
             runProofCheck()
             checkReport()
@@ -594,14 +615,14 @@ struct FocusView: View {
                 }
                 .accessibilityIdentifier("test-menu")
                 #endif
-                roundButton("target", size: 17, label: "Weekly goal", glow: coachStep == .goal) { showGoals = true }
-                roundButton("person.2", size: 15, label: "Accountability partner", glow: coachStep == .partner) { showKeys = true }
+                roundButton("target", size: 17, label: "Weekly goal") { showGoals = true }
+                roundButton("person.2", size: 15, label: "Accountability partner") { showKeys = true }
                 roundButton("shield", size: 17, label: "Restrictions") { showRestrictions = true }
             }
         }
     }
 
-    private func roundButton(_ icon: String, size: CGFloat, label: String, glow: Bool = false, action: @escaping () -> Void) -> some View {
+    private func roundButton(_ icon: String, size: CGFloat, label: String, action: @escaping () -> Void) -> some View {
         Button { showToolsHint = false; action() } label: {
             Image(systemName: icon)
                 .font(.system(size: size))
@@ -610,7 +631,6 @@ struct FocusView: View {
                 .contentShape(Rectangle())
         }
         .accessibilityLabel(label)
-        .coachGlow(glow, reduceMotion: reduceMotion)
     }
 
     // MARK: Session transitions
@@ -654,67 +674,51 @@ struct FocusView: View {
         }
     }
 
-    /// The tour steps explain a control the user cannot try yet. The brain talks, Next moves on.
-    private var isTourStep: Bool {
-        guard let coachStep else { return false }
+    /// The answers for the coach step on screen, under the minutes. Each one does the real thing:
+    /// opens the real picker or sheet, or saves the real setting. No step only talks.
+    @ViewBuilder private var coachActions: some View {
         switch coachStep {
-        case .mode, .goal, .partner, .pc, .live, .widget, .streak, .report, .quit, .plus: return true
-        default: return false
+        case .apps?:
+            coachButtons(main: "Choose apps", mainID: "coach-choose-apps", { showRestrictions = true },
+                         other: "Skip apps", otherID: "coach-skip-apps") { coachStep = .goal }
+        case .goal?:
+            CoachGoalChips(choices: [2, 4, 6, 8], current: goals.goal(), pick: pickGoal)
+        case .partner?:
+            coachButtons(main: "Add a friend", mainID: "coach-add-friend", { showKeys = true },
+                         other: "Not now", otherID: "coach-skip-friend") { coachStep = stepAfterPartner }
+        case .pc?:
+            coachButtons(main: "Connect", mainID: "coach-connect-pc", {
+                guard let near = finder.found.first else { coachStep = .hold; return }
+                showPC = true
+                Task { await pc.pairNearby(near) }
+            }, other: "Not now", otherID: "coach-skip-pc") { coachStep = .hold }
+        default:
+            EmptyView()
         }
     }
 
-    /// The tour card is at the bottom for every tour step except Locked mode (that control is down there).
-    private var tourCardBelow: Bool { isTourStep && coachStep != .mode }
-
-    /// The card for a tour step. Locked mode sits in the lower half, so its card goes to the top.
-    @ViewBuilder private var tourCard: some View {
-        if isTourStep, let step = coachStep, let place = FocusCoachStep.tour.firstIndex(of: step) {
-            TourCard(step: step, number: place + 4, total: FocusCoachStep.tour.count + 4,
-                     reduceMotion: reduceMotion, next: { tourNext() }, skip: { skipCoach() })
-                .padding(.horizontal, 12)
-                .padding(step == .mode ? .top : .bottom, step == .mode ? 76 : 12)
-                .transition(.opacity)
-        }
-    }
-
-    private func tourNext() {
-        switch coachStep {
-        case .mode: coachStep = .goal
-        case .goal: coachStep = .partner
-        case .partner: coachStep = .pc
-        case .pc: coachStep = .live
-        case .live: coachStep = .widget
-        case .widget: coachStep = .streak
-        case .streak: coachStep = .report
-        case .report: coachStep = .quit
-        case .quit: coachStep = .plus
-        case .plus: coachStep = .hold
-        default: break
-        }
-    }
-
-    /// The PC tour step when no PC is paired: a glowing "Connect a PC" that opens the real PC sheet.
-    private var tourPCRow: some View {
-        Button { showPC = true } label: {
-            Label("Connect a PC", systemImage: "desktopcomputer")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(FocusPaper.ink)
-                .frame(minHeight: 44)
-        }
-        .coachGlow(true, reduceMotion: reduceMotion)
-        .accessibilityIdentifier("coach-connect-pc")
-    }
-
-    /// The coach's apps step: choose the apps to quiet, or go on without them.
-    private var coachAppsButtons: some View {
+    private func coachButtons(main: String, mainID: String, _ mainAction: @escaping () -> Void,
+                              other: String, otherID: String, _ otherAction: @escaping () -> Void) -> some View {
         HStack(spacing: 12) {
-            Button("Choose apps") { showRestrictions = true }
+            Button(main, action: mainAction)
                 .buttonStyle(FocusActionStyle(prominent: true))
-                .accessibilityIdentifier("coach-choose-apps")
-            Button("Skip apps") { coachStep = .mode }
+                .accessibilityIdentifier(mainID)
+            Button(other, action: otherAction)
                 .buttonStyle(FocusActionStyle(prominent: false))
-                .accessibilityIdentifier("coach-skip-apps")
+                .accessibilityIdentifier(otherID)
         }
+    }
+
+    private func pickGoal(_ hours: Int) {
+        goals.setGoal(hours)
+        coachReward = "DEAL!"
+        coachStep = .partner
+    }
+
+    /// The PC step only shows when a PC is on the same Wi-Fi and not paired yet; otherwise there is
+    /// nothing to do there, so the coach goes straight to the start.
+    private var stepAfterPartner: FocusCoachStep {
+        !pc.isPaired && !finder.found.isEmpty ? .pc : .hold
     }
 
     /// LOCK IN while the coach is still showing (for example on the apps step) ends the coach
@@ -738,8 +742,13 @@ struct FocusView: View {
         coachReward = nil
         coachStep = .celebrate
         startSession()
+        // When the shields are really on, the lesson ends with the proof: the brain dares the user
+        // to open a locked app. Without shields (no apps picked, no Screen Time) it just cheers.
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(6))
+            try? await Task.sleep(for: .seconds(3))
+            guard coachStep == .celebrate else { return }
+            if restrictions.status == .active { coachStep = .tryIt; return }
+            try? await Task.sleep(for: .seconds(3))
             if coachStep == .celebrate { coachStep = nil }
         }
     }
