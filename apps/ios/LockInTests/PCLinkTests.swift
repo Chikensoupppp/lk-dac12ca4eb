@@ -203,7 +203,7 @@ final class PCModelsTests: XCTestCase {
         let b64 = Data(validJSON.utf8).base64EncodedString()
             .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        XCTAssertEqual(PCPairingOffer.decode("nogbox://pair?d=\(b64)"), offer)
+        XCTAssertEqual(PCPairingOffer.decode("nogbox://pair?d=\(b64)"), PCPairingOffer.decode(validJSON))
         XCTAssertNil(PCPairingOffer.decode("{}"))
         XCTAssertNil(PCPairingOffer.decode(validJSON.replacingOccurrences(of: "\"v\":1", with: "\"v\":2")))
         XCTAssertNil(PCPairingOffer.decode(validJSON.replacingOccurrences(of: "172.20.10.2", with: "evil.example.com")))
