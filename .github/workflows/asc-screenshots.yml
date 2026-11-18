@@ -1,0 +1,22 @@
+name: App Store screenshots
+# Uploads docs/aso/screenshots/6.9/ to App Store Connect (scripts/asc-upload-screenshots.py).
+# Run by pushing an `asc-shots-N` tag. Replaces the iPhone 6.9" screenshots of the editable version.
+on:
+  push:
+    tags: ['asc-shots-*']
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyjwt cryptography requests
+      - name: Upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: python scripts/asc-upload-screenshots.py
