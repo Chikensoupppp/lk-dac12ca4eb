@@ -67,11 +67,13 @@ final class PlusStore: ObservableObject {
             .build())
     }
 
-    /// TestFlight builds unlock Plus features so they can be tried before Plus is on sale.
-    /// App Store builds never match this.
+    /// True for TestFlight AND for App Review: both run with a sandbox receipt. Used only to
+    /// reset first-run state between test builds (FreshStart). It must never unlock Plus: App
+    /// Review would then never see the paywall or be able to test the purchase (Guideline 2.1).
+    /// Testers get Plus the real way, with a free sandbox purchase.
     static let isTestFlight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
 
-    var hasPlus: Bool { isPlus || Self.isTestFlight }
+    var hasPlus: Bool { isPlus }
 
     func load() async {
         do {
