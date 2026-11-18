@@ -21,6 +21,13 @@ struct RestrictionsSheet: View {
     @State private var picking = false
     /// Rows stay on screen when switched off, so they can be switched back on.
     @State private var rows: [Shielded] = []
+    @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// One shared entrance: fade and rise, in order. With Reduce Motion it is a fade only.
+    private func enter(_ index: Int) -> some ViewModifier {
+        Entrance(shown: appeared, index: index, still: reduceMotion)
+    }
 
     /// "Access granted" is the normal state and says nothing new; only problems and lock news show.
     private var showHeadline: Bool {
@@ -75,23 +82,37 @@ struct RestrictionsSheet: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 14)
                             .accessibilityAddTraits(.isHeader)
+                            .modifier(enter(0))
                         Text(chosenCount == 0
                              ? "Choose the apps you want to block while you\u{2019}re focusing."
                              : "They\u{2019}re blocked while your timer runs.")
                             .font(PrintFont.mono(14))
                             .foregroundStyle(Ink.ink)
                             .fixedSize(horizontal: false, vertical: true)
+                            .modifier(enter(1))
                         Text("You can change your selection anytime.")
                             .font(PrintFont.mono(12))
                             .foregroundStyle(Ink.soft)
+                            .modifier(enter(2))
                         if showHeadline {
                             Text(headline)
                                 .font(PrintFont.mono(14))
                                 .foregroundStyle(Ink.red)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .accessibilityIdentifier("restrictions-status")
+                                .modifier(enter(3))
                         }
-                        ForEach(rows, id: \.self) { item in row(item) }
+                        if rows.isEmpty {
+                            emptySlots
+                        } else {
+                            LockedStamp(count: chosenCount, still: reduceMotion)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                        }
+                        ForEach(rows, id: \.self) { item in
+                            row(item)
+                                .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 10)))
+                        }
                     }
                     .padding(.bottom, 16)
                 }
@@ -107,10 +128,15 @@ struct RestrictionsSheet: View {
             }
             .padding(.horizontal, 24)
         }
-        .onAppear { rows = currentRows() }
+        .onAppear {
+            rows = currentRows()
+            appeared = true
+        }
         .onChange(of: restrictions.selection) { _, _ in
             // Picker changes add new rows; switched-off rows stay.
-            for item in currentRows() where !rows.contains(item) { rows.append(item) }
+            withAnimation(.easeOut(duration: 0.25)) {
+                for item in currentRows() where !rows.contains(item) { rows.append(item) }
+            }
         }
         .familyActivityPicker(
             isPresented: $picking,
@@ -162,8 +188,28 @@ struct RestrictionsSheet: View {
                 SwitchPill(on: Binding(get: { isOn(item) }, set: { set(item, on: $0) }))
             }
             .padding(.vertical, 14)
+            .opacity(isOn(item) ? 1 : 0.45)
+            .animation(.easeOut(duration: 0.18), value: isOn(item))
             Rectangle().fill(Ink.ink.opacity(0.15)).frame(height: 1)
         }
+    }
+
+    /// Before anything is picked: the same dashed empty slots as the onboarding slide. They fill
+    /// the page and show what is coming, and they appear one after another.
+    private var emptySlots: some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 4)
+        return LazyVGrid(columns: columns, spacing: 14) {
+            ForEach(0..<12, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .strokeBorder(Ink.ink.opacity(0.4), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay(Image(systemName: "plus").foregroundStyle(Ink.ink.opacity(0.5)))
+                    .modifier(Entrance(shown: appeared, index: 4 + i / 2, still: reduceMotion, scale: true))
+            }
+        }
+        .padding(.top, 6)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("No apps chosen yet")
     }
 
     @ViewBuilder
@@ -188,6 +234,45 @@ struct RestrictionsSheet: View {
     }
 }
 
+/// Fade and rise, one item after the next (35 ms apart). Used once, when the sheet opens.
+private struct Entrance: ViewModifier {
+    let shown: Bool
+    let index: Int
+    let still: Bool
+    var scale = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown || still ? 0 : 12)
+            .scaleEffect(scale && !shown && !still ? 0.9 : 1)
+            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.4).delay(Double(index) * 0.035), value: shown)
+    }
+}
+
+/// The blue "N locked" stamp. It lands on the page each time the count changes, like a real
+/// rubber stamp: a quick drop from a little larger, no bounce.
+private struct LockedStamp: View {
+    let count: Int
+    let still: Bool
+    @State private var down = true
+
+    var body: some View {
+        Stamp(text: "\(count) locked", color: Ink.blue, size: 22, tilt: -5)
+            .scaleEffect(down && !still ? 1.35 : 1)
+            .opacity(down ? 0 : 1)
+            .onAppear { land() }
+            .onChange(of: count) { _, _ in
+                down = true
+                land()
+            }
+    }
+
+    private func land() {
+        withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22)) { down = false }
+    }
+}
+
 /// The black switch: a pill track with a paper knob, in the printed ink.
 private struct SwitchPill: View {
     @Binding var on: Bool
@@ -203,6 +288,7 @@ private struct SwitchPill: View {
                 .animation(.easeOut(duration: 0.16), value: on)
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: on)
         .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel("Lock")
         .accessibilityValue(on ? "On" : "Off")
