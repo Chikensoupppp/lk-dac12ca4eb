@@ -40,8 +40,8 @@ struct CountdownClockView: View {
                     Image("BrainExact")
                         .resizable().scaledToFit()
                         .accessibilityHidden(true)
-                        .frame(width: side * 0.44)
-                        .offset(y: side * (timing == nil ? -0.19 : -0.20))
+                        .frame(width: side * 0.37)
+                        .offset(y: side * (timing == nil ? -0.225 : -0.235))
                         // A small happy hop as the session starts.
                         .scaleEffect(sweeping ? 1.06 : 1)
                         .animation(motionLimited(systemReduceMotion) ? nil : .spring(response: 0.45, dampingFraction: 0.6), value: sweeping)
@@ -55,28 +55,41 @@ struct CountdownClockView: View {
                     // Sessions longer than an hour keep a full ring until an hour is left.
                     let fraction = timing.map { _ in remaining / 3600 } ?? idleFraction
                     let value = swept(min(max(fraction, 0), 1), at: context.date)
+                    let arcColor = flash == .endedEarly ? FocusPaper.secondary : FocusPaper.amber
+                    let endAngle = Angle.degrees(-90 + 360 * value).radians
                     ZStack {
+                        // Faint full circle so the arc reads as part of a dial, not a loose line.
+                        Circle()
+                            .stroke(FocusPaper.secondary.opacity(0.16), lineWidth: side * 0.008)
+                            .frame(width: ring, height: ring)
                         Circle().trim(from: 0, to: value)
-                            .stroke(flash == .endedEarly ? FocusPaper.secondary : FocusPaper.amber,
-                                    style: StrokeStyle(lineWidth: side * (timing != nil && seconds <= 60 ? 0.026 : 0.02), lineCap: .round))
+                            .stroke(arcColor,
+                                    style: StrokeStyle(lineWidth: side * (timing != nil && seconds <= 60 ? 0.024 : 0.018), lineCap: .round))
                             .rotationEffect(.degrees(-90))
                             .frame(width: ring, height: ring)
                             .animation(timing == nil && !motionLimited(systemReduceMotion) ? .spring(response: 0.34, dampingFraction: 1) : nil, value: idleFraction)
+                        // A round knob at the end of the arc, like the tip of a timer hand.
+                        if value > 0.01 && value < 0.995 {
+                            Circle().fill(arcColor)
+                                .frame(width: side * 0.05, height: side * 0.05)
+                                .overlay(Circle().fill(FocusPaper.page).frame(width: side * 0.02, height: side * 0.02))
+                                .offset(x: cos(endAngle) * ring / 2, y: sin(endAngle) * ring / 2)
+                        }
                         Text(SessionTiming.display(seconds: seconds))
-                            .font(AppFont.font(side * 0.22, .bold).monospacedDigit())
-                            .tracking(-side * 0.013)
+                            .font(AppFont.font(side * 0.2, .bold).monospacedDigit())
+                            .tracking(-side * 0.01)
                             .foregroundStyle(FocusPaper.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
-                            .frame(width: side * 0.82)
-                            .offset(y: side * (showsMascot ? 0.09 : -0.02))
+                            .frame(width: side * 0.8)
+                            .offset(y: side * (showsMascot ? 0.075 : -0.02))
                         if !typeSize.isAccessibilitySize {
                             Text(caption)
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(FocusPaper.secondary)
                                 .multilineTextAlignment(.center)
                                 .frame(width: side * 0.7)
-                                .offset(y: side * (showsMascot ? 0.27 : 0.14))
+                                .offset(y: side * (showsMascot ? 0.25 : 0.14))
                         }
                     }
                     .accessibilityElement(children: .ignore)
@@ -118,14 +131,6 @@ struct CountdownClockView: View {
                 mark.addLine(to: CGPoint(x: 0, y: major ? -122 : -126))
                 hand.stroke(mark, with: .color(FocusPaper.secondary.opacity(major ? 0.9 : 0.42)), lineWidth: major ? 1.2 : 0.85)
             }
-            var tally = Path()
-            for (a, b) in [(CGPoint(x: 45, y: 238), CGPoint(x: 38, y: 244)),
-                           (CGPoint(x: 50, y: 243), CGPoint(x: 45, y: 251)),
-                           (CGPoint(x: 57, y: 248), CGPoint(x: 52, y: 255))] {
-                tally.move(to: a)
-                tally.addLine(to: b)
-            }
-            context.stroke(tally, with: .color(FocusPaper.ink), style: StrokeStyle(lineWidth: 2, lineCap: .round))
         }
         .accessibilityHidden(true)
     }
