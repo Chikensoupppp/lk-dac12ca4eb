@@ -64,7 +64,7 @@ struct PCSheet: View {
     static var buddyOn: Bool { UserDefaults.standard.object(forKey: buddyKey) as? Bool ?? true }
 
     /// The PC setup page. The PC app's window takes over from there with its own guide.
-    static let setupURL = URL(string: "https://chikensoupppp.github.io/lk-dac12ca4eb/pc/")!
+    static let setupURL = URL(string: "https://swipelater.app/pc/")!
 
     static let remindKey = "lockin.pc.remindMinutes.v1"
     static let remindDefault = 3
