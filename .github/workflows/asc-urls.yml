@@ -1,0 +1,21 @@
+name: App Store links
+# Sets the App Store links from scripts/asc-set-urls.py. Run by pushing an `asc-urls-N` tag.
+on:
+  push:
+    tags: ['asc-urls-*']
+jobs:
+  urls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyjwt cryptography requests
+      - name: Set links
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: python scripts/asc-set-urls.py

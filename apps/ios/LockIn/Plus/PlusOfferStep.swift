@@ -5,8 +5,8 @@ import SwiftUI
 /// screen. Terms uses Apple's standard license until Lock In has its own.
 enum PlusLinks {
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    /// TODO(Brandon): Lock In needs a privacy policy page before App Review. Nil hides the link.
-    static let privacy: URL? = nil
+    /// The public privacy policy (swipelater-site repo, privacy/index.html). Nil would hide the link.
+    static let privacy: URL? = URL(string: "https://swipelater.app/privacy/")
 }
 
 /// The last slide: the offer, in a calm navy. An honest trial timeline with real dates, the price
