@@ -33,14 +33,16 @@ enum Matte {
     }
 }
 
-/// The Focus surface has its own paper palette; other screens still use Matte.
+/// The Focus surface palette. Since 2026-11-18 it is the same riso print look as the locked
+/// screen: grey newsprint, riso black, riso Medium Blue. `amber` keeps its old name so every use
+/// changes together, but it is blue now.
 enum FocusPaper {
-    static let page = Color(hex: 0xF6F3EC)
-    static let ink = Color(hex: 0x171513)
-    static let secondary = Color(hex: 0x6F6A60)
-    static let line = Color(hex: 0xE4DED3)
-    static let inset = Color(hex: 0xEDE9E0)
-    static let amber = Color(hex: 0xA97029)
+    static let page = Color(hex: 0xE7E8E3)
+    static let ink = Color(hex: 0x1B1B1B)
+    static let secondary = Color(hex: 0x575A55)
+    static let line = Color(hex: 0xC4C6BD)
+    static let inset = Color(hex: 0xF3F4F0)
+    static let amber = Color(hex: 0x3255A4)
 }
 
 /// True when decorative motion should be off: system Reduce Motion or Low Power Mode.

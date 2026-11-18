@@ -3,25 +3,26 @@ import SwiftUI
 /// A week to show in the report, by its Monday.
 struct ReportWeek: Identifiable, Equatable { let id: Date }
 
-/// Weekly screens palette, "Citrus" (owner's pick, 2026-11-15): tangerine and deep navy on cool
-/// grey. Tangerine is the progress color; navy is text and the quiet accent. Only these screens.
+/// Weekly screens palette: the same riso print look as the locked screen and the focus screen
+/// (grey newsprint, black ink, riso Medium Blue). The old orange "Citrus" look is gone (2026-11-18).
+/// Names are kept from the old palette so every use changes together.
 private enum GoalInk {
-    static let bg = Color(hex: 0xF1F2F4)
-    static let panel = Color(hex: 0xFFFFFF)
-    /// Main text, deep navy (the name is from the old dark look, where text was cream).
-    static let cream = Color(hex: 0x1A1F36)
-    static let soft = Color(hex: 0x545A6D)
-    /// Progress: bars, punch card, the pace card, the chosen goal.
-    static let tangerine = Color(hex: 0xFF7A2F)
-    /// Tangerine dark enough for small text on the light paper.
-    static let tangerineText = Color(hex: 0xC24F0E)
-    /// Days under pace.
-    static let peach = Color(hex: 0xFFC9A8)
-    /// Text on the tangerine card, under the headline.
-    static let onTangerineSoft = Color(hex: 0x3A2414)
-    /// Quiet accent: navy (today's dot, buttons on tangerine, toggles).
-    static let green = Color(hex: 0x1A1F36)
-    static let empty = Color(hex: 0xDDE0E6)
+    static let bg = Color(hex: 0xE7E8E3)
+    static let panel = Color(hex: 0xF3F4F0)
+    /// Main text: riso black.
+    static let cream = Color(hex: 0x1B1B1B)
+    static let soft = Color(hex: 0x575A55)
+    /// Progress: bars, punch card, the pace card, the chosen goal. Riso Medium Blue.
+    static let tangerine = Color(hex: 0x3255A4)
+    /// Same blue for small text on the paper (about 5.4:1).
+    static let tangerineText = Color(hex: 0x3255A4)
+    /// Days under pace: a washed-out blue.
+    static let peach = Color(hex: 0xA9B7D8)
+    /// Text on the blue card, under the headline.
+    static let onTangerineSoft = Color(hex: 0xDCE3F2)
+    /// Quiet accent: riso black (today's dot, buttons on the blue card, toggles).
+    static let green = Color(hex: 0x1B1B1B)
+    static let empty = Color(hex: 0xD8DAD2)
 }
 
 private let dayLetters = ["M", "T", "W", "T", "F", "S", "S"]
@@ -257,10 +258,10 @@ struct GoalSheet: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text("TO HIT YOUR GOAL")
                 .font(PrintFont.mono(11, .heavy)).tracking(1.5)
-                .foregroundStyle(GoalInk.cream)
+                .foregroundStyle(Color.white)
             Text("\(FocusLog.format(minutes: left)) to go")
                 .font(PrintFont.head(40))
-                .foregroundStyle(GoalInk.cream)
+                .foregroundStyle(Color.white)
             Text(daysLeft > 1
                  ? "About \(FocusLog.format(minutes: perDay)) a day gets you there by Sunday."
                  : "Last day. \(FocusLog.format(minutes: left)) today gets you there.")
@@ -347,7 +348,7 @@ struct GoalSheet: View {
                 .foregroundStyle(GoalInk.soft)
             if goal == nil {
                 Button("SET MY GOAL") { goals.setGoal(draft) }
-                    .buttonStyle(PrintButtonStyle(fill: GoalInk.tangerine, text: GoalInk.cream))
+                    .buttonStyle(PrintButtonStyle(fill: GoalInk.tangerine, text: .white))
             }
         }
     }
@@ -360,7 +361,7 @@ struct GoalSheet: View {
         } label: {
             Text("\(hours)")
                 .font(PrintFont.head(26))
-                .foregroundStyle(GoalInk.cream)
+                .foregroundStyle(on ? Color.white : GoalInk.cream)
                 .frame(maxWidth: .infinity, minHeight: 54)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
