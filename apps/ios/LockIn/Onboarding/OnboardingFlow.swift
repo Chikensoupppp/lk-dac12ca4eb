@@ -112,8 +112,8 @@ struct OnboardingFlow: View {
                 case .year: YearStep(hoursIndex: hoursIndex ?? 1, next: next)
                 case .goals: GoalsStep(goals: $goals, next: next)
                 case .slide: SlideToLockStep(next: next)
-                case .appsWait: BackLaterSignStep(next: next)
-                case .comeBack: PunchCardStep(next: next)
+                case .appsWait: LaterStep(next: next)
+                case .comeBack: StackDaysStep(next: next)
                 case .plan: PlanStep(hoursIndex: hoursIndex, categories: categories, goals: goals, next: next)
                 }
             }

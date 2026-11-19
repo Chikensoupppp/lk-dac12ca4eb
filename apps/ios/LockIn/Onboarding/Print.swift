@@ -49,6 +49,8 @@ struct PrintScaffold<Content: View>: View {
     var secondaryTitle: String?
     var secondaryAction: (() -> Void)?
     var footer: AnyView?
+    /// A full-screen layer drawn over the background color (the moving halftone field).
+    var backdrop: AnyView?
     @ViewBuilder var content: () -> Content
     @Environment(\.obBack) private var back
 
@@ -137,6 +139,7 @@ struct PrintScaffold<Content: View>: View {
             ZStack {
                 background
                 if grain { Grain(color: Ink.ink.opacity(0.09)) }
+                if let backdrop { backdrop }
             }
             .ignoresSafeArea()
         }

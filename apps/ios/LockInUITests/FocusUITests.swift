@@ -390,8 +390,8 @@ final class FocusUITests: XCTestCase {
         tap("Skip")                      // goals
         tap("onboarding-slide-knob")     // one slide, you're in (NEXT unlocks after the slide)
         tap("NEXT")
-        tap("NEXT")                      // swipe later (the sign)
-        tap("NEXT")                      // stack up the days (punch card)
+        tap("NEXT")                      // swipe later (notifications go to Later)
+        tap("NEXT")                      // stack up the days (the week stacks up)
         // The plan prints, then the introduction ends by itself and the coach starts.
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         app.buttons["skip-focus-coach"].tap()
