@@ -142,7 +142,7 @@ struct SlideToLockStep: View {
 
     var body: some View {
         // No NEXT: the slider sits where it was and moves on by itself. VoiceOver gets a Next after.
-        PrintScaffold(step: 6, tag: "How a session starts", title: "One slide.\nYou\u{2019}re in.",
+        PrintScaffold(step: 5, tag: "How a session starts", title: "One slide.\nYou\u{2019}re in.",
                       primaryView: AnyView(track.padding(.bottom, 6)),
                       secondaryTitle: voiceOver && locked ? "Next" : nil, secondaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
@@ -432,7 +432,7 @@ struct LaterStep: View {
     private var allGone: Bool { gone.count == Self.notes.count }
 
     var body: some View {
-        PrintScaffold(step: 7, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 6, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.62, ripples: ripples))) {
             SwapCaption(first: "Every ping waits in Later.", second: "All here when you\u{2019}re done.", swapped: allGone)
             VStack(spacing: 16) {
@@ -649,7 +649,7 @@ struct StackDaysStep: View {
     private static let shifts: [CGFloat] = [0, 6, -5, 8, -3, 4, -6]
 
     var body: some View {
-        PrintScaffold(step: 8, tag: "See your progress", title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 7, tag: "See your progress", title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.6, ripples: ripples))) {
             Text("One session a day. Watch it grow.")
                 .font(PrintFont.mono(14))

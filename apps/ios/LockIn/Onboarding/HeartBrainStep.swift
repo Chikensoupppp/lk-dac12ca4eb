@@ -27,7 +27,7 @@ struct HeartBrainStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 5, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
+        PrintScaffold(step: 4, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
                 ZStack(alignment: .top) {
                     // Under the report while it draws, so the slide is never blank: the same slide from

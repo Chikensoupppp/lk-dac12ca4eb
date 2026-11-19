@@ -12,10 +12,10 @@ import SwiftUI
 /// uses the guess. Order: the problem (1-5), how SwipeLater fixes it (6-8), make it yours (9-11),
 /// the plan (12), Plus (13).
 struct OnboardingFlow: View {
-    static let stepCount = 13
+    static let stepCount = 12
 
     enum Step: Int {
-        case hook = 1, guess, check, reveal, brain, slide, appsWait, comeBack, pulls, lock, goals, plan, plus
+        case hook = 1, guess, reveal, brain, slide, appsWait, comeBack, pulls, lock, goals, plan, plus
         /// "Can't do 4:00?" from the plan: optional, on the plan's step (`WhenSteps.swift`).
         case whenAsk, whenFree, whenPick
 
@@ -43,6 +43,8 @@ struct OnboardingFlow: View {
     /// The plan as it was when "Can't do 4:00?" was tapped, and the calendar's days for it.
     @State private var draftPlan: LockInPlan?
     @State private var calendarDays: [CalendarFit.Day] = []
+    /// Apple's Screen Time box is up; a second tap waits for it.
+    @State private var askingScreenTime = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
@@ -80,10 +82,7 @@ struct OnboardingFlow: View {
     private func next() {
         switch step {
         case .hook: advance(to: .guess)
-        case .guess: advance(to: .check)
-        case .check:
-            if screenTimeOn && ScreenTimeReport.isAvailable { usedReport = true; advance(to: .reveal) }
-            else { advance(to: hoursIndex == nil ? .slide : .brain) }
+        case .guess: askScreenTime()
         case .reveal: advance(to: .brain)
         case .brain: advance(to: .slide)
         case .slide: advance(to: .appsWait)
@@ -137,10 +136,29 @@ struct OnboardingFlow: View {
         move(to: .plan, back: true)
     }
 
-    /// "Not now (keep my guess)" on the why-we-ask slide.
-    private func skipCheck() {
-        usedReport = false
-        advance(to: hoursIndex == nil ? .slide : .brain)
+    /// "See my actual time" on the guess slide: Apple's Screen Time box comes up straight away (it
+    /// shows only once; after that the answer sticks). With access, the real hours are next;
+    /// without it, the flow goes on with the guess.
+    private func askScreenTime() {
+        guard !askingScreenTime else { return }
+        let afterAnswer = {
+            if screenTimeOn && ScreenTimeReport.isAvailable { usedReport = true; advance(to: .reveal) }
+            else { usedReport = false; advance(to: hoursIndex == nil ? .slide : .brain) }
+        }
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing-onboarding") { afterAnswer(); return }
+        #endif
+        switch restrictions.status {
+        case .needsAuthorization, .failed:
+            askingScreenTime = true
+            Task { @MainActor in
+                await restrictions.requestAuthorization()
+                askingScreenTime = false
+                afterAnswer()
+            }
+        default:
+            afterAnswer()
+        }
     }
 
     private func finish() {
@@ -166,7 +184,6 @@ struct OnboardingFlow: View {
                 switch step {
                 case .hook: HookStep(next: next, startNow: finish)
                 case .guess: GuessStep(guessIndex: $guessIndex, next: next)
-                case .check: CheckStep(restrictions: restrictions, next: next, skip: skipCheck)
                 case .reveal: RevealStep(guessIndex: guessIndex, next: next)
                 case .brain: HeartBrainStep(hoursIndex: hoursIndex, useReport: usedReport, next: next)
                 case .pulls: PullsStep(categories: $categories, next: next)

@@ -205,229 +205,6 @@ private struct DashedLine: View {
     }
 }
 
-// MARK: 3. Why we ask
-
-struct CheckStep: View {
-    @ObservedObject var restrictions: RestrictionController
-    let next: () -> Void
-    let skip: () -> Void
-    @State private var asking = false
-    @State private var bob = false
-    @State private var shown = false
-    @State private var drawn = false
-    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @Environment(\.openURL) private var openURL
-    @Environment(\.scenePhase) private var scenePhase
-
-    /// iOS shows its Screen Time box only once. After that the answer sticks until the app is
-    /// deleted, so this slide says what the answer already is instead of silently moving on.
-    private enum Access { case ask, on, off }
-
-    private var access: Access {
-        switch restrictions.status {
-        case .needsAuthorization, .failed: return .ask
-        case .denied: return .off
-        default: return .on
-        }
-    }
-
-    private var primaryTitle: String {
-        if asking { return "ASKING..." }
-        switch access {
-        // Not "Allow": this button opens Apple's own Screen Time box, which asks.
-        case .ask: return "OK, SHOW ME"
-        case .on: return "NEXT"
-        case .off: return "OPEN SETTINGS"
-        }
-    }
-
-    var body: some View {
-        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Your real time,\none tap away.", titleSize: 46, grain: true,
-                      primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
-                      secondaryTitle: access == .on ? nil : "Not now", secondaryAction: skip) {
-            VStack(alignment: .leading, spacing: 22) {
-                preview
-                if access == .on {
-                    Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
-                } else if access == .off {
-                    Text("Screen Time is off. Turn it on in Settings > Screen Time > Apps with Screen Time Access.")
-                        .font(PrintFont.body(15))
-                        .foregroundStyle(Ink.red)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-        // Coming back from Settings: pick up a changed answer.
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { restrictions.refresh() }
-        }
-        .task {
-            if effectiveReduceMotion(systemReduceMotion) { shown = true; drawn = true; return }
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { shown = true }
-            withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) { bob = true }
-            guard await printPause(0.6) else { return }
-            withAnimation(.easeOut(duration: 0.5)) { drawn = true }
-        }
-    }
-
-    private static var appName: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "SwipeLater"
-    }
-
-    /// A printed picture of the Screen Time box iOS shows next, with Continue circled and the brain
-    /// pointing at it (the way Opal primes it). Drawn tilted and inked so it reads as a picture of
-    /// the box; its Continue opens Apple's real box, its Don't Allow is "Not now". Mock: docs/design/slide3-options.html, option B.
-    /// Only while the answer is still to come.
-    @ViewBuilder
-    private var preview: some View {
-        if access == .ask {
-            VStack(spacing: 0) {
-                alertPicture
-                    .padding(.horizontal, 22)
-                    .rotationEffect(.degrees(-2))
-                    .scaleEffect(shown ? 1 : 0.86)
-                    .opacity(shown ? 1 : 0)
-                    .padding(.top, 14)
-                ZStack(alignment: .topLeading) {
-                    PointArrow()
-                        .trim(from: 0, to: drawn ? 1 : 0)
-                        .stroke(Ink.ink, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
-                        .frame(width: 96, height: 92)
-                        .offset(x: 20, y: 0)
-                    HStack(alignment: .center, spacing: 10) {
-                        Image("BrainExact")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 92)
-                            .offset(y: bob ? -3 : 3)
-                            .rotationEffect(.degrees(bob ? 3 : -3))
-                        Text("this one!\nthen your\nreal time")
-                            .font(PrintFont.hand(21))
-                            .foregroundStyle(Ink.ink)
-                            .opacity(drawn ? 1 : 0)
-                    }
-                    .offset(x: 112, y: 34)
-                }
-                .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-                Text("It never leaves your iPhone.")
-                    .font(PrintFont.mono(13))
-                    .foregroundStyle(Ink.ink)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 6)
-            }
-        } else {
-            Text("It never leaves your iPhone.")
-                .font(PrintFont.bold(18))
-                .foregroundStyle(Ink.ink.opacity(0.85))
-        }
-    }
-
-    private var alertPicture: some View {
-        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
-        let blue = Color(hex: 0x0A62D8)
-        return VStack(spacing: 0) {
-            VStack(spacing: 6) {
-                Text("\u{201C}\(Self.appName)\u{201D} Would Like to Access Screen Time")
-                    .font(.system(size: 15, weight: .semibold))
-                Text("Providing \u{201C}\(Self.appName)\u{201D} access to Screen Time may allow it to see your activity data, restrict content, and limit the usage of apps and websites.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: 0x333333))
-            }
-            .multilineTextAlignment(.center)
-            .foregroundStyle(Ink.ink)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 14)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Next, iPhone asks to allow Screen Time.")
-            Rectangle().fill(Color(hex: 0xC8C8C8)).frame(height: 1)
-            // Both buttons in the picture work: Continue opens Apple's real box (same as the big
-            // button), Don't Allow is the same as "Not now".
-            HStack(spacing: 0) {
-                Button(action: ask) {
-                    Text("Continue")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(blue)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(Ink.sun, lineWidth: 3)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .scaleEffect(drawn ? (bob ? 1.04 : 0.98) : 0.6)
-                                .opacity(drawn ? 1 : 0)
-                        }
-                }
-                .buttonStyle(AlertPictureButtonStyle())
-                .disabled(asking)
-                .accessibilityLabel("Continue")
-                .accessibilityHint("Opens the Screen Time box")
-                Rectangle().fill(Color(hex: 0xC8C8C8)).frame(width: 1, height: 44)
-                Button(action: skip) {
-                    Text("Don\u{2019}t Allow")
-                        .font(.system(size: 16))
-                        .foregroundStyle(blue)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(AlertPictureButtonStyle())
-                .disabled(asking)
-            }
-        }
-        .background(shape.fill(Color(hex: 0xF2F2F2)))
-        .clipShape(shape)
-        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
-        .background(shape.fill(Ink.ink).offset(y: 7))
-        .shadow(color: .black.opacity(0.22), radius: 16, y: 16)
-    }
-
-    private func ask() {
-        #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-ui-testing-onboarding") { next(); return }
-        #endif
-        switch access {
-        case .ask:
-            asking = true
-            Task {
-                await restrictions.requestAuthorization()
-                asking = false
-                next()
-            }
-        case .on:
-            next()
-        case .off:
-            if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-        }
-    }
-}
-
-/// Press feedback for the two buttons in the slide 3 box picture: a grey wash, like iOS alerts.
-private struct AlertPictureButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(Color.black.opacity(configuration.isPressed ? 0.08 : 0))
-    }
-}
-
-/// The hand-drawn arrow on slide 3: from beside the brain, up and right to Continue, with a head.
-private struct PointArrow: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX + r.width * 0.08, y: r.maxY))
-        p.addCurve(to: CGPoint(x: r.maxX - r.width * 0.08, y: r.minY + r.height * 0.12),
-                   control1: CGPoint(x: r.minX + r.width * 0.18, y: r.minY + r.height * 0.45),
-                   control2: CGPoint(x: r.minX + r.width * 0.45, y: r.minY + r.height * 0.22))
-        p.move(to: CGPoint(x: r.maxX - r.width * 0.26, y: r.minY))
-        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.06, y: r.minY + r.height * 0.11))
-        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.2, y: r.minY + r.height * 0.3))
-        return p
-    }
-}
-
 // MARK: 4. Real hours
 
 /// The real numbers, drawn by Apple's report view inside the LockInReport extension. Lock In
@@ -443,7 +220,7 @@ struct RevealStep: View {
 
     var body: some View {
         // No grain here: the cover below is flat paper, and grain would show its edges.
-        PrintScaffold(step: 4, tag: "Your real screen time",
+        PrintScaffold(step: 3, tag: "Your real screen time",
                       primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
             ZStack(alignment: .top) {
                 // Only seen if Apple's report is still drawing when the cover lifts.
@@ -659,7 +436,7 @@ struct PullsStep: View {
 
     var body: some View {
         // The headline is drawn here (not by the scaffold) so the brain can sit beside it.
-        PrintScaffold(step: 9, tag: "What distracts you", grain: true,
+        PrintScaffold(step: 8, tag: "What distracts you", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             header
@@ -863,7 +640,7 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 10, tag: "Pick apps to lock", title: words.title, grain: true,
+        PrintScaffold(step: 9, tag: "Pick apps to lock", title: words.title, grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
@@ -988,7 +765,7 @@ struct YearStep: View {
     private var focusDays: Int { OnboardingMath.focusDaysPerYear(minutesPerDay: 25) }
 
     var body: some View {
-        PrintScaffold(step: 8, tag: "What it adds up to", title: "Your next\nyear.", grain: true,
+        PrintScaffold(step: 7, tag: "What it adds up to", title: "Your next\nyear.", grain: true,
                       primaryTitle: "LET\u{2019}S DO IT", primaryAction: next) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(shown) DAYS")
@@ -1077,7 +854,7 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "What you want more of", background: Ink.notebook, title: "What do you\nwant more of?",
+        PrintScaffold(step: 10, tag: "What you want more of", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("Tap everything you\u{2019}d rather spend your time on.")
@@ -1211,7 +988,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 12, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
+        PrintScaffold(step: 11, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
             Text("Made from your answers.")
@@ -1427,7 +1204,7 @@ struct PromiseStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "Your promise", title: "One small\ncommitment.", grain: true,
+        PrintScaffold(step: 10, tag: "Your promise", title: "One small\ncommitment.", grain: true,
                       primaryView: AnyView(holdButton),
                       secondaryTitle: "Not now", secondaryAction: { signed = false; next() }) {
             VStack(alignment: .leading, spacing: 12) {
