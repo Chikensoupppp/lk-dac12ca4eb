@@ -44,7 +44,8 @@ struct DayBarSlide: View {
                                "A third of your day? Oof.", "Half your day?! Let\u{2019}s fix this."]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        // Same sizes as before; only the gaps are tighter so the last row clears CONTINUE on a 6.1" iPhone.
+        VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 Text(headline.uppercased())
                     .font(.system(size: 46, weight: .black).width(.compressed))
@@ -157,7 +158,7 @@ struct DayBarSlide: View {
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
             }
             .frame(height: 36)
-            .padding(.top, 14)
+            .padding(.top, 10)
 
             HStack {
                 ForEach(["0H", "4H", "8H", "12H", "16H"], id: \.self) { l in
@@ -172,9 +173,9 @@ struct DayBarSlide: View {
                 chip("A MONTH, NONSTOP", "\(Int((hours * 30 / 24).rounded())) DAYS", 1)
                 chip("A YEAR, NONSTOP", "\(Int((hours * 365 / 24).rounded())) DAYS", 2)
             }
-            .padding(.top, 12)
+            .padding(.top, 8)
         }
-        .padding(16)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Self.cardFill))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
@@ -213,7 +214,7 @@ struct DayBarSlide: View {
     }
 
     private var enough: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("EVERY DAY, THAT\u{2019}S ENOUGH TIME FOR")
                 .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.6)
                 .foregroundStyle(Self.ink.opacity(0.6))
