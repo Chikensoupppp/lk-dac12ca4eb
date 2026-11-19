@@ -190,7 +190,7 @@ struct HeartBrainStep: View {
     /// 45-minute episodes, about 40 pages an hour, 1-hour workouts.
     private var things: [(n: Int, one: String, many: String, symbol: String, fill: Color, glyph: Color)] {
         [
-            (Int(hours * 60 / 45), "episode of a show", "episodes of a show", "play.fill", Color(hex: 0xE5484D), .white),
+            (Int(hours * 60 / 45), "episode of a show", "episodes of a show", "tv.fill", Color(hex: 0xE5484D), .white),
             (Int((hours * 40 / 10).rounded()) * 10, "page of a book", "pages of a book", "book.fill", Ink.sun, Ink.ink),
             (Int(hours), "gym session", "gym sessions", "dumbbell.fill", Ink.blue, .white)
         ]
@@ -207,10 +207,11 @@ struct HeartBrainStep: View {
                     Image(systemName: t.symbol)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(t.glyph)
-                        .frame(width: 36, height: 36)
-                        .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(t.fill))
-                        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
-                        .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Ink.ink).offset(y: 3))
+                        // Round stickers, so nothing reads as a real app's icon.
+                        .frame(width: 38, height: 38)
+                        .background(Circle().fill(t.fill))
+                        .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
+                        .background(Circle().fill(Ink.ink).offset(y: 3))
                         .scaleEffect(on ? 1 : 0.6)
                         .rotationEffect(.degrees(on ? 0 : (i % 2 == 0 ? -5 : 5)))
                     Text("\(on ? t.n : 0)")

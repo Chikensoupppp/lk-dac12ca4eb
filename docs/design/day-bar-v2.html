@@ -48,7 +48,7 @@
   .enough { position: absolute; left: 24px; right: 24px; top: 590px; }
   .enough small { display: block; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1.6px; color: var(--soft); margin-bottom: 10px; }
   .item { display: flex; align-items: center; gap: 12px; height: 46px; }
-  .ic { width: 36px; height: 36px; border-radius: 12px; border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); display: grid; place-items: center; flex: none; }
+  .ic { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); display: grid; place-items: center; flex: none; }
   .ic svg { width: 20px; height: 20px; }
   .item b { font: 400 28px/1 Anton, Impact, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
   .item span { font: 700 16px/1.2 Inter, sans-serif; font-stretch: condensed; color: var(--ink); }
@@ -70,7 +70,7 @@ const BANDS = [
 // Every day, that many hours is enough for... (45-minute episodes, about 40 pages an hour, 1-hour workouts)
 const ITEMS = h => [
   { n: Math.floor(h * 60 / 45), one: "episode of a show", many: "episodes of a show", c: "#E5484D",
-    g: '<path d="M7 4.5v11l9-5.5z" fill="#fff"/>' },
+    g: '<rect x="3" y="5" width="14" height="9.5" rx="2" fill="#fff"/><path d="M7 17h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' },
   { n: Math.round(h * 40 / 10) * 10, one: "page of a book", many: "pages of a book", c: "#FFB511",
     g: '<path d="M3 5.5c2.5-1 5-1 7 .5v10c-2-1.5-4.5-1.5-7-.5zM17 5.5c-2.5-1-5-1-7 .5v10c2-1.5 4.5-1.5 7-.5z" fill="#1B1B1B"/>' },
   { n: Math.floor(h), one: "gym session", many: "gym sessions", c: "#3255A4",

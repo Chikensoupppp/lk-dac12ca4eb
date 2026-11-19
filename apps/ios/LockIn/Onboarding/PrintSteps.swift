@@ -383,29 +383,37 @@ struct RevealStep: View {
                 DeviceActivityReport(.reveal(guess: guessIndex), filter: filter)
                     .frame(height: 540)
                     .frame(maxWidth: .infinity)
-                Text("Tap the one that matches:")
+                // The app cannot read the number above (Apple keeps it inside the report), so the user
+                // taps the band it falls in. Their guess from slide 2 is marked so this reads as a check.
+                Text("Your real number? Tap it.")
                     .font(PrintFont.mono(14, .bold))
                     .foregroundStyle(Ink.ink)
-                HStack(spacing: 8) {
+                HStack(alignment: .bottom, spacing: 8) {
                     ForEach(0..<4, id: \.self) { i in
                         let on = realIndex == i
                         Button { realIndex = i } label: {
-                            Text(hoursTabs[i])
-                                .font(PrintFont.bold(16))
-                                .foregroundStyle(on ? Ink.paper : Ink.ink)
-                                .frame(maxWidth: .infinity, minHeight: 44)
-                                .background(Capsule().fill(on ? Ink.ink : Color.clear))
-                                .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2.5))
+                            VStack(spacing: 4) {
+                                Text("YOUR GUESS")
+                                    .font(PrintFont.mono(8, .bold)).tracking(0.6)
+                                    .foregroundStyle(Ink.blue)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                    .opacity(guessIndex == i ? 1 : 0)
+                                Text(hoursTabs[i])
+                                    .font(PrintFont.bold(16))
+                                    .foregroundStyle(on ? Ink.paper : Ink.ink)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(Capsule().fill(on ? Ink.ink : Color.clear))
+                                    .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2.5))
+                            }
                         }
                         .buttonStyle(.plain)
                         .sensoryFeedback(.selection, trigger: on)
-                        .accessibilityLabel(hoursTabs[i].replacingOccurrences(of: "HRS", with: "hours"))
+                        .accessibilityLabel(hoursTabs[i].replacingOccurrences(of: "HRS", with: "hours") + (guessIndex == i ? ", your guess" : ""))
                         .accessibilityAddTraits(on ? .isSelected : [])
                     }
                 }
             }
         }
-        .onAppear { if realIndex == nil { realIndex = guessIndex } }
     }
 }
 

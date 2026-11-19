@@ -292,7 +292,9 @@ struct LaterStep: View {
     @State private var ripples: [FieldRipple] = []
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
+    /// The round mark on a notification: a person's initial or a plain symbol, never an app icon.
     private struct Note {
+        let initial: String?
         let symbol: String
         let tile: Color
         let glyph: Color
@@ -301,9 +303,9 @@ struct LaterStep: View {
     }
 
     private static let notes = [
-        Note(symbol: "bubble.left.fill", tile: Ink.blue, glyph: .white, app: "Social", text: "Mia and 11 others liked your post"),
-        Note(symbol: "play.fill", tile: Ink.sun, glyph: Ink.ink, app: "Video", text: "Up next in 5\u{2026} 4\u{2026} 3\u{2026}"),
-        Note(symbol: "gamecontroller.fill", tile: Ink.ink, glyph: .white, app: "Games", text: "Your free spin is ready"),
+        Note(initial: "M", symbol: "", tile: Ink.blue, glyph: .white, app: "Social", text: "Mia and 11 others liked your post"),
+        Note(initial: nil, symbol: "timer", tile: Ink.sun, glyph: Ink.ink, app: "Video", text: "Up next in 5\u{2026} 4\u{2026} 3\u{2026}"),
+        Note(initial: nil, symbol: "gift.fill", tile: Ink.ink, glyph: .white, app: "Games", text: "Your free spin is ready"),
     ]
 
     var body: some View {
@@ -329,11 +331,16 @@ struct LaterStep: View {
         let isGone = gone.contains(i)
         let dx: CGFloat = isGone ? 460 : (drag[i] ?? 0)
         return HStack(spacing: 12) {
-            Image(systemName: note.symbol)
-                .font(.system(size: 19, weight: .semibold))
-                .foregroundStyle(note.glyph)
-                .frame(width: 42, height: 42)
-                .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(note.tile))
+            Group {
+                if let initial = note.initial {
+                    Text(initial).font(.system(size: 19, weight: .bold, design: .rounded))
+                } else {
+                    Image(systemName: note.symbol).font(.system(size: 18, weight: .semibold))
+                }
+            }
+            .foregroundStyle(note.glyph)
+            .frame(width: 42, height: 42)
+            .background(Circle().fill(note.tile))
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text(note.app)
