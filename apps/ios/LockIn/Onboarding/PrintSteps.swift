@@ -474,7 +474,7 @@ struct RevealStep: View {
             // Slide transitions settle in about a second; wait them out so only one report is up.
             guard await printPause(1.0) else { return }
             mountReport = true
-            let wait = effectiveReduceMotion(systemReduceMotion) ? 0.2 : 1.8
+            let wait = effectiveReduceMotion(systemReduceMotion) ? 0.2 : 3.4
             guard await printPause(wait) else { return }
             withAnimation(.easeOut(duration: 0.35)) { showReport = true }
         }
@@ -538,7 +538,7 @@ private struct GuessCheck: View {
             if effectiveReduceMotion(systemReduceMotion) { days = 7; return }
             withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { bob = true }
             for i in 1...7 {
-                guard await printPause(0.32) else { return }
+                guard await printPause(0.5) else { return }
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { days = i }
             }
         }
