@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>First run cream</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=block" rel="stylesheet">
+<style>
+  /* Prototype of SwipeLater first-run slides 10-12. Deterministic: window.render(t). */
+  :root {
+    --page: #E7E8E3; --ink: #1B1B1B; --blue: #3255A4; --sun: #FFB511; --soft: #62645E; --card: #F3F4F0;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, system-ui, sans-serif; }
+  .row { display: flex; gap: 24px; padding: 24px; width: max-content; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  canvas.field { position: absolute; inset: 0; width: 393px; height: 852px; }
+  .bars { position: absolute; top: 62px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.16); }
+  .bars i.on { background: var(--ink); }
+  .back { position: absolute; top: 80px; left: 18px; width: 44px; height: 44px; display: grid; place-items: center; }
+  .back svg { width: 12px; height: 20px; }
+  h1 { position: absolute; left: 24px; top: 136px; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: 60px; line-height: .98; letter-spacing: .2px; color: var(--ink); text-transform: uppercase; }
+  .cap { position: absolute; left: 24px; right: 24px; top: 278px; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 14px; line-height: 1.45; color: var(--ink); }
+  .cap span { position: absolute; left: 0; top: 0; }
+  .next { position: absolute; left: 24px; right: 24px; bottom: 40px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page);
+          display: grid; place-items: center; font: 800 19px/1 Inter, sans-serif; letter-spacing: 2px; font-stretch: condensed; }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+
+  /* Slide 10: slider */
+  .track { position: absolute; left: 24px; right: 24px; top: 488px; height: 76px; border-radius: 38px; background: var(--ink); overflow: hidden;
+           box-shadow: 0 14px 30px rgba(27,27,27,.22), inset 0 1px 0 rgba(255,255,255,.08); }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 38px; background: linear-gradient(90deg, #2B4C97, var(--blue)); }
+  .label { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 64px; font: 700 15px/1 Inter, sans-serif; letter-spacing: 3px; color: rgba(231,232,227,.38);
+           -webkit-background-clip: text; background-clip: text; }
+  .label b { font-weight: 700; background: linear-gradient(90deg, rgba(231,232,227,.35) 0%, rgba(231,232,227,.35) 40%, #fff 50%, rgba(231,232,227,.35) 60%, rgba(231,232,227,.35) 100%);
+             background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .locked { position: absolute; inset: 0; display: grid; place-items: center; padding-right: 60px; font: 700 15px/1 Inter, sans-serif; letter-spacing: 3px; color: #fff; }
+  .knob { position: absolute; top: 6px; left: 6px; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #ECEDE8 70%);
+          box-shadow: 0 6px 14px rgba(0,0,0,.35); display: grid; place-items: center; }
+  .knob img { width: 70px; margin-top: 2px; }
+  .lockb { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; border: 2px solid #fff; }
+  .finger { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(27,27,27,.16); border: 2px solid rgba(255,255,255,.7); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+
+  /* Slide 11: notifications */
+  .note { position: absolute; left: 20px; right: 20px; height: 74px; border-radius: 22px; background: rgba(250,250,247,.78);
+          backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+          box-shadow: 0 10px 28px rgba(27,27,27,.13), inset 0 1px 0 rgba(255,255,255,.9); display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+  .ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+  .ntxt { flex: 1; min-width: 0; }
+  .nt { display: flex; justify-content: space-between; font: 700 14px/1.2 Inter, sans-serif; color: var(--ink); }
+  .nt em { font-style: normal; font-weight: 500; font-size: 12px; color: var(--soft); }
+  .nb { font: 500 14px/1.3 Inter, sans-serif; color: #3a3b37; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The "Later" stack: one dark card with two ghost cards behind it, like grouped notifications. */
+  .later { position: absolute; left: 20px; right: 20px; top: 430px; height: 92px; }
+  .ghost { position: absolute; height: 92px; border-radius: 24px; background: rgba(27,27,27,.55); }
+  .g1 { left: 12px; right: 12px; top: 10px; opacity: .55; }
+  .g2 { left: 26px; right: 26px; top: 20px; opacity: .3; }
+  .lcard { position: absolute; inset: 0; border-radius: 24px; background: var(--ink); color: var(--page); display: flex; align-items: center; gap: 14px; padding: 0 18px;
+           box-shadow: 0 18px 36px rgba(27,27,27,.28), inset 0 1px 0 rgba(255,255,255,.1); }
+  .lcard .c { width: 48px; height: 48px; border-radius: 14px; background: var(--blue); display: grid; place-items: center; flex: none; }
+  .lcard b { display: block; font: 700 17px/1.2 Inter, sans-serif; }
+  .lcard span { font: 500 14px/1.3 Inter, sans-serif; color: rgba(231,232,227,.7); }
+  .lcard em { margin-left: auto; font: 600 13px/1 "IBM Plex Mono", monospace; font-style: normal; white-space: nowrap; color: var(--ink); background: var(--sun); border-radius: 12px; padding: 6px 10px; }
+
+  /* Slide 12: stack */
+  .blk { position: absolute; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+         font: 600 13px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; box-shadow: 0 6px 14px rgba(27,27,27,.16), inset 0 1px 0 rgba(255,255,255,.18); }
+  .brain { position: absolute; width: 86px; }
+  .hnum { position: absolute; left: 24px; top: 300px; white-space: nowrap; font: 400 112px/1 Anton, Impact, sans-serif; color: var(--ink); text-shadow: 3px 2.5px 0 #3255A4; }
+  .hsub { position: absolute; left: 24px; right: 40px; top: 430px; font: 500 14px/1.45 "IBM Plex Mono", monospace; color: var(--ink); }
+  .harrow { position: absolute; left: 200px; top: 520px; width: 110px; height: 84px; }
+  .hyou { position: absolute; left: 290px; top: 588px; font: 400 36px/1 "Caveat Brush", cursive; color: #3255A4; transform: rotate(-6deg); }
+  .skip { position: absolute; left: 0; right: 0; bottom: 44px; text-align: center; font: 600 15px/1 Inter, sans-serif; color: rgba(27,27,27,.6); }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const BRAIN = "../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png";
+const W = 393, H = 852, STEPS = 13;
+const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+const ease = t => { t = clamp(t); return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; };
+const easeOut = t => 1 - Math.pow(1 - clamp(t), 3);
+const easeIn = t => Math.pow(clamp(t), 2.2);
+// Apple-style spring: response (s) + damping ratio. Returns progress from 0 to 1 (can overshoot).
+function spring(t, response = .4, damping = 1) {
+  if (t <= 0) return 0;
+  const w = 2 * Math.PI / response;
+  if (damping >= 1) return 1 - (1 + w*t) * Math.exp(-w*t);
+  const wd = w * Math.sqrt(1 - damping*damping);
+  return 1 - Math.exp(-damping*w*t) * (Math.cos(wd*t) + damping*w/wd * Math.sin(wd*t));
+}
+const lerp = (a, b, p) => a + (b - a) * p;
+
+function chrome(step, title, cap1, cap2) {
+  return `<canvas class="field" width="${W*2}" height="${H*2}"></canvas>
+  <div class="bars">${Array.from({length: STEPS}, (_, i) => `<i class="${i < step ? 'on' : ''}"></i>`).join('')}</div>
+  <div class="back"><svg viewBox="0 0 12 20"><path d="M10 2 2 10l8 8" fill="none" stroke="#1B1B1B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>${title}</h1>
+  <div class="cap"><span class="c1">${cap1}</span><span class="c2">${cap2 || ''}</span></div>
+  <div class="next">NEXT</div><div class="home"></div>`;
+}
+
+const icons = {
+  social: `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="#fff"/></svg>`,
+  video: `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="#1B1B1B"/></svg>`,
+  games: `<svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5.5" fill="#fff"/><path d="M7 10v5M4.5 12.5h5" stroke="#1B1B1B" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="11.5" r="1.4" fill="#1B1B1B"/><circle cx="18.5" cy="14" r="1.4" fill="#1B1B1B"/></svg>`,
+  lock: `<svg width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5" fill="#fff"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="2.6"/></svg>`,
+  lockSmall: `<svg width="11" height="11" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5" fill="#fff"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="3"/></svg>`,
+};
+const NOTES = [
+  { ico: 'social', bg: '#3255A4', app: 'Social', body: 'Mia and 11 others liked your post' },
+  { ico: 'video', bg: '#FFB511', app: 'Video', body: 'Up next in 5… 4… 3…' },
+  { ico: 'games', bg: '#1B1B1B', app: 'Games', body: 'Your free spin is ready' },
+];
+const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+const row = document.getElementById('row');
+// Slide 1 (the hook) on the same cream page as the rest of the app: no blue page, no orange note.
+const hook = chrome(1, 'Where does<br>the time go?', '', '')
+  .replace('<div class="next">NEXT</div>', '<div class="next" style="bottom:86px">LET’S GO</div><div class="skip">Skip intro</div>')
+  .replace('<div class="back">', '<div class="back" style="display:none">') + `
+  <div class="hnum">?H ??M</div>
+  <div class="hsub">How many hours do you spend on your phone each day?</div>
+  <svg class="harrow" viewBox="0 0 110 84"><path d="M96 80 C80 40 64 20 14 14 M30 2 L12 14 L28 28" fill="none" stroke="#3255A4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="hyou">you?</div>`;
+const slides = [
+  hook,
+  chrome(10,'One slide.<br>You’re in.', 'Go on. Try it.', 'That’s how every session starts.') + `
+    <div class="track"><div class="fill"></div><div class="label"><b>SLIDE TO LOCK IN</b></div><div class="locked">LOCKED IN</div></div>
+    <div class="knob" style="top:494px;left:30px"><img src="${BRAIN}"><div class="lockb">${icons.lockSmall}</div></div>
+    <div class="finger"></div>`,
+  chrome(11, 'Swipe<br>later.', 'Your apps wait till you’re done.', 'Nothing lost. Just later.') +
+    NOTES.map(n => `<div class="note"><div class="ico" style="background:${n.bg}">${icons[n.ico]}</div>
+      <div class="ntxt"><div class="nt">${n.app}<em>now</em></div><div class="nb">${n.body}</div></div></div>`).join('') +
+    `<div class="later"><div class="ghost g2"></div><div class="ghost g1"></div>
+      <div class="lcard"><div class="c">${icons.lock.replace(/16/g, '22')}</div><div><b>Later</b><span>3 waiting till you're done</span></div><em>25:00</em></div></div>
+     <div class="finger"></div>`,
+  chrome(12, 'Stack up<br>the days.', 'One session a day. Watch it grow.') +
+    DAYS.map((d, i) => `<div class="blk" style="background:${i == 6 ? '#FFB511' : (i % 2 ? '#3A5EAD' : '#3255A4')};color:${i == 6 ? '#1B1B1B' : '#F3F4F0'}">
+      <span>${d}</span><span>${i == 6 ? '★' : '✓'}</span></div>`).join('') +
+    `<img class="brain" src="${BRAIN}">`,
+];
+const phones = slides.map(html => { const d = document.createElement('div'); d.className = 'phone'; d.innerHTML = html; row.appendChild(d); return d; });
+
+// The moving background: a riso halftone field. Dots breathe in slow drifting waves, strongest low on
+// the page so the headline stays clean, and ripple outward from whatever the user just did.
+// Two inks, slightly off-register like a real riso print: blue everywhere the wave is, sunflower only
+// on its crest. The wave drifts slowly up and across (no back-and-forth pulsing).
+function fieldValue(x, y, t, top, ripples) {
+  const m = clamp((y - top) / 300);
+  if (m <= 0) return 0;
+  const a = Math.sin(x * 0.014 - y * 0.010 + t * 0.62 + 1.4 * Math.sin(y * 0.006 + t * 0.18));
+  const b = Math.sin(y * 0.012 + x * 0.006 + t * 0.47);
+  let v = m * (0.50 + 0.30 * a + 0.20 * b);
+  for (const r of ripples) {
+    const dt = t - r.t0; if (dt < 0) continue;
+    const d = Math.hypot(x - r.x, y - r.y), front = dt * (r.speed || 520);
+    v += (r.amp || .9) * Math.exp(-Math.pow((d - front) / 52, 2)) * Math.exp(-dt * 1.0) * clamp(m * 1.8);
+  }
+  return v;
+}
+function field(ctx, t, top, ripples) {
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const step = 15;
+  const dots = [];
+  for (let y = step / 2; y < H + step; y += step) {
+    for (let x = ((Math.round(y / step)) % 2) * step / 2; x < W + step; x += step) {
+      const v = fieldValue(x, y, t, top, ripples);
+      if (v > .05) dots.push([x, y, v]);
+    }
+  }
+  // Tone on tone: darker cream dots on the cream page, so the page stays cream and still moves.
+  ctx.fillStyle = '#B9BAB0'; ctx.globalAlpha = .55;
+  for (const [x, y, v] of dots) {
+    const r = 5.6 * clamp((v - .62) / .5);
+    if (r > .4) { ctx.beginPath(); ctx.arc(x + 2.2, y + 1.6, r, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.fillStyle = '#C9CAC1'; ctx.globalAlpha = .9;
+  for (const [x, y, v] of dots) {
+    const r = 5.4 * clamp(v);
+    if (r > .4) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+}
+const $ = (p, s) => p.querySelector(s);
+const $$ = (p, s) => [...p.querySelectorAll(s)];
+const caption = (p, swapAt, t) => {
+  // Old line leaves first, new line arrives after, so the two never overlap.
+  const out = clamp((t - swapAt) / .18), inn = clamp((t - swapAt - .16) / .3);
+  $(p, '.c1').style.opacity = 1 - out; $(p, '.c1').style.transform = `translateY(${-6 * out}px)`;
+  $(p, '.c2').style.opacity = inn; $(p, '.c2').style.transform = `translateY(${6 * (1 - inn)}px)`;
+};
+// Headline and caption arrive once, together, at the start.
+const intro = (p, t) => {
+  const k = spring(t, .55, 1);
+  $(p, 'h1').style.opacity = clamp(t / .3); $(p, 'h1').style.transform = `translateY(${lerp(14, 0, k)}px)`;
+  $(p, '.cap').style.opacity = clamp((t - .12) / .3);
+};
+
+function slideA(p, t) {
+  intro(p, t);
+  const maxX = W - 48 - 76, t0 = 1.5, t1 = 2.45;
+  const drag = ease((t - t0) / (t1 - t0));
+  const x = t < t0 ? 0 : t < t1 ? drag * maxX : maxX;
+  const locked = t >= t1;
+  $(p, '.knob').style.transform = `translateX(${x}px) scale(${locked ? 1 + .08 * Math.exp(-(t - t1) * 6) * Math.sin((t - t1) * 22) : 1})`;
+  $(p, '.fill').style.width = `${76 + x}px`;
+  $(p, '.fill').style.opacity = x > 0 ? 1 : 0;
+  // The label shimmers left to right, like the iPhone's old slide to unlock.
+  $(p, '.label b').style.backgroundPosition = `${100 - ((t * 0.55) % 1.4) * 100}% 0`;
+  $(p, '.label').style.opacity = 1 - clamp(x / (maxX * .5));
+  $(p, '.locked').style.opacity = clamp((t - t1) / .25);
+  const lb = $(p, '.lockb'), ls = spring(t - t1 - .05, .35, .6);
+  lb.style.transform = `scale(${locked ? ls : 0})`;
+  const f = $(p, '.finger');
+  const fin = clamp((t - 1.05) / .25) * (1 - clamp((t - t1 - .05) / .25));
+  f.style.opacity = fin; f.style.left = `${30 + 9 + x}px`; f.style.top = `${494 + 9}px`;
+  f.style.transform = `scale(${t < t0 ? lerp(1.25, 1, clamp((t - 1.05) / .3)) : 1})`;
+  caption(p, t1 + .2, t);
+  field($(p, 'canvas').getContext('2d'), t, 470, [{ x: 30 + 32 + maxX, y: 526, t0: t1, amp: 1.2 }]);
+}
+
+function slideB(p, t) {
+  intro(p, t);
+  const notes = $$(p, '.note'), tops = [352, 436, 520];
+  const ripples = [];
+  notes.forEach((n, i) => {
+    const tin = .45 + .22 * i, tout = 2.55 + .3 * i;
+    const s = spring(t - tin, .55, .78);
+    let x = 0, rot = 0, op = clamp((t - tin) / .2);
+    if (t > tout) { const k = easeIn((t - tout) / .42); x = k * 460; rot = k * 7; op *= 1 - clamp((t - tout - .2) / .25); ripples.push({ x: W, y: tops[i] + 37, t0: tout + .3, amp: .7, speed: 480 }); }
+    n.style.top = tops[i] + 'px';
+    n.style.opacity = op;
+    n.style.transform = `translate(${x}px, ${lerp(-60, 0, s)}px) scale(${lerp(.94, 1, s)}) rotate(${rot}deg)`;
+  });
+  // A finger flicks each one away to the right.
+  const f = $(p, '.finger'); let fo = 0, fx = 0, fy = 0;
+  for (let i = 0; i < 3; i++) {
+    const tout = 2.55 + .3 * i, ts = tout - .12;
+    if (t >= ts - .1 && t < tout + .3) { fo = clamp((t - ts + .1) / .1) * (1 - clamp((t - tout - .15) / .15)); fx = 70 + easeIn((t - ts) / .45) * 260; fy = tops[i] + 14; }
+  }
+  f.style.opacity = fo; f.style.left = fx + 'px'; f.style.top = fy + 'px';
+  // The Later card rises into the space the notifications left; the ghost cards fan out behind it.
+  const later = $(p, '.later'), ps = spring(t - 3.5, .55, .74);
+  later.style.opacity = clamp((t - 3.5) / .2);
+  later.style.transform = `translateY(${lerp(50, 0, ps)}px) scale(${lerp(.92, 1, ps)})`;
+  const fan = spring(t - 3.75, .5, .8);
+  $(p, '.g1').style.transform = `translateY(${lerp(-10, 0, fan)}px)`;
+  $(p, '.g2').style.transform = `translateY(${lerp(-20, 0, fan)}px)`;
+  caption(p, 3.7, t);
+  field($(p, 'canvas').getContext('2d'), t, 470, ripples);
+}
+
+function slideC(p, t) {
+  intro(p, t);
+  const base = 742, h = 40, gap = 6, ripples = [];
+  const widths = [228, 214, 222, 208, 218, 204, 192], tilts = [-1, .8, -.6, 1.1, -.9, .5, -1.4], offs = [0, 6, -5, 8, -3, 4, -6];
+  $$(p, '.blk').forEach((b, i) => {
+    const td = .5 + .3 * i, s = spring(t - td, .42, .8);
+    const yRest = base - (i + 1) * (h + gap);
+    const landed = t - td > .12;
+    const squash = landed ? .1 * Math.exp(-(t - td - .12) * 9) : 0;
+    b.style.width = widths[i] + 'px';
+    b.style.left = (W - widths[i]) / 2 + offs[i] + 'px';
+    b.style.top = yRest + 'px';
+    b.style.opacity = clamp((t - td) / .08);
+    b.style.transform = `translateY(${lerp(-330, 0, s)}px) rotate(${tilts[i]}deg) scale(${1 + squash}, ${1 - squash})`;
+    ripples.push({ x: W / 2 + offs[i], y: yRest + h, t0: td + .14, amp: .45, speed: 420 });
+  });
+  const br = $(p, '.brain'), tb = .5 + .3 * 7 + .15, s = spring(t - tb, .55, .55);
+  const topY = base - 7 * (h + gap) - 78;
+  const bob = t > tb + .8 ? Math.sin((t - tb - .8) * 2.2) * 3 : 0;
+  br.style.left = (W - 86) / 2 - 4 + 'px'; br.style.top = topY + 'px';
+  br.style.opacity = clamp((t - tb) / .1);
+  br.style.transform = `translateY(${lerp(-260, 0, s) + bob}px) rotate(${lerp(-18, -4, s)}deg)`;
+  if (t > tb) ripples.push({ x: W / 2, y: topY + 70, t0: tb + .16, amp: .9 });
+  field($(p, 'canvas').getContext('2d'), t, 520, ripples);
+}
+
+window.render = t => { intro(phones[0], t); field($(phones[0], "canvas").getContext("2d"), t, 600, []); slideA(phones[1], t); slideB(phones[2], t); slideC(phones[3], t); };
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r))]);
+if (!new URLSearchParams(location.search).has('capture')) {
+  const start = performance.now();
+  const loop = now => { window.render(((now - start) / 1000) % 6.5); requestAnimationFrame(loop); };
+  window.ready.then(() => requestAnimationFrame(loop));
+} else window.ready.then(() => window.render(0));
+</script>
+</body>
+</html>

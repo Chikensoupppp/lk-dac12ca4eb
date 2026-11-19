@@ -59,6 +59,10 @@ struct FocusView: View {
     @State private var showGoals = false
     /// The Sunday report, opened by itself once a week.
     @State private var report: ReportWeek?
+    /// The lock-in plan made in the first run (nil when the intro was skipped), shown as
+    /// "Today's plan" and adjusted by the Monday check-in.
+    @State private var plan: LockInPlan?
+    @State private var checkIn: PlanWeekResult?
     /// Minutes of a session that finished while the app was closed; logged once in `.onAppear`.
     @State private var expiredMinutes = 0
     /// Short mood after a session ends (finished glow, gray glow for an early end).
@@ -86,8 +90,11 @@ struct FocusView: View {
             UserDefaults.standard.removeObject(forKey: "lockin.minutes.v1")
             UserDefaults.standard.removeObject(forKey: "lockin.firstWin.v1")
             UserDefaults.standard.removeObject(forKey: "lockin.plusOffered.v1")
+            UserDefaults.standard.removeObject(forKey: PlanStore.key)
+            UserDefaults.standard.removeObject(forKey: PlanStore.checkedKey)
         }
         #endif
+        _plan = State(initialValue: PlanStore.load())
         var hadSession = false
         switch SessionRecovery.resolve(store.load(), now: .now) {
         case .idle:
@@ -275,8 +282,10 @@ struct FocusView: View {
         GeometryReader { geo in
             let compact = geo.size.height < 700
             let gutter: CGFloat = compact ? 18 : 24
+            // The clock gives a little room when "Today's plan" sits above it.
+            let planShown = plan != nil && coachStep == nil && !isLocked
             let side = min(geo.size.width - 2 * gutter, compact ? 260 : 348,
-                           geo.size.height * (compact ? 0.38 : 0.40))
+                           geo.size.height * (compact ? (planShown ? 0.32 : 0.38) : (planShown ? 0.34 : 0.40)))
             VStack(alignment: .leading, spacing: compact ? 4 : 12) {
                 // Keep minutes and the session action reachable while long tasks, coach
                 // prompts and accessibility text can scroll independently above them.
@@ -294,6 +303,10 @@ struct FocusView: View {
                                 coachOverlay
                             }
                             statusLines
+                            if let plan, coachStep == nil, !isLocked {
+                                TodayPlanCard(plan: plan, progress: PlanProgress.make(plan: plan), compact: compact)
+                                    .padding(.top, compact ? 6 : 10)
+                            }
                             Spacer(minLength: 8)
                             VStack(spacing: 4) {
                                 CountdownClockView(duration: TimeInterval(selectedMinutes * 60),
@@ -363,6 +376,18 @@ struct FocusView: View {
             } : nil)
         }
         .sheet(item: $report) { r in WeekReportView(goals: goals, weekStart: r.id, plus: plus) { report = nil } }
+        // Closing the check-in without choosing keeps the plan as it is.
+        .sheet(item: $checkIn, onDismiss: { if let week = PlanStore.pendingCheckIn() { PlanStore.markCheckedIn(week: week) } }) { result in
+            if let plan {
+                PlanCheckInView(result: result, plan: plan) { next in
+                    PlanStore.save(next)
+                    PlanStore.markCheckedIn(week: result.weekStart)
+                    self.plan = next
+                    if timing == nil { selectedMinutes = next.minutes }
+                    checkIn = nil
+                }
+            }
+        }
         .sheet(isPresented: $showKeys, onDismiss: {
             guard coachStep == .partner else { return }
             if !keys.holders.isEmpty { coachReward = "NICE!" }
@@ -389,7 +414,8 @@ struct FocusView: View {
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow(restrictions: restrictions) {
                 onboardingDone = true
-                selectedMinutes = 25
+                selectedMinutes = PlanStore.load()?.minutes ?? 25
+                plan = PlanStore.load()
                 coachPending = true
                 coachStep = .task
             }
@@ -802,8 +828,15 @@ struct FocusView: View {
         if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { return }
         if DebugShot.name != nil { return }
         #endif
-        guard timing == nil, onboardingDone, report == nil, let week = goals.pendingReport() else { return }
-        report = ReportWeek(id: week)
+        guard timing == nil, onboardingDone, report == nil, checkIn == nil else { return }
+        if let week = goals.pendingReport() {
+            report = ReportWeek(id: week)
+            return
+        }
+        // Monday: last week's plan check-in. A week with no plan days in it is skipped quietly.
+        guard let plan, let week = PlanStore.pendingCheckIn() else { return }
+        let result = PlanWeekResult.make(plan: plan, weekOf: week)
+        if result.planned == 0 { PlanStore.markCheckedIn(week: week) } else { checkIn = result }
     }
 
     /// What the PC gets with a session start: the task (its workspace opens) and the buddy switch.

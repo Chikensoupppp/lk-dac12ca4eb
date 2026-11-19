@@ -228,8 +228,9 @@ final class FocusUITests: XCTestCase {
         step("onboarding-10-slide", tap: "NEXT", pre: { app.buttons["onboarding-slide-knob"].tap() })
         step("onboarding-11-apps-wait", tap: "NEXT")
         step("onboarding-12-come-back", tap: "NEXT")
-        // "Your first session" moves on by itself and ends the introduction. No promise to sign,
-        // no Plus offer here. The coach takes over on the real Focus screen.
+        // The plan receipt is built from the answers; taking it ends the introduction. No promise to
+        // sign, no Plus offer here. The coach takes over on the real Focus screen.
+        step("onboarding-13-plan", tap: "THIS IS MY PLAN")
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         runCoachToSession(app)
     }
@@ -392,6 +393,7 @@ final class FocusUITests: XCTestCase {
         tap("NEXT")
         tap("NEXT")                      // swipe later (notifications go to Later)
         tap("NEXT")                      // stack up the days (the week stacks up)
+        tap("THIS IS MY PLAN")           // the plan receipt
         // The plan prints, then the introduction ends by itself and the coach starts.
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         app.buttons["skip-focus-coach"].tap()

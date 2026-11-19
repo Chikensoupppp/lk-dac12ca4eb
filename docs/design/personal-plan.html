@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  /* Mock: SwipeLater first-run "Your plan" built from the user's answers, then the daily auto lock.
+     Example user: 5-6 h a day, pulled in by Social + Video, goal Studying. Cream ground, color on objects. */
+  :root { --page: #E7E8E3; --ink: #1B1B1B; --blue: #3255A4; --sun: #FFB511; --soft: #62645E; --card: #F3F4F0; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, system-ui, sans-serif; }
+  .row { display: flex; gap: 24px; padding: 24px; width: max-content; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .bars { position: absolute; top: 62px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.16); }
+  .bars i.on { background: var(--ink); }
+  h1 { position: absolute; left: 24px; top: 120px; font: 400 54px/.98 Anton, Impact, sans-serif; color: var(--ink); text-transform: uppercase; }
+  .cap { position: absolute; left: 24px; right: 24px; font: 500 14px/1.45 "IBM Plex Mono", monospace; color: var(--ink); }
+  .btn { position: absolute; left: 24px; right: 24px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page);
+         display: grid; place-items: center; font: 800 18px/1 Inter, sans-serif; letter-spacing: 2px; }
+  .sec { position: absolute; left: 0; right: 0; text-align: center; font: 600 15px/1 Inter, sans-serif; color: rgba(27,27,27,.6); }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+  .hand { position: absolute; font: 400 30px/1 "Caveat Brush", cursive; color: var(--blue); }
+
+  /* 1. Your plan: a printed receipt of their own answers */
+  .printer { position: absolute; left: 14px; right: 14px; top: 214px; height: 64px; border-radius: 20px; background: var(--ink); }
+  .printer::after { content: ""; position: absolute; left: 20px; right: 20px; bottom: 12px; height: 10px; border-radius: 5px; background: #000; }
+  .rcpt { position: absolute; left: 26px; right: 26px; top: 256px; background: #fff; padding: 26px 22px 32px; font: 600 15px/1.3 "IBM Plex Mono", monospace; color: var(--ink);
+          box-shadow: 0 12px 24px rgba(27,27,27,.14); clip-path: polygon(0 0,100% 0,100% calc(100% - 8px),95% 100%,90% calc(100% - 8px),85% 100%,80% calc(100% - 8px),75% 100%,70% calc(100% - 8px),65% 100%,60% calc(100% - 8px),55% 100%,50% calc(100% - 8px),45% 100%,40% calc(100% - 8px),35% 100%,30% calc(100% - 8px),25% 100%,20% calc(100% - 8px),15% 100%,10% calc(100% - 8px),5% 100%,0 calc(100% - 8px)); }
+  .rcpt .t { text-align: center; font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; }
+  .rcpt .r { display: flex; justify-content: space-between; padding: 7px 0; }
+  .rcpt .r span:last-child { font-weight: 700; }
+  .rcpt hr { border: 0; border-top: 2px dashed rgba(27,27,27,.3); margin: 10px 0; }
+  .rcpt .big { display: flex; justify-content: space-between; align-items: baseline; padding-top: 6px; }
+  .rcpt .big span { white-space: nowrap; }
+  .rcpt .big b { font: 400 34px/1 Anton, sans-serif; color: var(--blue); white-space: nowrap; }
+  .rcpt .pill { display: inline-block; padding: 3px 9px; border-radius: 10px; background: var(--ink); color: #fff; margin-left: 4px; font-size: 12px; }
+
+  /* 2. Daily lock (auto schedule) */
+  .card { position: absolute; left: 24px; right: 24px; background: var(--card); border-radius: 24px; padding: 18px; box-shadow: 0 10px 24px rgba(27,27,27,.10); }
+  .lbl { font: 700 12px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: var(--soft); margin-bottom: 12px; }
+  .days { display: flex; gap: 7px; }
+  .days b { flex: 1; height: 44px; border-radius: 14px; display: grid; place-items: center; font: 700 15px/1 Inter, sans-serif; border: 2px solid var(--ink); }
+  .days b.on { background: var(--ink); color: var(--page); }
+  .days b.off { border-color: rgba(27,27,27,.2); color: rgba(27,27,27,.35); }
+  .time { display: flex; align-items: center; gap: 12px; }
+  .time .chip { white-space: nowrap; font: 400 32px/1 Anton, sans-serif; color: var(--ink); background: #fff; border-radius: 14px; padding: 8px 14px; box-shadow: inset 0 0 0 2px var(--ink); }
+  .time .to { font: 600 14px/1 "IBM Plex Mono", monospace; color: var(--soft); }
+  .apps { display: flex; gap: 10px; align-items: center; }
+  .tile { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; position: relative; }
+  .tile .lk { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); border: 2px solid var(--card); display: grid; place-items: center; }
+  .apps .nm { font: 600 15px/1.3 Inter, sans-serif; color: var(--ink); }
+  .auto { display: flex; justify-content: space-between; align-items: center; }
+  .auto .t1 { font: 700 17px/1.2 Inter, sans-serif; color: var(--ink); }
+  .auto .t2 { font: 500 13px/1.3 Inter, sans-serif; color: var(--soft); margin-top: 3px; }
+  .sw { width: 64px; height: 38px; border-radius: 19px; background: var(--blue); position: relative; flex: none; }
+  .sw::after { content: ""; position: absolute; right: 4px; top: 4px; width: 30px; height: 30px; border-radius: 50%; background: #fff; }
+
+  /* 3. Tomorrow: the lock screen the next afternoon (proof it runs by itself) */
+  .lock { background: linear-gradient(180deg, #2B2F38, #15171C); }
+  .lock .clock { position: absolute; left: 0; right: 0; top: 110px; text-align: center; color: #F3F4F0; font: 300 92px/1 Inter, sans-serif; letter-spacing: -2px; }
+  .lock .date { position: absolute; left: 0; right: 0; top: 86px; text-align: center; color: rgba(243,244,240,.8); font: 600 18px/1 Inter, sans-serif; }
+  .la { position: absolute; left: 14px; right: 14px; top: 300px; border-radius: 26px; background: rgba(20,22,27,.92); padding: 16px 18px; color: #F3F4F0; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+  .la .top { display: flex; justify-content: space-between; align-items: center; font: 700 13px/1 Inter, sans-serif; letter-spacing: 1.5px; color: #8FB0FF; }
+  .la .mid { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .la .mid img { width: 54px; }
+  .la .num { font: 800 40px/1 Inter, sans-serif; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .la .sub { font: 500 13px/1.3 Inter, sans-serif; color: rgba(243,244,240,.7); }
+  .la .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); margin-top: 14px; overflow: hidden; }
+  .la .bar i { display: block; height: 100%; width: 22%; background: var(--blue); }
+  .nt { position: absolute; left: 14px; right: 14px; top: 470px; border-radius: 22px; background: rgba(243,244,240,.88); padding: 14px 16px; display: flex; gap: 12px; align-items: center; }
+  .nt .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--page); display: grid; place-items: center; flex: none; }
+  .nt .ic img { width: 34px; }
+  .nt b { display: block; font: 700 14px/1.2 Inter, sans-serif; color: var(--ink); }
+  .nt span { font: 500 14px/1.3 Inter, sans-serif; color: #3a3b37; }
+  .tag { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; }
+
+  /* 4. Main screen: today's plan, kept up every day */
+  .brand { position: absolute; left: 24px; top: 62px; font: 900 34px/1 Inter, sans-serif; letter-spacing: -1.5px; color: var(--ink); }
+  .today { position: absolute; left: 16px; right: 16px; top: 112px; background: #fff; border-radius: 24px; padding: 16px 18px 14px; box-shadow: 0 10px 24px rgba(27,27,27,.10); }
+  .today .hd { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .today .hd b { font: 700 12px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: var(--soft); }
+  .today .hd span { font: 600 12px/1 "IBM Plex Mono", monospace; color: var(--soft); }
+  .slot { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid rgba(27,27,27,.08); }
+  .slot .ck { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .slot .ck.done { background: var(--blue); }
+  .slot .ck.next { box-shadow: inset 0 0 0 2.5px var(--ink); }
+  .slot .tm { font: 700 16px/1 Inter, sans-serif; color: var(--ink); width: 74px; }
+  .slot .wh { font: 500 15px/1 Inter, sans-serif; color: var(--ink); flex: 1; }
+  .slot .wh.dim { color: var(--soft); text-decoration: line-through; text-decoration-color: rgba(27,27,27,.35); }
+  .slot .nx { font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; background: var(--sun); color: var(--ink); padding: 5px 8px; border-radius: 8px; }
+  .week { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(27,27,27,.08); margin-top: 2px; }
+  .week div { display: flex; flex-direction: column; align-items: center; gap: 5px; font: 600 11px/1 "IBM Plex Mono", monospace; color: var(--soft); }
+  .week i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-style: normal; }
+  .week i.hit { background: var(--ink); }
+  .week i.half { box-shadow: inset 0 0 0 2.5px var(--ink); background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
+  .week i.now { box-shadow: inset 0 0 0 2.5px var(--blue); }
+  .week i.later { box-shadow: inset 0 0 0 2px rgba(27,27,27,.18); }
+  .won { margin-top: 12px; display: flex; justify-content: space-between; align-items: baseline; }
+  .won span { font: 500 13px/1 Inter, sans-serif; color: var(--soft); }
+  .won b { font: 400 26px/1 Anton, sans-serif; color: var(--blue); }
+  .slide { position: absolute; left: 24px; right: 24px; bottom: 44px; height: 66px; border-radius: 33px; background: var(--ink); }
+  .slide .kn { position: absolute; left: 6px; top: 6px; width: 54px; height: 54px; border-radius: 50%; background: var(--page); display: grid; place-items: center; }
+  .slide .lb { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 50px; font: 800 14px/1 Inter, sans-serif; letter-spacing: 3px; color: var(--page); }
+
+  /* 5. Sunday check-in: the plan adjusts */
+  .opt { position: absolute; left: 24px; right: 24px; height: 62px; border-radius: 18px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px;
+         background: var(--card); box-shadow: inset 0 0 0 2px rgba(27,27,27,.12); font: 700 16px/1 Inter, sans-serif; color: var(--ink); }
+  .opt small { font: 600 13px/1 "IBM Plex Mono", monospace; color: var(--soft); }
+  .opt.on { background: var(--ink); color: var(--page); box-shadow: none; }
+  .opt.on small { color: rgba(231,232,227,.7); }
+  .stamp { position: absolute; font: 400 18px/1 Anton, sans-serif; letter-spacing: 1px; color: var(--blue); border: 3px solid var(--blue); border-radius: 8px; padding: 4px 8px; background: var(--card); transform: rotate(-6deg); }
+  .tag span { display: inline-block; font: 400 30px/1 "Caveat Brush", cursive; color: var(--sun); transform: rotate(-4deg); }
+</style>
+</head>
+<body>
+<div class="row">
+  <!-- 1. YOUR PLAN -->
+  <div class="phone">
+    <div class="bars"></div>
+    <h1>Your plan.</h1>
+    <div class="cap" style="top:186px">Made from your answers.</div>
+    <div class="printer"></div>
+    <div class="rcpt">
+      <div class="t">PLAN FOR: YOU</div>
+      <div class="r"><span>PHONE NOW</span><span>~6H A DAY</span></div>
+      <div class="r"><span>PULLS YOU IN</span><span><span class="pill">SOCIAL</span><span class="pill">VIDEO</span></span></div>
+      <div class="r"><span>FOR</span><span>STUDYING</span></div>
+      <hr>
+      <div class="r"><span>DAILY LOCK</span><span>2 &times; 45 MIN</span></div>
+      <div class="r"><span>WHEN</span><span>WEEKDAYS 4 PM</span></div>
+      <hr>
+      <div class="big"><span>YOU WIN BACK</span><b>1H 30M / DAY</b></div>
+      <div class="r" style="color:var(--soft)"><span>THIS YEAR</span><span>&asymp; 23 DAYS</span></div>
+    </div>
+    <div class="btn" style="bottom:96px">THIS IS MY PLAN</div>
+    <div class="sec" style="bottom:52px">Make it easier</div>
+    <div class="home"></div>
+  </div>
+
+  <!-- 2. DAILY LOCK = auto schedule -->
+  <div class="phone">
+    <div class="bars"></div>
+    <h1>Lock it in<br>every day.</h1>
+    <div class="cap" style="top:256px">Your apps lock by themselves at this time. You don&rsquo;t have to open SwipeLater.</div>
+    <div class="card" style="top:340px">
+      <div class="lbl">DAYS</div>
+      <div class="days"><b class="on">M</b><b class="on">T</b><b class="on">W</b><b class="on">T</b><b class="on">F</b><b class="off">S</b><b class="off">S</b></div>
+    </div>
+    <div class="card" style="top:462px">
+      <div class="lbl">TIME</div>
+      <div class="time"><span class="chip">4:00 PM</span><span class="to">TO</span><span class="chip">5:30 PM</span></div>
+    </div>
+    <div class="card" style="top:580px">
+      <div class="lbl">LOCKS</div>
+      <div class="apps">
+        <div class="tile" style="background:#3255A4"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="#fff"/></svg><div class="lk"><svg width="9" height="9" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5" fill="#fff"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="3"/></svg></div></div>
+        <div class="tile" style="background:#FFB511"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="#1B1B1B"/></svg><div class="lk"><svg width="9" height="9" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5" fill="#fff"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="3"/></svg></div></div>
+        <div class="nm">Social, Video</div>
+      </div>
+    </div>
+    <div class="btn" style="bottom:96px">SET MY DAILY LOCK</div>
+    <div class="sec" style="bottom:52px">I&rsquo;ll start it myself</div>
+    <div class="home"></div>
+  </div>
+
+  <!-- 3. TOMORROW 4:00 PM: it started by itself -->
+  <div class="phone lock">
+    <div class="date">Thursday, November 20</div>
+    <div class="clock">4:00</div>
+    <div class="la">
+      <div class="top"><span>&#9679; DAILY LOCK STARTED</span><span style="color:rgba(243,244,240,.6)">SwipeLater</span></div>
+      <div class="mid"><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt=""><div><div class="num">1:30:00</div><div class="sub">Social and Video locked till 5:30 PM</div></div></div>
+      <div class="bar"><i></i></div>
+    </div>
+    <div class="nt"><div class="ic"><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt=""></div><div><b>Your daily lock started</b><span>Studying time. See you at 5:30.</span></div></div>
+    <div class="home" style="background:#F3F4F0"></div>
+  </div>
+
+  <!-- 4. MAIN SCREEN: today's plan, every day -->
+  <div class="phone">
+    <div class="brand">SwipeLater.</div>
+    <div class="today">
+      <div class="hd"><b>TODAY&rsquo;S PLAN</b><span>Day 3</span></div>
+      <div class="slot"><div class="ck done"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="tm">4:00 PM</div><div class="wh dim">Studying, 45 min</div></div>
+      <div class="slot"><div class="ck next"></div><div class="tm">5:00 PM</div><div class="wh">Studying, 45 min</div><div class="nx">NEXT</div></div>
+      <div class="week">
+        <div><i class="hit"></i>M</div><div><i class="half"></i>T</div><div><i class="now"></i>W</div><div><i class="later"></i>T</div><div><i class="later"></i>F</div>
+      </div>
+      <div class="won"><span>Won back today</span><b>45 MIN</b></div>
+    </div>
+    <svg id="dial" style="position:absolute;left:66px;top:420px" width="260" height="260" viewBox="0 0 260 260"></svg>
+    <img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt="" style="position:absolute;left:150px;top:458px;width:92px">
+    <div style="position:absolute;left:0;right:0;top:545px;text-align:center;font:900 56px/1 Inter,sans-serif;letter-spacing:-2px;color:var(--ink)">45:00</div>
+    <div style="position:absolute;left:0;right:0;top:610px;text-align:center;font:600 15px/1 Inter,sans-serif;color:var(--soft)">Next: 5:00 PM</div>
+    <div class="slide"><div class="kn"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="#1B1B1B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="lb">SLIDE TO LOCK IN</div></div>
+    <div class="home"></div>
+  </div>
+
+  <!-- 5. SUNDAY CHECK-IN: the plan adjusts to what really happened -->
+  <div class="phone">
+    <div class="bars" style="display:none"></div>
+    <h1>Week 1.<br>Nice work.</h1>
+    <div class="rcpt" style="top:250px;left:26px;right:26px">
+      <div class="r"><span>PLANNED</span><span>10 LOCKS</span></div>
+      <div class="r"><span>DONE</span><span>8 LOCKS</span></div>
+      <div class="r"><span>BEST DAY</span><span>TUESDAY</span></div>
+      <hr>
+      <div class="big"><span>WON BACK</span><b>6H 10M</b></div>
+    </div>
+    <div class="cap" style="top:498px;font-weight:700">Next week:</div>
+    <div class="opt" style="top:528px">Step it up <small>3 &times; 45 MIN</small></div>
+    <div class="opt on" style="top:598px">Keep it <small>2 &times; 45 MIN</small></div>
+    <div class="stamp" style="left:250px;top:582px">8 OF 10</div>
+    <div class="opt" style="top:668px">Make it easier <small>2 &times; 25 MIN</small></div>
+    <div class="btn" style="bottom:36px;height:56px">START WEEK 2</div>
+    <div class="home"></div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.phone:not(.lock) .bars').forEach((b, k) => {
+    b.innerHTML = Array.from({ length: 13 }, (_, i) => `<i class="${i < 12 + k ? 'on' : ''}"></i>`).join('');
+  });
+  // The app's dial, small: ticks, faint track, blue arc (45 of 60 minutes) with its knob.
+  { const d = document.getElementById('dial'); let s = '';
+    for (let i = 0; i < 60; i++) { const a = i * 6 * Math.PI / 180, M = i % 5 === 0, r1 = 112, r2 = M ? 102 : 107;
+      s += `<line x1="${130 + Math.sin(a) * r1}" y1="${130 - Math.cos(a) * r1}" x2="${130 + Math.sin(a) * r2}" y2="${130 - Math.cos(a) * r2}" stroke="#575A55" stroke-opacity="${M ? .9 : .42}" stroke-width="${M ? 2 : 1.3}" stroke-linecap="round"/>`; }
+    const C = 2 * Math.PI * 124, f = .75, a = f * 2 * Math.PI;
+    s += `<circle cx="130" cy="130" r="124" fill="none" stroke="#575A55" stroke-opacity=".16" stroke-width="3"/>
+      <circle cx="130" cy="130" r="124" fill="none" stroke="#3255A4" stroke-width="6" stroke-linecap="round" transform="rotate(-90 130 130)" stroke-dasharray="${C * f} ${C}"/>
+      <circle cx="${130 + Math.sin(a) * 124}" cy="${130 - Math.cos(a) * 124}" r="8" fill="#3255A4"/><circle cx="${130 + Math.sin(a) * 124}" cy="${130 - Math.cos(a) * 124}" r="3" fill="#E7E8E3"/>`;
+    d.innerHTML = s; }
+  window.ready = Promise.all([document.fonts.ready, ...[...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r))]);
+  window.render = () => {};
+</script>
+</body>
+</html>

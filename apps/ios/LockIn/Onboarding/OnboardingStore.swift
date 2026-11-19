@@ -42,7 +42,8 @@ enum OnboardingStore {
             let current = defaults.stringArray(forKey: "lockin.tasks.v1") ?? ["Studying", "Homework", "Work", "Writing", "Reading"]
             defaults.set(mine + current.filter { !mine.contains($0) }, forKey: "lockin.tasks.v1")
         }
-        defaults.set(25, forKey: "lockin.minutes.v1")
+        // The plan slide already set its own length; without a plan (Skip intro) it is 25.
+        defaults.set(PlanStore.load(defaults)?.minutes ?? 25, forKey: "lockin.minutes.v1")
     }
 }
 

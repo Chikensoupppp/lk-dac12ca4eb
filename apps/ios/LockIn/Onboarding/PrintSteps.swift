@@ -807,78 +807,131 @@ struct GoalsStep: View {
     }
 }
 
-// MARK: 10. Making your plan
+// MARK: 13. Your lock-in plan
 
-/// A dot-matrix print-out of the user's own answers. Moves on by itself.
+/// A printed receipt of the user's own plan, made from their answers (mock:
+/// docs/design/personal-plan.html). They take it, or make it easier first. The plan is saved and
+/// then shown every day on the Focus screen.
 struct PlanStep: View {
     let hoursIndex: Int?
     let categories: Set<String>
     let goals: Set<String>
     let next: () -> Void
+    @State private var easier = 0
     @State private var lines = 0
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
-    private var printout: [String] {
-        var out = ["PLAN FOR: YOU", String(repeating: "-", count: 22)]
-        if let hoursIndex { out.append("\u{2713} \(hoursTabs[min(max(hoursIndex, 0), 3)]) A DAY") }
-        if !categories.isEmpty { out.append("\u{2713} " + categories.sorted().prefix(2).joined(separator: " + ").uppercased()) }
-        if !goals.isEmpty { out.append("\u{2713} GOAL: " + goals.sorted().prefix(2).joined(separator: ", ").uppercased()) }
-        out.append("\u{258C} DAILY LOCK: 25 MIN")
+    private var plan: LockInPlan {
+        var p = PlanRules.make(hoursIndex: hoursIndex, pulls: categories, goals: goals)
+        for _ in 0..<easier { p = PlanRules.apply(.easier, to: p) }
+        return p
+    }
+
+    private var rows: [(label: String, value: String)] {
+        let p = plan
+        var out: [(label: String, value: String)] = []
+        if let hoursIndex { out.append(("PHONE NOW", "\(hoursTabs[min(max(hoursIndex, 0), 3)]) A DAY")) }
+        if !p.pulls.isEmpty { out.append(("PULLS YOU IN", p.pulls.prefix(2).joined(separator: " + ").uppercased())) }
+        if let task = p.task { out.append(("FOR", task.uppercased())) }
+        out.append(("LOCK-INS", "\(p.sessionsPerDay) \u{00D7} \(p.minutes) MIN"))
+        out.append(("WHEN", "WEEKDAYS " + DailyNudge.timeText(minute: p.startMinute).uppercased()))
         return out
     }
 
+    private var wonBack: String {
+        let m = plan.minutesPerDay
+        if m < 60 { return "\(m) MIN" }
+        return m % 60 == 0 ? "\(m / 60)H" : "\(m / 60)H \(m % 60)M"
+    }
+
+    private var easeAction: (() -> Void)? {
+        guard PlanRules.rung(plan) > 0 else { return nil }
+        return { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { easier += 1 } }
+    }
+
     var body: some View {
-        PrintScaffold(step: 13, title: "Your first\nsession.", grain: true) {
+        PrintScaffold(step: 13, title: "Your lock-in\nplan.", grain: true,
+                      primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
+                      secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
+            Text("Made from your answers.")
+                .font(PrintFont.mono(14))
+                .foregroundStyle(Ink.ink)
             VStack(spacing: 0) {
-                Capsule().fill(Color.black).frame(height: 14)
+                Capsule().fill(Color.black).frame(height: 16)
                     .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
-                    .padding(.horizontal, 16)
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(Array(printout.enumerated()), id: \.offset) { i, line in
-                        Text(line)
-                            .font(PrintFont.mono(14))
-                            .foregroundStyle(Ink.ink)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .opacity(i < lines ? 1 : 0)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("PLAN FOR: YOU")
+                        .font(PrintFont.mono(15, .heavy)).tracking(2)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 4)
+                    ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(row.label)
+                            Spacer(minLength: 12)
+                            Text(row.value).fontWeight(.heavy).lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                        .font(PrintFont.mono(15))
+                        .opacity(i < lines ? 1 : 0)
+                        if i == rows.count - 3 { dashes }
                     }
-                    Text("\u{00B7} \u{00B7} \u{00B7}").font(PrintFont.mono(14)).foregroundStyle(Ink.ink.opacity(0.35))
+                    dashes
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("YOU WIN BACK").font(PrintFont.mono(15))
+                        Spacer(minLength: 8)
+                        Text("\(wonBack) / DAY")
+                            .font(PrintFont.head(36))
+                            .foregroundStyle(Ink.blue)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                            .contentTransition(.numericText())
+                    }
+                    HStack {
+                        Text("THIS YEAR")
+                        Spacer()
+                        Text("\u{2248} \(PlanRules.daysPerYear(plan)) DAYS").fontWeight(.heavy)
+                    }
+                    .font(PrintFont.mono(14))
+                    .foregroundStyle(Ink.soft)
                 }
-                .padding(18)
-                .padding(.bottom, 10)
+                .foregroundStyle(Ink.ink)
+                .padding(.horizontal, 20)
+                .padding(.top, 22)
+                .padding(.bottom, 30)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(ReceiptEdge().fill(Color.white).shadow(color: .black.opacity(0.18), radius: 10, y: 8))
-                .padding(.horizontal, 36)
-                .offset(y: -6)
+                .background(ReceiptEdge().fill(Color.white).shadow(color: .black.opacity(0.16), radius: 12, y: 10))
+                .padding(.horizontal, 10)
+                .offset(y: -8)
             }
-            .padding(.top, 20)
+            .padding(.top, 4)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Making your plan")
-            VStack(alignment: .leading, spacing: 6) {
-                Text("25 MINUTES. ONE THING.")
-                    .font(PrintFont.head(34))
-                    .foregroundStyle(Ink.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text("A small start is still a start.")
-                    .font(PrintFont.body(16))
-                    .foregroundStyle(Ink.ink.opacity(0.75))
-            }
-            .padding(.top, 12)
-            .opacity(lines >= printout.count ? 1 : 0)
-            .animation(.easeOut(duration: 0.4), value: lines)
+            .accessibilityLabel(accessibilitySummary)
         }
         .task {
-            let reduce = effectiveReduceMotion(systemReduceMotion)
-            if reduce { lines = printout.count } else {
-                for i in 1...printout.count {
-                    guard await printPause(0.45) else { return }
-                    lines = i
-                }
+            if effectiveReduceMotion(systemReduceMotion) { lines = rows.count; return }
+            for i in 1...rows.count {
+                guard await printPause(0.3) else { return }
+                withAnimation(.easeOut(duration: 0.2)) { lines = i }
             }
-            guard await printPause(reduce ? 1.5 : 1.3) else { return }
-            next()
         }
+    }
+
+    private var dashes: some View {
+        Text(String(repeating: "- ", count: 30))
+            .font(PrintFont.mono(13))
+            .foregroundStyle(Ink.ink.opacity(0.3))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .accessibilityHidden(true)
+    }
+
+    private var accessibilitySummary: String {
+        let p = plan
+        return "Your lock-in plan: \(p.sessionsPerDay) lock-ins of \(p.minutes) minutes, weekdays at \(DailyNudge.timeText(minute: p.startMinute)). You win back \(p.minutesPerDay) minutes a day, about \(PlanRules.daysPerYear(p)) days this year."
+    }
+
+    private func accept() {
+        PlanStore.save(plan)
+        next()
     }
 }
 
