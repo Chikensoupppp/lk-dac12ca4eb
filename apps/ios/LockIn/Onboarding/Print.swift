@@ -36,6 +36,8 @@ enum PrintFont {
 /// One printed slide: progress bars, Back, a headline, the content, and the buttons.
 struct PrintScaffold<Content: View>: View {
     let step: Int
+    /// What this slide is for, in a few words, above the headline (e.g. "TAKE A GUESS").
+    var tag: String? = nil
     var background: Color = Ink.paper
     var foreground: Color = Ink.ink
     var title: String?
@@ -87,6 +89,18 @@ struct PrintScaffold<Content: View>: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    if let tag {
+                        HStack(spacing: 7) {
+                            Circle().fill(foreground == Ink.ink ? Ink.blue : foreground).frame(width: 7, height: 7)
+                            Text(tag.uppercased())
+                                .font(PrintFont.mono(11, .bold))
+                                .tracking(1.4)
+                                .foregroundStyle(foreground == Ink.ink ? Ink.blue : foreground.opacity(0.8))
+                        }
+                        .padding(.bottom, -6)
+                        .accessibilityElement(children: .combine)
+                        .staggerIn(0)
+                    }
                     if let title {
                         Text(title.uppercased())
                             .font(PrintFont.head(shownTitleSize))

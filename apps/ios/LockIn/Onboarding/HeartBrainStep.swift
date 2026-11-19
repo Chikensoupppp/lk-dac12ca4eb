@@ -15,7 +15,7 @@ struct HeartBrainStep: View {
     private static let midpoints = [1.5, 3.5, 5.5, 7.5]
 
     var body: some View {
-        PrintScaffold(step: 5, grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
+        PrintScaffold(step: 5, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
                 DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
                     .frame(height: 700)

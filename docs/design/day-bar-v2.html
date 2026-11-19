@@ -81,7 +81,13 @@ const back = x => { const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c *
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 
 function setup(el, band) {
-  const b = BANDS[band];
+  // ?real=5.2 draws it as the report does: the real daily average as the headline.
+  const real = parseFloat(new URLSearchParams(location.search).get("real"));
+  let b = BANDS[band];
+  if (real) {
+    const m = Math.round(real * 60);
+    b = { ...b, hours: real, title: `${Math.floor(m / 60)}H ${String(m % 60).padStart(2, "0")}M<br>a day.` };
+  }
   const items = ITEMS(b.hours);
   el.innerHTML = `<div class="bars">${Array.from({ length: 13 }, (_, i) => `<i class="${i < 5 ? "on" : ""}"></i>`).join("")}</div>
   <div class="back"><svg viewBox="0 0 12 20" width="12" height="20"><path d="M10 2L2 10l8 8" stroke="#1B1B1B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>

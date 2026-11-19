@@ -20,7 +20,7 @@ struct HookStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        PrintScaffold(step: 1, title: "Where does\nthe time go?", titleSize: 58, grain: true,
+        PrintScaffold(step: 1, tag: "The big question", title: "Where does\nthe time go?", titleSize: 58, grain: true,
                       primaryTitle: "LET\u{2019}S GO", primaryAction: next,
                       secondaryTitle: "Skip intro", secondaryAction: startNow) {
             VStack(alignment: .leading, spacing: 6) {
@@ -94,10 +94,14 @@ struct GuessStep: View {
     let next: () -> Void
 
     var body: some View {
-        PrintScaffold(step: 2, title: "What\u{2019}s your\nguess?", titleSize: 46, grain: true,
+        PrintScaffold(step: 2, tag: "Take a guess", title: "What\u{2019}s your\nguess?", titleSize: 46, grain: true,
                       primaryTitle: "SEE MY ACTUAL TIME", primaryEnabled: guessIndex != nil, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: { guessIndex = nil; next() }) {
             VStack(alignment: .leading, spacing: 18) {
+                Text("Tap the hours you think you spend on your phone a day. Next, we check.")
+                    .font(PrintFont.mono(14))
+                    .foregroundStyle(Ink.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 poster
                 if guessIndex != nil {
                     Stamp(text: "Just guess", color: Ink.ink, size: 18, tilt: -4, fill: nil)
@@ -246,7 +250,7 @@ struct CheckStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 3, title: "Let\u{2019}s\ncheck.", grain: true,
+        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Let\u{2019}s\ncheck.", grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
                       secondaryTitle: access == .on ? nil : "Not now (keep my guess)", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {
@@ -369,7 +373,7 @@ struct RevealStep: View {
     let next: () -> Void
 
     var body: some View {
-        PrintScaffold(step: 4, grain: true,
+        PrintScaffold(step: 4, tag: "Your real screen time", grain: true,
                       primaryTitle: "NEXT", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
                 DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
@@ -417,7 +421,7 @@ struct PullsStep: View {
     private static let canvas = CGSize(width: 345, height: 430)
 
     var body: some View {
-        PrintScaffold(step: 6, title: "What pulls\nyou in?", grain: true,
+        PrintScaffold(step: 6, tag: "What distracts you", title: "What pulls\nyou in?", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("Which apps tend to keep you longer than you planned?")
@@ -518,7 +522,7 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 7, title: words.title, grain: true,
+        PrintScaffold(step: 7, tag: "Pick apps to lock", title: words.title, grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
@@ -644,7 +648,7 @@ struct YearStep: View {
     private var focusDays: Int { OnboardingMath.focusDaysPerYear(minutesPerDay: 25) }
 
     var body: some View {
-        PrintScaffold(step: 8, title: "Your next\nyear.", grain: true,
+        PrintScaffold(step: 8, tag: "What it adds up to", title: "Your next\nyear.", grain: true,
                       primaryTitle: "LET\u{2019}S DO IT", primaryAction: next) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(shown) DAYS")
@@ -733,7 +737,7 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 9, background: Ink.notebook, title: "What\u{2019}s worth\nyour time?",
+        PrintScaffold(step: 9, tag: "What you want more of", background: Ink.notebook, title: "What\u{2019}s worth\nyour time?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("What would you like to make more room for?")
@@ -832,7 +836,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 13, title: "Your lock-in\nplan.", grain: true,
+        PrintScaffold(step: 13, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
             Text("Made from your answers.")
@@ -943,7 +947,7 @@ struct PromiseStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 11, title: "One small\ncommitment.", grain: true,
+        PrintScaffold(step: 11, tag: "Your promise", title: "One small\ncommitment.", grain: true,
                       primaryView: AnyView(holdButton),
                       secondaryTitle: "Not now", secondaryAction: { signed = false; next() }) {
             VStack(alignment: .leading, spacing: 12) {

@@ -139,10 +139,10 @@ struct SlideToLockStep: View {
     private let knob: CGFloat = 64
 
     var body: some View {
-        PrintScaffold(step: 10, title: "One slide.\nYou\u{2019}re in.",
+        PrintScaffold(step: 10, tag: "How a session starts", title: "One slide.\nYou\u{2019}re in.",
                       primaryTitle: "NEXT", primaryEnabled: locked || voiceOver, primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
-            SwapCaption(first: "Go on. Try it.", second: "That\u{2019}s how every session starts.", swapped: locked)
+            SwapCaption(first: "Slide the button to start a focus session.", second: "That\u{2019}s how every session starts.", swapped: locked)
             track
                 .padding(.top, compactScreen ? 60 : 150)
         }
@@ -309,7 +309,7 @@ struct LaterStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 11, title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 11, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
             SwapCaption(first: "Your apps wait till you\u{2019}re done.", second: "Nothing lost. Just later.", swapped: laterShown)
             ZStack {
@@ -507,7 +507,7 @@ struct StackDaysStep: View {
     private static let shifts: [CGFloat] = [0, 6, -5, 8, -3, 4, -6]
 
     var body: some View {
-        PrintScaffold(step: 12, title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 12, tag: "See your progress", title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.6, ripples: ripples))) {
             Text("One session a day. Watch it grow.")
                 .font(PrintFont.mono(14))
