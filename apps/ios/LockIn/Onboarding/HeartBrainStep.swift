@@ -30,8 +30,8 @@ struct HeartBrainStep: View {
         "That\u{2019}s a lot of time. How much of it is really yours to choose?",
         "You don\u{2019}t have to change everything today. Start with 25 minutes."
     ]
-    private static let says = ["Nice! Most of the day is still ours.", "Hmm. Can we get some back?",
-                               "A third of our day? Oof.", "Half our day?! Let\u{2019}s fix this."]
+    private static let says = ["Nice! Most of the day is still yours.", "Hmm. Want some of it back?",
+                               "A third of your day? Oof.", "Half your day?! Let\u{2019}s fix this."]
 
     var body: some View {
         PrintScaffold(step: 5, title: Self.titles[band], titleSize: 46, grain: true,
