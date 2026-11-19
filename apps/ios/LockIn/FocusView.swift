@@ -419,15 +419,6 @@ struct FocusView: View {
                                 onStay: { showLockedExit = false })
             }
         }
-        .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow(restrictions: restrictions, plus: plus) {
-                onboardingDone = true
-                selectedMinutes = PlanStore.load()?.minutes ?? 25
-                plan = PlanStore.load()
-                coachPending = true
-                coachStep = .task
-            }
-        }
         .fullScreenCover(isPresented: $showStreak, onDismiss: advanceAfterSession) {
             StreakView(minutes: streakMinutes) { showStreak = false }
         }
@@ -505,6 +496,21 @@ struct FocusView: View {
 
     var body: some View {
         framed
+        .accessibilityHidden(!onboardingDone)
+        .overlay {
+            // The intro is drawn on top from the very first frame. As a full-screen cover it only
+            // slid up after this screen had drawn, so the Focus screen flashed for half a second.
+            if !onboardingDone {
+                OnboardingFlow(restrictions: restrictions, plus: plus) {
+                    withAnimation(.easeOut(duration: 0.3)) { onboardingDone = true }
+                    selectedMinutes = PlanStore.load()?.minutes ?? 25
+                    plan = PlanStore.load()
+                    coachPending = true
+                    coachStep = .task
+                }
+                .transition(.opacity)
+            }
+        }
         .sensoryFeedback(.success, trigger: coachReward) { _, reward in reward != nil }
         .task(id: coachReward) {
             guard coachReward != nil else { return }
