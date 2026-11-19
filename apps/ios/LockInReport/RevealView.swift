@@ -93,9 +93,12 @@ struct RevealView: View {
             dashes
             ForEach(data.topApps) { app in
                 HStack(spacing: 8) {
-                    if let token = app.token {
-                        Label(token).labelStyle(.iconOnly).frame(width: 18, height: 18)
-                    }
+                    // A plain initial, not the app's own icon.
+                    Text(String(app.name.prefix(1)).uppercased())
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(Self.receipt)
+                        .frame(width: 18, height: 18)
+                        .background(Circle().fill(Self.ink))
                     row(app.name, Self.duration(app.seconds), bold: false)
                 }
             }

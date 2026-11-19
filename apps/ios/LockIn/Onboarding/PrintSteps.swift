@@ -910,9 +910,8 @@ struct LockAppsStep: View {
         }
     }
 
-    /// Picked apps as their own icons, no box and no shadow, at about 30 pt: the biggest size
-    /// that stays sharp (Screen Time only gives a tiny icon, so going bigger blurs it). A small
-    /// lock sits on each corner. Before anything is picked, a grid of empty dashed slots.
+    /// One plain colored tile per picked app (not the apps' real icons), with a small lock on each
+    /// corner. Before anything is picked, a grid of empty dashed slots.
     @ViewBuilder
     private func tiles(_ has: Bool) -> some View {
         let apps = Array(restrictions.selection.applicationTokens)
@@ -920,12 +919,12 @@ struct LockAppsStep: View {
         if has {
             let columns = [GridItem(.adaptive(minimum: 44, maximum: 56), spacing: 18)]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 18) {
-                ForEach(Array(apps.prefix(15).enumerated()), id: \.offset) { _, token in
-                    lockedIcon { Label(token).labelStyle(.iconOnly) }
-                }
-                if apps.count < 15 {
-                    ForEach(Array(cats.prefix(15 - apps.count).enumerated()), id: \.offset) { _, token in
-                        lockedIcon { Label(token).labelStyle(.iconOnly) }
+                // Plain locked tiles, one per pick, not the apps' own icons.
+                ForEach(0..<min(apps.count + cats.count, 15), id: \.self) { i in
+                    lockedIcon {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill([Ink.blue, Ink.red, Ink.sun, Ink.ink][i % 4])
+                            .scaleEffect(1 / 2.8)
                     }
                 }
                 if lockedCount > 15 {
