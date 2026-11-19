@@ -25,7 +25,7 @@ struct HookStep: View {
                       secondaryTitle: "Skip intro", secondaryAction: startNow) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number)
-                    .font(PrintFont.head(128))
+                    .font(PrintFont.head(GuessStep.compact ? 100 : 128))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                     .foregroundStyle(Ink.ink)
@@ -90,6 +90,8 @@ private struct HookArrow: Shape {
 
 /// A "lost" poster. The user tears off the tab that matches their guess.
 struct GuessStep: View {
+    /// iPhone SE and other short screens: a smaller poster so the tabs are above the fold.
+    static var compact: Bool { UIScreen.main.bounds.height < 700 }
     @Binding var guessIndex: Int?
     let next: () -> Void
 
@@ -111,7 +113,7 @@ struct GuessStep: View {
     private var poster: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("LOST:\nA FEW HOURS")
-                .font(PrintFont.head(76))
+                .font(PrintFont.head(Self.compact ? 52 : 76))
                 .misprint(Ink.sun)
                 .lineSpacing(-14)
                 .lineLimit(2)
@@ -133,7 +135,7 @@ struct GuessStep: View {
                     if i < 3 { DashedLine(vertical: true).frame(width: 2) }
                 }
             }
-            .frame(height: 150)
+            .frame(height: Self.compact ? 112 : 150)
             .overlay(alignment: .top) { DashedLine(vertical: false).frame(height: 2) }
         }
         .background(Color.white)
