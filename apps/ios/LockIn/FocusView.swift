@@ -62,6 +62,7 @@ struct FocusView: View {
     /// The lock-in plan made in the first run (nil when the intro was skipped), shown as
     /// "Today's plan" and adjusted by the Monday check-in.
     @State private var plan: LockInPlan?
+    @State private var showSchedule = false
     @State private var checkIn: PlanWeekResult?
     /// Minutes of a session that finished while the app was closed; logged once in `.onAppear`.
     @State private var expiredMinutes = 0
@@ -306,6 +307,7 @@ struct FocusView: View {
                             if let plan, coachStep == nil, !isLocked {
                                 TodayPlanCard(plan: plan, progress: PlanProgress.make(plan: plan), compact: compact)
                                     .padding(.top, compact ? 6 : 10)
+                                ScheduleLine(plan: plan, schedule: LockInSchedule.load()) { showSchedule = true }
                             }
                             Spacer(minLength: 8)
                             VStack(spacing: 4) {
@@ -394,6 +396,12 @@ struct FocusView: View {
             coachStep = stepAfterPartner
         }) { KeysSheet(keys: keys) { showKeys = false } }
         .sheet(isPresented: $showPlusOffer, onDismiss: advanceAfterSession) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
+        .sheet(isPresented: $showSchedule) {
+            if let plan {
+                ScheduleSheet(plan: plan, plus: plus, restrictions: restrictions,
+                              saved: { self.plan = $0 }, close: { showSchedule = false })
+            }
+        }
         .sheet(item: $completion, onDismiss: advanceAfterSession) { info in
             CompletionCard(info: info, keep: { completion = nil }, change: { pendingTaskPicker = true; completion = nil })
                 .presentationDetents([.large])

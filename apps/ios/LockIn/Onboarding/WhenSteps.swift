@@ -448,7 +448,7 @@ private struct Hatch: Shape {
     }
 }
 
-private struct PlusBadge: View {
+struct PlusBadge: View {
     var body: some View {
         Text("PLUS")
             .font(PrintFont.mono(10, .bold)).tracking(1)
@@ -461,7 +461,7 @@ private struct PlusBadge: View {
 }
 
 /// "Remind me" (free) or "Lock by itself" (Plus).
-private struct ThenCards: View {
+struct ThenCards: View {
     @Binding var then: LockInSchedule.Then
     let minute: Int
     var perDay = false
@@ -505,7 +505,7 @@ private struct ThenCards: View {
 }
 
 /// "Add to my calendar": SwipeLater's own repeating events, so nothing gets booked over them.
-private struct AddToCalendarRow: View {
+struct AddToCalendarRow: View {
     @Binding var on: Bool
 
     var body: some View {
