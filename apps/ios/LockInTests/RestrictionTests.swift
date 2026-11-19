@@ -174,4 +174,18 @@ final class RestrictionControllerTests: XCTestCase {
         c.reconcile(activeSessionID: r.id, now: r.timing.endsAt)
         XCTAssertFalse(client.shieldApplied)
     }
+
+    /// Bug 2026-11-19: after ending a session early the shields were off, but the apps screen still
+    /// said "Locked." because its words only looked at how many apps were picked.
+    func testEndingEarlyStopsSayingLocked() {
+        let c = controller()
+        c.begin(record())
+        XCTAssertEqual(LockWords(chosen: 3, shieldsOn: c.status == .active), .locked)
+        c.end()
+        XCTAssertFalse(client.shieldApplied)
+        let words = LockWords(chosen: 3, shieldsOn: c.status == .active)
+        XCTAssertEqual(words, .ready)
+        XCTAssertEqual(words.stamp(3), "3 picked")
+        XCTAssertEqual(LockWords(chosen: 0, shieldsOn: false), .pick)
+    }
 }

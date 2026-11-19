@@ -10,6 +10,34 @@ private enum Shielded: Hashable {
     case site(WebDomainToken)
 }
 
+/// The words for the chosen apps. "Locked" only while a session's shields are really on; otherwise
+/// the apps are open and just waiting for the next session.
+enum LockWords: Equatable {
+    case pick, ready, locked
+
+    init(chosen: Int, shieldsOn: Bool) {
+        self = chosen == 0 ? .pick : (shieldsOn ? .locked : .ready)
+    }
+
+    var title: String {
+        switch self {
+        case .pick: return "Pick what\nto pause."
+        case .ready: return "Ready\nto lock."
+        case .locked: return "Locked."
+        }
+    }
+
+    var line: String {
+        switch self {
+        case .pick: return "Choose the apps you want to block while you\u{2019}re focusing."
+        case .ready: return "They lock when you start a session. Right now they\u{2019}re open."
+        case .locked: return "They\u{2019}re blocked until your timer ends."
+        }
+    }
+
+    func stamp(_ count: Int) -> String { self == .locked ? "\(count) locked" : "\(count) picked" }
+}
+
 /// Screen Time controls: which apps stay closed during a lock-in. Reports only what the framework
 /// reported; it never claims enforcement it has not applied.
 /// Same printed look and same words as the onboarding "Pick what to pause" slide (LockAppsStep),
@@ -54,6 +82,8 @@ struct RestrictionsSheet: View {
         return s.applicationTokens.count + s.categoryTokens.count + s.webDomainTokens.count
     }
 
+    private var words: LockWords { LockWords(chosen: chosenCount, shieldsOn: restrictions.status == .active) }
+
     private var titleSize: CGFloat { UIScreen.main.bounds.height < 700 ? 42 : 52 }
 
     var body: some View {
@@ -76,16 +106,14 @@ struct RestrictionsSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text((chosenCount == 0 ? "Pick what\nto pause." : "Locked.").uppercased())
+                        Text(words.title.uppercased())
                             .font(PrintFont.head(titleSize))
                             .foregroundStyle(Ink.ink)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 14)
                             .accessibilityAddTraits(.isHeader)
                             .modifier(enter(0))
-                        Text(chosenCount == 0
-                             ? "Choose the apps you want to block while you\u{2019}re focusing."
-                             : "They\u{2019}re blocked while your timer runs.")
+                        Text(words.line)
                             .font(PrintFont.mono(14))
                             .foregroundStyle(Ink.ink)
                             .fixedSize(horizontal: false, vertical: true)
@@ -105,7 +133,7 @@ struct RestrictionsSheet: View {
                         if rows.isEmpty {
                             emptySlots
                         } else {
-                            LockedStamp(count: chosenCount, still: reduceMotion)
+                            LockedStamp(count: chosenCount, words: words, still: reduceMotion)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                         }
@@ -250,15 +278,16 @@ private struct Entrance: ViewModifier {
     }
 }
 
-/// The blue "N locked" stamp. It lands on the page each time the count changes, like a real
-/// rubber stamp: a quick drop from a little larger, no bounce.
+/// The "N locked" stamp (blue, only while shields are on) or "N picked" (grey). It lands on the
+/// page each time the count changes, like a real rubber stamp: a quick drop from a little larger, no bounce.
 private struct LockedStamp: View {
     let count: Int
+    let words: LockWords
     let still: Bool
     @State private var down = true
 
     var body: some View {
-        Stamp(text: "\(count) locked", color: Ink.blue, size: 22, tilt: -5)
+        Stamp(text: words.stamp(count), color: words == .locked ? Ink.blue : Ink.soft, size: 22, tilt: -5)
             .scaleEffect(down && !still ? 1.35 : 1)
             .opacity(down ? 0 : 1)
             .onAppear { land() }

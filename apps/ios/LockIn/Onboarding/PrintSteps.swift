@@ -536,12 +536,14 @@ struct LockAppsStep: View {
 
     var body: some View {
         let has = restrictions.hasSelection
-        PrintScaffold(step: 7, title: has ? "Locked." : "Pick what\nto pause.", grain: true,
+        // No session runs during the first run, so the apps are picked, not locked yet.
+        let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
+        PrintScaffold(step: 7, title: words.title, grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
             VStack(alignment: .leading, spacing: 18) {
-                Text(has ? "They\u{2019}re blocked while your timer runs." : "Choose the apps you want to block while you\u{2019}re focusing.")
+                Text(has ? "They lock when you start a session." : words.line)
                     .font(PrintFont.mono(14))
                     .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -550,7 +552,7 @@ struct LockAppsStep: View {
                     .foregroundStyle(Ink.ink.opacity(0.65))
                 tiles(has)
                 if has {
-                    Stamp(text: "\(lockedCount) locked", color: Ink.blue, size: 22, tilt: -5)
+                    Stamp(text: words.stamp(lockedCount), color: Ink.blue, size: 22, tilt: -5)
                         .frame(maxWidth: .infinity)
                 }
             }
