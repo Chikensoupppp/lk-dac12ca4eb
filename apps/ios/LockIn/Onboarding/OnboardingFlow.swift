@@ -180,6 +180,9 @@ struct OnboardingFlow: View {
 
     var body: some View {
         ZStack {
+            // The flow sits over the Focus screen (so it is there from the first frame). Paper under
+            // the slides keeps that screen from showing through while two slides cross-fade.
+            Ink.paper.ignoresSafeArea()
             Group {
                 switch step {
                 case .hook: HookStep(next: next, startNow: finish)

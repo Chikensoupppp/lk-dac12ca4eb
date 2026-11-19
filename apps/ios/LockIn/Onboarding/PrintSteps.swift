@@ -216,6 +216,9 @@ struct RevealStep: View {
     let next: () -> Void
     @State private var showReport = false
     @State private var mountReport = false
+    /// The cover's words and pictures go first, then its paper: the two layouts never sit on top of
+    /// each other half-faded (that read as a glitch).
+    @State private var coverFaded = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
@@ -241,7 +244,7 @@ struct RevealStep: View {
                         .frame(height: 560)
                         .frame(maxWidth: .infinity)
                 }
-                GuessCheck(guessIndex: guessIndex, done: showReport)
+                GuessCheck(guessIndex: guessIndex, done: coverFaded)
                     .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
                     .background(Ink.paper.opacity(showReport ? 0 : 1))
                     .allowsHitTesting(!showReport)
@@ -253,7 +256,9 @@ struct RevealStep: View {
             mountReport = true
             let wait = effectiveReduceMotion(systemReduceMotion) ? 0.2 : 3.4
             guard await printPause(wait) else { return }
-            withAnimation(.easeOut(duration: 0.35)) { showReport = true }
+            withAnimation(.easeOut(duration: 0.2)) { coverFaded = true }
+            guard await printPause(0.2) else { return }
+            withAnimation(.easeOut(duration: 0.3)) { showReport = true }
         }
     }
 }
