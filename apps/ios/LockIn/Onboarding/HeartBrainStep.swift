@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Slide 5: what your hours mean for one day. The waking day is 16 hour tiles; the phone hours flip
-/// blue one by one, each stamped with an app, while the count climbs. Then the share of the day, the
-/// brain's reaction and one "you are here" finding. Mock: docs/design/waking-day-v1.html.
+/// Slide 5: what your hours mean. One bar is your awake day (16 hours); the blue part is the phone,
+/// with the share, the time left for you, an hour scale and week / month / year totals. Under it,
+/// what that much time is enough for every day. The brain reacts. Mock: docs/design/day-bar-v2.html.
 /// (The file keeps its old name; the heart monitor is gone.)
 struct HeartBrainStep: View {
     let hoursIndex: Int
@@ -11,16 +11,17 @@ struct HeartBrainStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduce: Bool { effectiveReduceMotion(systemReduceMotion) }
 
-    @State private var shown = 0
-    @State private var shareShown = false
+    /// 0...1: how far the bar has filled.
+    @State private var fill: Double = 0
+    @State private var chipsShown = false
+    @State private var itemsShown = 0
     @State private var bubbleShown = false
-    @State private var findShown = false
+    @State private var landed = 0
     @State private var bob = false
 
     private var band: Int { min(max(hoursIndex, 0), 3) }
     private var hours: Double { [1.5, 3.5, 5.5, 7.5][band] }
-    private var tileCount: Int { Int(hours.rounded(.up)) }
-    private var hasHalf: Bool { hours.truncatingRemainder(dividingBy: 1) > 0 }
+    private static let awake: Double = 16
 
     private static let titles = ["1\u{2013}2 hours\na day.", "3\u{2013}4 hours\na day.", "5\u{2013}6 hours\na day.", "7+ hours\na day."]
     private static let lines = [
@@ -31,20 +32,11 @@ struct HeartBrainStep: View {
     ]
     private static let says = ["Nice! Most of the day is still ours.", "Hmm. Can we get some back?",
                                "A third of our day? Oof.", "Half our day?! Let\u{2019}s fix this."]
-    /// (before, highlighted, after)
-    private static let shares: [(String, String, String)] = [
-        ("That\u{2019}s about ", "1 in every 10", " waking hours."), ("That\u{2019}s about ", "1 in every 5", " waking hours."),
-        ("That\u{2019}s about ", "1 in every 3", " waking hours."), ("That\u{2019}s ", "almost half", " of your waking hours.")
-    ]
-    /// Which hours (0 = 7 AM ... 15 = 10 PM) the phone takes, spread through the day like real use.
-    private static let order = [13, 1, 9, 14, 5, 11, 15, 7, 3, 12]
-    private static let glyphs = ["play.fill", "bubble.left.fill", "music.note", "envelope.fill",
-                                 "heart.fill", "camera.fill", "gamecontroller.fill", "cart.fill"]
 
     var body: some View {
         PrintScaffold(step: 5, title: Self.titles[band], titleSize: 46, grain: true,
                       primaryTitle: "CONTINUE", primaryAction: next) {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 20) {
                 ZStack(alignment: .topLeading) {
                     Text(Self.lines[band])
                         .font(PrintFont.bold(17))
@@ -63,17 +55,14 @@ struct HeartBrainStep: View {
                 }
 
                 card
-                if findShown {
-                    FindingCard(band: band)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+                enough
             }
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: shown)
+        .sensoryFeedback(.impact(weight: .light), trigger: landed)
         .task { await run() }
     }
 
-    // MARK: Pieces
+    // MARK: The brain
 
     private var brain: some View {
         Image("BrainExact")
@@ -81,16 +70,14 @@ struct HeartBrainStep: View {
             .scaledToFit()
             .frame(width: 104)
             .offset(y: bob ? -2 : 2)
-            // A small hop each time a tile lands.
-            .keyframeAnimator(initialValue: CGFloat(0), trigger: shown) { content, s in
+            .keyframeAnimator(initialValue: CGFloat(0), trigger: landed) { content, s in
                 content.scaleEffect(x: 1 + s, y: 1 - s, anchor: .bottom)
             } keyframes: { _ in
                 KeyframeTrack {
-                    CubicKeyframe(0.08, duration: 0.07)
-                    SpringKeyframe(0, duration: 0.3, spring: .bouncy)
+                    CubicKeyframe(0.09, duration: 0.08)
+                    SpringKeyframe(0, duration: 0.35, spring: .bouncy)
                 }
             }
-            // One wobble when it speaks.
             .keyframeAnimator(initialValue: 0.0, trigger: bubbleShown) { content, a in
                 content.rotationEffect(.degrees(a), anchor: .bottom)
             } keyframes: { _ in
@@ -104,86 +91,150 @@ struct HeartBrainStep: View {
             .accessibilityHidden(true)
     }
 
+    // MARK: The bar card
+
     private var card: some View {
-        let minutes = min(hours * 60, Double(shown) * 60 - (hasHalf && shown == tileCount ? 30 : 0))
-        let m = Int(minutes)
+        let minutes = hours * 60 * fill
+        let share = hours / Self.awake
+        let left = Self.awake * 60 - minutes
         return VStack(alignment: .leading, spacing: 0) {
-            Text("YOUR WAKING DAY \u{00B7} 16 HOURS")
-                .font(PrintFont.mono(10, .bold)).tracking(1.6)
+            Text(Self.hm(minutes))
+                .font(PrintFont.head(56))
+                .monospacedDigit()
+                .foregroundStyle(Ink.ink)
+                .contentTransition(.numericText(value: minutes))
+            Text("ON YOUR PHONE, OUT OF 16 HOURS AWAKE")
+                .font(PrintFont.mono(10, .bold)).tracking(1.2)
                 .foregroundStyle(Ink.ink.opacity(0.6))
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("\(m / 60)H \(String(format: "%02d", m % 60))M")
-                    .font(PrintFont.head(52))
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: minutes))
-                    .animation(.snappy, value: shown)
-                Text("ON YOUR PHONE").font(PrintFont.mono(12, .bold)).tracking(1.2)
+                .padding(.top, 4)
+
+            GeometryReader { g in
+                let w = g.size.width
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.white)
+                    // One faint mark per hour.
+                    Path { p in
+                        for h in 1..<16 {
+                            let x = w * CGFloat(h) / 16
+                            p.move(to: CGPoint(x: x, y: 0)); p.addLine(to: CGPoint(x: x, y: 36))
+                        }
+                    }
+                    .stroke(Ink.ink.opacity(0.12), lineWidth: 2)
+                    Rectangle()
+                        .fill(Ink.blue)
+                        .frame(width: max(0, w * CGFloat(share * fill)))
+                        .overlay(alignment: .trailing) { Rectangle().fill(Ink.ink).frame(width: fill > 0 ? 2 : 0) }
+                    Text("\(Int((share * fill * 100).rounded()))%")
+                        .font(PrintFont.mono(12, .bold))
+                        .foregroundStyle(.white)
+                        .padding(.leading, 10)
+                        .opacity(fill > 0.05 ? 1 : 0)
+                    HStack {
+                        Spacer()
+                        Text("\(Self.hm(left)) LEFT FOR YOU")
+                            .font(PrintFont.mono(10, .bold)).tracking(1)
+                            .foregroundStyle(Ink.ink.opacity(0.6))
+                            .padding(.horizontal, 4).padding(.vertical, 3)
+                            .background(Color.white)
+                            .padding(.trailing, 8)
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
             }
-            .foregroundStyle(Ink.ink)
-            .padding(.top, 6)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 8), spacing: 7) {
-                ForEach(0..<16, id: \.self) { hour in tile(hour) }
+            .frame(height: 36)
+            .padding(.top, 14)
+
+            HStack {
+                ForEach(["0H", "4H", "8H", "12H", "16H"], id: \.self) { l in
+                    Text(l).font(PrintFont.mono(9, .semibold)).foregroundStyle(Ink.ink.opacity(0.55))
+                    if l != "16H" { Spacer() }
+                }
+            }
+            .padding(.top, 5)
+
+            HStack(spacing: 8) {
+                chip("EVERY WEEK", Self.hm(hours * 7 * 60, dropZeroMinutes: true), 0)
+                chip("A MONTH, NONSTOP", "\(Int((hours * 30 / 24).rounded())) DAYS", 1)
+                chip("A YEAR, NONSTOP", "\(Int((hours * 365 / 24).rounded())) DAYS", 2)
             }
             .padding(.top, 12)
-            share
-                .padding(.top, 14)
-                .opacity(shareShown ? 1 : 0)
-                .offset(y: shareShown ? 0 : 8)
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color(hex: 0xF4F4F0)))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Ink.ink).offset(y: 5))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("About \(Self.titles[band].replacingOccurrences(of: "\n", with: " ")) on your phone. \(shareSentence).")
+        .accessibilityLabel("\(Self.hm(hours * 60, spoken: true)) on your phone, \(Int((share * 100).rounded())) percent of 16 hours awake. Every week \(Self.hm(hours * 7 * 60, spoken: true)). In a year, \(Int((hours * 365 / 24).rounded())) full days.")
     }
 
-    private func tile(_ hour: Int) -> some View {
-        let k = Self.order.firstIndex(of: hour).flatMap { $0 < tileCount ? $0 : nil }
-        let filled = k.map { $0 < shown } ?? false
-        let half = k == tileCount - 1 && hasHalf
-        let h = 7 + hour
-        return ZStack {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Ink.ink.opacity(0.16), lineWidth: 2)
-            Text("\((h + 11) % 12 + 1)\(h < 12 ? "a" : "p")")
-                .font(PrintFont.mono(9, .semibold))
-                .foregroundStyle(Ink.ink.opacity(0.4))
-            if filled, let k {
-                Image(systemName: Self.glyphs[k % Self.glyphs.count])
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Ink.blue))
-                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Ink.ink).offset(y: 3))
-                    .mask {
-                        // A half hour fills the left half of its tile.
-                        HStack(spacing: 0) {
-                            Rectangle()
-                            if half { Color.clear }
-                        }
-                        .padding(.bottom, -4)
-                    }
-                    .rotationEffect(.degrees(Double(k % 3 - 1) * 2.5))
-                    .transition(.asymmetric(insertion: .scale(scale: 0.6).combined(with: .opacity).combined(with: .offset(y: -14)),
-                                            removal: .opacity))
+    private func chip(_ label: String, _ value: String, _ i: Int) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label).font(PrintFont.mono(9, .bold)).tracking(1.1).foregroundStyle(Ink.ink.opacity(0.6))
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(value).font(PrintFont.head(22)).foregroundStyle(Ink.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Ink.ink.opacity(0.14), lineWidth: 1.5))
+        .opacity(chipsShown ? 1 : 0)
+        .offset(y: chipsShown ? 0 : 8)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(i) * 0.08), value: chipsShown)
+    }
+
+    // MARK: What the time is enough for
+
+    /// 45-minute episodes, about 40 pages an hour, 1-hour workouts.
+    private var things: [(n: Int, one: String, many: String, symbol: String, fill: Color, glyph: Color)] {
+        [
+            (Int(hours * 60 / 45), "episode of a show", "episodes of a show", "play.fill", Color(hex: 0xE5484D), .white),
+            (Int((hours * 40 / 10).rounded()) * 10, "page of a book", "pages of a book", "book.fill", Ink.sun, Ink.ink),
+            (Int(hours), "gym session", "gym sessions", "dumbbell.fill", Ink.blue, .white)
+        ]
+    }
+
+    private var enough: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("EVERY DAY, THAT\u{2019}S ENOUGH TIME FOR")
+                .font(PrintFont.mono(10, .bold)).tracking(1.6)
+                .foregroundStyle(Ink.ink.opacity(0.6))
+            ForEach(Array(things.enumerated()), id: \.offset) { i, t in
+                let on = i < itemsShown
+                HStack(spacing: 12) {
+                    Image(systemName: t.symbol)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(t.glyph)
+                        .frame(width: 36, height: 36)
+                        .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(t.fill))
+                        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
+                        .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Ink.ink).offset(y: 3))
+                        .scaleEffect(on ? 1 : 0.6)
+                        .rotationEffect(.degrees(on ? 0 : (i % 2 == 0 ? -5 : 5)))
+                    Text("\(on ? t.n : 0)")
+                        .font(PrintFont.head(28))
+                        .monospacedDigit()
+                        .contentTransition(.numericText(value: Double(on ? t.n : 0)))
+                    Text(t.n == 1 ? t.one : t.many)
+                        .font(PrintFont.bold(16))
+                }
+                .foregroundStyle(Ink.ink)
+                .opacity(on ? 1 : 0)
+                .offset(y: on ? 0 : 16)
+                .accessibilityElement(children: .combine)
             }
         }
-        .aspectRatio(1, contentMode: .fit)
     }
 
-    private var shareSentence: String {
-        let s = Self.shares[band]
-        return s.0 + s.1 + s.2
-    }
+    // MARK: Words
 
-    private var share: Text {
-        let s = Self.shares[band]
-        var mark = AttributedString(" \(s.1) ")
-        mark.backgroundColor = Ink.sun
-        return Text(s.0) + Text(mark) + Text(s.2)
+    static func hm(_ minutes: Double, dropZeroMinutes: Bool = false, spoken: Bool = false) -> String {
+        let m = Int(minutes.rounded())
+        if spoken { return m % 60 == 0 ? "\(m / 60) hours" : "\(m / 60) hours \(m % 60) minutes" }
+        if dropZeroMinutes && m % 60 == 0 { return "\(m / 60)H" }
+        return "\(m / 60)H \(String(format: "%02d", m % 60))M"
     }
 
     // MARK: The run
@@ -191,24 +242,26 @@ struct HeartBrainStep: View {
     @MainActor
     private func run() async {
         if reduce {
-            shown = tileCount
-            shareShown = true
+            fill = 1
+            chipsShown = true
+            itemsShown = things.count
             bubbleShown = true
-            findShown = true
             return
         }
         withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { bob = true }
-        guard await printPause(0.5) else { return }
-        for k in 0..<tileCount {
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.6)) { shown = k + 1 }
-            guard await printPause(0.26) else { return }
+        guard await printPause(0.4) else { return }
+        withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 1.4)) { fill = 1 }
+        guard await printPause(1.2) else { return }
+        chipsShown = true
+        landed += 1
+        guard await printPause(0.9) else { return }
+        for i in 0..<things.count {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) { itemsShown = i + 1 }
+            landed += 1
+            guard await printPause(0.3) else { return }
         }
-        guard await printPause(0.15) else { return }
-        withAnimation(.easeOut(duration: 0.4)) { shareShown = true }
-        guard await printPause(0.2) else { return }
+        guard await printPause(0.4) else { return }
         withAnimation(.spring(response: 0.35, dampingFraction: 0.62)) { bubbleShown = true }
-        guard await printPause(0.75) else { return }
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.86)) { findShown = true }
     }
 }
 
@@ -241,48 +294,5 @@ private struct Bubble: View {
             p.closeSubpath()
             return p
         }
-    }
-}
-
-// MARK: - Finding
-
-/// One finding picked by hours, marked "you are here". Plain summaries, not quotes; sources in
-/// docs/ONBOARDING_V2.md. All show links, not cause.
-private struct FindingCard: View {
-    let band: Int
-
-    private static let notes: [(tag: String, text: String, source: String)] = [
-        ("1\u{2013}2H", "In a study of 120,000 UK teens, about 1\u{2013}2 hours a day was not linked to lower well-being.",
-         "Przybylski & Weinstein, Psychological Science, 2017"),
-        ("3H+", "Teens on social media more than 3 hours a day were more likely to report anxiety or depression symptoms.",
-         "Riehm et al., JAMA Psychiatry, 2019"),
-        ("6H+", "In the same study, the link was stronger for teens on social media more than 6 hours a day.",
-         "Riehm et al., JAMA Psychiatry, 2019"),
-        ("7H+", "Teens with 7+ hours of daily screen time were about twice as likely to have been diagnosed with anxiety or depression.",
-         "Twenge & Campbell, Preventive Medicine Reports, 2018")
-    ]
-
-    var body: some View {
-        let note = Self.notes[band]
-        VStack(alignment: .leading, spacing: 8) {
-            Text("YOU ARE HERE \u{00B7} \(note.tag)")
-                .font(PrintFont.mono(10, .bold)).tracking(1.4)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 9).padding(.vertical, 6)
-                .background(Capsule().fill(Ink.blue))
-            Text(note.text)
-                .font(PrintFont.bold(15))
-                .foregroundStyle(Ink.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("\(note.source). Links, not cause and effect. Not medical advice.")
-                .font(PrintFont.mono(10, .medium))
-                .foregroundStyle(Ink.ink.opacity(0.6))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white)
-            .shadow(color: Ink.ink.opacity(0.14), radius: 12, y: 8))
-        .accessibilityElement(children: .combine)
     }
 }

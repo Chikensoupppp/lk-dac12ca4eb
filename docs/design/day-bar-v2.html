@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day bar v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  /* SwipeLater slide 5, plain version: one bar is your awake day, the blue part is the phone. Under
+     it, what that much time is enough for, in things everyone knows. The brain reacts.
+     Borrowed: a battery bar (everyone reads it), Opal's count-up, "that's enough time to..." lists. */
+  :root { --page:#E7E8E3; --ink:#1B1B1B; --blue:#3255A4; --sun:#FFB511; --soft:#62645E; --card:#F4F4F0; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, system-ui, sans-serif; }
+  .row { display: flex; gap: 24px; padding: 24px; width: max-content; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .bars { position: absolute; top: 62px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.16); }
+  .bars i.on { background: var(--ink); }
+  .back { position: absolute; top: 80px; left: 18px; width: 44px; height: 44px; display: grid; place-items: center; }
+  h1 { position: absolute; left: 24px; top: 132px; font: 400 50px/.98 Anton, Impact, sans-serif; color: var(--ink); text-transform: uppercase; }
+  .lede { position: absolute; left: 24px; right: 30px; top: 245px; font: 700 17px/1.3 Inter, sans-serif; font-stretch: condensed; color: rgba(27,27,27,.82); }
+  .brain { position: absolute; width: 112px; right: 14px; top: 122px; transform-origin: 50% 100%; }
+  .brain img { width: 100%; display: block; }
+  .bubble { position: absolute; left: 24px; right: 24px; top: 240px; padding: 9px 14px; border-radius: 18px 4px 18px 18px; background: #fff;
+            font: 400 21px/1.05 "Caveat Brush", cursive; color: var(--ink); box-shadow: 0 8px 18px rgba(27,27,27,.14); transform-origin: 85% 0; }
+  .bubble::before { content: ""; position: absolute; right: 52px; top: -10px; border-style: solid; border-color: transparent transparent #fff transparent; border-width: 0 8px 11px 8px; }
+
+  .card { position: absolute; left: 20px; right: 20px; top: 310px; padding: 16px 16px 14px; border-radius: 24px; background: var(--card);
+          border: 2px solid var(--ink); box-shadow: 0 5px 0 var(--ink); }
+  .big { font: 400 56px/1 Anton, Impact, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .of { font: 700 11px/1.3 "IBM Plex Mono", monospace; letter-spacing: 1.3px; color: var(--soft); margin-top: 6px; }
+  .bar { position: relative; height: 30px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; margin-top: 16px; overflow: hidden; }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--blue); border-right: 2px solid var(--ink); }
+  .ticks { position: absolute; inset: 0; background-image: linear-gradient(90deg, rgba(27,27,27,.12) 2px, transparent 2px); background-size: calc(100% / 16) 100%; }
+  .bar { height: 36px; }
+  .pct { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font: 700 12px/1 "IBM Plex Mono", monospace; color: #fff; letter-spacing: .5px; z-index: 2; white-space: nowrap; }
+  .left { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font: 700 10px/1 "IBM Plex Mono", monospace; color: var(--soft); letter-spacing: 1px; z-index: 2; white-space: nowrap; background: #fff; padding: 3px 4px; }
+  .axis { position: relative; height: 14px; margin-top: 5px; font: 600 9px/1 "IBM Plex Mono", monospace; color: var(--soft); }
+  .axis span { position: absolute; top: 0; transform: translateX(-50%); }
+  .axis span:first-child { transform: none; } .axis span:last-child { transform: translateX(-100%); }
+  .chips { display: flex; gap: 8px; margin-top: 12px; }
+  .chip { flex: 1; border-radius: 12px; background: #fff; border: 1.5px solid rgba(27,27,27,.14); padding: 8px 10px; }
+  .chip small { display: block; font: 700 9px/1 "IBM Plex Mono", monospace; letter-spacing: 1.2px; color: var(--soft); }
+  .chip b { display: block; font: 400 22px/1 Anton, Impact, sans-serif; color: var(--ink); margin-top: 5px; font-variant-numeric: tabular-nums; }
+
+  .enough { position: absolute; left: 24px; right: 24px; top: 572px; }
+  .enough small { display: block; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1.6px; color: var(--soft); margin-bottom: 10px; }
+  .item { display: flex; align-items: center; gap: 12px; height: 46px; }
+  .ic { width: 36px; height: 36px; border-radius: 12px; border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); display: grid; place-items: center; flex: none; }
+  .ic svg { width: 20px; height: 20px; }
+  .item b { font: 400 28px/1 Anton, Impact, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .item span { font: 700 16px/1.2 Inter, sans-serif; font-stretch: condensed; color: var(--ink); }
+
+  .next { position: absolute; left: 24px; right: 24px; bottom: 40px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page);
+          display: grid; place-items: center; font: 800 19px/1 Inter, sans-serif; letter-spacing: 2px; font-stretch: condensed; }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const BANDS = [
+  { title: "1–2 hours<br>a day.", lede: "A little more intentional time can go a long way.", hours: 1.5, say: "Nice! Most of the day is still ours." },
+  { title: "3–4 hours<br>a day.", lede: "What would you do with a little of that time back?", hours: 3.5, say: "Hmm. Can we get some back?" },
+  { title: "5–6 hours<br>a day.", lede: "That’s a lot of time. How much of it is really yours to choose?", hours: 5.5, say: "A third of our day? Oof." },
+  { title: "7+ hours<br>a day.", lede: "You don’t have to change everything today. Start with 25 minutes.", hours: 7.5, say: "Half our day?! Let’s fix this." },
+];
+// Every day, that many hours is enough for... (45-minute episodes, about 40 pages an hour, 1-hour workouts)
+const ITEMS = h => [
+  { n: Math.floor(h * 60 / 45), one: "episode of a show", many: "episodes of a show", c: "#E5484D",
+    g: '<path d="M7 4.5v11l9-5.5z" fill="#fff"/>' },
+  { n: Math.round(h * 40 / 10) * 10, one: "page of a book", many: "pages of a book", c: "#FFB511",
+    g: '<path d="M3 5.5c2.5-1 5-1 7 .5v10c-2-1.5-4.5-1.5-7-.5zM17 5.5c-2.5-1-5-1-7 .5v10c2-1.5 4.5-1.5 7-.5z" fill="#1B1B1B"/>' },
+  { n: Math.floor(h), one: "gym session", many: "gym sessions", c: "#3255A4",
+    g: '<rect x="2" y="8" width="3" height="4" rx="1" fill="#fff"/><rect x="15" y="8" width="3" height="4" rx="1" fill="#fff"/><rect x="5" y="6" width="2.5" height="8" rx="1" fill="#fff"/><rect x="12.5" y="6" width="2.5" height="8" rx="1" fill="#fff"/><rect x="7.5" y="9" width="5" height="2" fill="#fff"/>' },
+];
+const ease = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+
+function setup(el, band) {
+  const b = BANDS[band];
+  const items = ITEMS(b.hours);
+  el.innerHTML = `<div class="bars">${Array.from({ length: 13 }, (_, i) => `<i class="${i < 5 ? "on" : ""}"></i>`).join("")}</div>
+  <div class="back"><svg viewBox="0 0 12 20" width="12" height="20"><path d="M10 2L2 10l8 8" stroke="#1B1B1B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>${b.title}</h1><div class="lede">${b.lede}</div>
+  <div class="brain"><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt=""></div>
+  <div class="bubble">${b.say}</div>
+  <div class="card">
+    <div class="big">0H 00M</div>
+    <div class="of">ON YOUR PHONE, OUT OF 16 HOURS AWAKE</div>
+    <div class="bar"><div class="fill"></div><div class="ticks"></div><div class="pct">0%</div><div class="left"></div></div>
+    <div class="axis"><span style="left:0">0H</span><span style="left:25%">4H</span><span style="left:50%">8H</span><span style="left:75%">12H</span><span style="left:100%">16H</span></div>
+    <div class="chips"><div class="chip"><small>EVERY WEEK</small><b class="wk">0H</b></div><div class="chip"><small>A MONTH, NONSTOP</small><b class="mo">0 DAYS</b></div><div class="chip"><small>A YEAR, NONSTOP</small><b class="yr">0 DAYS</b></div></div>
+  </div>
+  <div class="enough"><small>EVERY DAY, THAT’S ENOUGH TIME FOR</small>
+    ${items.map(it => `<div class="item"><div class="ic" style="background:${it.c}"><svg viewBox="0 0 20 20">${it.g}</svg></div><b>0</b><span>${it.n === 1 ? it.one : it.many}</span></div>`).join("")}
+  </div>
+  <div class="next">CONTINUE</div><div class="home"></div>`;
+  return { el, b, items };
+}
+
+function drawPhone(p, t) {
+  const { el, b, items } = p;
+  // The bar fills while the number counts up.
+  const f = ease(clamp((t - 0.4) / 1.4));
+  el.querySelector(".fill").style.width = `${(b.hours / 16) * 100 * f}%`;
+  const m = Math.round(b.hours * 60 * f);
+  el.querySelector(".big").textContent = `${Math.floor(m / 60)}H ${String(m % 60).padStart(2, "0")}M`;
+  el.querySelector(".pct").textContent = `${Math.round(b.hours / 16 * 100 * f)}%`;
+  const rest = Math.round((16 * 60 - b.hours * 60 * f));
+  el.querySelector(".left").textContent = `${Math.floor(rest / 60)}H ${String(rest % 60).padStart(2, "0")}M LEFT FOR YOU`;
+  const cg = ease(clamp((t - 1.6) / 0.8));
+  const wk = Math.round(b.hours * 7 * 60 * cg);
+  el.querySelector(".wk").textContent = `${Math.floor(wk / 60)}H${wk % 60 ? " " + String(wk % 60).padStart(2, "0") + "M" : ""}`;
+  el.querySelector(".mo").textContent = `${Math.round(b.hours * 30 / 24 * cg)} DAYS`;
+  el.querySelector(".yr").textContent = `${Math.round(b.hours * 365 / 24 * cg)} DAYS`;
+  el.querySelectorAll(".chip").forEach((c, i) => { const k = clamp((t - (1.5 + i * 0.12)) / 0.35); c.style.opacity = k; c.style.transform = `translateY(${(1 - ease(k)) * 8}px)`; });
+  // Then the three things, one after another, each counting up.
+  el.querySelectorAll(".item").forEach((row, i) => {
+    const k = clamp((t - (2.5 + i * 0.3)) / 0.4);
+    row.style.opacity = k; row.style.transform = `translateY(${(1 - ease(k)) * 16}px)`;
+    const c = clamp((t - (2.5 + i * 0.3)) / 0.7);
+    row.querySelector("b").textContent = Math.round(items[i].n * ease(c));
+    const ic = row.querySelector(".ic");
+    ic.style.transform = `scale(${k > 0 ? 0.6 + 0.4 * back(k) : 0.6}) rotate(${(i % 2 ? 5 : -5) * (1 - k)}deg)`;
+  });
+  // The brain hops when the bar lands and when it speaks.
+  const land = t - 1.8, speak = t - 3.8;
+  const hop = (land >= 0 ? Math.exp(-land * 7) * Math.sin(land * 20) * 0.09 : 0);
+  const wob = speak >= 0 ? Math.exp(-speak * 4) * Math.sin(speak * 16) * 7 : 0;
+  el.querySelector(".brain").style.transform = `translateY(${Math.sin(t * 2.2) * 2}px) rotate(${wob}deg) scale(${1 + hop}, ${1 - hop})`;
+  const bb = clamp(speak / 0.35);
+  const bubble = el.querySelector(".bubble");
+  bubble.style.opacity = bb; bubble.style.transform = `scale(${bb > 0 ? 0.7 + 0.3 * back(bb) : 0.7})`;
+  el.querySelector(".lede").style.opacity = 1 - clamp((speak + 0.1) / 0.2);
+}
+
+const row = document.getElementById("row");
+const frames = (new URLSearchParams(location.search).get("f") || "2:1.2,2:6,3:6,0:6,1:6").split(",").map(s => s.split(":").map(Number));
+const phones = frames.map(([band]) => { const d = document.createElement("div"); d.className = "phone"; row.appendChild(d); return setup(d, band); });
+window.render = t => phones.forEach((p, i) => drawPhone(p, t ?? frames[i][1]));
+window.renderAt = t => phones.forEach(p => drawPhone(p, t));
+document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r)))).then(() => { window.render(); window.ready = true; });
+</script>
+</body>
+</html>
