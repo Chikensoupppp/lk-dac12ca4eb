@@ -72,8 +72,9 @@ struct HalftoneField: View {
             y += step
             row += 1
         }
-        ctx.fill(sun, with: .color(Ink.sun.opacity(0.85)))
-        ctx.fill(blue, with: .color(Ink.blue.opacity(0.62)))
+        // Tone-on-tone: darker and lighter cream dots on the paper, so the objects carry the color.
+        ctx.fill(sun, with: .color(Color(hex: 0xC9CAC1).opacity(0.9)))
+        ctx.fill(blue, with: .color(Color(hex: 0xB9BAB0).opacity(0.55)))
     }
 
     private static func value(x: Double, y: Double, t: Double, top: Double, fade: Double, ripples: [LiveRipple]) -> Double {

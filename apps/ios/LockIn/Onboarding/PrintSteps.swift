@@ -20,7 +20,7 @@ struct HookStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        PrintScaffold(step: 1, background: Ink.orange, foreground: Ink.paper, title: "Where does\nthe time go?", titleSize: 58, grain: true,
+        PrintScaffold(step: 1, title: "Where does\nthe time go?", titleSize: 58, grain: true,
                       primaryTitle: "LET\u{2019}S GO", primaryAction: next,
                       secondaryTitle: "Skip intro", secondaryAction: startNow) {
             VStack(alignment: .leading, spacing: 6) {
@@ -28,24 +28,24 @@ struct HookStep: View {
                     .font(PrintFont.head(128))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                    .foregroundStyle(Ink.paper)
+                    .foregroundStyle(Ink.ink)
                     .monospacedDigit()
                     .misprint()
                     .accessibilityLabel("Unknown hours a day")
                 Text("How many hours do you spend on your phone each day?")
                     .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.paper)
+                    .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(alignment: .top) {
                     Spacer()
                     ZStack(alignment: .bottomTrailing) {
                         HookArrow()
                             .trim(from: 0, to: noteShown ? 1 : 0)
-                            .stroke(Ink.sun, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                            .stroke(Ink.blue, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                             .frame(width: 110, height: 84)
                         Text("you?")
                             .font(PrintFont.hand(34))
-                            .foregroundStyle(Ink.sun)
+                            .foregroundStyle(Ink.blue)
                             .rotationEffect(.degrees(-6))
                             .offset(x: 36, y: 34)
                             .scaleEffect(noteShown ? 1 : 0.3)
@@ -112,7 +112,7 @@ struct GuessStep: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("LOST:\nA FEW HOURS")
                 .font(PrintFont.head(76))
-                .misprint()
+                .misprint(Ink.sun)
                 .lineSpacing(-14)
                 .lineLimit(2)
                 .minimumScaleFactor(0.55)
@@ -669,7 +669,7 @@ struct YearStep: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(shown) DAYS")
                     .font(PrintFont.head(92))
-                    .misprint()
+                    .misprint(Ink.sun)
                     .foregroundStyle(Ink.orange)
                     .monospacedDigit()
                     .lineLimit(1)

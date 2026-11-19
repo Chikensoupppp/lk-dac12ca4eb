@@ -148,8 +148,8 @@ struct PrintScaffold<Content: View>: View {
 
 extension View {
     /// Two-ink riso look: a thin sunflower copy printed slightly off-register behind the shape.
-    func misprint() -> some View {
-        shadow(color: Ink.sun.opacity(0.9), radius: 0, x: 2.5, y: 2)
+    func misprint(_ edge: Color = Ink.blue) -> some View {
+        shadow(color: edge.opacity(0.9), radius: 0, x: 2.5, y: 2)
     }
 }
 
