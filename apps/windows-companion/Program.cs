@@ -206,6 +206,9 @@ app.MapPost("/session/start", async (StartSessionRequest request, SessionStore s
 app.MapPost("/session/stop", ([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] StopSessionRequest? request,
     SessionStore store, SessionWatch watch) =>
 {
+    // A Locked session runs to its end: the PC does not take an early stop, from the phone or anywhere else.
+    if (watch.LockedSnapshot() is { } held && (request?.Id is null || request.Id == held.Id))
+        return Results.Json(new { error = "locked", session = store.Current }, statusCode: StatusCodes.Status409Conflict);
     var session = store.Stop(request?.Id);
     watch.End(request?.Id);
     return Results.Ok(session);
@@ -306,7 +309,11 @@ if (!args.Contains("--headless"))
     if (ShieldFile.ReadActive(stateDir) is { } saved
         && sessionStore.TryStart(saved.Id, saved.DurationSeconds, saved.StartedAt, out _) == StartOutcome.Started)
         sessionWatch.Begin(saved.Id, saved.Buddy, saved.StartedAt, saved.DurationSeconds, saved.Task, null, null, locked: true);
-    shield = new ShieldController(stateDir, sessionWatch.LockedSnapshot);
+    shield = new ShieldController(stateDir, sessionWatch.LockedSnapshot, jump =>
+    {
+        // The PC clock was moved: slide the session with it, so its remaining time does not change.
+        if (sessionWatch.LockedSnapshot() is { } live) { sessionWatch.ShiftClock(jump); sessionStore.Shift(live.Id, jump); }
+    });
 }
 // Lets the phone find this PC on the Wi-Fi ("Find nearby PC"). Pairing still needs the owner's Allow.
 using var bonjour = new BonjourAdvertiser(Environment.MachineName, LanPort, fingerprint, LanAddresses.Find());

@@ -81,6 +81,8 @@ public static class ProcessShield
     {
         using var mine = new Mutex(true, WatchdogMutexName, out var first);
         if (!first) return;
+        // A task left over from a session that is long over: remove it and leave.
+        if (ShieldFile.ReadActive(stateDir) is null) { ShieldTask.Remove(); return; }
         Protect(true);
         var missing = 0;
         while (true)
@@ -152,13 +154,18 @@ public sealed class ShieldController : IDisposable
 {
     private readonly ShieldFile file;
     private readonly Func<ShieldState?> snapshot;
+    private readonly Action<TimeSpan> onClockJump;
     private readonly System.Threading.Timer timer;
     private bool active;
+    private DateTimeOffset? lastWall;
+    private long lastTicks;
 
-    public ShieldController(string stateDir, Func<ShieldState?> snapshot)
+    /// <param name="onClockJump">Called with how far the PC clock moved against real elapsed time (positive = forward).</param>
+    public ShieldController(string stateDir, Func<ShieldState?> snapshot, Action<TimeSpan> onClockJump)
     {
         file = new ShieldFile(stateDir);
         this.snapshot = snapshot;
+        this.onClockJump = onClockJump;
         timer = new System.Threading.Timer(_ => Tick(), null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
     }
 
@@ -166,10 +173,23 @@ public sealed class ShieldController : IDisposable
     {
         try
         {
+            // Environment.TickCount64 keeps counting through sleep and ignores clock changes, so wall time
+            // moving faster or slower than it means someone changed the clock to run the session out.
+            var wall = DateTimeOffset.UtcNow;
+            var ticks = Environment.TickCount64;
+            if (lastWall is { } before)
+            {
+                var jump = (wall - before) - TimeSpan.FromMilliseconds(ticks - lastTicks);
+                if (jump.Duration() > TimeSpan.FromSeconds(30) && snapshot() is not null) onClockJump(jump);
+            }
+            lastWall = wall;
+            lastTicks = ticks;
+
             var state = snapshot();
             file.Write(state);
             if (state is not null)
             {
+                if (!active) ShieldTask.Install();
                 active = true;
                 ProcessShield.Protect(true);
                 ProcessShield.EnsureWatchdog();
@@ -178,10 +198,72 @@ public sealed class ShieldController : IDisposable
             {
                 active = false;
                 ProcessShield.Protect(false);
+                ShieldTask.Remove();
             }
         }
         catch (Exception) { }
     }
 
     public void Dispose() { timer.Dispose(); file.Dispose(); }
+}
+
+/// <summary>
+/// A per-user Scheduled Task that starts the watchdog every minute, so the guard also comes
+/// back after a restart even if the Startup entry is switched off. Added when a Locked session starts and
+/// removed when it ends. Runs as the user, no admin, and also on battery.
+/// </summary>
+public static class ShieldTask
+{
+    private const string Name = "SwipeLater Watchdog";
+
+    /// <summary>Returns what schtasks said, for checks.</summary>
+    public static string Install()
+    {
+        try
+        {
+            var xml = $"""
+                <?xml version="1.0" encoding="UTF-16"?>
+                <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+                  <Triggers>
+                    <TimeTrigger>
+                      <Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition>
+                      <StartBoundary>2020-01-01T00:00:00</StartBoundary><Enabled>true</Enabled>
+                    </TimeTrigger>
+                  </Triggers>
+                  <Principals><Principal id="Author"><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
+                  <Settings>
+                    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+                    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+                    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+                    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+                    <StartWhenAvailable>true</StartWhenAvailable>
+                    <Hidden>true</Hidden>
+                  </Settings>
+                  <Actions Context="Author"><Exec><Command>{System.Security.SecurityElement.Escape(Environment.ProcessPath!)}</Command><Arguments>--watchdog</Arguments></Exec></Actions>
+                </Task>
+                """;
+            var path = Path.Combine(Path.GetTempPath(), "swipelater-watchdog.xml");
+            File.WriteAllText(path, xml, System.Text.Encoding.Unicode);
+            var said = Run($"/Create /TN \"{Name}\" /XML \"{path}\" /F");
+            try { File.Delete(path); } catch (Exception) { }
+            return said;
+        }
+        catch (Exception e) { return e.Message; }
+    }
+
+    public static void Remove() => Run($"/Delete /TN \"{Name}\" /F");
+
+    private static string Run(string arguments)
+    {
+        try
+        {
+            using var p = Process.Start(new ProcessStartInfo("schtasks.exe", arguments)
+            { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true });
+            if (p is null) return "";
+            var text = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
+            p.WaitForExit(10000);
+            return text;
+        }
+        catch (Exception e) { return e.Message; }
+    }
 }

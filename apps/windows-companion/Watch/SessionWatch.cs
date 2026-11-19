@@ -219,6 +219,12 @@ public sealed class SessionWatch : IDisposable
         }
     }
 
+    /// <summary>The PC clock was moved by <paramref name="by"/>: move the start with it so the time left stays the same.</summary>
+    public void ShiftClock(TimeSpan by)
+    {
+        lock (gate) { if (sessionId is not null) startedAt += by; }
+    }
+
     public void End(string? id)
     {
         lock (gate)
