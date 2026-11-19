@@ -44,11 +44,10 @@ struct DayBarSlide: View {
                                "A third of your day? Oof.", "Half your day?! Let\u{2019}s fix this."]
 
     var body: some View {
-        // Sized to end well above the CONTINUE button on a 6.1" iPhone (it used to reach under it).
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
                 Text(headline.uppercased())
-                    .font(.system(size: 44, weight: .black).width(.compressed))
+                    .font(.system(size: 46, weight: .black).width(.compressed))
                     .foregroundStyle(Self.ink)
                     .lineSpacing(-4)
                     .fixedSize(horizontal: false, vertical: true)
@@ -57,7 +56,7 @@ struct DayBarSlide: View {
             }
             ZStack(alignment: .topLeading) {
                 Text(Self.lines[band])
-                    .font(.system(size: 16, weight: .heavy).width(.condensed))
+                    .font(.system(size: 17, weight: .heavy).width(.condensed))
                     .foregroundStyle(Self.ink.opacity(0.82))
                     .fixedSize(horizontal: false, vertical: true)
                     .opacity(bubbleShown ? 0 : 1)
@@ -82,7 +81,7 @@ struct DayBarSlide: View {
         Image("BrainExact")
             .resizable()
             .scaledToFit()
-            .frame(width: 86)
+            .frame(width: 104)
             .offset(y: bob ? -2 : 2)
             .keyframeAnimator(initialValue: CGFloat(0), trigger: landed) { content, s in
                 content.scaleEffect(x: 1 + s, y: 1 - s, anchor: .bottom)
@@ -114,7 +113,7 @@ struct DayBarSlide: View {
         let soft = Self.ink.opacity(0.6)
         return VStack(alignment: .leading, spacing: 0) {
             Text(Self.hm(minutes))
-                .font(.system(size: 50, weight: .black).width(.compressed))
+                .font(.system(size: 56, weight: .black).width(.compressed))
                 .monospacedDigit()
                 .foregroundStyle(Self.ink)
                 .contentTransition(.numericText(value: minutes))
@@ -158,7 +157,7 @@ struct DayBarSlide: View {
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
             }
             .frame(height: 36)
-            .padding(.top, 12)
+            .padding(.top, 14)
 
             HStack {
                 ForEach(["0H", "4H", "8H", "12H", "16H"], id: \.self) { l in
@@ -173,9 +172,9 @@ struct DayBarSlide: View {
                 chip("A MONTH, NONSTOP", "\(Int((hours * 30 / 24).rounded())) DAYS", 1)
                 chip("A YEAR, NONSTOP", "\(Int((hours * 365 / 24).rounded())) DAYS", 2)
             }
-            .padding(.top, 10)
+            .padding(.top, 12)
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Self.cardFill))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
@@ -192,7 +191,7 @@ struct DayBarSlide: View {
             Text(value).font(.system(size: 22, weight: .black).width(.compressed)).foregroundStyle(Self.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
-        .padding(.horizontal, 10).padding(.vertical, 6)
+        .padding(.horizontal, 10).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Self.ink.opacity(0.14), lineWidth: 1.5))
@@ -214,7 +213,7 @@ struct DayBarSlide: View {
     }
 
     private var enough: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("EVERY DAY, THAT\u{2019}S ENOUGH TIME FOR")
                 .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.6)
                 .foregroundStyle(Self.ink.opacity(0.6))
@@ -222,16 +221,16 @@ struct DayBarSlide: View {
                 let on = i < itemsShown
                 HStack(spacing: 12) {
                     Image(systemName: t.symbol)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(t.glyph)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 38, height: 38)
                         .background(Circle().fill(t.fill))
                         .overlay(Circle().strokeBorder(Self.ink, lineWidth: 2))
                         .background(Circle().fill(Self.ink).offset(y: 3))
                         .scaleEffect(on ? 1 : 0.6)
                         .rotationEffect(.degrees(on ? 0 : (i % 2 == 0 ? -5 : 5)))
                     Text("\(on ? t.n : 0)")
-                        .font(.system(size: 26, weight: .black).width(.compressed))
+                        .font(.system(size: 28, weight: .black).width(.compressed))
                         .monospacedDigit()
                         .contentTransition(.numericText(value: Double(on ? t.n : 0)))
                     Text(t.n == 1 ? t.one : t.many)

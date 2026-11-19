@@ -31,7 +31,7 @@ struct HeartBrainStep: View {
                     .padding(.top, 160)
                     if showReport {
                         DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
-                            .frame(height: 600)
+                            .frame(height: 700)
                             .frame(maxWidth: .infinity)
                             .transition(.opacity)
                     }
