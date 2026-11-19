@@ -213,6 +213,8 @@ struct CheckStep: View {
     let skip: () -> Void
     @State private var asking = false
     @State private var bob = false
+    @State private var shown = false
+    @State private var drawn = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
@@ -233,22 +235,18 @@ struct CheckStep: View {
         if asking { return "ASKING..." }
         switch access {
         // Not "Allow": this button opens Apple's own Screen Time box, which asks.
-        case .ask: return "SHOW MY TIME"
+        case .ask: return "OK, SHOW ME"
         case .on: return "NEXT"
         case .off: return "OPEN SETTINGS"
         }
     }
 
     var body: some View {
-        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Let\u{2019}s see your\nreal number.", titleSize: 46, grain: true,
+        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "One tap:\nContinue.", titleSize: 46, grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
                       secondaryTitle: access == .on ? nil : "Not now", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {
-                Text("Allow Screen Time. It never leaves your iPhone.")
-                    .font(PrintFont.bold(18))
-                    .foregroundStyle(Ink.ink.opacity(0.85))
-                    .fixedSize(horizontal: false, vertical: true)
-                peek
+                preview
                 if access == .on {
                     Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
                 } else if access == .off {
@@ -263,51 +261,113 @@ struct CheckStep: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { restrictions.refresh() }
         }
-        .onAppear {
-            guard !effectiveReduceMotion(systemReduceMotion) else { return }
+        .task {
+            if effectiveReduceMotion(systemReduceMotion) { shown = true; drawn = true; return }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { shown = true }
             withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) { bob = true }
+            guard await printPause(0.6) else { return }
+            withAnimation(.easeOut(duration: 0.5)) { drawn = true }
         }
     }
 
-    /// The brain peeking at a hidden number through a magnifying glass.
-    private var peek: some View {
-        ZStack {
-            VStack(spacing: 6) {
-                Text("YOUR SCREEN TIME")
-                    .font(PrintFont.mono(11, .bold)).tracking(1.6)
-                    .foregroundStyle(Ink.ink.opacity(0.6))
-                Text("?H ??M")
-                    .font(PrintFont.head(64))
-                    .foregroundStyle(Ink.ink)
-                Text("A DAY")
-                    .font(PrintFont.mono(12, .bold)).tracking(1.6)
-                    .foregroundStyle(Ink.ink.opacity(0.6))
-            }
-            .padding(.vertical, 22)
-            .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color(hex: 0xF4F4F0)))
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
-            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Ink.ink).offset(y: 5))
-            .padding(.trailing, 70)
+    private static var appName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "SwipeLater"
+    }
 
-            ZStack(alignment: .bottomTrailing) {
-                Image("BrainExact")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 120)
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 54, weight: .bold))
-                    .foregroundStyle(Ink.blue)
-                    .rotationEffect(.degrees(bob ? -8 : 4))
-                    .offset(x: 10, y: 12)
+    /// A printed picture of the Screen Time box iOS shows next, with Continue circled and the brain
+    /// pointing at it (the way Opal primes it). Drawn tilted, inked and untappable, so it reads as a
+    /// picture of the box, not the box itself. Mock: docs/design/slide3-options.html, option B.
+    /// Only while the answer is still to come.
+    @ViewBuilder
+    private var preview: some View {
+        if access == .ask {
+            VStack(spacing: 0) {
+                alertPicture
+                    .padding(.horizontal, 22)
+                    .rotationEffect(.degrees(-2))
+                    .scaleEffect(shown ? 1 : 0.86)
+                    .opacity(shown ? 1 : 0)
+                    .padding(.top, 14)
+                ZStack(alignment: .topLeading) {
+                    PointArrow()
+                        .trim(from: 0, to: drawn ? 1 : 0)
+                        .stroke(Ink.ink, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                        .frame(width: 96, height: 92)
+                        .offset(x: 20, y: 0)
+                    HStack(alignment: .center, spacing: 10) {
+                        Image("BrainExact")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 92)
+                            .offset(y: bob ? -3 : 3)
+                            .rotationEffect(.degrees(bob ? 3 : -3))
+                        Text("this one!\nthen your\nreal time")
+                            .font(PrintFont.hand(21))
+                            .foregroundStyle(Ink.ink)
+                            .opacity(drawn ? 1 : 0)
+                    }
+                    .offset(x: 112, y: 34)
+                }
+                .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
+                Text("It never leaves your iPhone.")
+                    .font(PrintFont.mono(13))
+                    .foregroundStyle(Ink.ink)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 6)
             }
-            .offset(y: bob ? -4 : 4)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .offset(y: 48)
+            .allowsHitTesting(false)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Next, iPhone asks to allow Screen Time. Tap Continue. It never leaves your iPhone.")
+        } else {
+            Text("It never leaves your iPhone.")
+                .font(PrintFont.bold(18))
+                .foregroundStyle(Ink.ink.opacity(0.85))
         }
-        .padding(.bottom, 50)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Your screen time, hidden until you allow it")
+    }
+
+    private var alertPicture: some View {
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let blue = Color(hex: 0x0A62D8)
+        return VStack(spacing: 0) {
+            VStack(spacing: 6) {
+                Text("\u{201C}\(Self.appName)\u{201D} Would Like to Access Screen Time")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Providing \u{201C}\(Self.appName)\u{201D} access to Screen Time may allow it to see your activity data, restrict content, and limit the usage of apps and websites.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(hex: 0x333333))
+            }
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Ink.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 14)
+            .padding(.top, 16)
+            .padding(.bottom, 14)
+            Rectangle().fill(Color(hex: 0xC8C8C8)).frame(height: 1)
+            HStack(spacing: 0) {
+                Text("Continue")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(blue)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(Ink.sun, lineWidth: 3)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .scaleEffect(drawn ? (bob ? 1.04 : 0.98) : 0.6)
+                            .opacity(drawn ? 1 : 0)
+                    }
+                Rectangle().fill(Color(hex: 0xC8C8C8)).frame(width: 1, height: 44)
+                Text("Don\u{2019}t Allow")
+                    .font(.system(size: 16))
+                    .foregroundStyle(blue)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+        }
+        .background(shape.fill(Color(hex: 0xF2F2F2)))
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 7))
+        .shadow(color: .black.opacity(0.22), radius: 16, y: 16)
     }
 
     private func ask() {
@@ -327,6 +387,21 @@ struct CheckStep: View {
         case .off:
             if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
         }
+    }
+}
+
+/// The hand-drawn arrow on slide 3: from beside the brain, up and right to Continue, with a head.
+private struct PointArrow: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX + r.width * 0.08, y: r.maxY))
+        p.addCurve(to: CGPoint(x: r.maxX - r.width * 0.08, y: r.minY + r.height * 0.12),
+                   control1: CGPoint(x: r.minX + r.width * 0.18, y: r.minY + r.height * 0.45),
+                   control2: CGPoint(x: r.minX + r.width * 0.45, y: r.minY + r.height * 0.22))
+        p.move(to: CGPoint(x: r.maxX - r.width * 0.26, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.06, y: r.minY + r.height * 0.11))
+        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.2, y: r.minY + r.height * 0.3))
+        return p
     }
 }
 

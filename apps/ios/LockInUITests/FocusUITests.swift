@@ -214,7 +214,7 @@ final class FocusUITests: XCTestCase {
         step("onboarding-1-hook", tap: "LET\u{2019}S GO")
         step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
-        step("onboarding-3-check", tap: "SHOW MY TIME")
+        step("onboarding-3-check", tap: "OK, SHOW ME")
         step("onboarding-5-brain", tap: "CONTINUE")
         step("onboarding-6-slide", tap: "NEXT", pre: { app.buttons["onboarding-slide-knob"].tap() })
         step("onboarding-7-apps-wait", tap: "NEXT")
