@@ -151,7 +151,7 @@ struct SlideToLockStep: View {
     private var track: some View {
         GeometryReader { proxy in
             let maxX = max(proxy.size.width - height, 1)
-            let progress = min(x / maxX, 1)
+            let progress = Double(min(x / maxX, 1))
             ZStack(alignment: .leading) {
                 Capsule().fill(Ink.ink)
                 Capsule()
