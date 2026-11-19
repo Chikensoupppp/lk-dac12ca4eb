@@ -508,7 +508,7 @@ struct PullsStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityLabel("What pulls you in?")
-            VStack(alignment: .trailing, spacing: 0) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Image("BrainExact")
                     .resizable()
                     .scaledToFit()
@@ -538,9 +538,11 @@ struct PullsStep: View {
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: categories.count)
             }
-            .offset(y: compact ? -8 : -14)
             .accessibilityHidden(true)
         }
+        // Tall enough for the brain and its bubble, which reach below the two-line headline;
+        // without this the bubble spilled under the line of text after it and was covered.
+        .frame(minHeight: compact ? 116 : 136, alignment: .top)
     }
 
     private var sheet: some View {
