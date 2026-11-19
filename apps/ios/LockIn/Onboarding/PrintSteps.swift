@@ -215,9 +215,10 @@ struct CheckStep: View {
     @State private var bob = false
     @State private var shown = false
     @State private var drawn = false
-    @State private var pulledAt: Date?
-    @State private var landAt: Date?
+    @State private var dialAt: Date?
+    @State private var openAt: Date?
     @State private var won = false
+    @State private var stampShown = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
@@ -234,34 +235,73 @@ struct CheckStep: View {
         }
     }
 
+    /// What the slide shows. While the box is being answered (and the vault opening after a yes)
+    /// it stays the asking slide, even though access may already have turned on underneath.
+    private var display: Access { asking || won ? .ask : access }
+
+    private var reduce: Bool { effectiveReduceMotion(systemReduceMotion) }
+
     private var primaryTitle: String {
-        if asking { return "SPINNING..." }
-        switch access {
-        // Not "Allow": this button pulls the lever, and Apple's own Screen Time box asks.
-        case .ask: return "SPIN IT"
-        case .on: return "NEXT"
+        if asking { return "OPENING..." }
+        switch display {
+        // Not "Allow": this button starts the dial, and Apple's own Screen Time box asks.
+        case .ask: return "OPEN IT"
+        case .on: return "SEE MY NUMBER"
         case .off: return "OPEN SETTINGS"
         }
     }
 
+    private var tag: String {
+        switch display {
+        case .ask: return "Allow Screen Time"
+        case .on: return "Screen Time is on"
+        case .off: return "Screen Time is off"
+        }
+    }
+
+    private var title: String {
+        switch display {
+        case .ask: return "Your number\u{2019}s\nin here."
+        case .on: return "Already\nunlocked."
+        case .off: return "Locked\nfor now."
+        }
+    }
+
+    private var line: String {
+        switch display {
+        case .ask: return won ? "Your number\u{2019}s next!" : "Only you have the key."
+        case .on: return stampShown ? "You gave me the key already." : "Unlocking\u{2026}"
+        case .off: return "Only Settings has the key."
+        }
+    }
+
     var body: some View {
-        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "What\u{2019}s your\nnumber?", titleSize: 46, grain: true,
+        PrintScaffold(step: 3, tag: tag, title: title, titleSize: 46, grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
-                      secondaryTitle: access == .on ? nil : "Not now", secondaryAction: skip) {
-            VStack(alignment: .leading, spacing: 16) {
-                SlotMachine(pulledAt: pulledAt, landAt: landAt, won: won,
-                            reduceMotion: effectiveReduceMotion(systemReduceMotion),
-                            pull: { if !asking, access == .ask { ask() } })
-                    .padding(.top, 4)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: pulledAt)
-                    .sensoryFeedback(.success, trigger: won)
-                preview
-                if asking || won {
-                    EmptyView()
-                } else if access == .on {
-                    Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
-                } else if access == .off {
-                    Text("Screen Time is off. Turn it on in Settings > Screen Time > Apps with Screen Time Access.")
+                      secondaryTitle: display == .on ? nil : "Not now", secondaryAction: skip) {
+            VStack(alignment: .leading, spacing: 18) {
+                Vault(dialAt: dialAt, openAt: openAt, reduceMotion: reduce,
+                      tap: { if !asking, access == .ask { ask() } })
+                    .overlay(alignment: .bottomTrailing) { vaultStamp }
+                    .padding(.top, 6)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: dialAt)
+                    .sensoryFeedback(.success, trigger: openAt)
+                brainLine
+                switch display {
+                case .ask:
+                    alertPicture
+                        .padding(.horizontal, 18)
+                        .rotationEffect(.degrees(-2))
+                        .scaleEffect(shown ? 1 : 0.9)
+                        .opacity(shown ? 1 : 0)
+                case .on:
+                    Text("Your real week is ready.\nIt never leaves your iPhone.")
+                        .font(PrintFont.mono(13))
+                        .foregroundStyle(Ink.soft)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                case .off:
+                    Text("Turn it on in Settings > Screen Time > Apps with Screen Time Access.")
                         .font(PrintFont.body(15))
                         .foregroundStyle(Ink.red)
                         .fixedSize(horizontal: false, vertical: true)
@@ -272,8 +312,13 @@ struct CheckStep: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { restrictions.refresh() }
         }
+        // Already allowed (now, or after a trip to Settings): the vault opens by itself.
+        .onChange(of: access) { _, now in
+            if now == .on, !asking { openByItself() }
+        }
         .task {
-            if effectiveReduceMotion(systemReduceMotion) { shown = true; drawn = true; return }
+            if access == .on { openByItself() }
+            if reduce { shown = true; drawn = true; return }
             withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { shown = true }
             withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) { bob = true }
             guard await printPause(0.6) else { return }
@@ -281,52 +326,60 @@ struct CheckStep: View {
         }
     }
 
+    @ViewBuilder
+    private var vaultStamp: some View {
+        if display == .on, stampShown {
+            Stamp(text: "Already open", color: Ink.blue, size: 22, tilt: -9)
+                .offset(x: -8, y: -6)
+                .transition(.scale(scale: 1.25).combined(with: .opacity))
+        } else if display == .off {
+            Stamp(text: "Locked", color: Ink.red, size: 24, tilt: -9)
+                .offset(x: -14, y: -10)
+        }
+    }
+
+    private var brainLine: some View {
+        HStack(spacing: 8) {
+            Image("BrainExact")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 84)
+                .offset(y: bob ? -3 : 3)
+                .rotationEffect(.degrees(bob ? 3 : -3))
+                .offset(y: won || stampShown ? -14 : 0)
+            Text(line)
+                .font(PrintFont.hand(19))
+                .foregroundStyle(Ink.ink)
+                .contentTransition(.opacity)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Ink.ink, lineWidth: 2))
+                .background(RoundedRectangle(cornerRadius: 16).fill(Ink.ink).offset(x: 3, y: 3))
+            Spacer(minLength: 0)
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.55), value: line)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func openByItself() {
+        guard openAt == nil else { return }
+        if reduce { openAt = .now; stampShown = true; return }
+        Task {
+            guard await printPause(0.5) else { return }
+            openAt = .now
+            guard await printPause(Vault.openDuration - 0.1) else { return }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) { stampShown = true }
+        }
+    }
+
     private static var appName: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "SwipeLater"
     }
 
-    /// The brain's line, then a printed picture of the Screen Time box iOS shows next, with Continue
-    /// circled (the way Opal primes it). Its Continue pulls the lever like the big button; its
-    /// Don't Allow is "Not now". Only while the answer is still to come.
-    @ViewBuilder
-    private var preview: some View {
-        // Stays up while the reels land, even though the answer has already turned access on.
-        if access == .ask || asking || won {
-            VStack(spacing: 14) {
-                HStack(spacing: 8) {
-                    Image("BrainExact")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 84)
-                        .offset(y: bob ? -3 : 3)
-                        .rotationEffect(.degrees(bob ? 3 : -3))
-                        .offset(y: won ? -14 : 0)
-                    Text(won ? "Your number\u{2019}s next!" : "Pull it! iPhone asks first.")
-                        .font(PrintFont.hand(19))
-                        .foregroundStyle(Ink.ink)
-                        .contentTransition(.opacity)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Ink.ink, lineWidth: 2))
-                        .background(RoundedRectangle(cornerRadius: 16).fill(Ink.ink).offset(x: 3, y: 3))
-                    Spacer(minLength: 0)
-                }
-                .animation(.spring(response: 0.4, dampingFraction: 0.55), value: won)
-                .accessibilityElement(children: .combine)
-                alertPicture
-                    .padding(.horizontal, 18)
-                    .rotationEffect(.degrees(-2))
-                    .scaleEffect(shown ? 1 : 0.9)
-                    .opacity(shown ? 1 : 0)
-            }
-        } else {
-            Text("It never leaves your iPhone.")
-                .font(PrintFont.bold(18))
-                .foregroundStyle(Ink.ink.opacity(0.85))
-        }
-    }
-
+    /// A printed picture of the Screen Time box iOS shows next, with Continue circled (the way
+    /// Opal primes it). Its Continue starts the dial like the big button; its Don't Allow is
+    /// "Not now".
     private var alertPicture: some View {
         let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         let blue = Color(hex: 0x0A62D8)
@@ -391,22 +444,19 @@ struct CheckStep: View {
         switch access {
         case .ask:
             asking = true
-            let still = effectiveReduceMotion(systemReduceMotion)
-            if !still { pulledAt = .now }
+            let still = reduce
+            dialAt = .now
             Task {
-                // Let the lever come down and the reels get going before Apple's box covers them.
-                if !still { _ = await printPause(0.5) }
+                // Let the dial get going before Apple's box covers it.
+                if !still { _ = await printPause(0.4) }
                 await restrictions.requestAuthorization()
                 let granted = access == .on
-                if !still, let pulledAt {
-                    let now = Date.now
-                    landAt = now
-                    let land = now.timeIntervalSince(pulledAt) - SlotMachine.leverTime
-                    let settle = SlotMachine.settleTime(afterLand: land) - land
-                    _ = await printPause(settle)
+                if granted {
+                    openAt = .now
+                    if !still { _ = await printPause(Vault.openDuration) }
                 }
                 won = granted
-                if granted, !still { _ = await printPause(0.9) }
+                if granted, !still { _ = await printPause(0.6) }
                 asking = false
                 next()
             }
