@@ -431,9 +431,9 @@ private struct PointArrow: Shape {
 // MARK: 4. Real hours
 
 /// The real numbers, drawn by Apple's report view inside the LockInReport extension. Lock In
-/// cannot read them. A short "reading your week" moment plays first, then the report fades in on
-/// top of it (Apple's report can take a moment to draw; the loading view keeps the slide from
-/// ever looking blank).
+/// cannot read them. The report starts loading at once, under a "reading your week" cover that
+/// lifts after 2.8 s; if the report still isn't drawn then, a small spinner shows instead of a
+/// blank slide.
 struct RevealStep: View {
     let guessIndex: Int?
     let next: () -> Void
@@ -441,16 +441,29 @@ struct RevealStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        PrintScaffold(step: 4, tag: "Your real screen time", grain: true,
+        // No grain here: the cover below is flat paper, and grain would show its edges.
+        PrintScaffold(step: 4, tag: "Your real screen time",
                       primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
             ZStack(alignment: .top) {
-                ReadingWeek(done: showReport)
-                if showReport {
-                    DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
-                        .frame(height: 560)
-                        .frame(maxWidth: .infinity)
-                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                // Only seen if Apple's report is still drawing when the cover lifts.
+                VStack(spacing: 14) {
+                    ProgressView().tint(Ink.ink)
+                    Text("Adding up your week\u{2026}")
+                        .font(PrintFont.mono(13, .bold))
+                        .foregroundStyle(Ink.ink.opacity(0.6))
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 200)
+                // Mounted right away, under the cover, so the extension starts reading the week while
+                // "reading your week" plays. It used to start only after it, which added its whole
+                // load time (several seconds on a first run) on top of the 2.8 s.
+                DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
+                    .frame(height: 560)
+                    .frame(maxWidth: .infinity)
+                ReadingWeek(done: showReport)
+                    .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
+                    .background(Ink.paper.opacity(showReport ? 0 : 1))
+                    .allowsHitTesting(!showReport)
             }
         }
         .task {
