@@ -412,8 +412,9 @@ struct RevealStep: View {
 /// Whether this build carries the report extension. Without it the reveal slide is skipped.
 enum ScreenTimeReport {
     static var isAvailable: Bool {
-        guard let url = Bundle.main.builtInPlugInsURL,
-              let items = try? FileManager.default.contentsOfDirectory(atPath: url.path) else { return false }
+        // The report extension is an ExtensionKit extension: it lives in Extensions/, not PlugIns/.
+        let url = Bundle.main.bundleURL.appendingPathComponent("Extensions")
+        guard let items = try? FileManager.default.contentsOfDirectory(atPath: url.path) else { return false }
         return items.contains("LockInReport.appex")
     }
 }

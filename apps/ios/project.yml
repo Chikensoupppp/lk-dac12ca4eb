@@ -67,7 +67,7 @@ targets:
   # Draws the user's real Screen Time on the onboarding reveal slide. Apple sandboxes it: it can
   # read usage but cannot send anything back to the app.
   LockInReport:
-    type: app-extension
+    type: extensionkit-extension
     platform: iOS
     sources: [LockInReport, ReportShared]
     entitlements:
@@ -78,8 +78,8 @@ targets:
       path: Config/LockInReport-Info.plist
       properties:
         CFBundleDisplayName: SwipeLater Report
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.deviceactivityui.report-extension
+        EXAppExtensionAttributes:
+          EXExtensionPointIdentifier: com.apple.deviceactivityui.report-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.report
