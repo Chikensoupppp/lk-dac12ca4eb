@@ -17,9 +17,8 @@ targets:
   LockIn:
     type: application
     platform: iOS
-    # The LockInReport extension (real hours on the reveal slide) is not in this build yet: its
-    # bundle ID needs Family Controls (Distribution) approval first. Without it the app skips the
-    # reveal and uses the user's guess (see ScreenTimeReport.isAvailable).
+    # LockInReport draws the real Screen Time hours on the reveal slide (ScreenTimeReport.isAvailable
+    # checks that it is in the build).
     sources: [LockIn, Shared, ReportShared, BrainArt, LiveShared]
     entitlements:
       path: Config/LockIn.entitlements
@@ -31,6 +30,7 @@ targets:
         aps-environment: production
     dependencies:
       - target: LockInMonitor
+      - target: LockInReport
       - target: LockInWidget
       - package: RevenueCat
         product: RevenueCat
@@ -73,6 +73,28 @@ targets:
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: NO
   # The home screen brain widget. Reads the day's level from the shared app group (BrainLevel).
+  # Draws the user's real Screen Time on the onboarding reveal slide. Apple sandboxes it: it can
+  # read usage but cannot send anything back to the app.
+  LockInReport:
+    type: app-extension
+    platform: iOS
+    sources: [LockInReport, ReportShared]
+    entitlements:
+      path: Config/LockInReport.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+    info:
+      path: Config/LockInReport-Info.plist
+      properties:
+        CFBundleDisplayName: SwipeLater Report
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivityui.report-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.report
+        DEVELOPMENT_TEAM: D6TH2NSZLT
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
   LockInWidget:
     type: app-extension
     platform: iOS
