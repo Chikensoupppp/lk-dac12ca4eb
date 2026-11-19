@@ -1,5 +1,11 @@
 # Project status
 
+## First-run slides + clock - 2026-11-19
+
+- Long intro is now the default ("LET'S GO"; "Skip intro" takes the short way). Three new slides before the plan (`Onboarding/HowItWorksSteps.swift`, mock `docs/design/how-it-works-v2.html`): moving riso halftone background with ripples, brain slider ("One slide. You're in."), notifications swiped to Later ("Swipe later."), the week stacking up ("Stack up the days."). Timer clock: faint full track, end knob, smaller brain and number, stray tally marks removed.
+- CI run 44428992090: build and all tests passed (the run was cut off later in the screenshot step). TestFlight build 64 (run 44434932570) uploaded.
+- Unverified: the SwiftUI slides on a real iPhone (only the HTML mock was rendered), feel of the drag and flick, battery cost of the moving background. Brandon asked to stop using cloud simulator screenshot runs.
+
 ## Focus screen · 2026-11-16
 
 Local SwiftUI redesign with the approved mascot in the timer. Browser mock reviewed at standard and compact widths. Swift syntax checked on Windows. Xcode build, simulator UI tests, VoiceOver and hardware verification are pending.
