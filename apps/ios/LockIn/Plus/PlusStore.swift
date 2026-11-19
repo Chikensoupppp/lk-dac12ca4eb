@@ -101,7 +101,10 @@ final class PlusStore: ObservableObject {
     }
 
     /// The free-trial length in days, when the product has one and the user can still get it.
-    var trialDays: Int? {
+    var trialDays: Int? { trialDays(for: product) }
+
+    /// The same, for one plan (the yearly chip shows its trial even while monthly is picked).
+    func trialDays(for product: Product?) -> Int? {
         guard trialEligible, let offer = product?.subscription?.introductoryOffer,
               offer.paymentMode == .freeTrial else { return nil }
         let p = offer.period

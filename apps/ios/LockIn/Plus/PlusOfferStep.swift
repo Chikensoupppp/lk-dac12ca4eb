@@ -9,27 +9,35 @@ enum PlusLinks {
     static let privacy: URL? = URL(string: "https://swipelater.app/privacy/")
 }
 
-/// The last slide: the offer, in a calm navy. An honest trial timeline with real dates, the price
-/// from the App Store, an easy "Not now", and Restore / Terms / Privacy.
+/// The Plus offer: the last slide of the first run, and the sheet behind the Locked mode switch.
+/// A member card rises in and gets its LOCKED IN stamp, what Plus adds pops in, one plan is picked,
+/// and an honest trial timeline with real dates. Prices come from the App Store. An easy "Not now",
+/// and Restore / Terms / Privacy. Mock: docs/design/paywall-v2.html.
 struct PlusOfferStep: View {
     @ObservedObject var plus: PlusStore
     /// Last slide of the first run (true) or the sheet behind the Locked mode switch (false).
     var intro = true
     let next: () -> Void
+
     @State private var cardIn = false
+    @State private var stamped = false
+    @State private var shine = false
     @State private var rows = 0
+    @State private var plansIn = false
+    @State private var stops = 0
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.openURL) private var openURL
 
-    /// Text color. Was cream on navy; the slide is on paper now.
-    private static let cream = Ink.ink
+    private static let softInk = Color(hex: 0x3F413B)
 
     private var buttonTitle: String {
         if plus.isPlus { return "CONTINUE" }
         switch plus.loadState {
         case .loading: return "LOADING..."
         case .unavailable: return "NOT ON SALE YET"
-        case .ready: return plus.trialDays != nil ? "TRY FOR $0" : "GET PLUS"
+        case .ready:
+            if let days = plus.trialDays { return "TRY \(days) DAYS FREE" }
+            return "GET PLUS"
         }
     }
 
@@ -38,177 +46,295 @@ struct PlusOfferStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 12, title: "Ready to\nlock in?", grain: true,
+        PrintScaffold(step: OnboardingFlow.stepCount, tag: "SwipeLater Plus", title: "Lock in\nfor real.", titleSize: 46,
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
-                      secondaryTitle: plus.isPlus ? nil : "Not now", secondaryAction: next,
                       footer: AnyView(footer)) {
-            VStack(alignment: .leading, spacing: 22) {
-                if intro {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Your first focus session is ready.")
-                            .font(PrintFont.bold(20))
-                            .foregroundStyle(Self.cream)
-                        Text("One button. One thing to focus on.")
-                            .font(PrintFont.body(15, .medium))
-                            .foregroundStyle(Self.cream.opacity(0.8))
-                    }
-                    .fixedSize(horizontal: false, vertical: true)
-                }
+            VStack(alignment: .leading, spacing: 18) {
                 card
-                    .rotationEffect(.degrees(cardIn ? -4 : -14))
-                    .scaleEffect(cardIn ? 1 : 0.6)
+                    .padding(.horizontal, 6)
+                    .rotationEffect(.degrees(cardIn ? -2 : -10))
+                    .scaleEffect(cardIn ? 1 : 0.8, anchor: .bottom)
+                    .offset(y: cardIn ? 0 : 120)
                     .opacity(cardIn ? 1 : 0)
-                Text("Plus adds Locked mode: no quit button. Only your accountability partner, or one emergency exit a week, can end a session early.")
-                    .font(PrintFont.body(15, .medium))
-                    .foregroundStyle(Self.cream.opacity(0.8))
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 10) {
+                    feature(0, symbol: "lock.fill", color: Ink.blue, glyph: .white,
+                            title: "Locked mode", line: "No quit button. The session runs to the end.")
+                    feature(1, symbol: "person.2.fill", color: Ink.sun, glyph: Ink.ink,
+                            title: "A friend holds the key", line: "Only your partner, or one emergency exit a week, ends it early.")
+                    feature(2, symbol: "calendar", color: Ink.red, glyph: .white,
+                            title: "Every week, saved", line: "Your whole history, not just the last 3 weeks.")
+                }
                 if plus.isPlus {
                     Text("You have Plus. Thank you.")
                         .font(PrintFont.bold(22))
-                        .foregroundStyle(Self.cream)
+                        .foregroundStyle(Ink.ink)
+                } else if plus.loadState == .unavailable {
+                    Text("Plus is not on sale yet. Everything you set up stays free.")
+                        .font(PrintFont.bold(19))
+                        .foregroundStyle(Ink.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    if plus.monthly != nil && plus.yearly != nil { planPicker }
-                    timeline
+                    VStack(alignment: .leading, spacing: 16) {
+                        if plus.yearly != nil || plus.monthly != nil { planPicker }
+                        timeline
+                    }
+                    .opacity(plansIn ? 1 : 0)
+                    .offset(y: plansIn ? 0 : 14)
                 }
                 if let message = plus.message {
-                    Text(message).font(PrintFont.mono(12)).foregroundStyle(Self.cream.opacity(0.75))
+                    Text(message).font(PrintFont.mono(12)).foregroundStyle(Self.softInk)
                 }
             }
         }
-        .task {
-            if effectiveReduceMotion(systemReduceMotion) { cardIn = true; rows = 3; return }
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) { cardIn = true }
-            guard await printPause(0.4) else { return }
-            for i in 1...3 {
-                withAnimation(.easeOut(duration: 0.3)) { rows = i }
-                guard await printPause(0.25) else { return }
-            }
-        }
+        .sensoryFeedback(.impact(weight: .heavy), trigger: stamped)
+        .task { await play() }
     }
 
+    // MARK: The card
+
     private var card: some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(LinearGradient(colors: [Ink.blue, Color(hex: 0x24407F)], startPoint: .topLeading, endPoint: .bottomTrailing))
-            Circle()
-                .stroke(Color.white.opacity(0.13), lineWidth: 18)
-                .frame(width: 180, height: 180)
+        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        let year = Calendar.current.component(.year, from: .now)
+        return ZStack(alignment: .topLeading) {
+            shape.fill(Ink.blue)
+            Canvas { ctx, size in
+                // Halftone dots, like the riso print on the rest of the slides.
+                for x in stride(from: 4.5, to: size.width, by: 9) {
+                    for y in stride(from: 4.5, to: size.height, by: 9) {
+                        ctx.fill(Path(ellipseIn: CGRect(x: x - 1.4, y: y - 1.4, width: 2.8, height: 2.8)),
+                                 with: .color(.white.opacity(0.16)))
+                    }
+                }
+            }
+            LinearGradient(colors: [.clear, .white.opacity(0.45), .clear], startPoint: .leading, endPoint: .trailing)
+                .frame(width: 70, height: 260)
+                .rotationEffect(.degrees(18))
+                .offset(x: shine ? 420 : -140, y: -60)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("MEMBER CARD")
+                    .font(PrintFont.mono(10, .bold)).tracking(1.8)
+                    .opacity(0.8)
+                Text("PLUS")
+                    .font(PrintFont.head(38))
+                    .padding(.top, 4)
+                Spacer(minLength: 0)
+                Text("SWIPELATER \u{00B7} \(String(year))")
+                    .font(PrintFont.mono(12)).tracking(2)
+                    .opacity(0.85)
+            }
+            .foregroundStyle(.white)
+            .padding(20)
+            Image("BrainExact")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .offset(x: 40, y: 60)
-            Text("SWIPELATER\nPLUS")
-                .font(PrintFont.head(40))
-                .lineLimit(2)
-                .minimumScaleFactor(0.6)
-                .lineSpacing(-6)
-                .foregroundStyle(.white)
-                .padding(20)
-            Text(plus.isPlus ? "MEMBER \u{00B7} ACTIVE" : "MEMBER \u{00B7} SINCE TODAY")
-                .font(PrintFont.mono(13))
-                .foregroundStyle(.white.opacity(0.85))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                .padding(20)
+                .offset(x: -6, y: 10)
+            Text(plus.isPlus ? "ACTIVE" : "LOCKED IN")
+                .font(PrintFont.head(22))
+                .tracking(1)
+                .foregroundStyle(Ink.sun)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Ink.ink.opacity(0.18)))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Ink.sun, lineWidth: 3))
+                .rotationEffect(.degrees(-9))
+                .scaleEffect(stamped ? 1 : 2.2)
+                .opacity(stamped ? 1 : 0)
+                .offset(x: 112, y: 34)
         }
-        .frame(height: 190)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: .black.opacity(0.6), radius: 20, y: 18)
-        .padding(.horizontal, 12)
+        .frame(height: 130)
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 6))
+        .shadow(color: .black.opacity(0.25), radius: 14, y: 14)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("SwipeLater Plus card")
+        .accessibilityLabel(plus.isPlus ? "SwipeLater Plus member card, active" : "SwipeLater Plus member card")
     }
+
+    private func feature(_ i: Int, symbol: String, color: Color, glyph: Color, title: String, line: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(glyph)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(color))
+                .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
+                .background(Circle().fill(Ink.ink).offset(y: 3))
+                .scaleEffect(rows > i ? 1 : 0.6)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
+                Text(line)
+                    .font(PrintFont.body(14, .medium))
+                    .foregroundStyle(Self.softInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .opacity(rows > i ? 1 : 0)
+        .offset(x: rows > i ? 0 : -16)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Plans and the timeline
 
     /// Yearly (with the free trial) or monthly. Prices come from the App Store.
     private var planPicker: some View {
         HStack(spacing: 10) {
             if let yearly = plus.yearly {
-                planChip(id: PlusStore.yearlyID, title: "Yearly", price: "\(yearly.displayPrice) / year",
-                         note: plus.trialDays.map { "\($0) days free" } ?? "Best value")
+                planChip(id: PlusStore.yearlyID, title: "Yearly", price: yearly.displayPrice,
+                         note: perMonth(yearly).map { "\($0) a month" } ?? "Best value",
+                         badge: plus.trialDays(for: yearly).map { "\($0) DAYS FREE" })
             }
             if let monthly = plus.monthly {
-                planChip(id: PlusStore.monthlyID, title: "Monthly", price: "\(monthly.displayPrice) / month", note: "Cancel any time")
+                planChip(id: PlusStore.monthlyID, title: "Monthly", price: monthly.displayPrice,
+                         note: plus.trialDays(for: monthly).map { "\($0) days free" } ?? "No free trial", badge: nil)
             }
         }
+        .padding(.top, 8)
     }
 
-    private func planChip(id: String, title: String, price: String, note: String) -> some View {
+    private func perMonth(_ product: Product) -> String? {
+        guard product.subscription?.subscriptionPeriod.unit == .year else { return nil }
+        return (product.price / 12).formatted(product.priceFormatStyle)
+    }
+
+    private func planChip(id: String, title: String, price: String, note: String, badge: String?) -> some View {
         let on = plus.selectedID == id
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         return Button { plus.selectedID = id } label: {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title.uppercased()).font(PrintFont.mono(12, .heavy)).tracking(1.5)
-                Text(price).font(PrintFont.bold(19))
-                Text(note).font(PrintFont.mono(11, .medium)).opacity(0.75)
+                Text(title.uppercased()).font(PrintFont.mono(11, .bold)).tracking(1.2).foregroundStyle(Self.softInk)
+                Text(price).font(PrintFont.head(26)).foregroundStyle(Ink.ink)
+                Text(note).font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
             }
-            .foregroundStyle(Self.cream)
-            .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
-            .padding(.horizontal, 14)
-            .background(RoundedRectangle(cornerRadius: 16).fill(on ? Ink.sun.opacity(0.35) : Color.clear))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Self.cream.opacity(on ? 1 : 0.3), lineWidth: on ? 3 : 1.5))
+            .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+            .padding(.horizontal, 13)
+            .background(shape.fill(Color.white))
+            .overlay(shape.strokeBorder(on ? Ink.ink : Ink.ink.opacity(0.18), lineWidth: 2))
+            .background(shape.fill(Ink.ink).offset(y: on ? 4 : 0))
+            .overlay(alignment: .topTrailing) {
+                if let badge {
+                    Text(badge)
+                        .font(PrintFont.mono(9, .bold)).tracking(1)
+                        .foregroundStyle(Ink.ink)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Ink.sun))
+                        .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2))
+                        .offset(x: -10, y: -11)
+                }
+            }
+            .animation(.easeOut(duration: 0.15), value: on)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(title), \(price), \(note)")
-        .accessibilityAddTraits(on ? .isSelected : [])
+        .accessibilityLabel([title, price, note, badge?.lowercased()].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 
-    /// Today / reminder day / charge day. Dates are real, counted from today.
+    /// Today / reminder day / charge day, with real dates. The reminder is the local notification
+    /// `PlusStore` schedules two days before the trial ends.
     @ViewBuilder
     private var timeline: some View {
-        if plus.loadState == .unavailable {
-            Text("Plus is not on sale yet. Everything you set up stays free.")
-                .font(PrintFont.bold(20))
-                .foregroundStyle(Self.cream)
-                .fixedSize(horizontal: false, vertical: true)
-        } else if let days = plus.trialDays, let price = plus.priceLine {
-            VStack(alignment: .leading, spacing: 16) {
-                stop(0, filled: true, title: "Today", line: "Plus unlocked. $0.")
-                stop(1, filled: false, title: dayTitle(max(days - 2, 1)), line: "We remind you.")
-                stop(2, filled: false, title: dayTitle(days), line: "\(price). Cancel any time.")
+        if let days = plus.trialDays, let price = plus.priceLine {
+            VStack(alignment: .leading, spacing: 10) {
+                ZStack(alignment: .top) {
+                    GeometryReader { g in
+                        Capsule().fill(Ink.ink.opacity(0.15)).frame(height: 3)
+                        Capsule().fill(Ink.ink).frame(width: g.size.width * min(CGFloat(stops) / 3, 1), height: 3)
+                    }
+                    .frame(height: 3)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 12)
+                    HStack(alignment: .top) {
+                        stop(0, icon: "checkmark", fill: Ink.blue, glyph: .white,
+                             title: "Today", line: "All of Plus, free", align: .leading)
+                        Spacer(minLength: 4)
+                        stop(1, icon: "bell.fill", fill: Ink.sun, glyph: Ink.ink,
+                             title: dayTitle(max(days - 2, 1)), line: "We remind you", align: .center)
+                        Spacer(minLength: 4)
+                        stop(2, icon: "dollarsign", fill: .white, glyph: Ink.ink,
+                             title: dayTitle(days), line: price, align: .trailing)
+                    }
+                }
+                legal("Free for \(days) days, then \(price). Renews automatically until you cancel in Settings.")
             }
-            Text("Free for \(days) days, then \(price). Renews automatically until you cancel in Settings.")
-                .font(PrintFont.mono(10, .regular))
-                .foregroundStyle(Self.cream.opacity(0.6))
-                .fixedSize(horizontal: false, vertical: true)
         } else if let price = plus.priceLine {
-            stop(0, filled: true, title: "Today", line: "\(price). Cancel any time.")
-            Text("\(price). Renews automatically until you cancel in Settings.")
-                .font(PrintFont.mono(10, .regular))
-                .foregroundStyle(Self.cream.opacity(0.6))
+            legal("\(price). Renews automatically until you cancel in Settings.")
         }
+    }
+
+    private func stop(_ i: Int, icon: String, fill: Color, glyph: Color, title: String, line: String,
+                      align: HorizontalAlignment) -> some View {
+        VStack(alignment: align, spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(glyph)
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(fill))
+                .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
+                .scaleEffect(stops > i ? 1 : 0.5)
+                .padding(.bottom, 2)
+            Text(title).font(PrintFont.bold(15)).foregroundStyle(Ink.ink)
+            Text(line).font(PrintFont.body(13, .semibold)).foregroundStyle(Self.softInk)
+                .lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .multilineTextAlignment(align == .leading ? .leading : align == .trailing ? .trailing : .center)
+        .opacity(stops > i ? 1 : 0)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func legal(_ text: String) -> some View {
+        Text(text)
+            .font(PrintFont.body(11, .medium))
+            .foregroundStyle(Self.softInk)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private func dayTitle(_ day: Int) -> String {
         let date = Calendar.current.date(byAdding: .day, value: day, to: .now) ?? .now
-        return "Day \(day) \u{00B7} " + date.formatted(.dateTime.month(.abbreviated).day())
+        return date.formatted(.dateTime.month(.abbreviated).day())
     }
 
-    private func stop(_ i: Int, filled: Bool, title: String, line: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Circle()
-                .fill(filled ? Self.cream : Color.clear)
-                .overlay(Circle().strokeBorder(Self.cream, lineWidth: 3))
-                .frame(width: 22, height: 22)
-                .padding(.top, 2)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(PrintFont.bold(19)).foregroundStyle(Self.cream)
-                Text(line).font(PrintFont.mono(14, .medium)).foregroundStyle(Self.cream.opacity(0.75))
-            }
-        }
-        .opacity(rows > i ? 1 : 0)
-        .offset(x: rows > i ? 0 : -14)
-        .accessibilityElement(children: .combine)
-    }
+    // MARK: Footer and actions
 
     private var footer: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 20) {
+            if !plus.isPlus {
+                Button(action: next) { Text("Not now").fontWeight(.bold).foregroundStyle(Ink.ink) }
+            }
             Button("Restore") { Task { await plus.restore() } }
-            Text("\u{00B7}")
             Button("Terms") { openURL(PlusLinks.terms) }
             if let privacy = PlusLinks.privacy {
-                Text("\u{00B7}")
                 Button("Privacy") { openURL(privacy) }
             }
         }
-        .font(PrintFont.mono(11))
-        .foregroundStyle(Self.cream.opacity(0.55))
+        .font(PrintFont.body(14))
+        .foregroundStyle(Ink.ink.opacity(0.7))
         .frame(minHeight: 44)
+    }
+
+    private func play() async {
+        if intro { UserDefaults.standard.set(true, forKey: "lockin.plusOffered.v1") }
+        if effectiveReduceMotion(systemReduceMotion) {
+            cardIn = true; stamped = true; rows = 3; plansIn = true; stops = 3
+            return
+        }
+        guard await printPause(0.15) else { return }
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { cardIn = true }
+        guard await printPause(0.7) else { return }
+        withAnimation(.spring(response: 0.26, dampingFraction: 0.5)) { stamped = true }
+        guard await printPause(0.15) else { return }
+        withAnimation(.easeInOut(duration: 0.8)) { shine = true }
+        for i in 1...3 {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) { rows = i }
+            guard await printPause(0.15) else { return }
+        }
+        withAnimation(.easeOut(duration: 0.35)) { plansIn = true }
+        guard await printPause(0.3) else { return }
+        for i in 1...3 {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { stops = i }
+            guard await printPause(0.22) else { return }
+        }
     }
 
     private func buy() {

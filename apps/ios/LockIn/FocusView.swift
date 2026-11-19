@@ -412,7 +412,7 @@ struct FocusView: View {
             }
         }
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow(restrictions: restrictions) {
+            OnboardingFlow(restrictions: restrictions, plus: plus) {
                 onboardingDone = true
                 selectedMinutes = PlanStore.load()?.minutes ?? 25
                 plan = PlanStore.load()

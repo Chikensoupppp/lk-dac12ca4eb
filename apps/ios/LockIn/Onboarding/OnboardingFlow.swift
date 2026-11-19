@@ -5,23 +5,24 @@ import SwiftUI
 /// The long way is the default: the first slide opens it, and "Skip intro" ends it so the Focus screen's
 /// coach takes over (task, minutes, distracting apps, one hold to start). The introduction goes:
 /// guess, why we ask, real hours, brain, what pulls you in, lock apps,
-/// your year, goals, three how-it-works slides, making your plan. There is no promise to sign and no Plus offer here; Plus is
-/// shown once, after the first finished free session.
+/// goals, three how-it-works slides, making your plan, and the Plus offer last ("Not now" is one tap).
+/// Seeing it here counts as the one Plus offer, so it is not shown again after the first session.
 /// The real hours can only be drawn by Apple's report extension (Lock In can never read them), so
 /// slides 4 and 5 are drawn by it. Without Screen Time access, or without the extension, slide 5
 /// uses the guess. Order: the problem (1-5), how SwipeLater fixes it (6-8), make it yours (9-11),
-/// the plan (12).
+/// the plan (12), Plus (13).
 struct OnboardingFlow: View {
-    static let stepCount = 12
+    static let stepCount = 13
 
     enum Step: Int {
-        case hook = 1, guess, check, reveal, brain, slide, appsWait, comeBack, pulls, lock, goals, plan
+        case hook = 1, guess, check, reveal, brain, slide, appsWait, comeBack, pulls, lock, goals, plan, plus
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
     }
 
     @ObservedObject var restrictions: RestrictionController
+    @ObservedObject var plus: PlusStore
     let onFinish: () -> Void
 
     @State private var step: Step = .hook
@@ -83,7 +84,8 @@ struct OnboardingFlow: View {
         case .pulls: advance(to: .lock)
         case .lock: advance(to: .goals)
         case .goals: advance(to: .plan)
-        case .plan: finish()
+        case .plan: advance(to: .plus)
+        case .plus: finish()
         }
     }
 
@@ -116,6 +118,7 @@ struct OnboardingFlow: View {
                 case .appsWait: LaterStep(next: next)
                 case .comeBack: StackDaysStep(next: next)
                 case .plan: PlanStep(hoursIndex: hoursIndex, realShown: usedReport, categories: categories, goals: goals, next: next)
+                case .plus: PlusOfferStep(plus: plus, next: next)
                 }
             }
             .environment(\.obBack, history.isEmpty || step == .plan ? nil : back)

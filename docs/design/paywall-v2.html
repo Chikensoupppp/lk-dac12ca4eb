@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paywall v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  /* SwipeLater Plus, the last onboarding slide. A Plus membership card slides in and gets its
+     LOCKED IN stamp; three things Plus adds pop in; one plan picked; an honest trial timeline.
+     Borrowed: Opal and Blinkist's "how your free trial works" timeline, Duolingo Super's mascot
+     moment, a gym membership card as the one metaphor. Prices here are examples; the app shows
+     the App Store's. Deterministic: render(t). */
+  :root { --page:#E7E8E3; --ink:#1B1B1B; --blue:#3255A4; --sun:#FFB511; --soft:#62645E; --card:#F4F4F0; --red:#E5484D; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, system-ui, sans-serif; }
+  .row { display: flex; gap: 24px; padding: 24px; width: max-content; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .bars { position: absolute; top: 62px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: var(--ink); }
+  .back { position: absolute; top: 80px; left: 18px; width: 44px; height: 44px; display: grid; place-items: center; }
+  .tag { position: absolute; left: 24px; top: 130px; display: flex; gap: 7px; align-items: center; font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--blue); }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+  h1 { position: absolute; left: 24px; top: 150px; font: 400 46px/.98 Anton, Impact, sans-serif; color: var(--ink); text-transform: uppercase; }
+
+  /* The membership card */
+  .card { position: absolute; left: 30px; right: 30px; top: 248px; height: 128px; border-radius: 22px; background: var(--blue); border: 2px solid var(--ink);
+          box-shadow: 0 6px 0 var(--ink), 0 22px 30px -12px rgba(27,27,27,.4); overflow: hidden; color: #fff; transform-origin: 50% 100%; }
+  .card .dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.16) 1.4px, transparent 1.5px); background-size: 9px 9px; }
+  .card .shine { position: absolute; top: -40%; bottom: -40%; width: 70px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transform: rotate(18deg); }
+  .card .who { position: absolute; left: 20px; top: 18px; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1.8px; opacity: .8; }
+  .card .name { position: absolute; left: 20px; top: 36px; font: 400 34px/1 Anton, Impact, sans-serif; letter-spacing: .5px; }
+  .card .num { position: absolute; left: 20px; bottom: 18px; font: 600 12px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; opacity: .85; }
+  .card img { position: absolute; right: 4px; bottom: -8px; width: 104px; }
+  .stamp { position: absolute; left: 122px; top: 34px; padding: 6px 12px; border: 3px solid var(--sun); border-radius: 10px; color: var(--sun);
+           font: 400 20px/1 Anton, Impact, sans-serif; letter-spacing: 1px; transform-origin: 50% 50%; background: rgba(27,27,27,.18); }
+
+  .feats { position: absolute; left: 24px; right: 24px; top: 392px; }
+  .f { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+  .ic { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); display: grid; place-items: center; flex: none; }
+  .ic svg { width: 18px; height: 18px; }
+  .f b { display: block; font: 800 16px/1.15 Inter, sans-serif; font-stretch: condensed; color: var(--ink); }
+  .f span { display: block; font: 500 13.5px/1.25 Inter, sans-serif; color: #3F413B; }
+
+  .plans { position: absolute; left: 24px; right: 24px; top: 564px; display: flex; gap: 10px; }
+  .plan { position: relative; flex: 1; border-radius: 16px; border: 2px solid rgba(27,27,27,.18); background: #fff; padding: 12px 12px 10px; }
+  .plan.on { border-color: var(--ink); box-shadow: 0 4px 0 var(--ink); }
+  .plan small { display: block; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1.2px; color: var(--soft); }
+  .plan b { display: block; font: 400 22px/1 Anton, Impact, sans-serif; color: var(--ink); margin-top: 6px; }
+  .plan em { display: block; font: 600 11px/1.2 Inter, sans-serif; font-style: normal; color: var(--soft); margin-top: 4px; }
+  .badge { position: absolute; right: 10px; top: -11px; background: var(--sun); color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; font: 700 9px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; padding: 4px 7px; }
+
+  /* The trial timeline: three stops on a line, readable at a glance (v1's 10.5px grey was too small). */
+  .tline { position: absolute; left: 36px; right: 36px; top: 664px; height: 3px; background: rgba(27,27,27,.15); border-radius: 2px; }
+  .tline i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); border-radius: 2px; }
+  .tl { position: absolute; left: 24px; right: 24px; top: 652px; display: flex; justify-content: space-between; }
+  .tl > div { width: 33%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .tl > div:first-child { align-items: flex-start; text-align: left; }
+  .tl > div:last-child { align-items: flex-end; text-align: right; }
+  .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; margin-bottom: 6px; }
+  .dot svg { width: 13px; height: 13px; }
+  .tl b { display: block; font: 800 14px/1.1 Inter, sans-serif; font-stretch: condensed; color: var(--ink); }
+  .tl span { display: block; font: 600 12.5px/1.2 Inter, sans-serif; color: #3F413B; margin-top: 1px; }
+
+  .next { position: absolute; left: 24px; right: 24px; bottom: 68px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page);
+          display: grid; place-items: center; font: 800 19px/1 Inter, sans-serif; letter-spacing: 2px; font-stretch: condensed; overflow: hidden; }
+  .next .gl { position: absolute; top: 0; bottom: 0; width: 80px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent); }
+  .foot { position: absolute; left: 0; right: 0; bottom: 24px; display: flex; justify-content: center; gap: 22px; font: 600 13px/1 Inter, sans-serif; color: rgba(27,27,27,.7); }
+  .foot b { color: var(--ink); font-weight: 700; }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const FEATS = [
+  { c: "#3255A4", g: '<rect x="4.5" y="9" width="11" height="8" rx="2" fill="#fff"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9" stroke="#fff" stroke-width="2" fill="none"/>',
+    b: "Locked mode", s: "No quit button. Only a friend or one emergency exit a week ends it." },
+  { c: "#FFB511", g: '<rect x="2.5" y="3.5" width="15" height="10" rx="1.5" fill="none" stroke="#1B1B1B" stroke-width="2"/><path d="M7 17h6M10 13.5V17" stroke="#1B1B1B" stroke-width="2" stroke-linecap="round"/>',
+    b: "Your PC locks in too", s: "Distracting computer apps wait too." },
+  { c: "#E5484D", g: '<rect x="3" y="4.5" width="14" height="12" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M3 8.5h14M7 2.5v4M13 2.5v4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
+    b: "Every week, saved", s: "Your whole history, not just 3 weeks." },
+];
+const ease = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const day = n => { const d = new Date(2026, 10, 19 + n); return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+
+function setup(el) {
+  el.innerHTML = `<div class="bars">${Array.from({ length: 13 }, () => "<i></i>").join("")}</div>
+  <div class="back"><svg viewBox="0 0 12 20" width="12" height="20"><path d="M10 2L2 10l8 8" stroke="#1B1B1B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="tag"><i></i>SWIPELATER PLUS</div>
+  <h1>Lock in<br>for real.</h1>
+  <div class="card"><div class="dots"></div><div class="shine"></div>
+    <div class="who">MEMBER CARD</div><div class="name">PLUS</div><div class="num">SWIPELATER · 2026</div>
+    <img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt="">
+    <div class="stamp">LOCKED IN</div></div>
+  <div class="feats">${FEATS.map(f => `<div class="f"><div class="ic" style="background:${f.c}"><svg viewBox="0 0 20 20">${f.g}</svg></div><div><b>${f.b}</b><span>${f.s}</span></div></div>`).join("")}</div>
+  <div class="plans">
+    <div class="plan on"><span class="badge">7 DAYS FREE</span><small>YEARLY</small><b>$29.99</b><em>$2.50 a month</em></div>
+    <div class="plan"><small>MONTHLY</small><b>$4.99</b><em>No free trial</em></div>
+  </div>
+  <div class="tline"><i></i></div>
+  <div class="tl">
+    <div><i class="dot" style="background:#3255A4"><svg viewBox="0 0 14 14"><path d="M3 7.3l2.6 2.6L11 4.4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b>Today</b><span>All of Plus, free</span></div>
+    <div><i class="dot" style="background:#FFB511"><svg viewBox="0 0 14 14"><path d="M7 2a3.4 3.4 0 0 0-3.4 3.4v2.4L2.4 10h9.2l-1.2-2.2V5.4A3.4 3.4 0 0 0 7 2z" fill="#1B1B1B"/><circle cx="7" cy="11.6" r="1.3" fill="#1B1B1B"/></svg></i><b>${day(5)}</b><span>We remind you</span></div>
+    <div><i class="dot" style="background:#fff"><svg viewBox="0 0 14 14"><path d="M7 2.5v9M9.6 4.6C9.1 3.9 8.2 3.6 7 3.6c-1.5 0-2.5.8-2.5 1.9 0 2.6 5.3 1.4 5.3 4 0 1.1-1.1 1.9-2.8 1.9-1.3 0-2.3-.4-2.8-1.2" stroke="#1B1B1B" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></i><b>${day(7)}</b><span>$29.99 a year</span></div>
+  </div>
+  <div class="next"><div class="gl"></div>TRY 7 DAYS FREE</div>
+  <div class="foot"><b>Not now</b><span>Restore</span><span>Terms</span><span>Privacy</span></div>
+  <div class="home"></div>`;
+  return el;
+}
+
+function drawPhone(el, t) {
+  // 1. The card rises in with a tilt, then the stamp slams on, then a shine sweeps.
+  const c = clamp((t - 0.2) / 0.7);
+  const card = el.querySelector(".card");
+  card.style.opacity = c > 0 ? 1 : 0;
+  card.style.transform = `translateY(${(1 - ease(c)) * 120}px) rotate(${-10 + 8 * back(c)}deg) scale(${0.8 + 0.2 * ease(c)})`;
+  const s = clamp((t - 1.0) / 0.28);
+  const stamp = el.querySelector(".stamp");
+  stamp.style.opacity = s > 0 ? 1 : 0;
+  stamp.style.transform = `rotate(-9deg) scale(${s > 0 ? 2.2 - 1.2 * ease(s) : 2.2})`;
+  const thump = t > 1.28 ? Math.exp(-(t - 1.28) * 9) * Math.sin((t - 1.28) * 30) * 4 : 0;
+  card.style.transform += ` translateY(${thump}px)`;
+  const sh = clamp((t - 1.4) / 0.8);
+  el.querySelector(".shine").style.left = `${-100 + 520 * ease(sh)}px`;
+  el.querySelector(".card img").style.transform = `translateY(${Math.sin(t * 2.2) * 2}px) rotate(${Math.sin(t * 1.4) * 3}deg)`;
+  // 2. What Plus adds, one by one.
+  el.querySelectorAll(".f").forEach((f, i) => {
+    const k = clamp((t - (1.6 + i * 0.18)) / 0.4);
+    f.style.opacity = k; f.style.transform = `translateX(${(1 - ease(k)) * -16}px)`;
+    f.querySelector(".ic").style.transform = `scale(${k > 0 ? 0.6 + 0.4 * back(k) : 0.6})`;
+  });
+  // 3. Plans, the timeline drawing across, and a gentle glint on the button.
+  const pl = clamp((t - 2.3) / 0.4);
+  const plans = el.querySelector(".plans");
+  plans.style.opacity = pl; plans.style.transform = `translateY(${(1 - ease(pl)) * 14}px)`;
+  const tl = clamp((t - 2.6) / 0.8);
+  el.querySelector(".tline i").style.width = `${100 * ease(tl)}%`;
+  el.querySelectorAll(".tl > div").forEach((d, i) => {
+    const k = clamp((t - (2.7 + i * 0.25)) / 0.3);
+    d.style.opacity = k;
+    d.querySelector(".dot").style.transform = `scale(${k > 0 ? 0.5 + 0.5 * back(k) : 0.5})`;
+  });
+  const g = ((t - 3) % 3) / 0.9;
+  el.querySelector(".next .gl").style.left = t > 3 && g < 1 ? `${-80 + 440 * g}px` : "-120px";
+}
+
+const row = document.getElementById("row");
+const times = (new URLSearchParams(location.search).get("t") || "1.15,4.2").split(",").map(Number);
+const phones = times.map(() => { const d = document.createElement("div"); d.className = "phone"; row.appendChild(d); return setup(d); });
+window.render = t => phones.forEach((p, i) => drawPhone(p, t ?? times[i]));
+window.renderAt = t => phones.forEach(p => drawPhone(p, t));
+document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r)))).then(() => { window.render(); window.ready = true; });
+</script>
+</body>
+</html>

@@ -442,105 +442,221 @@ enum ScreenTimeReport {
     }
 }
 
-// MARK: 6. What pulls you in
+// MARK: 9. What pulls you in
 
-/// A sheet of stickers. Tapping one "peels" it: it turns dark and gets a blue check.
+/// A printed checklist of the kinds of apps that keep people longer than they planned, each with
+/// real examples (names only, no logos). Tapping a row checks its box and a sunflower highlighter
+/// swipes under the name; the brain reacts to how many you pick. Mock: docs/design/pulls-v2.html.
 struct PullsStep: View {
     @Binding var categories: Set<String>
     let next: () -> Void
+    @State private var shown = 0
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
-    private enum Cut { case circle, pill, rounded, card, star, bubble }
-    private static let stickers: [(name: String, cut: Cut, w: CGFloat, h: CGFloat, x: CGFloat, y: CGFloat, tilt: Double)] = [
-        ("Video", .circle, 150, 150, 85, 83, -8),
-        ("Games", .pill, 150, 96, 257, 52, 6),
-        ("Social", .rounded, 140, 140, 262, 196, -5),
-        ("Shopping", .card, 170, 88, 91, 232, 4),
-        ("News", .star, 136, 136, 85, 372, 0),
-        ("Chat", .bubble, 150, 100, 251, 352, -3)
+    private struct Kind {
+        let name: String
+        let examples: String
+        let symbol: String
+        let color: Color
+        let glyph: Color
+    }
+
+    /// The names are what the plan and `OnboardingStore` keep, so they stay as they were.
+    private static let kinds: [Kind] = [
+        Kind(name: "Video", examples: "YouTube, TikTok, streaming", symbol: "play.fill", color: Ink.blue, glyph: .white),
+        Kind(name: "Social", examples: "Instagram, Snapchat, X, Reddit", symbol: "person.2.fill", color: Ink.red, glyph: .white),
+        Kind(name: "Games", examples: "Just one more round", symbol: "gamecontroller.fill", color: Ink.sun, glyph: Ink.ink),
+        Kind(name: "Chat", examples: "Group chats, Discord", symbol: "bubble.left.and.bubble.right.fill", color: Ink.ink, glyph: .white),
+        Kind(name: "Shopping", examples: "Scrolling deals and carts", symbol: "bag.fill", color: Ink.blue, glyph: .white),
+        Kind(name: "News", examples: "Headlines, sports scores", symbol: "newspaper.fill", color: Ink.red, glyph: .white)
     ]
-    private static let canvas = CGSize(width: 345, height: 430)
+    private static let reactions = ["Be honest.", "Same here.", "Classic combo.", "Big ones. Got it."]
+    private static let exampleInk = Color(hex: 0x3F413B)
+
+    private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
+    private var compact: Bool { UIScreen.main.bounds.height < 700 }
 
     var body: some View {
-        PrintScaffold(step: 9, tag: "What distracts you", title: "What pulls\nyou in?", grain: true,
+        // The headline is drawn here (not by the scaffold) so the brain can sit beside it.
+        PrintScaffold(step: 9, tag: "What distracts you", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
-            Text("Which apps tend to keep you longer than you planned?")
+            header
+            Text("Tap every kind that keeps you longer than you planned.")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            GeometryReader { g in
-                let scale = min(1, g.size.width / Self.canvas.width)
-                ZStack(alignment: .topLeading) {
-                    ForEach(Self.stickers, id: \.name) { s in
-                        sticker(s.name, cut: s.cut, w: s.w, h: s.h)
-                            .rotationEffect(.degrees(s.tilt))
-                            .position(x: s.x, y: s.y)
-                    }
-                }
-                .frame(width: Self.canvas.width, height: Self.canvas.height, alignment: .topLeading)
-                .scaleEffect(scale, anchor: .topLeading)
+            sheet
+        }
+        .task {
+            if reduceMotion { shown = Self.kinds.count; return }
+            for i in 1...Self.kinds.count {
+                guard await printPause(0.07) else { return }
+                withAnimation(.easeOut(duration: 0.3)) { shown = i }
             }
-            .frame(height: Self.canvas.height * 0.95)
         }
     }
 
-    private func shape(_ cut: Cut) -> AnyShape {
-        switch cut {
-        case .circle: return AnyShape(Circle())
-        case .pill: return AnyShape(Capsule())
-        case .rounded: return AnyShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        case .card: return AnyShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        case .star: return AnyShape(StarShape())
-        case .bubble: return AnyShape(UnevenRoundedRectangle(topLeadingRadius: 50, bottomLeadingRadius: 8,
-                                                             bottomTrailingRadius: 50, topTrailingRadius: 50))
-        }
-    }
-
-    private func sticker(_ name: String, cut: Cut, w: CGFloat, h: CGFloat) -> some View {
-        let on = categories.contains(name)
-        let outline = shape(cut)
-        return Button {
-            if on { categories.remove(name) } else { categories.insert(name) }
-        } label: {
-            Text(name.uppercased())
-                .font(PrintFont.head(26))
-                .foregroundStyle(Ink.paper)
-                .frame(width: w, height: h)
-                .background(outline.fill(on ? Ink.ink : Ink.orange))
-                .overlay(outline.stroke(Color.white, lineWidth: 6))
-                .shadow(color: .black.opacity(0.3), radius: 8, y: 8)
-                .overlay(alignment: .topTrailing) {
-                    if on {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .black))
-                            .foregroundStyle(.white)
-                            .frame(width: 30, height: 30)
-                            .background(Circle().fill(Ink.blue))
-                            .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                            .offset(x: 6, y: -8)
-                            .transition(.scale.combined(with: .opacity))
+    private var header: some View {
+        let size: CGFloat = compact ? 52 * 0.8 : 52
+        return ZStack(alignment: .topTrailing) {
+            Text("WHAT PULLS\nYOU IN?")
+                .font(PrintFont.head(size))
+                .lineSpacing(-size * 0.12)
+                .foregroundStyle(Ink.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityLabel("What pulls you in?")
+            VStack(alignment: .trailing, spacing: 0) {
+                Image("BrainExact")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: compact ? 70 : 88)
+                    .keyframeAnimator(initialValue: Hop(), trigger: reduceMotion ? 0 : categories.count) { view, v in
+                        view.offset(y: v.y).rotationEffect(.degrees(v.r))
+                    } keyframes: { _ in
+                        KeyframeTrack(\.y) { CubicKeyframe(-12, duration: 0.16); SpringKeyframe(0, duration: 0.4) }
+                        KeyframeTrack(\.r) { CubicKeyframe(6, duration: 0.16); SpringKeyframe(0, duration: 0.4) }
                     }
+                ZStack(alignment: .trailing) {
+                    let line = Self.reactions[min(categories.count, Self.reactions.count - 1)]
+                    Text(line)
+                        .font(PrintFont.bold(15))
+                        .foregroundStyle(Ink.ink)
+                        .lineLimit(1)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .background(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
+                                                           bottomTrailingRadius: 14, topTrailingRadius: 4).fill(Ink.ink).offset(y: 3))
+                        .background(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
+                                                           bottomTrailingRadius: 14, topTrailingRadius: 4).fill(Color.white))
+                        .overlay(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
+                                                        bottomTrailingRadius: 14, topTrailingRadius: 4).strokeBorder(Ink.ink, lineWidth: 2))
+                        .id(line)
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.8, anchor: .topTrailing).combined(with: .opacity))
                 }
-                .scaleEffect(on ? 1.04 : 1)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: categories.count)
+            }
+            .offset(y: compact ? -8 : -14)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private var sheet: some View {
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+        return VStack(spacing: 0) {
+            ForEach(Array(Self.kinds.enumerated()), id: \.offset) { i, kind in
+                if i > 0 {
+                    DashLine()
+                        .stroke(Ink.ink.opacity(0.22), style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                        .frame(height: 1.5)
+                }
+                row(kind)
+                    .opacity(shown > i ? 1 : 0)
+                    .offset(y: shown > i ? 0 : 12)
+            }
+        }
+        .background(shape.fill(Ink.notebook))
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 5))
+        .padding(.horizontal, -4)
+        .padding(.bottom, 6)
+    }
+
+    private func row(_ kind: Kind) -> some View {
+        let on = categories.contains(kind.name)
+        return Button {
+            if on { categories.remove(kind.name) } else { categories.insert(kind.name) }
+        } label: {
+            HStack(spacing: 13) {
+                Image(systemName: kind.symbol)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(kind.glyph)
+                    .frame(width: 38, height: 38)
+                    .background(Circle().fill(kind.color))
+                    .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
+                    .keyframeAnimator(initialValue: Hop(), trigger: reduceMotion ? false : on) { view, v in
+                        view.offset(y: v.y).rotationEffect(.degrees(v.r))
+                    } keyframes: { _ in
+                        KeyframeTrack(\.y) { CubicKeyframe(-6, duration: 0.15); SpringKeyframe(0, duration: 0.3) }
+                        KeyframeTrack(\.r) { CubicKeyframe(-10, duration: 0.15); SpringKeyframe(0, duration: 0.3) }
+                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(kind.name)
+                        .font(PrintFont.bold(19))
+                        .foregroundStyle(Ink.ink)
+                        .background(alignment: .leading) {
+                            // The highlighter: a sunflower stroke behind the lower half of the name.
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Ink.sun)
+                                .frame(height: 11)
+                                .padding(.leading, -3)
+                                .padding(.trailing, -5)
+                                .offset(y: 4)
+                                .scaleEffect(x: on ? 1 : 0.001, anchor: .leading)
+                                .animation(reduceMotion ? nil : .easeOut(duration: 0.3).delay(0.05), value: on)
+                        }
+                    Text(kind.examples)
+                        .font(PrintFont.body(13, .medium))
+                        .foregroundStyle(Self.exampleInk)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+                Spacer(minLength: 8)
+                checkbox(on)
+            }
+            .padding(.horizontal, 14)
+            .frame(minHeight: 60)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.spring(response: 0.35, dampingFraction: 0.55), value: on)
         .sensoryFeedback(.selection, trigger: on)
-        .accessibilityLabel(name)
-        .accessibilityAddTraits(on ? .isSelected : [])
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(kind.name)
+        .accessibilityHint(kind.examples)
+        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private func checkbox(_ on: Bool) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Ink.blue)
+                .scaleEffect(on ? 1 : 0.001)
+                .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: on)
+            CheckMark()
+                .trim(from: 0, to: on ? 1 : 0)
+                .stroke(Color.white, style: StrokeStyle(lineWidth: 2.6, lineCap: .round, lineJoin: .round))
+                .frame(width: 14, height: 14)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.25).delay(0.1), value: on)
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .strokeBorder(Ink.ink, lineWidth: 2)
+        }
+        .frame(width: 28, height: 28)
     }
 }
 
-private struct StarShape: Shape {
+private struct Hop {
+    var y: CGFloat = 0
+    var r: Double = 0
+}
+
+private struct DashLine: Shape {
     func path(in r: CGRect) -> Path {
-        let pts: [(CGFloat, CGFloat)] = [(0.5, 0), (0.61, 0.35), (0.98, 0.35), (0.68, 0.57), (0.79, 0.91),
-                                         (0.5, 0.70), (0.21, 0.91), (0.32, 0.57), (0.02, 0.35), (0.39, 0.35)]
         var p = Path()
-        for (i, pt) in pts.enumerated() {
-            let point = CGPoint(x: r.minX + pt.0 * r.width, y: r.minY + pt.1 * r.height)
-            if i == 0 { p.move(to: point) } else { p.addLine(to: point) }
-        }
-        p.closeSubpath()
+        p.move(to: CGPoint(x: r.minX, y: r.midY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
+        return p
+    }
+}
+
+private struct CheckMark: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX + r.width * 0.06, y: r.minY + r.height * 0.52))
+        p.addLine(to: CGPoint(x: r.minX + r.width * 0.38, y: r.minY + r.height * 0.84))
+        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.04, y: r.minY + r.height * 0.14))
         return p
     }
 }

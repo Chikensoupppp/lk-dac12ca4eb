@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulls v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  /* Slide 9, "What pulls you in". Replaces the orange sticker pile. A printed checklist: each row is
+     a kind of app with real examples, tapping one checks the box and a sunflower highlighter swipes
+     under the name. The brain reacts to how many you admit to. Borrowed: Headspace/Calm "what brings
+     you here" multi-select rows, a highlighter on paper. Deterministic: render(t). */
+  :root { --page:#E7E8E3; --ink:#1B1B1B; --blue:#3255A4; --sun:#FFB511; --red:#D25A44; --soft:#45473F; --sheet:#F4F4F0; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, system-ui, sans-serif; }
+  .row { display: flex; gap: 24px; padding: 24px; width: max-content; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .bars { position: absolute; top: 62px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.18); }
+  .bars i.on { background: var(--ink); }
+  .back { position: absolute; top: 80px; left: 18px; width: 44px; height: 44px; display: grid; place-items: center; }
+  .tag { position: absolute; left: 24px; top: 130px; display: flex; gap: 7px; align-items: center; font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--blue); }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+  h1 { position: absolute; left: 24px; top: 150px; font: 400 52px/.96 Anton, Impact, sans-serif; color: var(--ink); text-transform: uppercase; }
+  .sub { position: absolute; left: 24px; right: 24px; top: 266px; font: 600 14px/1.35 "IBM Plex Mono", monospace; color: var(--ink); }
+
+  .brain { position: absolute; right: 18px; top: 136px; width: 98px; transform-origin: 50% 100%; }
+  .bub { position: absolute; right: 20px; top: 214px; background: #fff; border: 2px solid var(--ink); border-radius: 16px 4px 16px 16px; padding: 8px 11px;
+         font: 800 14px/1 Inter, sans-serif; font-stretch: condensed; color: var(--ink); white-space: nowrap; transform-origin: 85% 0; box-shadow: 0 3px 0 var(--ink); }
+
+  .sheet { position: absolute; left: 20px; right: 20px; top: 306px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 20px; box-shadow: 0 5px 0 var(--ink); overflow: hidden; }
+  .it { position: relative; display: flex; align-items: center; gap: 13px; height: 60px; padding: 0 14px; border-top: 1.5px dashed rgba(27,27,27,.22); }
+  .it:first-child { border-top: 0; }
+  .ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; border: 2px solid var(--ink); }
+  .ic svg { width: 18px; height: 18px; }
+  .tx { flex: 1; min-width: 0; }
+  .nm { position: relative; display: inline-block; isolation: isolate; font: 800 18px/1.1 Inter, sans-serif; font-stretch: condensed; color: var(--ink); }
+  .nm .hl { position: absolute; left: -3px; right: -5px; top: 46%; height: 11px; background: var(--sun); border-radius: 3px; transform-origin: 0 50%; z-index: -1; transform: skewX(-12deg) scaleX(0); }
+  .nm span { position: relative; }
+  .ex { font: 500 12.5px/1.25 Inter, sans-serif; color: var(--soft); margin-top: 2px; }
+  .box { width: 28px; height: 28px; border-radius: 9px; border: 2px solid var(--ink); flex: none; display: grid; place-items: center; position: relative; overflow: hidden; }
+  .box .f { position: absolute; inset: 0; background: var(--blue); transform: scale(0); border-radius: 6px; }
+  .box svg { position: relative; width: 16px; height: 16px; }
+
+  .next { position: absolute; left: 24px; right: 24px; bottom: 76px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page);
+          display: grid; place-items: center; font: 800 19px/1 Inter, sans-serif; letter-spacing: 2px; font-stretch: condensed; }
+  .skip { position: absolute; left: 0; right: 0; bottom: 30px; text-align: center; font: 600 15px/1 Inter, sans-serif; color: rgba(27,27,27,.65); }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+  .tap { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(27,27,27,.18); pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const W = "#fff", K = "#1B1B1B";
+const ITEMS = [
+  { n: "Video", e: "YouTube, TikTok, streaming", c: "#3255A4", g: `<path d="M6 4.5v11l9-5.5z" fill="${W}"/>` },
+  { n: "Social", e: "Instagram, Snapchat, X, Reddit", c: "#D25A44", g: `<circle cx="7.5" cy="7" r="2.6" fill="${W}"/><circle cx="13.5" cy="7.5" r="2.2" fill="${W}"/><path d="M2.5 16c.4-3 2.4-4.6 5-4.6s4.6 1.6 5 4.6zM12 11.6c2.6-.3 4.8 1 5.4 4.4h-3.6" fill="${W}"/>` },
+  { n: "Games", e: "Just one more round", c: "#FFB511", g: `<rect x="2.5" y="6" width="15" height="9" rx="4.5" fill="${K}"/><path d="M6.5 8.6v3.8M4.6 10.5h3.8" stroke="#FFB511" stroke-width="1.6" stroke-linecap="round"/><circle cx="13" cy="9.4" r="1.1" fill="#FFB511"/><circle cx="14.6" cy="11.6" r="1.1" fill="#FFB511"/>` },
+  { n: "Chat", e: "Group chats, Discord", c: "#1B1B1B", g: `<path d="M3 5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H8l-3 2.5V11.5a2 2 0 0 1-2-2z" fill="${W}"/><path d="M15.5 7.5h.5a1.5 1.5 0 0 1 1.5 1.5v3.5A1.5 1.5 0 0 1 16 14v2l-2.4-2H10" stroke="${W}" stroke-width="1.6" fill="none" stroke-linejoin="round"/>` },
+  { n: "Shopping", e: "Scrolling deals and carts", c: "#3255A4", g: `<path d="M4 7h12l-1 9.5H5z" fill="${W}"/><path d="M7.3 7V5.8a2.7 2.7 0 0 1 5.4 0V7" stroke="${W}" stroke-width="1.7" fill="none"/>` },
+  { n: "News", e: "Headlines, sports scores", c: "#D25A44", g: `<rect x="3" y="4" width="14" height="12" rx="2" fill="${W}"/><path d="M5.5 7.5h9M5.5 10h5M5.5 12.5h5" stroke="#D25A44" stroke-width="1.5" stroke-linecap="round"/><rect x="11.5" y="9.3" width="3" height="3.6" rx=".6" fill="#D25A44"/>` },
+];
+const PICKS = [{ i: 0, t: 1.7 }, { i: 1, t: 2.6 }, { i: 3, t: 3.5 }];
+const LINES = ["Be honest.", "Same here.", "Classic combo.", "Big ones. Got it."];
+const ease = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+
+function setup(el) {
+  el.innerHTML = `<div class="bars">${Array.from({ length: 13 }, (_, i) => `<i class="${i < 9 ? "on" : ""}"></i>`).join("")}</div>
+  <div class="back"><svg viewBox="0 0 12 20" width="12" height="20"><path d="M10 2L2 10l8 8" stroke="#1B1B1B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="tag"><i></i>WHAT DISTRACTS YOU</div>
+  <h1>What pulls<br>you in?</h1>
+  <img class="brain" src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt="">
+  <div class="bub">Be honest.</div>
+  <div class="sub">Tap every kind that keeps you longer than you planned.</div>
+  <div class="sheet">${ITEMS.map(it => `<div class="it"><div class="ic" style="background:${it.c}"><svg viewBox="0 0 20 20">${it.g}</svg></div>
+    <div class="tx"><div class="nm"><i class="hl"></i><span>${it.n}</span></div><div class="ex">${it.e}</div></div>
+    <div class="box"><i class="f"></i><svg viewBox="0 0 16 16"><path class="ck" d="M3.5 8.4l3 3 6-6.6" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg></div></div>`).join("")}</div>
+  <div class="next">NEXT</div><div class="skip">Skip</div><div class="home"></div><div class="tap" style="opacity:0"></div>`;
+  return el;
+}
+
+function drawPhone(el, t) {
+  // Rows print in one after another.
+  el.querySelectorAll(".it").forEach((r, i) => {
+    const k = clamp((t - (0.25 + i * 0.07)) / 0.4);
+    r.style.opacity = k; r.style.transform = `translateY(${(1 - ease(k)) * 12}px)`;
+  });
+  const sheet = el.querySelector(".sheet");
+  const s0 = clamp((t - 0.1) / 0.45);
+  sheet.style.opacity = s0; sheet.style.transform = `translateY(${(1 - ease(s0)) * 24}px)`;
+  // Picks: box fills, check draws, highlighter swipes, icon hops.
+  let count = 0, lastPick = -9;
+  PICKS.forEach(p => {
+    const k = t - p.t;
+    const row = el.querySelectorAll(".it")[p.i];
+    const fill = clamp(k / 0.22), ck = clamp((k - 0.1) / 0.25), hl = clamp((k - 0.05) / 0.35), hop = clamp(k / 0.45);
+    row.querySelector(".box .f").style.transform = `scale(${k > 0 ? 0.4 + 0.6 * back(fill) : 0})`;
+    row.querySelector(".ck").style.strokeDashoffset = 1 - ease(ck);
+    row.querySelector(".hl").style.transform = `skewX(-12deg) scaleX(${ease(hl)})`;
+    row.querySelector(".ic").style.transform = k > 0 ? `translateY(${-Math.sin(Math.PI * hop) * 6}px) rotate(${Math.sin(Math.PI * hop) * -10}deg)` : "";
+    if (k >= 0) { count++; lastPick = p.t; }
+  });
+  // A finger tap marker for the video.
+  const tap = el.querySelector(".tap");
+  const near = PICKS.find(p => t > p.t - 0.25 && t < p.t + 0.2);
+  if (near) { const k = clamp((t - (near.t - 0.25)) / 0.45); tap.style.opacity = Math.sin(Math.PI * k) * 0.9; tap.style.left = "309px"; tap.style.top = `${306 + near.i * 60 + 9}px`; tap.style.transform = `scale(${1.2 - 0.3 * k})`; }
+  else tap.style.opacity = 0;
+  // The brain reacts.
+  const bub = el.querySelector(".bub");
+  bub.textContent = LINES[Math.min(count, 3)];
+  const b0 = clamp((t - 0.6) / 0.35), b1 = clamp((t - lastPick) / 0.3);
+  bub.style.transform = `scale(${t < 0.6 ? 0 : (count ? 0.85 + 0.15 * back(b1) : back(b0))})`;
+  const brain = el.querySelector(".brain");
+  const jump = count ? Math.max(0, Math.sin(Math.PI * clamp((t - lastPick) / 0.4))) * 10 : 0;
+  brain.style.transform = `translateY(${-jump + Math.sin(t * 2.2) * 2}px) rotate(${Math.sin(t * 1.5) * 3}deg)`;
+  el.querySelector(".next").style.opacity = count ? 1 : 0.35;
+}
+
+const row = document.getElementById("row");
+const times = (new URLSearchParams(location.search).get("t") || "1.2,4.4").split(",").map(Number);
+const phones = times.map(() => { const d = document.createElement("div"); d.className = "phone"; row.appendChild(d); return setup(d); });
+window.render = t => phones.forEach((p, i) => drawPhone(p, t ?? times[i]));
+window.renderAt = t => phones.forEach(p => drawPhone(p, t));
+document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r)))).then(() => { window.render(); window.ready = true; });
+</script>
+</body>
+</html>

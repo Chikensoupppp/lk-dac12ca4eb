@@ -227,9 +227,10 @@ final class FocusUITests: XCTestCase {
         app.buttons["NEXT"].tap()
         step("onboarding-10-lock", tap: "Skip for now")
         step("onboarding-11-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
-        // The plan receipt is built from the answers; taking it ends the introduction.
-        // The coach takes over on the real Focus screen.
+        // The plan receipt is built from the answers; the Plus offer comes last ("Not now" ends the
+        // introduction). The coach takes over on the real Focus screen.
         step("onboarding-12-plan", tap: "THIS IS MY PLAN")
+        step("onboarding-13-plus", tap: "Not now")
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         runCoachToSession(app)
     }
@@ -383,16 +384,17 @@ final class FocusUITests: XCTestCase {
         }
         tap("LET\u{2019}S GO")
         tap("Skip")                      // guess
-        tap("Not now (keep my guess)")   // Screen Time
-        tap("Skip")                      // what pulls you in
-        tap("Skip for now")              // lock apps
-        XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
-        tap("Skip")                      // goals
+        tap("Not now")                   // Screen Time (no guess, so the hours slide is left out)
         tap("onboarding-slide-knob")     // one slide, you're in (NEXT unlocks after the slide)
         tap("NEXT")
         tap("NEXT")                      // swipe later (notifications go to Later)
         tap("NEXT")                      // stack up the days (the week stacks up)
+        tap("Skip")                      // what pulls you in
+        tap("Skip for now")              // lock apps
+        XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
+        tap("Skip")                      // goals
         tap("THIS IS MY PLAN")           // the plan receipt
+        tap("Not now")                   // the Plus offer
         // The plan prints, then the introduction ends by itself and the coach starts.
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         app.buttons["skip-focus-coach"].tap()
