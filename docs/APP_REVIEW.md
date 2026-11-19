@@ -45,10 +45,7 @@ for tracking):
 | Purchases | Purchase History | RevenueCat checks that a Plus purchase is active (random app user ID, no name). |
 | Identifiers | User ID | The random RevenueCat app user ID, and the random partner IDs in iCloud. |
 | User Content | Other User Content | The session status sent to a paired partner (locked/break/free, end time, the PC app in front), encrypted for the partner's phone. |
-| Contact Info | Name | The display name a user types for their partner, sent with a remote unlock request. |
-
-Not collected: location, contacts, health, browsing history, search history, usage data, diagnostics,
-Screen Time numbers (Apple keeps them on the device; the app cannot read them).
-
-Note: the partner display name is the one field stored in iCloud without encryption. If it is
-sealed for the partner's phone like the rest of the request, the Name row can be dropped.
+Not collected: name or other contact info, location, contacts, health, browsing history, search
+history, usage data, diagnostics, Screen Time numbers (Apple keeps them on the device; the app
+cannot read them). Remote unlock requests carry no name since build 99: the partner's phone shows
+the name it saved when the phones paired.

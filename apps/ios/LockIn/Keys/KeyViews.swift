@@ -596,7 +596,7 @@ struct RemoteAskView: View {
         message = nil
         Task {
             do {
-                try await RemoteKeys.send(a, myName: keys.myCard.name, to: holder)
+                try await RemoteKeys.send(a, to: holder)
                 ask = a
                 sentAt = .now
             } catch {

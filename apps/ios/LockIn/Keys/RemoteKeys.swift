@@ -6,8 +6,8 @@ import UserNotifications
 /// No Lock In server: Apple stores two small record types and sends the push.
 ///
 /// - UnlockRequest: written by the person asking. The reason is encrypted to the Key Holder,
-///   and the request is signed. Fields: requestID, holderID, requesterID, requesterName,
-///   sessionID, nonce, payload, signature, createdAt.
+///   and the request is signed. Fields: requestID, holderID, requesterID, sessionID, nonce,
+///   payload, signature, createdAt. (requesterName is in the schema but no longer written.)
 /// - UnlockAnswer: written by the Key Holder, signed. Fields: requestID, nonce, approved, signature.
 /// The Key Holder's phone subscribes to requests addressed to it, so iCloud pushes a notification.
 /// Both people must be signed in to iCloud. Records must exist in the production schema (see HANDOFF).
@@ -23,12 +23,13 @@ enum RemoteKeys {
 
     // MARK: Asking
 
-    static func send(_ ask: UnlockAsk, myName: String, to holder: KeyPerson) async throws {
+    /// No name goes into iCloud: the Key Holder's phone shows the name it saved when the two
+    /// phones paired (`friend.name` in `pending`).
+    static func send(_ ask: UnlockAsk, to holder: KeyPerson) async throws {
         let record = CKRecord(recordType: "UnlockRequest")
         record["requestID"] = ask.requestID
         record["holderID"] = holder.id
         record["requesterID"] = ask.from
-        record["requesterName"] = myName
         record["sessionID"] = ask.sessionID
         record["nonce"] = ask.nonce
         record["payload"] = (KeyStore.seal(ask.reason, to: holder) ?? Data()).base64EncodedString()
