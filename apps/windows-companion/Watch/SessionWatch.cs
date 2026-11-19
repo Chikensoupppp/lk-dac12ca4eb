@@ -209,6 +209,16 @@ public sealed class SessionWatch : IDisposable
         get { lock (gate) return sessionId is not null && strict && clock.GetUtcNow() < startedAt + length; }
     }
 
+    /// <summary>The running Locked session, for the shield; null when none is locked and running.</summary>
+    public ShieldState? LockedSnapshot()
+    {
+        lock (gate)
+        {
+            if (sessionId is null || !strict || clock.GetUtcNow() >= startedAt + length) return null;
+            return new ShieldState(sessionId, startedAt, (int)length.TotalSeconds, task, phoneBuddy);
+        }
+    }
+
     public void End(string? id)
     {
         lock (gate)

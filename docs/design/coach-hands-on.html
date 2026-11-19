@@ -1,0 +1,26 @@
+<!doctype html><meta charset=utf-8><title>Coach hands-on</title>
+<style>
+:root{--page:#F6F3EC;--ink:#171513;--sec:#6F6A60;--line:#E4DED3;--inset:#EDE9E0;--amber:#A97029;--pink:#F9BAD2}
+body{margin:0;background:#d9d4ca;font-family:-apple-system,"SF Pro Rounded",system-ui,sans-serif;display:flex;gap:28px;padding:28px;width:max-content}
+.ph{width:300px;height:640px;background:var(--page);border-radius:38px;border:6px solid var(--ink);padding:18px;box-sizing:border-box;display:flex;flex-direction:column;position:relative}
+.cap{font:700 13px system-ui;color:var(--ink);margin:0 0 8px;text-align:center;width:300px}
+.col{display:flex;flex-direction:column;align-items:center}
+.skip{font-weight:700;font-size:15px;margin:14px 0 2px}
+.coach{display:flex;gap:8px;align-items:center}
+.brain{width:64px;height:54px;border-radius:50%;background:var(--pink);border:2px solid var(--ink);flex:none;position:relative}
+.brain:after{content:"";position:absolute;left:18px;top:26px;width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:20px 0 0 var(--ink)}
+.bub{background:#fff;border:2px solid var(--ink);border-radius:16px;padding:10px;font-weight:800;font-size:14px;line-height:1.2}
+.ring{width:170px;height:170px;border-radius:50%;border:14px solid var(--line);margin:auto;display:grid;place-items:center;font-weight:800;font-size:34px;color:var(--ink)}
+.pill{background:var(--inset);border-radius:99px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:10px;opacity:.5}
+.mins{background:var(--inset);border-radius:17px;padding:4px;display:flex;gap:4px;margin-bottom:10px;opacity:.5}
+.mins b{flex:1;text-align:center;padding:11px 0;font-size:15px;border-radius:13px}.mins .on{background:var(--ink);color:var(--page)}
+.chips{display:flex;gap:8px;margin-bottom:10px}.chips b{flex:1;text-align:center;padding:14px 0;border-radius:15px;border:2px solid var(--ink);font-size:17px}.chips .on{background:var(--ink);color:var(--page)}
+.btns{display:flex;gap:10px;margin-bottom:10px}.btns b{padding:12px 16px;border-radius:17px;font-size:15px;border:2px solid var(--ink)}.btns .p{background:var(--ink);color:var(--page)}
+.slide{background:var(--ink);color:var(--page);border-radius:99px;padding:16px;text-align:center;font-weight:800;letter-spacing:1px;box-shadow:0 0 0 3px var(--amber)}
+.reward{display:inline-block;background:#F2C14E;border-radius:8px;padding:6px 10px;font-weight:900;font-size:20px;transform:rotate(-8deg);margin:6px 0 0 70px}
+.lock{background:var(--ink);color:var(--page);border-radius:99px;padding:16px;text-align:center;font-weight:800}
+</style>
+<div class=col><p class=cap>1 · Goal: tap one</p><div class=ph><div class=skip>Skip</div><div class=coach><div class=brain></div><div class=bub>How many hours a week? Pick one. I'll keep count.</div></div><div class=ring>25:00</div><div class=pill>Studying</div><div class=mins><b>15</b><b class=on>25</b><b>45</b><b>60</b><b>90</b></div><div class=chips><b>2h</b><b class=on>4h</b><b>6h</b><b>8h</b></div><div class=slide>SLIDE TO LOCK IN</div></div></div>
+<div class=col><p class=cap>2 · Friend: opens the real friend screen</p><div class=ph><div class=skip>Skip</div><div class=coach><div class=brain></div><div class=bub>Got a friend who keeps you honest? Add them now.</div></div><div class=reward>DEAL!</div><div class=ring>25:00</div><div class=pill>Studying</div><div class=mins><b>15</b><b class=on>25</b><b>45</b><b>60</b><b>90</b></div><div class=btns><b class=p>Add a friend</b><b>Not now</b></div><div class=slide>SLIDE TO LOCK IN</div></div></div>
+<div class=col><p class=cap>3 · After the first start: the dare</p><div class=ph><div class=skip style="opacity:0">Skip</div><div class=coach><div class=brain></div><div class=bub>Your apps are locked. Go try one. I dare you!</div></div><div class=ring style="border-color:var(--ink)">24:31</div><div style="flex:1"></div><div class=lock>END SESSION</div></div></div>
+<div class=col><p class=cap>4 · Back from the locked app</p><div class=ph><div class=skip style="opacity:0">Skip</div><div class=coach><div class=brain></div><div class=bub>Ha! Locked tight. Now back to work!</div></div><div class=reward>LOCKED!</div><div class=ring style="border-color:var(--ink)">23:50</div><div style="flex:1"></div><div class=lock>END SESSION</div></div></div>

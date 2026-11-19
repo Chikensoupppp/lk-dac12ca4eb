@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Profile picture</title>
+<style>
+  /* Facebook profile picture: the smiling brain on the app's cream. Facebook crops it to a circle,
+     so the mascot stays inside the middle 80%. */
+  html, body { margin: 0; width: 720px; height: 720px; overflow: hidden; }
+  body { background: radial-gradient(circle at 50% 46%, #F6F6F2 0%, #ECEDE8 45%, #E2E3DD 100%); position: relative; }
+  .shadow { position: absolute; left: 50%; top: 578px; width: 400px; height: 44px; margin-left: -200px; border-radius: 50%;
+            background: radial-gradient(closest-side, rgba(27,27,27,.18), rgba(27,27,27,0)); }
+  img { position: absolute; left: 50%; top: 96px; width: 620px; margin-left: -310px; }
+</style></head>
+<body><div class="shadow"></div><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" alt=""></body></html>

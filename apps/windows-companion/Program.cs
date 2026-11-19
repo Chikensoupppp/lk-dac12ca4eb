@@ -22,6 +22,12 @@ if (NativeHost.IsLaunch(args))
     Environment.ExitCode = NativeHost.Run(args);
     return;
 }
+// The shield's second process: keeps a Locked session alive (see SessionShield.cs).
+if (args.Contains("--watchdog"))
+{
+    ProcessShield.RunWatchdog(stateDir);
+    return;
+}
 if (args.Contains("--register-browser"))
 {
     Console.WriteLine("Chrome and Edge can now reach SwipeLater. Host file: "
@@ -40,6 +46,11 @@ if (args.Contains("--later"))
     ui.SetApartmentState(ApartmentState.STA);
     ui.Start();
     ui.Join();
+    return;
+}
+if (args.Contains("--uninstall") && ShieldFile.ReadActive(stateDir) is { } held)
+{
+    System.Windows.Forms.MessageBox.Show($"A locked session runs until {held.EndsAt.ToLocalTime():h:mm tt}. SwipeLater can be removed after it.", "SwipeLater");
     return;
 }
 if (args.Contains("--uninstall"))
@@ -219,7 +230,7 @@ app.MapPost("/session/status", (SessionStatusRequest request, SessionWatch watch
     var partner = watch.PartnerView(request.Id!);
     return Results.Ok(new
     {
-        // Always filled (partner sharing has no switch). Private browser windows give no title.
+        // Always filled (partner sharing has no switch).
         title = partner.Title,
         appKey = partner.Key,
         pausedApp = partner.PausedName,
@@ -287,6 +298,16 @@ if (args.Contains("--pair"))
 
 // Browser activity arrives through a private pipe, not through either HTTP door.
 var sessionWatch = app.Services.GetRequiredService<SessionWatch>();
+// A Locked session that was running when this app was killed or restarted carries on with its old end time.
+ShieldController? shield = null;
+if (!args.Contains("--headless"))
+{
+    var sessionStore = app.Services.GetRequiredService<SessionStore>();
+    if (ShieldFile.ReadActive(stateDir) is { } saved
+        && sessionStore.TryStart(saved.Id, saved.DurationSeconds, saved.StartedAt, out _) == StartOutcome.Started)
+        sessionWatch.Begin(saved.Id, saved.Buddy, saved.StartedAt, saved.DurationSeconds, saved.Task, null, null, locked: true);
+    shield = new ShieldController(stateDir, sessionWatch.LockedSnapshot);
+}
 // Lets the phone find this PC on the Wi-Fi ("Find nearby PC"). Pairing still needs the owner's Allow.
 using var bonjour = new BonjourAdvertiser(Environment.MachineName, LanPort, fingerprint, LanAddresses.Find());
 using var guardianPipe = new GuardianPipe(sessionWatch.Report, sessionWatch.Heartbeat, sessionWatch.HandleLater);

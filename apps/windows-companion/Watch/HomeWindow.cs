@@ -652,7 +652,7 @@ public sealed class HomeWindow : Form
             var dotY = partnerTop + Px(44);
             using (var dot = new SolidBrush(Green))
                 g.FillEllipse(dot, Pf(63), dotY - Pf(3.5f), Pf(7), Pf(7));
-            TextRenderer.DrawText(g, "Window title only. Private windows stay hidden", statusFont,
+            TextRenderer.DrawText(g, "Window title only", statusFont,
                 new Rectangle(Px(76), dotY - Px(10), Px(280), Px(20)), Soft, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
