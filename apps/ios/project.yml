@@ -44,6 +44,8 @@ targets:
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: SwipeLater talks to your PC and to your Key Holder's phone nearby, so a session can start on both or a friend can let you out.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
+        # Portrait only: the slides and the focus screen are laid out for an upright phone.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
   LockInMonitor:
     type: app-extension
     platform: iOS
