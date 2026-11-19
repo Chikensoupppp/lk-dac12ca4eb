@@ -438,6 +438,7 @@ struct RevealStep: View {
     let guessIndex: Int?
     let next: () -> Void
     @State private var showReport = false
+    @State private var mountReport = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
@@ -454,12 +455,15 @@ struct RevealStep: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 200)
-                // Mounted right away, under the cover, so the extension starts reading the week while
-                // "reading your week" plays. It used to start only after it, which added its whole
-                // load time (several seconds on a first run) on top of the 2.8 s.
-                DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
-                    .frame(height: 560)
-                    .frame(maxWidth: .infinity)
+                // Mounted early, under the cover, so the extension reads the week while "reading your
+                // week" plays (it used to start only after it, adding its whole load time on top).
+                // Not at once: coming Back from slide 5, its report is still on screen during the
+                // slide transition, and two reports at once can draw each other's content.
+                if mountReport {
+                    DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
+                        .frame(height: 560)
+                        .frame(maxWidth: .infinity)
+                }
                 ReadingWeek(done: showReport)
                     .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
                     .background(Ink.paper.opacity(showReport ? 0 : 1))
@@ -467,7 +471,10 @@ struct RevealStep: View {
             }
         }
         .task {
-            let wait = effectiveReduceMotion(systemReduceMotion) ? 0.6 : 2.8
+            // Slide transitions settle in about a second; wait them out so only one report is up.
+            guard await printPause(1.0) else { return }
+            mountReport = true
+            let wait = effectiveReduceMotion(systemReduceMotion) ? 0.2 : 1.8
             guard await printPause(wait) else { return }
             withAnimation(.easeOut(duration: 0.35)) { showReport = true }
         }

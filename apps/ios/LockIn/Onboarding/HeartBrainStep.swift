@@ -38,7 +38,7 @@ struct HeartBrainStep: View {
                 }
                 // Only one Screen Time report on screen at a time: start after slide 4's is gone.
                 .task {
-                    guard await printPause(0.7) else { return }
+                    guard await printPause(1.0) else { return }
                     withAnimation(.easeOut(duration: 0.3)) { showReport = true }
                 }
             } else {
