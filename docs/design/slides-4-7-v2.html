@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slides 4-7 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  /* 4: the loading is the report's own layout printing out (same headline, a receipt feeding out of
+        a slot with grey lines), so the real numbers drop in without a jump. No spinner.
+     5: the same idea for the day bar: the card is already there, the bar sweeps, the numbers are
+        grey pills until the real ones land.
+     6: no NEXT. The slider sits where NEXT was; the middle shows what sliding starts: a session
+        card and the apps that lock.
+     7: notifications on a printed lock screen; swiping sends them into a sunflower LATER pocket
+        that fills up and shows when they come back. Deterministic render(t). */
+  :root { --page:#E7E8E3; --ink:#1B1B1B; --blue:#3255A4; --sun:#FFB511; --red:#D25A44; --soft:#45473F; --sheet:#F4F4F0; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, sans-serif; }
+  .row { display: flex; gap: 22px; padding: 22px; width: max-content; }
+  .lab { font: 700 13px/1 "IBM Plex Mono", monospace; color: #3b3b3b; margin: 0 0 8px 6px; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .bars { position: absolute; top: 71px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.18); } .bars i.on { background: var(--ink); }
+  .back { position: absolute; top: 87px; left: 18px; width: 44px; height: 44px; display: grid; place-items: center; }
+  .tag { position: absolute; left: 24px; top: 138px; display: flex; gap: 7px; align-items: center; font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--blue); }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+  h1 { position: absolute; left: 24px; right: 24px; top: 158px; font: 400 52px/.95 Anton, sans-serif; color: var(--ink); text-transform: uppercase; }
+  .cap { position: absolute; left: 24px; right: 24px; font: 600 14px/1.35 "IBM Plex Mono", monospace; color: var(--ink); }
+  .btn { position: absolute; left: 24px; right: 24px; bottom: 86px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page); display: grid; place-items: center; font: 800 19px/1 Inter; letter-spacing: 2px; }
+  .btn.off { opacity: .35; }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+  .sk { background: linear-gradient(90deg, rgba(27,27,27,.10), rgba(27,27,27,.20), rgba(27,27,27,.10)); background-size: 200% 100%; border-radius: 6px; }
+
+  /* 4 */
+  .big4 { position: absolute; left: 24px; top: 276px; font: 400 84px/1 Anton, sans-serif; color: rgba(27,27,27,.16); letter-spacing: 2px; }
+  .slot { position: absolute; left: 34px; right: 34px; top: 410px; height: 16px; border-radius: 8px; background: #111; box-shadow: inset 0 3px 4px rgba(0,0,0,.6); }
+  .rcpt { position: absolute; left: 44px; right: 44px; top: 418px; background: #FBFBF7; box-shadow: 0 10px 16px rgba(0,0,0,.14); overflow: hidden; transform-origin: 50% 0; padding: 18px 18px 0; }
+  .rcpt .t { text-align: center; font: 800 14px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: var(--ink); }
+  .rcpt .s { text-align: center; font: 500 11px/1 "IBM Plex Mono", monospace; color: var(--soft); margin: 6px 0 12px; }
+  .rcpt .ln { display: flex; justify-content: space-between; align-items: center; height: 26px; }
+  .rcpt .dash { border-top: 1.5px dashed rgba(27,27,27,.35); margin: 6px 0; }
+  .who { position: absolute; left: 24px; right: 24px; top: 676px; display: flex; gap: 10px; align-items: center; font: 600 13px/1.3 "IBM Plex Mono", monospace; color: var(--soft); }
+  .who img { width: 42px; }
+
+  /* 5 */
+  .h5 { position: absolute; left: 24px; top: 160px; }
+  .card5 { position: absolute; left: 24px; right: 24px; top: 318px; height: 232px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 0 5px 0 var(--ink); padding: 16px; }
+  .bar5 { position: relative; height: 36px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; overflow: hidden; margin-top: 14px; }
+  .bar5 i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #3255A4, #6E8CCB); opacity: .55; }
+  .chips5 { display: flex; gap: 8px; margin-top: 16px; }
+  .chips5 div { flex: 1; height: 52px; background: #fff; border: 1.5px solid rgba(27,27,27,.14); border-radius: 12px; padding: 8px 10px; }
+
+  /* 6 */
+  .card6 { position: absolute; left: 24px; right: 24px; top: 300px; height: 262px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 0 5px 0 var(--ink); padding: 16px 18px; }
+  .card6 small { font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--soft); }
+  .card6 .tm { font: 400 64px/1 Anton, sans-serif; color: var(--ink); margin-top: 6px; }
+  .card6 .task { font: 800 16px/1 Inter; color: var(--ink); margin-top: 4px; }
+  .apps { display: flex; gap: 14px; margin-top: 18px; }
+  .ap { position: relative; width: 52px; height: 52px; border-radius: 16px; border: 2px solid var(--ink); display: grid; place-items: center; font: 800 18px/1 Inter; color: #fff; }
+  .ap .lk { position: absolute; right: -8px; bottom: -8px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); border: 2px solid #fff; display: grid; place-items: center; }
+  .ap.locked { filter: grayscale(.85) brightness(1.05); opacity: .7; }
+  .ring { position: absolute; right: 18px; top: 18px; width: 92px; height: 92px; }
+  .track { position: absolute; left: 24px; right: 24px; bottom: 86px; height: 76px; border-radius: 38px; background: var(--ink); overflow: hidden; box-shadow: 0 14px 15px rgba(27,27,27,.22); }
+  .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 38px; background: linear-gradient(90deg, #2B4C97, #3255A4); }
+  .track .lbl { position: absolute; left: 70px; right: 0; top: 0; bottom: 0; display: grid; place-items: center; font: 700 15px/1 Inter; letter-spacing: 3px; color: rgba(231,232,227,.55); }
+  .knob { position: absolute; top: 6px; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #ECEDE8); box-shadow: 0 6px 7px rgba(0,0,0,.35); display: grid; place-items: center; }
+  .knob img { width: 70px; }
+  .dots { position: absolute; left: 0; right: 0; top: 470px; bottom: 0; background-image: radial-gradient(#C9CAC1 2.4px, transparent 2.6px); background-size: 15px 15px; opacity: .5; -webkit-mask: linear-gradient(transparent, #000 40%); }
+
+  /* 7 */
+  .lock7 { position: absolute; left: 30px; right: 30px; top: 302px; height: 316px; border-radius: 34px; background: linear-gradient(180deg, #3D4A6B, #26304A); border: 2px solid var(--ink); box-shadow: 0 6px 0 var(--ink); overflow: hidden; }
+  .lock7 .clk { position: absolute; left: 0; right: 0; top: 22px; text-align: center; font: 400 54px/1 Anton, sans-serif; color: rgba(255,255,255,.92); }
+  .lock7 .dt { position: absolute; left: 0; right: 0; top: 82px; text-align: center; font: 600 12px/1 Inter; color: rgba(255,255,255,.7); }
+  .nt { position: absolute; left: 12px; right: 12px; height: 62px; border-radius: 18px; background: rgba(255,255,255,.82); backdrop-filter: blur(8px); display: flex; align-items: center; gap: 10px; padding: 0 12px; box-shadow: 0 8px 14px rgba(0,0,0,.18); }
+  .nt .ic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 800 16px/1 Inter; color: #fff; flex: none; }
+  .nt b { display: block; font: 700 13px/1.1 Inter; color: var(--ink); } .nt span { display: block; font: 500 12.5px/1.2 Inter; color: rgba(27,27,27,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pocket { position: absolute; left: 24px; right: 24px; top: 636px; height: 74px; border-radius: 18px; background: var(--sun); border: 2px solid var(--ink); box-shadow: 0 5px 0 var(--ink); display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  .pocket .bd { width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--sun); display: grid; place-items: center; font: 400 22px/1 Anton, sans-serif; }
+  .pocket b { display: block; font: 800 17px/1.1 Inter; color: var(--ink); } .pocket span { display: block; font: 600 12.5px/1.2 Inter; color: rgba(27,27,27,.75); }
+  .pocket .back25 { margin-left: auto; padding: 6px 10px; border-radius: 999px; background: var(--ink); color: var(--sun); font: 700 12px/1 "IBM Plex Mono", monospace; }
+  .lip { position: absolute; left: 34px; right: 34px; top: 628px; height: 16px; border-radius: 8px 8px 0 0; background: #E9A300; border: 2px solid var(--ink); border-bottom: 0; }
+  .hand7 { position: absolute; right: 30px; top: 594px; font: 400 18px/1 "Caveat Brush", cursive; color: var(--ink); transform: rotate(-4deg); }
+  .scan { position: absolute; left: 24px; right: 24px; top: 374px; display: flex; gap: 6px; align-items: center; }
+  .scan span { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(27,27,27,.25); display: grid; place-items: center; font: 700 10px/1 "IBM Plex Mono", monospace; color: rgba(27,27,27,.45); }
+  .scan span.on { background: var(--blue); border-color: var(--ink); color: #fff; }
+  .scan em { margin-left: auto; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1.2px; color: var(--blue); font-style: normal; }
+  .bub4 { background: #fff; border: 2px solid var(--ink); border-radius: 14px 14px 14px 4px; padding: 7px 10px; font: 400 17px/1 "Caveat Brush", cursive; color: var(--ink); }
+  .day5 { position: absolute; left: 24px; right: 24px; top: 578px; display: flex; align-items: center; gap: 8px; }
+  .sunm { font: 700 10px/1 "IBM Plex Mono", monospace; color: var(--soft); white-space: nowrap; }
+  .hrs { flex: 1; display: flex; gap: 3px; } .hrs i { flex: 1; height: 14px; border-radius: 3px; background: rgba(27,27,27,.12); } .hrs i.on { background: var(--blue); }
+  .things5 { position: absolute; left: 24px; right: 24px; top: 610px; display: flex; flex-direction: column; gap: 8px; }
+  .things5 div { display: flex; gap: 10px; align-items: center; }
+  .bub5 { position: absolute; right: 22px; top: 262px; background: #fff; border: 2px solid var(--ink); border-radius: 14px 4px 14px 14px; padding: 7px 10px; font: 400 17px/1 "Caveat Brush", cursive; color: var(--ink); }
+  .meta6 { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+  .meta6 span { padding: 5px 8px; border-radius: 999px; background: #fff; border: 1.5px solid rgba(27,27,27,.18); font: 700 10.5px/1 Inter; color: var(--ink); }
+  .wall { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,181,17,.22) 2px, transparent 2.3px); background-size: 12px 12px; -webkit-mask: linear-gradient(transparent 30%, #000); }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const BRAIN = "../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png";
+const ease = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const chrome = (step, tag) => `<div class="bars">${Array.from({ length: 13 }, (_, i) => `<i class="${i < step ? "on" : ""}"></i>`).join("")}</div>
+  <div class="back"><svg viewBox="0 0 12 20" width="12" height="20"><path d="M10 2L2 10l8 8" stroke="#1B1B1B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="tag"><i></i>${tag}</div><div class="home"></div>`;
+const lockSvg = `<svg width="11" height="11" viewBox="0 0 20 20"><rect x="4.5" y="9" width="11" height="8" rx="2" fill="#fff"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9" stroke="#fff" stroke-width="2.4" fill="none"/></svg>`;
+
+const P = [
+  { lab: "4  LOADING, NEW", html: chrome(4, "YOUR REAL SCREEN TIME") + `
+      <h1 style="font-size:56px">Here’s your<br>number.</h1>
+      <div class="big4">?H ??M</div>
+      <div class="scan">${["M", "T", "W", "T", "F", "S", "S"].map(d => `<span>${d}</span>`).join("")}<em>READING MONDAY</em></div>
+      <div class="slot"></div>
+      <div class="rcpt"><div class="t">YOUR RECEIPT</div><div class="s">THIS WEEK · PER DAY</div>
+        ${[60, 46, 52, 38].map(w => `<div class="ln"><span style="display:flex;gap:8px;align-items:center;width:70%"><i class="sk" style="width:18px;height:18px;border-radius:5px;flex:none"></i><i class="sk" style="width:${w}%;height:10px"></i></span><i class="sk" style="width:16%;height:10px"></i></div>`).join("")}
+        <div class="dash"></div><div class="ln"><b style="font:800 13px/1 IBM Plex Mono">TOTAL</b><i class="sk" style="width:22%;height:12px"></i></div>
+        <div class="ln"><b style="font:700 13px/1 IBM Plex Mono;color:#D25A44">PICKUPS</b><i class="sk" style="width:14%;height:12px"></i></div><div style="height:12px"></div></div>
+      <div class="who"><img src="${BRAIN}"><span class="bub4">Hmm… doing the math.</span></div>
+      <div class="btn off">NEXT</div>`,
+    draw(el, t) {
+      const r = el.querySelector(".rcpt"); const k = clamp((t - .2) / 2.2);
+      r.style.clipPath = `inset(0 0 ${100 - 100 * ease(k)}% 0)`;
+      el.querySelectorAll(".sk").forEach(s => s.style.backgroundPosition = `${(t * 120) % 200}% 0`);
+      el.querySelector(".big4").textContent = t < 2.6 ? `${Math.floor(t * 7) % 9}H ${String(Math.floor(t * 37) % 60).padStart(2, "0")}M` : "?H ??M";
+      el.querySelector(".who img").style.transform = `rotate(${Math.sin(t * 6) * 8}deg)`;
+      const day = Math.min(6, Math.floor(t / .38)); const names = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+      el.querySelectorAll(".scan span").forEach((d, i) => d.classList.toggle("on", i < day || (i === day && t > 2.6)));
+      el.querySelector(".scan em").textContent = t > 2.6 ? "ALMOST THERE" : "READING " + names[day];
+    } },
+  { lab: "5  LOADING, NEW", html: chrome(5, "WHAT THAT MEANS FOR YOUR DAY") + `
+      <div class="h5"><i class="sk" style="display:block;width:230px;height:46px;margin-bottom:10px"></i><i class="sk" style="display:block;width:150px;height:46px"></i></div>
+      <img src="${BRAIN}" style="position:absolute;right:22px;top:156px;width:92px">
+      <i class="sk" style="position:absolute;left:24px;top:282px;width:300px;height:14px"></i>
+      <div class="card5"><i class="sk" style="display:block;width:150px;height:46px"></i>
+        <div style="font:700 10px/1 IBM Plex Mono;letter-spacing:1.2px;color:rgba(27,27,27,.55);margin-top:8px">ON YOUR PHONE, OUT OF 16 HOURS AWAKE</div>
+        <div class="bar5"><i></i></div>
+        <div style="display:flex;justify-content:space-between;font:600 9px/1 IBM Plex Mono;color:rgba(27,27,27,.5);margin-top:5px"><span>0H</span><span>4H</span><span>8H</span><span>12H</span><span>16H</span></div>
+        <div class="chips5"><div><i class="sk" style="display:block;width:60%;height:8px"></i><i class="sk" style="display:block;width:80%;height:16px;margin-top:8px"></i></div><div><i class="sk" style="display:block;width:60%;height:8px"></i><i class="sk" style="display:block;width:80%;height:16px;margin-top:8px"></i></div><div><i class="sk" style="display:block;width:60%;height:8px"></i><i class="sk" style="display:block;width:80%;height:16px;margin-top:8px"></i></div></div></div>
+      <div class="day5"><span class="sunm">7AM</span><div class="hrs">${Array.from({ length: 16 }, () => "<i></i>").join("")}</div><span class="sunm">11PM</span></div>
+      <div class="things5">${[130, 150].map(w => `<div><i class="sk" style="width:32px;height:32px;border-radius:50%;flex:none"></i><i class="sk" style="width:34px;height:20px"></i><i class="sk" style="width:${w}px;height:12px"></i></div>`).join("")}</div>
+      <div class="bub5">Adding up your day…</div>
+      <div class="btn off">CONTINUE</div>`,
+    draw(el, t) {
+      el.querySelectorAll(".sk").forEach(s => s.style.backgroundPosition = `${(t * 120) % 200}% 0`);
+      const b = el.querySelector(".bar5 i"); const k = (t * .45) % 1; b.style.width = `${30 + 25 * Math.sin(k * Math.PI)}%`;
+      const h = Math.floor((t * 6) % 17); el.querySelectorAll(".hrs i").forEach((x, i) => x.classList.toggle("on", i < h));
+    } },
+  { lab: "6  NO NEXT, SLIDER AT THE BOTTOM", html: chrome(6, "HOW A SESSION STARTS") + `
+      <div class="dots"></div>
+      <h1>One slide.<br>You’re in.</h1>
+      <div class="cap" style="top:268px">Slide the brain to start a session.</div>
+      <div class="card6"><small class="st">READY</small><div class="tm">25:00</div><div class="task">Studying</div>
+        <svg class="ring" viewBox="0 0 92 92"><circle cx="46" cy="46" r="38" stroke="rgba(27,27,27,.12)" stroke-width="9" fill="none"/><circle class="arc" cx="46" cy="46" r="38" stroke="#3255A4" stroke-width="9" fill="none" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 46 46)"/></svg>
+        <div class="meta6"><span>1 break · 5 min</span><span>PC locks too</span><span>Pings go to Later</span></div>
+        <div style="font:700 11px/1 IBM Plex Mono;letter-spacing:1.4px;color:#45473F;margin-top:14px">THESE WAIT TILL YOU’RE DONE</div>
+        <div class="apps">${[["S", "#3255A4"], ["V", "#D25A44"], ["G", "#E9A300"], ["C", "#1B1B1B"]].map(([l, c]) => `<div class="ap" style="background:${c}">${l}<i class="lk">${lockSvg}</i></div>`).join("")}</div></div>
+      <div class="track"><i class="fill"></i><div class="lbl">SLIDE TO LOCK IN</div><div class="knob"><img src="${BRAIN}"></div></div>`,
+    draw(el, t) {
+      const k = clamp((t - 1) / .8), kn = el.querySelector(".knob"); const max = 345 - 76;
+      kn.style.left = `${6 + max * ease(k)}px`; el.querySelector(".fill").style.width = `${76 + max * ease(k)}px`;
+      el.querySelector(".lbl").style.opacity = k >= 1 ? 1 : 1 - k * 2; el.querySelector(".lbl").textContent = k >= 1 ? "LOCKED IN" : "SLIDE TO LOCK IN"; el.querySelector(".lbl").style.color = k >= 1 ? "#fff" : "rgba(231,232,227,.55)"; el.querySelector(".lbl").style.left = k >= 1 ? "0" : "70px"; el.querySelector(".lbl").style.right = k >= 1 ? "70px" : "0";
+      const done = k >= 1;
+      el.querySelector(".st").textContent = done ? "LOCKED IN" : "READY";
+      el.querySelector(".tm").textContent = done ? `24:${String(59 - Math.floor((t - 1.8) % 60)).padStart(2, "0")}` : "25:00";
+      el.querySelector(".arc").style.strokeDashoffset = done ? 1 - .04 : 1;
+      el.querySelectorAll(".ap").forEach((a, i) => { const q = clamp((t - (1.9 + i * .12)) / .25);
+        a.classList.toggle("locked", q >= 1); a.querySelector(".lk").style.transform = `scale(${q > 0 ? back(q) : 0})`; });
+    } },
+  { lab: "7  BETTER", html: chrome(7, "WHAT HAPPENS TO YOUR APPS") + `
+      <h1>Swipe<br>later.</h1>
+      <div class="cap" style="top:268px">Every ping waits in Later.</div>
+      <div class="lock7"><i class="wall"></i><div class="clk">4:12</div><div class="dt">Thursday · Locked in · 24:12 left</div>
+        ${[["M", "#3255A4", "Social", "Mia and 11 others liked your post"], ["▶", "#D25A44", "Video", "Up next in 5… 4… 3…"], ["★", "#E9A300", "Games", "Your free spin is ready"], ["C", "#1B1B1B", "Chat", "3 new messages in Squad"]].map(([i, c, a, x], n) =>
+          `<div class="nt" style="top:${110 + n * 50}px;z-index:${10 - n}"><div class="ic" style="background:${c}">${i}</div><div style="min-width:0"><b>${a}</b><span>${x}</span></div></div>`).join("")}</div>
+      <div class="lip"></div>
+      <div class="pocket"><div class="bd">0</div><div><b>Later</b><span class="who7"></span></div><div class="back25">BACK AT 4:36</div></div>
+      <div class="btn" style="bottom:44px;height:52px;font-size:17px">NEXT</div>`,
+    draw(el, t) {
+      el.querySelectorAll(".nt").forEach((n, i) => {
+        const k = clamp((t - (1 + i * .5)) / .45);
+        n.style.transform = `translate(${ease(k) * 40}px, ${k > 0 ? ease(k) * (330 - (110 + i * 50)) : 0}px) scale(${(1 - i * .04) * (1 - .55 * ease(k))}) rotate(${8 * k}deg)`;
+        n.style.opacity = 1 - clamp((k - .7) / .3);
+      });
+      const c = el.querySelectorAll(".nt").length; let gone = 0; for (let i = 0; i < c; i++) if (t > 1 + i * .5 + .4) gone++;
+      const bd = el.querySelector(".bd"); bd.textContent = gone;
+      el.querySelector(".who7").innerHTML = gone ? ["#3255A4", "#D25A44", "#E9A300", "#1B1B1B"].slice(0, gone).map(c => `<i style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};border:1.5px solid #E7E8E3;margin-right:-4px"></i>`).join("") + "&nbsp;&nbsp;waiting" : "Waiting till you’re done"; const last = 1 + (gone - 1) * .5 + .4;
+      const p = gone ? clamp((t - last) / .3) : 1; el.querySelector(".pocket").style.transform = `scale(${gone ? 1 + .06 * Math.sin(Math.PI * p) : 1})`;
+    } },
+];
+const row = document.getElementById("row");
+const phones = P.map(p => { const w = document.createElement("div"); w.innerHTML = `<div class="lab">${p.lab}</div><div class="phone">${p.html}</div>`; row.appendChild(w); return w.querySelector(".phone"); });
+const times = (new URLSearchParams(location.search).get("t") || "1.4,1.2,3.2,0.8").split(",").map(Number);
+window.renderAt = t => P.forEach((p, i) => p.draw(phones[i], t));
+window.render = () => P.forEach((p, i) => p.draw(phones[i], times[i]));
+document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r)))).then(() => { window.render(); window.ready = true; });
+</script>
+</body>
+</html>

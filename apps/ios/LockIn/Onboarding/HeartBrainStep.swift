@@ -20,15 +20,26 @@ struct HeartBrainStep: View {
         PrintScaffold(step: 5, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
                 ZStack(alignment: .top) {
-                    // Under the report while it draws, so the slide is never blank.
-                    VStack(spacing: 14) {
-                        ProgressView().tint(Ink.ink)
-                        Text("Adding up your day\u{2026}")
-                            .font(PrintFont.mono(13, .bold))
-                            .foregroundStyle(Ink.ink.opacity(0.6))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 160)
+                    // Under the report while it draws, so the slide is never blank: the same slide from
+                    // the guess (or a typical day), marked as such. The report covers it once drawn.
+                    let band = min(max(hoursIndex ?? 1, 0), 3)
+                    DayBarSlide(hours: Self.midpoints[band], headline: Self.titles[band])
+                        .overlay(alignment: .topTrailing) {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(hoursIndex == nil ? "A TYPICAL DAY" : "YOUR GUESS")
+                                    .font(PrintFont.mono(11, .bold)).tracking(1.2)
+                                Text("REAL NUMBERS LOADING\u{2026}")
+                                    .font(PrintFont.mono(8.5, .semibold))
+                            }
+                            .foregroundStyle(Ink.ink)
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Ink.sun))
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Ink.ink, lineWidth: 2))
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Ink.ink).offset(y: 3))
+                            .rotationEffect(.degrees(5))
+                            .offset(x: -8, y: 166)
+                            .accessibilityElement(children: .combine)
+                        }
                     if showReport {
                         DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
                             .frame(height: 700)

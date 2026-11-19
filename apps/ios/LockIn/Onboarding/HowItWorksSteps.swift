@@ -131,6 +131,7 @@ struct SlideToLockStep: View {
     let next: () -> Void
     @State private var x: CGFloat = 0
     @State private var locked = false
+    @State private var lockedAt: Date?
     @State private var pop = false
     @State private var ripples: [FieldRipple] = []
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
@@ -140,12 +141,14 @@ struct SlideToLockStep: View {
     private let knob: CGFloat = 64
 
     var body: some View {
+        // No NEXT: the slider sits where it was and moves on by itself. VoiceOver gets a Next after.
         PrintScaffold(step: 6, tag: "How a session starts", title: "One slide.\nYou\u{2019}re in.",
-                      primaryTitle: "NEXT", primaryEnabled: locked || voiceOver, primaryAction: next,
+                      primaryView: AnyView(track.padding(.bottom, 6)),
+                      secondaryTitle: voiceOver && locked ? "Next" : nil, secondaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
-            SwapCaption(first: "Slide the button to start a focus session.", second: "That\u{2019}s how every session starts.", swapped: locked)
-            track
-                .padding(.top, compactScreen ? 60 : 150)
+            SwapCaption(first: "Slide the brain to start a session.", second: "That\u{2019}s how every session starts.", swapped: locked)
+            SessionPreview(locked: locked, lockedAt: lockedAt)
+                .padding(.top, 6)
         }
         .sensoryFeedback(.success, trigger: locked)
         // Sliding is the "next": after a beat to see LOCKED IN, the next slide comes by itself.
@@ -232,6 +235,7 @@ struct SlideToLockStep: View {
 
     private func lock(_ maxX: CGFloat) {
         guard !locked else { return }
+        lockedAt = .now
         if effectiveReduceMotion(systemReduceMotion) {
             x = maxX
             locked = true
@@ -247,6 +251,113 @@ struct SlideToLockStep: View {
             guard await printPause(0.16) else { return }
             withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) { pop = false }
         }
+    }
+}
+
+/// What sliding starts, so the space above the slider shows the session (mock:
+/// docs/design/slides-4-7-v2.html, slide 6): READY 25:00, then LOCKED IN with the clock running,
+/// the ring starting, and the apps that wait getting a lock one by one.
+private struct SessionPreview: View {
+    let locked: Bool
+    let lockedAt: Date?
+
+    private static let length: TimeInterval = 25 * 60
+    private static let apps: [(letter: String, color: Color)] = [("S", Ink.blue), ("V", Ink.red), ("G", Color(hex: 0xE9A300)), ("C", Ink.ink)]
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let left = remaining(at: context.date)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(locked ? "LOCKED IN" : "READY")
+                            .font(PrintFont.mono(11, .bold)).tracking(1.4)
+                            .foregroundStyle(locked ? Ink.blue : Color(hex: 0x45473F))
+                        Text(clock(left))
+                            .font(PrintFont.head(64))
+                            .monospacedDigit()
+                            .foregroundStyle(Ink.ink)
+                            .contentTransition(.numericText(countsDown: true))
+                        Text("Studying").font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
+                    }
+                    Spacer(minLength: 8)
+                    ZStack {
+                        Circle().stroke(Ink.ink.opacity(0.12), lineWidth: 9)
+                        Circle()
+                            .trim(from: 0, to: locked ? max(0.04, 1 - left / Self.length) : 0)
+                            .stroke(Ink.blue, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }
+                    .frame(width: 84, height: 84)
+                }
+                HStack(spacing: 6) {
+                    chip("1 break \u{00B7} 5 min")
+                    chip("PC locks too")
+                    chip("Pings go to Later")
+                }
+                .padding(.top, 14)
+                Text("THESE WAIT TILL YOU\u{2019}RE DONE")
+                    .font(PrintFont.mono(11, .bold)).tracking(1.4)
+                    .foregroundStyle(Color(hex: 0x45473F))
+                    .padding(.top, 14)
+                HStack(spacing: 16) {
+                    ForEach(Array(Self.apps.enumerated()), id: \.offset) { i, app in
+                        Text(app.letter)
+                            .font(.system(size: 18, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .frame(width: 50, height: 50)
+                            .background(RoundedRectangle(cornerRadius: 15, style: .continuous).fill(app.color))
+                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
+                            .saturation(locked ? 0.15 : 1)
+                            .opacity(locked ? 0.75 : 1)
+                            .overlay(alignment: .bottomTrailing) {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 24, height: 24)
+                                    .background(Circle().fill(Ink.ink))
+                                    .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
+                                    .offset(x: 8, y: 8)
+                                    .scaleEffect(locked ? 1 : 0.01)
+                            }
+                            .animation(.spring(response: 0.35, dampingFraction: 0.55).delay(locked ? 0.15 + Double(i) * 0.12 : 0), value: locked)
+                    }
+                }
+                .padding(.top, 10)
+                .padding(.bottom, 6)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(shape.fill(Color(hex: 0xF4F4F0)))
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 5))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(locked ? "Locked in. 25 minutes of studying. Your distracting apps wait till you're done."
+                                   : "Ready: 25 minutes of studying. Your distracting apps will wait till you're done.")
+    }
+
+    private func remaining(at now: Date) -> TimeInterval {
+        guard locked, let lockedAt else { return Self.length }
+        return max(Self.length - now.timeIntervalSince(lockedAt), 0)
+    }
+
+    private func clock(_ seconds: TimeInterval) -> String {
+        let s = Int(seconds.rounded(.up))
+        return "\(s / 60):\(String(format: "%02d", s % 60))"
+    }
+
+    private func chip(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 10.5, weight: .bold))
+            .foregroundStyle(Ink.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(Color.white))
+            .overlay(Capsule().strokeBorder(Ink.ink.opacity(0.18), lineWidth: 1.5))
     }
 }
 
@@ -288,19 +399,20 @@ private struct ShimmerLabel: View {
 
 // MARK: Swipe later.
 
-/// Three notifications drop in. The user swipes them away (or they go by themselves after a moment),
-/// and a dark "Later" card rises in their place.
+/// A printed lock screen during a session with four pings stacked on it (mock:
+/// docs/design/slides-4-7-v2.html, slide 7). The user swipes them right, or they go by themselves
+/// after a moment, and each drops into the sunflower "Later" pocket below, which counts them and
+/// says when they come back.
 struct LaterStep: View {
     let next: () -> Void
     @State private var shown = 0
-    @State private var gone: Set<Int> = []
+    @State private var gone: [Int] = []
     @State private var drag: [Int: CGFloat] = [:]
-    @State private var laterShown = false
-    @State private var fanned = false
     @State private var ripples: [FieldRipple] = []
+    @State private var opened = Date.now
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
-    /// The round mark on a notification: a person's initial or a plain symbol, never an app icon.
+    /// The round mark on a ping: a person's initial or a plain symbol, never an app icon.
     private struct Note {
         let initial: String?
         let symbol: String
@@ -312,71 +424,106 @@ struct LaterStep: View {
 
     private static let notes = [
         Note(initial: "M", symbol: "", tile: Ink.blue, glyph: .white, app: "Social", text: "Mia and 11 others liked your post"),
-        Note(initial: nil, symbol: "timer", tile: Ink.sun, glyph: Ink.ink, app: "Video", text: "Up next in 5\u{2026} 4\u{2026} 3\u{2026}"),
-        Note(initial: nil, symbol: "gift.fill", tile: Ink.ink, glyph: .white, app: "Games", text: "Your free spin is ready"),
+        Note(initial: nil, symbol: "play.fill", tile: Ink.red, glyph: .white, app: "Video", text: "Up next in 5\u{2026} 4\u{2026} 3\u{2026}"),
+        Note(initial: nil, symbol: "star.fill", tile: Ink.sun, glyph: Ink.ink, app: "Games", text: "Your free spin is ready"),
+        Note(initial: "C", symbol: "", tile: Ink.ink, glyph: .white, app: "Chat", text: "3 new messages in Squad"),
     ]
+
+    private var allGone: Bool { gone.count == Self.notes.count }
 
     var body: some View {
         PrintScaffold(step: 7, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
-                      backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
-            SwapCaption(first: "Your apps wait till you\u{2019}re done.", second: "Nothing lost. Just later.", swapped: laterShown)
-            ZStack {
-                VStack(spacing: 10) {
-                    ForEach(0..<3, id: \.self) { i in noteRow(i) }
-                }
-                laterCard
+                      backdrop: AnyView(HalftoneField(fadeStart: 0.62, ripples: ripples))) {
+            SwapCaption(first: "Every ping waits in Later.", second: "All here when you\u{2019}re done.", swapped: allGone)
+            VStack(spacing: 16) {
+                lockScreen
+                pocket
             }
-            .padding(.top, compactScreen ? 20 : 48)
+            .padding(.top, 4)
         }
         .sensoryFeedback(.impact(weight: .light), trigger: gone.count)
-        .sensoryFeedback(.success, trigger: laterShown)
+        .sensoryFeedback(.success, trigger: allGone)
         .task { await run() }
+    }
+
+    // MARK: The lock screen
+
+    private var lockScreen: some View {
+        let shape = RoundedRectangle(cornerRadius: 34, style: .continuous)
+        return ZStack(alignment: .top) {
+            shape.fill(LinearGradient(colors: [Color(hex: 0x3D4A6B), Color(hex: 0x26304A)], startPoint: .top, endPoint: .bottom))
+            Canvas { ctx, size in
+                // Sunflower halftone in the lower half, like a riso wallpaper.
+                for y in stride(from: size.height * 0.35, to: size.height, by: 12) {
+                    let k = (y - size.height * 0.35) / (size.height * 0.65)
+                    for x in stride(from: 6.0, to: size.width, by: 12) {
+                        let r = 2.2 * k
+                        ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)),
+                                 with: .color(Ink.sun.opacity(0.25)))
+                    }
+                }
+            }
+            VStack(spacing: 4) {
+                Text(opened.formatted(date: .omitted, time: .shortened).replacingOccurrences(of: " AM", with: "").replacingOccurrences(of: " PM", with: ""))
+                    .font(PrintFont.head(56))
+                    .foregroundStyle(.white.opacity(0.94))
+                Text("\(opened.formatted(.dateTime.weekday(.wide))) \u{00B7} Locked in \u{00B7} 24:12 left")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.72))
+            }
+            .padding(.top, 20)
+            ZStack(alignment: .top) {
+                ForEach(Array(Self.notes.indices.reversed()), id: \.self) { i in noteRow(i) }
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 104)
+        }
+        .frame(height: 312)
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 6))
+        .accessibilityElement(children: .contain)
     }
 
     private func noteRow(_ i: Int) -> some View {
         let note = Self.notes[i]
         let isIn = i < shown
         let isGone = gone.contains(i)
-        let dx: CGFloat = isGone ? 460 : (drag[i] ?? 0)
-        return HStack(spacing: 12) {
+        let dx: CGFloat = drag[i] ?? 0
+        return HStack(spacing: 10) {
             Group {
                 if let initial = note.initial {
-                    Text(initial).font(.system(size: 19, weight: .bold, design: .rounded))
+                    Text(initial).font(.system(size: 16, weight: .bold, design: .rounded))
                 } else {
-                    Image(systemName: note.symbol).font(.system(size: 18, weight: .semibold))
+                    Image(systemName: note.symbol).font(.system(size: 14, weight: .semibold))
                 }
             }
             .foregroundStyle(note.glyph)
-            .frame(width: 42, height: 42)
+            .frame(width: 36, height: 36)
             .background(Circle().fill(note.tile))
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 HStack {
-                    Text(note.app)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(Ink.ink)
+                    Text(note.app).font(.system(size: 13, weight: .bold)).foregroundStyle(Ink.ink)
                     Spacer()
-                    Text("now")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Ink.soft)
+                    Text("now").font(.system(size: 11, weight: .medium)).foregroundStyle(Ink.soft)
                 }
                 Text(note.text)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 12.5, weight: .medium))
                     .foregroundStyle(Ink.ink.opacity(0.82))
                     .lineLimit(1)
             }
         }
-        .padding(.horizontal, 14)
-        .frame(height: 74)
+        .padding(.horizontal, 12)
+        .frame(height: 62)
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white.opacity(0.55)))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.7)))
         }
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.9), lineWidth: 0.5))
-        .shadow(color: Ink.ink.opacity(0.13), radius: 14, y: 10)
-        .rotationEffect(.degrees(Double(dx / 460) * 7))
-        .offset(x: dx, y: isIn ? 0 : -60)
-        .scaleEffect(isIn ? 1 : 0.94)
+        .shadow(color: .black.opacity(0.18), radius: 10, y: 8)
+        .scaleEffect(isGone ? 0.45 : 1 - CGFloat(i) * 0.04)
+        .rotationEffect(.degrees(isGone ? 8 : Double(dx / 300) * 6))
+        .offset(x: isGone ? 40 : dx, y: isGone ? 230 : (isIn ? CGFloat(i) * 50 : CGFloat(i) * 50 - 40))
         .opacity(isIn && !isGone ? 1 : 0)
         .gesture(
             DragGesture(minimumDistance: 6)
@@ -388,7 +535,7 @@ struct LaterStep: View {
                 }
                 .onEnded { value in
                     guard isIn, !isGone else { return }
-                    if value.translation.width > 90 || value.predictedEndTranslation.width > 220 { fling(i) }
+                    if value.translation.width > 80 || value.predictedEndTranslation.width > 200 { fling(i) }
                     else { withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { drag[i] = 0 } }
                 }
         )
@@ -398,81 +545,68 @@ struct LaterStep: View {
         .accessibilityHidden(!isIn || isGone)
     }
 
-    private var laterCard: some View {
-        ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Ink.ink.opacity(0.55))
-                .frame(height: 92)
-                .padding(.horizontal, 26)
-                .offset(y: fanned ? 20 : 0)
-                .opacity(0.3)
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Ink.ink.opacity(0.55))
-                .frame(height: 92)
-                .padding(.horizontal, 12)
-                .offset(y: fanned ? 10 : 0)
-                .opacity(0.55)
-            HStack(spacing: 14) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 48, height: 48)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Ink.blue))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Later")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Ink.paper)
-                    Text("3 waiting till you\u{2019}re done")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Ink.paper.opacity(0.7))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+    // MARK: The Later pocket
+
+    private var pocket: some View {
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+        let back = opened.addingTimeInterval(24 * 60).formatted(date: .omitted, time: .shortened)
+        return HStack(spacing: 12) {
+            Text("\(gone.count)")
+                .font(PrintFont.head(24))
+                .foregroundStyle(Ink.sun)
+                .contentTransition(.numericText(value: Double(gone.count)))
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(Ink.ink))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Later").font(.system(size: 17, weight: .heavy)).foregroundStyle(Ink.ink)
+                if gone.isEmpty {
+                    Text("Waiting till you\u{2019}re done").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Ink.ink.opacity(0.75))
+                } else {
+                    HStack(spacing: -4) {
+                        ForEach(gone, id: \.self) { i in
+                            Circle().fill(Self.notes[i].tile)
+                                .overlay(Circle().strokeBorder(Ink.paper, lineWidth: 1.5))
+                                .frame(width: 14, height: 14)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                        Text("waiting").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Ink.ink.opacity(0.75))
+                            .padding(.leading, 10)
+                    }
                 }
-                Spacer(minLength: 6)
-                Text("25:00")
-                    .font(PrintFont.mono(13))
-                    .foregroundStyle(Ink.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Ink.sun))
             }
-            .padding(.horizontal, 18)
-            .frame(height: 92)
-            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Ink.ink))
-            .shadow(color: Ink.ink.opacity(0.28), radius: 18, y: 18)
+            Spacer(minLength: 6)
+            Text("BACK AT \(back.uppercased())")
+                .font(PrintFont.mono(11, .bold))
+                .foregroundStyle(Ink.sun)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(Ink.ink))
         }
-        .opacity(laterShown ? 1 : 0)
-        .offset(y: laterShown ? 0 : 50)
-        .scaleEffect(laterShown ? 1 : 0.92)
-        .allowsHitTesting(false)
+        .padding(.horizontal, 14)
+        .frame(height: 74)
+        .background(shape.fill(Ink.sun))
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 5))
+        .keyframeAnimator(initialValue: CGFloat(1), trigger: gone.count) { view, s in
+            view.scaleEffect(s)
+        } keyframes: { _ in
+            KeyframeTrack { CubicKeyframe(1.06, duration: 0.12); SpringKeyframe(1, duration: 0.3) }
+        }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Later: 3 waiting till you're done")
-        .accessibilityHidden(!laterShown)
+        .accessibilityLabel(gone.isEmpty ? "Later: waiting till you're done" : "Later: \(gone.count) waiting, back at \(back)")
     }
+
+    // MARK: Motion
 
     private func fling(_ i: Int) {
         guard !gone.contains(i) else { return }
         if effectiveReduceMotion(systemReduceMotion) {
-            gone.insert(i)
+            gone.append(i)
         } else {
-            withAnimation(.easeIn(duration: 0.38)) { _ = gone.insert(i) }
-            ripples.append(FieldRipple(origin: UnitPoint(x: 1, y: 0.45 + 0.1 * Double(i)),
-                                       start: Date.now.addingTimeInterval(0.25), amp: 0.7, speed: 480))
-        }
-        if gone.count == Self.notes.count { showLater() }
-    }
-
-    private func showLater() {
-        if effectiveReduceMotion(systemReduceMotion) {
-            laterShown = true
-            fanned = true
-            return
-        }
-        Task {
-            guard await printPause(0.35) else { return }
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.74)) { laterShown = true }
-            guard await printPause(0.25) else { return }
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { fanned = true }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { gone.append(i) }
+            ripples.append(FieldRipple(origin: UnitPoint(x: 0.5, y: 0.85), start: Date.now.addingTimeInterval(0.3), amp: 0.7, speed: 480))
         }
     }
 
@@ -480,17 +614,17 @@ struct LaterStep: View {
         if effectiveReduceMotion(systemReduceMotion) {
             shown = Self.notes.count
         } else {
-            guard await printPause(0.45) else { return }
+            guard await printPause(0.4) else { return }
             for k in 1...Self.notes.count {
-                withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) { shown = k }
-                guard await printPause(0.22) else { return }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { shown = k }
+                guard await printPause(0.18) else { return }
             }
         }
         // A moment for the user to swipe them away; then the rest go by themselves.
         guard await printPause(2.2) else { return }
         for i in 0..<Self.notes.count where !gone.contains(i) {
             fling(i)
-            guard await printPause(0.3) else { return }
+            guard await printPause(0.4) else { return }
         }
     }
 }

@@ -464,7 +464,7 @@ struct RevealStep: View {
                         .frame(height: 560)
                         .frame(maxWidth: .infinity)
                 }
-                ReadingWeek(done: showReport)
+                GuessCheck(guessIndex: guessIndex, done: showReport)
                     .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
                     .background(Ink.paper.opacity(showReport ? 0 : 1))
                     .allowsHitTesting(!showReport)
@@ -481,64 +481,127 @@ struct RevealStep: View {
     }
 }
 
-/// "Reading your week": the brain thinks, seven day dots fill in, and the digits roll.
-private struct ReadingWeek: View {
+/// The cover on slide 4 while Apple's report loads, so the slide is never blank (mock:
+/// docs/design/slide4-guess.html): "Let's check your guess." The guess tab from slide 2 is taped up,
+/// the brain looks at it through a magnifying glass, and the week's bars rise one day at a time
+/// with a "?" on top. Without a guess it reads "Reading your week…" and shows only the bars.
+private struct GuessCheck: View {
+    let guessIndex: Int?
     let done: Bool
     @State private var days = 0
-    @State private var roll = 0
     @State private var bob = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+
+    private static let names = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
     private static let letters = ["M", "T", "W", "T", "F", "S", "S"]
+    /// Made-up heights: the bars are a "reading" animation, not data.
+    private static let heights: [CGFloat] = [0.62, 0.48, 0.70, 0.55, 0.80, 0.92, 0.74]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("READING\nYOUR WEEK\u{2026}")
+            Text(guessIndex == nil ? "READING\nYOUR WEEK\u{2026}" : "LET\u{2019}S CHECK\nYOUR GUESS.")
                 .font(PrintFont.head(52))
                 .lineSpacing(-6)
                 .foregroundStyle(Ink.ink)
-            HStack(spacing: 8) {
-                ForEach(0..<7, id: \.self) { i in
-                    Text(Self.letters[i])
-                        .font(PrintFont.mono(13, .bold))
-                        .foregroundStyle(i < days ? Color.white : Ink.ink.opacity(0.45))
-                        .frame(width: 36, height: 36)
-                        .background(Circle().fill(i < days ? Ink.blue : Color.clear))
-                        .overlay(Circle().strokeBorder(i < days ? Ink.ink : Ink.ink.opacity(0.2), lineWidth: 2))
-                        .scaleEffect(i < days ? 1 : 0.88)
+                .fixedSize(horizontal: false, vertical: true)
+            if let guessIndex {
+                HStack(alignment: .center, spacing: 0) {
+                    tab(guessIndex)
+                        .rotationEffect(.degrees(-5))
+                    Spacer(minLength: 8)
+                    ZStack(alignment: .bottomLeading) {
+                        Image("BrainExact").resizable().scaledToFit().frame(width: 100)
+                            .rotationEffect(.degrees(bob ? 4 : -4))
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 46, weight: .bold))
+                            .foregroundStyle(Ink.ink)
+                            .offset(x: bob ? -30 : -14, y: bob ? 6 : -4)
+                    }
+                    .padding(.trailing, 8)
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    Stamp(text: "Checking\u{2026}", color: Ink.red, size: 20, tilt: 8)
+                        .offset(x: -4, y: 22)
+                }
+                .padding(.bottom, 8)
             }
-            Text(rolled)
-                .font(PrintFont.head(96))
-                .monospacedDigit()
-                .foregroundStyle(Ink.ink.opacity(0.85))
-                .contentTransition(.numericText())
-            Image("BrainExact")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 130)
-                .rotationEffect(.degrees(bob ? 6 : -6), anchor: .bottom)
+            week
+            Text("Close? Way off? Let\u{2019}s see\u{2026}")
+                .font(PrintFont.hand(20))
+                .foregroundStyle(Ink.ink)
                 .frame(maxWidth: .infinity)
         }
         .opacity(done ? 0 : 1)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Reading your week")
+        .accessibilityLabel(guessIndex == nil ? "Reading your week" : "Checking your guess against your real week")
         .task {
             if effectiveReduceMotion(systemReduceMotion) { days = 7; return }
-            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { bob = true }
+            withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { bob = true }
             for i in 1...7 {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { days = i }
-                for _ in 0..<2 {
-                    withAnimation(.snappy(duration: 0.15)) { roll += 1 }
-                    guard await printPause(0.17) else { return }
-                }
+                guard await printPause(0.32) else { return }
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { days = i }
             }
         }
     }
 
-    private var rolled: String {
-        guard roll > 0 else { return "?H ??M" }
-        let h = (roll * 7) % 10, m = (roll * 37) % 60
-        return "\(h)H \(String(format: "%02d", m))M"
+    private func tab(_ g: Int) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("YOU GUESSED").font(PrintFont.mono(10, .bold)).tracking(1.4).opacity(0.85)
+            Text(hoursTabs[min(max(g, 0), 3)]).font(PrintFont.head(40)).lineLimit(1).minimumScaleFactor(0.7)
+            Text("A DAY").font(PrintFont.mono(11, .bold)).tracking(1.2).opacity(0.85)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .frame(width: 176, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Ink.blue))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Ink.ink, lineWidth: 2))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Ink.ink).offset(y: 6))
+        .overlay(alignment: .top) {
+            Rectangle().fill(Ink.sun.opacity(0.75)).frame(width: 80, height: 22)
+                .rotationEffect(.degrees(-12)).offset(y: -12)
+        }
+    }
+
+    private var week: some View {
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+        return VStack(spacing: 6) {
+            HStack {
+                Text("YOUR WEEK")
+                Spacer()
+                Text(days >= 7 ? "ALMOST THERE" : "READING \(Self.names[min(days, 6)])")
+                    .foregroundStyle(Ink.blue)
+                    .contentTransition(.opacity)
+            }
+            .font(PrintFont.mono(10.5, .bold)).tracking(1.2)
+            .foregroundStyle(Color(hex: 0x45473F))
+            HStack(alignment: .bottom, spacing: 10) {
+                ForEach(0..<7, id: \.self) { i in
+                    let on = i < days
+                    VStack(spacing: 4) {
+                        Text("?").font(PrintFont.head(16)).foregroundStyle(Ink.blue).opacity(on ? 1 : 0)
+                        UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6)
+                            .fill(Ink.blue.opacity(0.78))
+                            .overlay(UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6)
+                                .strokeBorder(Ink.ink, lineWidth: 2))
+                            .frame(height: on ? 86 * Self.heights[i] : 0)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 112, alignment: .bottom)
+            .overlay(alignment: .bottom) { Rectangle().fill(Ink.ink).frame(height: 2) }
+            HStack(spacing: 10) {
+                ForEach(0..<7, id: \.self) { i in
+                    Text(Self.letters[i]).font(PrintFont.mono(10.5, .bold)).foregroundStyle(Color(hex: 0x45473F))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .padding(14)
+        .background(shape.fill(Color(hex: 0xF4F4F0)))
+        .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
+        .background(shape.fill(Ink.ink).offset(y: 5))
     }
 }
 
