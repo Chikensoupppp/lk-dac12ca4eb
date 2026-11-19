@@ -708,10 +708,12 @@ struct PullsStep: View {
                         .lineLimit(1)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 7)
-                        .background(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
-                                                           bottomTrailingRadius: 14, topTrailingRadius: 4).fill(Ink.ink).offset(y: 3))
+                        // White right behind the words, the ink shadow behind that (the other way
+                        // round the ink covered the white and hid the words).
                         .background(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
                                                            bottomTrailingRadius: 14, topTrailingRadius: 4).fill(Color.white))
+                        .background(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
+                                                           bottomTrailingRadius: 14, topTrailingRadius: 4).fill(Ink.ink).offset(y: 3))
                         .overlay(UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14,
                                                         bottomTrailingRadius: 14, topTrailingRadius: 4).strokeBorder(Ink.ink, lineWidth: 2))
                         .id(line)

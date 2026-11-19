@@ -465,7 +465,7 @@ struct LaterStep: View {
             }
             VStack(spacing: 4) {
                 Text(opened.formatted(date: .omitted, time: .shortened).replacingOccurrences(of: " AM", with: "").replacingOccurrences(of: " PM", with: ""))
-                    .font(PrintFont.head(56))
+                    .font(PrintFont.head(compactScreen ? 44 : 56))
                     .foregroundStyle(.white.opacity(0.94))
                 Text("\(opened.formatted(.dateTime.weekday(.wide))) \u{00B7} Locked in \u{00B7} 24:12 left")
                     .font(.system(size: 12, weight: .semibold))
@@ -476,9 +476,9 @@ struct LaterStep: View {
                 ForEach(Array(Self.notes.indices.reversed()), id: \.self) { i in noteRow(i) }
             }
             .padding(.horizontal, 12)
-            .padding(.top, 104)
+            .padding(.top, compactScreen ? 84 : 104)
         }
-        .frame(height: 312)
+        .frame(height: compactScreen ? 232 : 312)
         .clipShape(shape)
         .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
         .background(shape.fill(Ink.ink).offset(y: 6))
@@ -523,7 +523,7 @@ struct LaterStep: View {
         .shadow(color: .black.opacity(0.18), radius: 10, y: 8)
         .scaleEffect(isGone ? 0.45 : 1 - CGFloat(i) * 0.04)
         .rotationEffect(.degrees(isGone ? 8 : Double(dx / 300) * 6))
-        .offset(x: isGone ? 40 : dx, y: isGone ? 230 : (isIn ? CGFloat(i) * 50 : CGFloat(i) * 50 - 40))
+        .offset(x: isGone ? 40 : dx, y: isGone ? 230 : (isIn ? CGFloat(i) * (compactScreen ? 30 : 50) : CGFloat(i) * (compactScreen ? 30 : 50) - 40))
         .opacity(isIn && !isGone ? 1 : 0)
         .gesture(
             DragGesture(minimumDistance: 6)
