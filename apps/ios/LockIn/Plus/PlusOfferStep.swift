@@ -46,23 +46,23 @@ struct PlusOfferStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: OnboardingFlow.stepCount, tag: "SwipeLater Plus", title: "Lock in\nfor real.", titleSize: 46,
+        PrintScaffold(step: OnboardingFlow.stepCount, tag: "SwipeLater Plus", title: "Lock in\nfor real.", titleSize: 40,
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
                       footer: AnyView(footer)) {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 12) {
                 card
                     .padding(.horizontal, 6)
                     .rotationEffect(.degrees(cardIn ? -2 : -10))
                     .scaleEffect(cardIn ? 1 : 0.8, anchor: .bottom)
                     .offset(y: cardIn ? 0 : 120)
                     .opacity(cardIn ? 1 : 0)
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     feature(0, symbol: "lock.fill", color: Ink.blue, glyph: .white,
-                            title: "Locked mode", line: "No quit button. The session runs to the end.")
+                            title: "Locked mode", line: "No quit button. It runs to the end.")
                     feature(1, symbol: "person.2.fill", color: Ink.sun, glyph: Ink.ink,
-                            title: "A friend holds the key", line: "Only your partner, or one emergency exit a week, ends it early.")
+                            title: "A friend holds the key", line: "They end it early. Or 1 emergency exit a week.")
                     feature(2, symbol: "calendar", color: Ink.red, glyph: .white,
-                            title: "Every week, saved", line: "Your whole history, not just the last 3 weeks.")
+                            title: "Every week, saved", line: "Your whole history, not just 3 weeks.")
                 }
                 if plus.isPlus {
                     Text("You have Plus. Thank you.")
@@ -74,7 +74,7 @@ struct PlusOfferStep: View {
                         .foregroundStyle(Ink.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 10) {
                         if plus.yearly != nil || plus.monthly != nil { planPicker }
                         timeline
                     }
@@ -106,16 +106,20 @@ struct PlusOfferStep: View {
                     }
                 }
             }
+            // Flexible height (scaled, not sized) so the shine never makes the card taller than its
+            // frame: a fixed 260 pt here centered the content and cut "PLUS" off the top.
             LinearGradient(colors: [.clear, .white.opacity(0.45), .clear], startPoint: .leading, endPoint: .trailing)
-                .frame(width: 70, height: 260)
+                .frame(width: 70)
+                .frame(maxHeight: .infinity)
+                .scaleEffect(y: 2)
                 .rotationEffect(.degrees(18))
-                .offset(x: shine ? 420 : -140, y: -60)
+                .offset(x: shine ? 420 : -140)
             VStack(alignment: .leading, spacing: 0) {
                 Text("MEMBER CARD")
                     .font(PrintFont.mono(10, .bold)).tracking(1.8)
                     .opacity(0.8)
                 Text("PLUS")
-                    .font(PrintFont.head(38))
+                    .font(PrintFont.head(34))
                     .padding(.top, 4)
                 Spacer(minLength: 0)
                 Text("SWIPELATER \u{00B7} \(String(year))")
@@ -123,11 +127,11 @@ struct PlusOfferStep: View {
                     .opacity(0.85)
             }
             .foregroundStyle(.white)
-            .padding(20)
+            .padding(16)
             Image("BrainExact")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 100)
+                .frame(width: 88)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 .offset(x: -6, y: 10)
             Text(plus.isPlus ? "ACTIVE" : "LOCKED IN")
@@ -141,9 +145,9 @@ struct PlusOfferStep: View {
                 .rotationEffect(.degrees(-9))
                 .scaleEffect(stamped ? 1 : 2.2)
                 .opacity(stamped ? 1 : 0)
-                .offset(x: 112, y: 34)
+                .offset(x: 104, y: 30)
         }
-        .frame(height: 130)
+        .frame(height: 112)
         .clipShape(shape)
         .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
         .background(shape.fill(Ink.ink).offset(y: 6))
@@ -157,15 +161,15 @@ struct PlusOfferStep: View {
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(glyph)
-                .frame(width: 38, height: 38)
+                .frame(width: 34, height: 34)
                 .background(Circle().fill(color))
                 .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
                 .background(Circle().fill(Ink.ink).offset(y: 3))
                 .scaleEffect(rows > i ? 1 : 0.6)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
+                Text(title).font(PrintFont.bold(16)).foregroundStyle(Ink.ink)
                 Text(line)
-                    .font(PrintFont.body(14, .medium))
+                    .font(PrintFont.body(13, .medium))
                     .foregroundStyle(Self.softInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -207,7 +211,7 @@ struct PlusOfferStep: View {
                 Text(price).font(PrintFont.head(26)).foregroundStyle(Ink.ink)
                 Text(note).font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
             }
-            .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
             .padding(.horizontal, 13)
             .background(shape.fill(Color.white))
             .overlay(shape.strokeBorder(on ? Ink.ink : Ink.ink.opacity(0.18), lineWidth: 2))
