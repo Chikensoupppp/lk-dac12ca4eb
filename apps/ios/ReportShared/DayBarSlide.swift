@@ -318,3 +318,29 @@ private struct Bubble: View {
         }
     }
 }
+
+// MARK: - Fit
+
+/// Shrinks its content evenly when it is taller than `height`, so slide 5 keeps its look and still
+/// ends above the button on every iPhone. Used by the app and by the report extension.
+struct ScaleToFitHeight: ViewModifier {
+    let height: CGFloat
+    @State private var natural: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        let scale = natural > height && height > 0 ? height / natural : 1
+        content
+            .fixedSize(horizontal: false, vertical: true)
+            .background(GeometryReader { g in
+                Color.clear
+                    .onAppear { natural = g.size.height }
+                    .onChange(of: g.size.height) { _, h in natural = h }
+            })
+            .scaleEffect(scale, anchor: .top)
+            .frame(height: natural > 0 ? min(natural, height) : nil, alignment: .top)
+    }
+}
+
+extension View {
+    func scaleToFit(height: CGFloat) -> some View { modifier(ScaleToFitHeight(height: height)) }
+}

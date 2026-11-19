@@ -44,7 +44,11 @@ struct DayBarReportView: View {
             DayBarSlide.paper.ignoresSafeArea()
             if let hours {
                 let m = Int((hours * 60).rounded())
-                DayBarSlide(hours: hours, headline: "\(m / 60)H \(String(format: "%02d", m % 60))M\na day.", animated: false)
+                // The app gives this view exactly the room above its CONTINUE button; shrink to fit it.
+                GeometryReader { g in
+                    DayBarSlide(hours: hours, headline: "\(m / 60)H \(String(format: "%02d", m % 60))M\na day.", animated: false)
+                        .scaleToFit(height: g.size.height)
+                }
             } else {
                 Text("No Screen Time history on this iPhone yet.")
                     .font(.system(size: 17, weight: .semibold))

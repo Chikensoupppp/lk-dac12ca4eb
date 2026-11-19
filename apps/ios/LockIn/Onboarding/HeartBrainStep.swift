@@ -16,6 +16,16 @@ struct HeartBrainStep: View {
     private static let titles = ["1\u{2013}2 hours\na day.", "3\u{2013}4 hours\na day.", "5\u{2013}6 hours\na day.", "7+ hours\na day."]
     private static let midpoints = [1.5, 3.5, 5.5, 7.5]
 
+    /// The room between the slide's tag and the CONTINUE button: the screen minus the safe areas,
+    /// the progress bars and Back (60), the tag (23), the scroll's bottom padding and fade (40) and
+    /// the button area (68). Slide 5 is scaled down to fit it, so the last row never hides under
+    /// the button, and the report is given exactly this height.
+    private static var fitHeight: CGFloat {
+        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first
+        let insets = window?.safeAreaInsets ?? .zero
+        return max(UIScreen.main.bounds.height - insets.top - insets.bottom - 60 - 23 - 40 - 68, 420)
+    }
+
     var body: some View {
         PrintScaffold(step: 5, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
@@ -24,6 +34,7 @@ struct HeartBrainStep: View {
                     // the guess (or a typical day), marked as such. The report covers it once drawn.
                     let band = min(max(hoursIndex ?? 1, 0), 3)
                     DayBarSlide(hours: Self.midpoints[band], headline: Self.titles[band])
+                        .scaleToFit(height: Self.fitHeight)
                         .overlay(alignment: .topTrailing) {
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text(hoursIndex == nil ? "A TYPICAL DAY" : "YOUR GUESS")
@@ -42,7 +53,7 @@ struct HeartBrainStep: View {
                         }
                     if showReport {
                         DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
-                            .frame(height: 700)
+                            .frame(height: Self.fitHeight)
                             .frame(maxWidth: .infinity)
                             .transition(.opacity)
                     }
@@ -55,6 +66,7 @@ struct HeartBrainStep: View {
             } else {
                 let band = min(max(hoursIndex ?? 0, 0), 3)
                 DayBarSlide(hours: Self.midpoints[band], headline: Self.titles[band])
+                    .scaleToFit(height: Self.fitHeight)
             }
         }
     }
