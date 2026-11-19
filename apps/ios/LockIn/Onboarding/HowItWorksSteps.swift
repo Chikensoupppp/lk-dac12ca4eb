@@ -30,7 +30,8 @@ struct SlideToLockStep: View {
                 let progress = min(x / maxX, 1)
                 ZStack(alignment: .leading) {
                     Capsule().fill(Ink.ink)
-                    Capsule().fill(Ink.blue).frame(width: knob + x)
+                    // The blue trail only shows once the knob really moves (not during the hint nudge).
+                    Capsule().fill(Ink.blue).frame(width: knob + x).opacity(x > 0 ? 1 : 0)
                     Text("SLIDE TO LOCK IN")
                         .font(PrintFont.bold(17))
                         .tracking(2)
@@ -47,7 +48,7 @@ struct SlideToLockStep: View {
                         .opacity(locked ? 1 : 0)
                     Circle().fill(Ink.paper)
                         .frame(width: knob - 8, height: knob - 8)
-                        .overlay(Image("BrainExact").resizable().scaledToFit().padding(7))
+                        .overlay(Image("BrainExact").resizable().scaledToFit().scaleEffect(1.25))
                         .overlay(alignment: .bottomTrailing) {
                             if locked {
                                 Image(systemName: "lock.fill")
@@ -83,18 +84,29 @@ struct SlideToLockStep: View {
             }
             .frame(height: knob)
             .padding(.top, 30)
-            HStack {
-                Spacer()
-                Text("see? easy.")
-                    .font(PrintFont.hand(34))
-                    .foregroundStyle(Ink.blue)
-                    .rotationEffect(.degrees(-6))
-                    .scaleEffect(locked ? 1 : 0.3)
-                    .opacity(locked ? 1 : 0)
-                    .padding(.trailing, 28)
-                    .accessibilityHidden(!locked)
+            ZStack {
+                HStack {
+                    Text("slide me \u{2192}")
+                        .font(PrintFont.hand(30))
+                        .foregroundStyle(Ink.blue)
+                        .rotationEffect(.degrees(-3))
+                        .padding(.leading, 20)
+                        .opacity(locked ? 0 : 1)
+                    Spacer()
+                }
+                HStack {
+                    Spacer()
+                    Text("see? easy.")
+                        .font(PrintFont.hand(34))
+                        .foregroundStyle(Ink.blue)
+                        .rotationEffect(.degrees(-6))
+                        .scaleEffect(locked ? 1 : 0.3)
+                        .opacity(locked ? 1 : 0)
+                        .padding(.trailing, 28)
+                }
             }
             .padding(.top, 10)
+            .accessibilityHidden(true)
         }
         .sensoryFeedback(.success, trigger: locked)
         .task {
@@ -352,9 +364,13 @@ struct PunchCardStep: View {
                 .background(Circle().strokeBorder(Ink.sun, style: StrokeStyle(lineWidth: 2, dash: [4, 3])))
         } else if i == 0 {
             ZStack {
-                // The punched hole shows the newsprint behind the card.
-                Circle().fill(punched ? Ink.paper : Color.clear)
-                    .overlay(Circle().stroke(Ink.ink.opacity(punched ? 0.35 : 0), lineWidth: 1.5))
+                // Punched: a blue stamp with a check, so "done" reads at a glance.
+                Circle().fill(Ink.blue)
+                    .overlay(Image(systemName: "checkmark")
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundStyle(Ink.paper))
+                    .scaleEffect(punched ? 1 : 0.2)
+                    .opacity(punched ? 1 : 0)
                 Circle().strokeBorder(Ink.blue, lineWidth: 3)
                     .opacity(punched ? 0 : 1)
                     .scaleEffect(pulse && !punched ? 1.12 : 1)

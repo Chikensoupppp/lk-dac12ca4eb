@@ -51,6 +51,8 @@ jobs:
           if [[ "${GITHUB_REF_NAME:-}" == screens-pick* ]]; then SHOTS="restrictions"; fi
           # A `screens-look*` tag photographs the main look: clock, running clock, goal page.
           if [[ "${GITHUB_REF_NAME:-}" == screens-look* ]]; then SHOTS="idle active goals"; fi
+          # A `screens-ob*` tag photographs only the how-it-works first-run slides.
+          if [[ "${GITHUB_REF_NAME:-}" == screens-ob* ]]; then SHOTS="ob-10 ob-11 ob-12"; fi
           for spec in "${SPECS[@]}"; do
             label="${spec%%:*}"; names="${spec#*:}"
             IFS=: read -ra list <<< "$names"
