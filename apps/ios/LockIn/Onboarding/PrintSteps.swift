@@ -242,7 +242,7 @@ struct CheckStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "One tap:\nContinue.", titleSize: 46, grain: true,
+        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Your real time,\none tap away.", titleSize: 46, grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
                       secondaryTitle: access == .on ? nil : "Not now", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {

@@ -98,7 +98,7 @@ const OPTIONS = [
       const s = clamp((t - .9) / .3); el.querySelector(".seal").style.transform = `scale(${s > 0 ? 2 - back(s) : 0}) rotate(${-12 + 12 * ease(s)}deg)`;
       el.querySelector(".win b").style.filter = `blur(${5 + Math.sin(t * 3) * 1.2}px)`;
     } },
-  { name: "B  POPUP PREVIEW", html: chrome("One tap:<br>Continue.", "OK, SHOW ME") + `
+  { name: "B  POPUP PREVIEW", html: chrome("Your real time,<br>one tap away.", "OK, SHOW ME") + `
     <div class="alert"><div class="t">“SwipeLater” Would Like to Access Screen Time</div>
       <div class="m">Providing “SwipeLater” access to Screen Time may allow it to see your activity data, restrict content, and limit the usage of apps and websites.</div>
       <div class="b"><div class="go">Continue<i class="ring"></i></div><div>Don’t Allow</div></div></div>
