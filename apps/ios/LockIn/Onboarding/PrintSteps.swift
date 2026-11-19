@@ -275,8 +275,8 @@ struct CheckStep: View {
     }
 
     /// A printed picture of the Screen Time box iOS shows next, with Continue circled and the brain
-    /// pointing at it (the way Opal primes it). Drawn tilted, inked and untappable, so it reads as a
-    /// picture of the box, not the box itself. Mock: docs/design/slide3-options.html, option B.
+    /// pointing at it (the way Opal primes it). Drawn tilted and inked so it reads as a picture of
+    /// the box; its Continue opens Apple's real box, its Don't Allow is "Not now". Mock: docs/design/slide3-options.html, option B.
     /// Only while the answer is still to come.
     @ViewBuilder
     private var preview: some View {
@@ -309,15 +309,14 @@ struct CheckStep: View {
                     .offset(x: 112, y: 34)
                 }
                 .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
                 Text("It never leaves your iPhone.")
                     .font(PrintFont.mono(13))
                     .foregroundStyle(Ink.ink)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 6)
             }
-            .allowsHitTesting(false)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Next, iPhone asks to allow Screen Time. Tap Continue. It never leaves your iPhone.")
         } else {
             Text("It never leaves your iPhone.")
                 .font(PrintFont.bold(18))
@@ -342,25 +341,41 @@ struct CheckStep: View {
             .padding(.horizontal, 14)
             .padding(.top, 16)
             .padding(.bottom, 14)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Next, iPhone asks to allow Screen Time.")
             Rectangle().fill(Color(hex: 0xC8C8C8)).frame(height: 1)
+            // Both buttons in the picture work: Continue opens Apple's real box (same as the big
+            // button), Don't Allow is the same as "Not now".
             HStack(spacing: 0) {
-                Text("Continue")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(blue)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .overlay {
-                        Capsule()
-                            .strokeBorder(Ink.sun, lineWidth: 3)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .scaleEffect(drawn ? (bob ? 1.04 : 0.98) : 0.6)
-                            .opacity(drawn ? 1 : 0)
-                    }
+                Button(action: ask) {
+                    Text("Continue")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(blue)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(Ink.sun, lineWidth: 3)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .scaleEffect(drawn ? (bob ? 1.04 : 0.98) : 0.6)
+                                .opacity(drawn ? 1 : 0)
+                        }
+                }
+                .buttonStyle(AlertPictureButtonStyle())
+                .disabled(asking)
+                .accessibilityLabel("Continue")
+                .accessibilityHint("Opens the Screen Time box")
                 Rectangle().fill(Color(hex: 0xC8C8C8)).frame(width: 1, height: 44)
-                Text("Don\u{2019}t Allow")
-                    .font(.system(size: 16))
-                    .foregroundStyle(blue)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                Button(action: skip) {
+                    Text("Don\u{2019}t Allow")
+                        .font(.system(size: 16))
+                        .foregroundStyle(blue)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(AlertPictureButtonStyle())
+                .disabled(asking)
             }
         }
         .background(shape.fill(Color(hex: 0xF2F2F2)))
@@ -387,6 +402,14 @@ struct CheckStep: View {
         case .off:
             if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
         }
+    }
+}
+
+/// Press feedback for the two buttons in the slide 3 box picture: a grey wash, like iOS alerts.
+private struct AlertPictureButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Color.black.opacity(configuration.isPressed ? 0.08 : 0))
     }
 }
 
