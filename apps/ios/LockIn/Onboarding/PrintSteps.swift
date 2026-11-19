@@ -363,55 +363,18 @@ struct CheckStep: View {
 // MARK: 4. Real hours
 
 /// The real numbers, drawn by Apple's report view inside the LockInReport extension. Lock In
-/// cannot read them, so the user taps the band that matches what they see.
+/// cannot read them; slide 5 is drawn by the report too, so nothing needs to be tapped here.
 struct RevealStep: View {
     let guessIndex: Int?
-    @Binding var realIndex: Int?
     let next: () -> Void
-
-    private var filter: DeviceActivityFilter {
-        let end = Date()
-        let start = Calendar.current.date(byAdding: .day, value: -7, to: Calendar.current.startOfDay(for: end)) ?? end
-        return DeviceActivityFilter(segment: .daily(during: DateInterval(start: start, end: end)),
-                                    users: .all, devices: .init([.iPhone]))
-    }
 
     var body: some View {
         PrintScaffold(step: 4, grain: true,
-                      primaryTitle: "NEXT", primaryEnabled: realIndex != nil, primaryAction: next) {
+                      primaryTitle: "NEXT", primaryAction: next) {
             VStack(alignment: .leading, spacing: 14) {
-                DeviceActivityReport(.reveal(guess: guessIndex), filter: filter)
+                DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
                     .frame(height: 540)
                     .frame(maxWidth: .infinity)
-                // The app cannot read the number above (Apple keeps it inside the report), so the user
-                // taps the band it falls in. Their guess from slide 2 is marked so this reads as a check.
-                Text("Your real number? Tap it.")
-                    .font(PrintFont.mono(14, .bold))
-                    .foregroundStyle(Ink.ink)
-                HStack(alignment: .bottom, spacing: 8) {
-                    ForEach(0..<4, id: \.self) { i in
-                        let on = realIndex == i
-                        Button { realIndex = i } label: {
-                            VStack(spacing: 4) {
-                                Text("YOUR GUESS")
-                                    .font(PrintFont.mono(8, .bold)).tracking(0.6)
-                                    .foregroundStyle(Ink.blue)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                                    .opacity(guessIndex == i ? 1 : 0)
-                                Text(hoursTabs[i])
-                                    .font(PrintFont.bold(16))
-                                    .foregroundStyle(on ? Ink.paper : Ink.ink)
-                                    .frame(maxWidth: .infinity, minHeight: 44)
-                                    .background(Capsule().fill(on ? Ink.ink : Color.clear))
-                                    .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2.5))
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .sensoryFeedback(.selection, trigger: on)
-                        .accessibilityLabel(hoursTabs[i].replacingOccurrences(of: "HRS", with: "hours") + (guessIndex == i ? ", your guess" : ""))
-                        .accessibilityAddTraits(on ? .isSelected : [])
-                    }
-                }
             }
         }
     }
@@ -419,6 +382,14 @@ struct RevealStep: View {
 
 /// Whether this build carries the report extension. Without it the reveal slide is skipped.
 enum ScreenTimeReport {
+    /// The last 7 days, one segment per day, this iPhone only.
+    static var lastWeek: DeviceActivityFilter {
+        let end = Date()
+        let start = Calendar.current.date(byAdding: .day, value: -7, to: Calendar.current.startOfDay(for: end)) ?? end
+        return DeviceActivityFilter(segment: .daily(during: DateInterval(start: start, end: end)),
+                                    users: .all, devices: .init([.iPhone]))
+    }
+
     static var isAvailable: Bool {
         // The report extension is an ExtensionKit extension: it lives in Extensions/, not PlugIns/.
         let url = Bundle.main.bundleURL.appendingPathComponent("Extensions")
@@ -823,6 +794,8 @@ struct GoalsStep: View {
 /// then shown every day on the Focus screen.
 struct PlanStep: View {
     let hoursIndex: Int?
+    /// The real number was shown (and the app cannot read it), so the guess is not printed.
+    var realShown = false
     let categories: Set<String>
     let goals: Set<String>
     let next: () -> Void
@@ -839,7 +812,7 @@ struct PlanStep: View {
     private var rows: [(label: String, value: String)] {
         let p = plan
         var out: [(label: String, value: String)] = []
-        if let hoursIndex { out.append(("PHONE NOW", "\(hoursTabs[min(max(hoursIndex, 0), 3)]) A DAY")) }
+        if let hoursIndex, !realShown { out.append(("PHONE NOW", "\(hoursTabs[min(max(hoursIndex, 0), 3)]) A DAY")) }
         if !p.pulls.isEmpty { out.append(("PULLS YOU IN", p.pulls.prefix(2).joined(separator: " + ").uppercased())) }
         if let task = p.task { out.append(("FOR", task.uppercased())) }
         out.append(("LOCK-INS", "\(p.sessionsPerDay) \u{00D7} \(p.minutes) MIN"))

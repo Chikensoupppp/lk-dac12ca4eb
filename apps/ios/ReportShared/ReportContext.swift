@@ -8,4 +8,7 @@ extension DeviceActivityReport.Context {
     static func reveal(guess: Int?) -> Self {
         Self("lockin.reveal.\(guess.map(String.init) ?? "none")")
     }
+
+    /// Slide 5, the day bar, drawn from the real daily average.
+    static let dayBar = Self("lockin.daybar")
 }

@@ -12,6 +12,45 @@ struct LockInReport: DeviceActivityReportExtension {
         RevealScene(guess: 1) { RevealView(data: $0) }
         RevealScene(guess: 2) { RevealView(data: $0) }
         RevealScene(guess: 3) { RevealView(data: $0) }
+        DayBarScene { DayBarReportView(hours: $0) }
+    }
+}
+
+/// Slide 5 with the real numbers. Same averaging as the reveal: the days that had any use.
+struct DayBarScene: DeviceActivityReportScene {
+    let content: (Double?) -> DayBarReportView
+    var context: DeviceActivityReport.Context { .dayBar }
+
+    func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> Double? {
+        var total: TimeInterval = 0
+        var days = 0
+        for await device in data {
+            for await segment in device.activitySegments {
+                if segment.totalActivityDuration > 60 { days += 1 }
+                total += segment.totalActivityDuration
+            }
+        }
+        guard days > 0 else { return nil }
+        return total / Double(days) / 3600
+    }
+}
+
+struct DayBarReportView: View {
+    /// Hours a day, or nil with no history.
+    let hours: Double?
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            DayBarSlide.paper.ignoresSafeArea()
+            if let hours {
+                let m = Int((hours * 60).rounded())
+                DayBarSlide(hours: hours, headline: "\(m / 60)H \(String(format: "%02d", m % 60))M\na day.")
+            } else {
+                Text("No Screen Time history on this iPhone yet.")
+                    .font(.system(size: 17, weight: .semibold))
+                    .padding(.top, 20)
+            }
+        }
     }
 }
 

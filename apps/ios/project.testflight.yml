@@ -78,7 +78,7 @@ targets:
   LockInReport:
     type: extensionkit-extension
     platform: iOS
-    sources: [LockInReport, ReportShared]
+    sources: [LockInReport, ReportShared, BrainArt/Assets.xcassets]
     entitlements:
       path: Config/LockInReport.entitlements
       properties:

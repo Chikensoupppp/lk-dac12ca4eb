@@ -28,15 +28,16 @@ struct OnboardingFlow: View {
     @State private var goingBack = false
     /// The poster tab the user tore off (0 = 1-2 hours ... 3 = 7+).
     @State private var guessIndex: Int?
-    /// The band the user matched on the real-hours slide. Wins over the guess.
-    @State private var realIndex: Int?
+    /// The real-hours report was shown. The app cannot read that number (Apple keeps it inside the
+    /// report), so later slides that need it are drawn by the report too, or left out.
+    @State private var usedReport = false
     @State private var categories: Set<String> = []
     @State private var goals: Set<String> = []
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     /// The hours answer the rest of the flow uses.
-    private var hoursIndex: Int? { realIndex ?? guessIndex }
+    private var hoursIndex: Int? { guessIndex }
 
     private var screenTimeOn: Bool {
         switch restrictions.status {
@@ -71,12 +72,12 @@ struct OnboardingFlow: View {
         case .hook: advance(to: .guess)
         case .guess: advance(to: .check)
         case .check:
-            if screenTimeOn && ScreenTimeReport.isAvailable { advance(to: .reveal) }
+            if screenTimeOn && ScreenTimeReport.isAvailable { usedReport = true; advance(to: .reveal) }
             else { advance(to: hoursIndex == nil ? .pulls : .brain) }
-        case .reveal: advance(to: hoursIndex == nil ? .pulls : .brain)
+        case .reveal: advance(to: .brain)
         case .brain: advance(to: .pulls)
         case .pulls: advance(to: .lock)
-        case .lock: advance(to: hoursIndex == nil ? .goals : .year)
+        case .lock: advance(to: hoursIndex == nil || usedReport ? .goals : .year)
         case .year: advance(to: .goals)
         case .goals: advance(to: .slide)
         case .slide: advance(to: .appsWait)
@@ -88,6 +89,7 @@ struct OnboardingFlow: View {
 
     /// "Not now (keep my guess)" on the why-we-ask slide.
     private func skipCheck() {
+        usedReport = false
         advance(to: hoursIndex == nil ? .pulls : .brain)
     }
 
@@ -105,8 +107,8 @@ struct OnboardingFlow: View {
                 case .hook: HookStep(next: next, startNow: finish)
                 case .guess: GuessStep(guessIndex: $guessIndex, next: next)
                 case .check: CheckStep(restrictions: restrictions, next: next, skip: skipCheck)
-                case .reveal: RevealStep(guessIndex: guessIndex, realIndex: $realIndex, next: next)
-                case .brain: HeartBrainStep(hoursIndex: hoursIndex ?? 0, next: next)
+                case .reveal: RevealStep(guessIndex: guessIndex, next: next)
+                case .brain: HeartBrainStep(hoursIndex: hoursIndex, useReport: usedReport, next: next)
                 case .pulls: PullsStep(categories: $categories, next: next)
                 case .lock: LockAppsStep(restrictions: restrictions, next: next)
                 case .year: YearStep(hoursIndex: hoursIndex ?? 1, next: next)
@@ -114,7 +116,7 @@ struct OnboardingFlow: View {
                 case .slide: SlideToLockStep(next: next)
                 case .appsWait: LaterStep(next: next)
                 case .comeBack: StackDaysStep(next: next)
-                case .plan: PlanStep(hoursIndex: hoursIndex, categories: categories, goals: goals, next: next)
+                case .plan: PlanStep(hoursIndex: hoursIndex, realShown: usedReport, categories: categories, goals: goals, next: next)
                 }
             }
             .environment(\.obBack, history.isEmpty || step == .plan ? nil : back)
