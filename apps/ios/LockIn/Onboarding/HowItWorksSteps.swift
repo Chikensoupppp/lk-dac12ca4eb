@@ -125,7 +125,8 @@ private var compactScreen: Bool { UIScreen.main.bounds.height < 700 }
 // MARK: One slide. You're in.
 
 /// The real "slide to lock in" control, with the brain as the knob. It follows the finger 1:1,
-/// and a flick counts too. A tap also locks it (VoiceOver, UI tests). NEXT unlocks once it is slid.
+/// and a flick counts too. A tap also locks it (VoiceOver, UI tests). Once it is slid the next slide
+/// follows by itself; NEXT stays for VoiceOver.
 struct SlideToLockStep: View {
     let next: () -> Void
     @State private var x: CGFloat = 0
@@ -147,6 +148,13 @@ struct SlideToLockStep: View {
                 .padding(.top, compactScreen ? 60 : 150)
         }
         .sensoryFeedback(.success, trigger: locked)
+        // Sliding is the "next": after a beat to see LOCKED IN, the next slide comes by itself.
+        // VoiceOver users keep the NEXT button instead of being moved on. Cancelled if they leave first.
+        .task(id: locked) {
+            guard locked, !voiceOver else { return }
+            guard await printPause(1.1) else { return }
+            next()
+        }
     }
 
     private var track: some View {

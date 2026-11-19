@@ -216,7 +216,8 @@ final class FocusUITests: XCTestCase {
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
         step("onboarding-3-check", tap: "OK, SHOW ME")
         step("onboarding-5-brain", tap: "CONTINUE")
-        step("onboarding-6-slide", tap: "NEXT", pre: { app.buttons["onboarding-slide-knob"].tap() })
+        // Sliding moves on by itself (the next step's 2-second wait covers it).
+        step("onboarding-6-slide", tap: "onboarding-slide-knob")
         step("onboarding-7-apps-wait", tap: "NEXT")
         step("onboarding-8-come-back", tap: "NEXT")
         step("onboarding-9-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
@@ -385,8 +386,8 @@ final class FocusUITests: XCTestCase {
         tap("LET\u{2019}S GO")
         tap("Skip")                      // guess
         tap("Not now")                   // Screen Time (no guess, so the hours slide is left out)
-        tap("onboarding-slide-knob")     // one slide, you're in (NEXT unlocks after the slide)
-        tap("NEXT")
+        tap("onboarding-slide-knob")     // one slide, you're in (moves on by itself)
+        sleep(2)
         tap("NEXT")                      // swipe later (notifications go to Later)
         tap("NEXT")                      // stack up the days (the week stacks up)
         tap("Skip")                      // what pulls you in
