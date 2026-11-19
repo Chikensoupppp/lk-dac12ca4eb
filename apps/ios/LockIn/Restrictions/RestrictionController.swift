@@ -62,7 +62,11 @@ final class RestrictionController: ObservableObject {
 
     func setSelection(_ newValue: FamilyActivitySelection) {
         selection = newValue
-        if let data = try? JSONEncoder().encode(newValue) { defaults.set(data, forKey: Self.selectionKey) }
+        if let data = try? JSONEncoder().encode(newValue) {
+            defaults.set(data, forKey: Self.selectionKey)
+            // The Plus auto-lock is applied by the monitor extension, which reads the app group copy.
+            if defaults == .standard { BrainLevel.shared?.set(data, forKey: AutoLock.selectionKey) }
+        }
     }
 
     /// Re-read authorization. Safe to call on appear and whenever the app becomes active.

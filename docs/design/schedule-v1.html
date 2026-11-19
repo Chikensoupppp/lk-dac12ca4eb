@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Schedule v1</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  /* The plan's time, made to fit the user's real week. 1 the plan receipt with a plain "swap" row
+     and "Can't do that time?"; 2 the calendar found a free slot ("OK?"); 3 no calendar: pick a time,
+     and how often (the repeating auto-lock is Plus). */
+  :root { --page:#E7E8E3; --ink:#1B1B1B; --blue:#3255A4; --sun:#FFB511; --red:#D25A44; --soft:#45473F; --sheet:#F4F4F0; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, sans-serif; }
+  .row { display: flex; gap: 22px; padding: 22px; width: max-content; }
+  .lab { font: 700 13px/1 "IBM Plex Mono", monospace; color: #3b3b3b; margin: 0 0 8px 6px; }
+  .phone { position: relative; width: 393px; height: 852px; background: var(--page); overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .bars { position: absolute; top: 71px; left: 24px; right: 24px; display: flex; gap: 3px; }
+  .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.18); } .bars i.on { background: var(--ink); }
+  .back { position: absolute; top: 87px; left: 18px; width: 44px; height: 44px; display: grid; place-items: center; }
+  .tag { position: absolute; left: 24px; top: 138px; display: flex; gap: 7px; align-items: center; font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--blue); }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+  h1 { position: absolute; left: 24px; right: 24px; top: 158px; font: 400 46px/.96 Anton, sans-serif; color: var(--ink); text-transform: uppercase; }
+  .sub { position: absolute; left: 24px; right: 24px; font: 600 14px/1.35 "IBM Plex Mono", monospace; color: var(--ink); }
+  .btn { position: absolute; left: 24px; right: 24px; bottom: 86px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page); display: grid; place-items: center; font: 800 19px/1 Inter; letter-spacing: 2px; }
+  .sec { position: absolute; left: 0; right: 0; bottom: 44px; text-align: center; font: 600 15px/1 Inter; color: rgba(27,27,27,.7); }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); }
+
+  /* 1 receipt */
+  .rc { position: absolute; left: 34px; right: 34px; top: 300px; background: #fff; padding: 22px 20px 26px; box-shadow: 0 12px 22px rgba(0,0,0,.14); font: 600 14.5px/1 "IBM Plex Mono", monospace; color: var(--ink); }
+  .rc .h { text-align: center; font-weight: 800; letter-spacing: 2px; margin-bottom: 14px; }
+  .rc .r { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; }
+  .rc .r b { font-weight: 800; }
+  .rc .dash { color: rgba(27,27,27,.3); white-space: nowrap; overflow: hidden; margin: 6px 0; }
+  .swap { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; padding: 10px 12px; background: #F2F4FA; border: 2px solid var(--blue); border-radius: 12px; }
+  .swap s { color: rgba(27,27,27,.5); text-decoration-thickness: 2px; font-weight: 700; }
+  .swap .ar { font: 800 18px/1 Inter; color: var(--blue); }
+  .swap b { font-weight: 800; color: var(--blue); }
+  .rc .win { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+  .rc .win b { font: 400 34px/1 Anton, sans-serif; color: var(--blue); }
+  .cant { position: absolute; left: 0; right: 0; top: 614px; text-align: center; font: 700 15px/1 Inter; color: var(--blue); text-decoration: underline; text-underline-offset: 4px; }
+
+  /* 2 calendar */
+  .week { position: absolute; left: 24px; right: 24px; top: 300px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); padding: 14px 12px 12px; }
+  .cols { display: flex; gap: 6px; }
+  .col { flex: 1; }
+  .col small { display: block; text-align: center; font: 700 10px/1 "IBM Plex Mono", monospace; color: var(--soft); margin-bottom: 6px; }
+  .day { position: relative; height: 180px; background: #fff; border-radius: 8px; border: 1.5px solid rgba(27,27,27,.12); overflow: hidden; }
+  .busy { position: absolute; left: 3px; right: 3px; border-radius: 4px; background: rgba(27,27,27,.14); }
+  .slot { position: absolute; left: 2px; right: 2px; border-radius: 5px; background: var(--blue); border: 2px solid var(--ink); }
+  .hours { display: flex; justify-content: space-between; font: 600 9px/1 "IBM Plex Mono", monospace; color: rgba(27,27,27,.5); margin-top: 6px; padding: 0 2px; }
+  .found { position: absolute; left: 24px; right: 24px; top: 580px; display: flex; gap: 12px; align-items: center; }
+  .found img { width: 72px; }
+  .bub { background: #fff; border: 2px solid var(--ink); border-radius: 16px 16px 16px 4px; padding: 10px 12px; font: 400 21px/1.1 "Caveat Brush", cursive; box-shadow: 0 3px 0 var(--ink); }
+  .legend { position: absolute; left: 24px; right: 24px; top: 650px; display: flex; gap: 16px; font: 600 11px/1 "IBM Plex Mono", monospace; color: var(--soft); }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+
+  /* 3 pick */
+  .time { position: absolute; left: 24px; right: 24px; top: 272px; display: flex; gap: 10px; }
+  .time div { flex: 1; text-align: center; padding: 14px 0; background: #fff; border: 2px solid rgba(27,27,27,.15); border-radius: 14px; font: 400 26px/1 Anton, sans-serif; color: var(--ink); }
+  .time div.on { border-color: var(--ink); box-shadow: 0 4px 0 var(--ink); background: var(--sheet); }
+  .days { position: absolute; left: 24px; right: 24px; top: 372px; display: flex; gap: 7px; }
+  .days span { flex: 1; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--ink); font: 700 13px/1 "IBM Plex Mono", monospace; }
+  .days span.on { background: var(--blue); color: #fff; }
+  .q { position: absolute; left: 24px; top: 440px; font: 800 18px/1 Inter; font-stretch: condensed; color: var(--ink); }
+  .rep { position: absolute; left: 24px; right: 24px; top: 470px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); overflow: hidden; }
+  .opt { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-top: 1.5px dashed rgba(27,27,27,.2); }
+  .opt:first-child { border-top: 0; }
+  .rad { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; flex: none; }
+  .rad i { width: 12px; height: 12px; border-radius: 50%; background: var(--blue); }
+  .opt b { display: block; font: 800 16px/1.15 Inter; font-stretch: condensed; }
+  .opt span { display: block; font: 500 12.5px/1.25 Inter; color: var(--soft); }
+  .plus { margin-left: auto; padding: 4px 8px; background: var(--sun); border: 2px solid var(--ink); border-radius: 999px; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const BRAIN = "../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png";
+const chrome = (step, tag, title, btn, sec) => `<div class="bars">${Array.from({ length: 14 }, (_, i) => `<i class="${i < step ? "on" : ""}"></i>`).join("")}</div>
+  <div class="back"><svg viewBox="0 0 12 20" width="12" height="20"><path d="M10 2L2 10l8 8" stroke="#1B1B1B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="tag"><i></i>${tag}</div><h1>${title}</h1><div class="btn">${btn}</div>${sec ? `<div class="sec">${sec}</div>` : ""}<div class="home"></div>`;
+const dash = "- ".repeat(30);
+// Busy blocks per weekday, as [startHour, endHour] between 8 and 22.
+const busy = [[[8, 15], [18, 19]], [[8, 15.5]], [[8, 15], [16, 17.5]], [[8, 15.5], [19, 21]], [[8, 14]], [[11, 13]], []];
+const y = h => (h - 8) / 14 * 180;
+const phones = [
+  ["1  YOUR PLAN (CHANGED)", chrome(12, "YOUR PLAN", "Your lock-in<br>plan.", "THIS IS MY PLAN", "Make it easier") + `
+    <div class="sub" style="top:268px">Made from your answers.</div>
+    <div class="rc"><div class="h">PLAN FOR: YOU</div>
+      <div class="swap"><s>VIDEO + SOCIAL</s><span class="ar">→</span><b>STUDYING</b></div>
+      <div class="r"><span>LOCK-INS</span><b>2 × 25 MIN</b></div>
+      <div class="r"><span>WHEN</span><b>WEEKDAYS 4:00 PM</b></div>
+      <div class="dash">${dash}</div>
+      <div class="win"><span>YOU WIN BACK</span><b>50 MIN / DAY</b></div></div>
+    <div class="cant">Can’t do 4:00 PM?</div>`],
+  ["2  FROM YOUR CALENDAR", chrome(13, "WHEN IT FITS", "Free at<br>5:30 PM.", "LOCK IN THEN", "Pick another time") + `
+    <div class="sub" style="top:260px">From your calendar, on this iPhone.</div>
+    <div class="week"><div class="cols">${["M", "T", "W", "T", "F", "S", "S"].map((d, i) => `<div class="col"><small>${d}</small><div class="day">
+      ${busy[i].map(([a, b]) => `<i class="busy" style="top:${y(a)}px;height:${y(b) - y(a)}px"></i>`).join("")}
+      ${i < 5 ? `<i class="slot" style="top:${y(17.5)}px;height:${y(18.5) - y(17.5)}px"></i>` : ""}</div></div>`).join("")}</div>
+      <div class="hours"><span>8AM</span><span>12PM</span><span>4PM</span><span>8PM</span></div></div>
+    <div class="found"><img src="${BRAIN}"><div class="bub">Weekdays, 5:30 PM. Your calendar’s clear then. OK?</div></div>`],
+  ["3  NO CALENDAR: PICK", chrome(13, "WHEN IT FITS", "When can you<br>lock in?", "SET MY TIME", "") + `
+    <div class="time"><div>3:30 PM</div><div class="on">5:30 PM</div><div>8:00 PM</div></div>
+    <div class="days">${["M", "T", "W", "T", "F", "S", "S"].map((d, i) => `<span class="${i < 5 ? "on" : ""}">${d}</span>`).join("")}</div>
+    <div class="q">How often?</div>
+    <div class="rep">
+      <div class="opt"><div class="rad"></div><div><b>Just remind me</b><span>A nudge at 5:30. You start it.</span></div></div>
+      <div class="opt"><div class="rad"><i></i></div><div><b>Lock in by itself</b><span>Your apps lock at 5:30 on the days you picked.</span></div><span class="plus">PLUS</span></div>
+    </div>`],
+];
+const row = document.getElementById("row");
+phones.forEach(([l, h]) => { const w = document.createElement("div"); w.innerHTML = `<div class="lab">${l}</div><div class="phone">${h}</div>`; row.appendChild(w); });
+document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r)))).then(() => { window.ready = true; });
+window.render = () => {};
+</script>
+</body>
+</html>

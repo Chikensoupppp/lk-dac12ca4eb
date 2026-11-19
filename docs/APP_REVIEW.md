@@ -25,6 +25,9 @@ Yearly (with a free trial) and monthly. Plus adds:
 - The full weekly history (free users see the last 3 weeks).
 To test Locked mode: buy Plus in the sandbox, tap "Locked mode" under the minutes on the Focus screen, start a short session. To leave early, END SESSION > Emergency exit (once a week, with a 15-minute wait). The session also ends by itself when the timer runs out, so please use the shortest length. Restore Purchases is on the offer screen.
 
+CALENDAR (OPTIONAL)
+On the plan slide, "Can't do 4:00?" offers to use the calendar. With permission, the app reads events on the device to suggest free times (it skips days like an away game) and, only if the user turns on "Add to my calendar", adds its own repeating "SwipeLater lock-in" events. Nothing is saved or sent. Without permission the user picks a time by hand.
+
 OPTIONAL FEATURES (not needed for review)
 - Accountability partner: two phones pair in person (Nearby Interaction + local network). Status and unlock requests go through the CloudKit public database, encrypted for the partner's phone.
 - SwipeLater for Windows (free, swipelater.app/pc): pairs over the local network with a QR code.

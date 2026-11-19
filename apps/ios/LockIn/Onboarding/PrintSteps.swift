@@ -1067,36 +1067,56 @@ struct GoalsStep: View {
     }
 }
 
-// MARK: 13. Your lock-in plan
+// MARK: 12. Your lock-in plan
 
 /// A printed receipt of the user's own plan, made from their answers (mock:
-/// docs/design/personal-plan.html). They take it, or make it easier first. The plan is saved and
-/// then shown every day on the Focus screen.
+/// docs/design/schedule-v2.html, screen 1). What pulls them in is struck through and swapped for
+/// what the time is for; the time sits on a tear-off stub with "Can't do 4:00?", which opens the
+/// schedule screens (`WhenSteps.swift`). They take it, or make it easier first. The plan is saved
+/// and then shown every day on the Focus screen.
 struct PlanStep: View {
     let hoursIndex: Int?
     /// The real number was shown (and the app cannot read it), so the guess is not printed.
     var realShown = false
     let categories: Set<String>
     let goals: Set<String>
+    /// "Make it easier" steps, kept by the flow so they survive a trip to the schedule screens.
+    @Binding var easier: Int
+    /// The time picked on the schedule screens, if any.
+    var timeChoice: TimeChoice? = nil
+    /// "Can't do 4:00?": opens the schedule screens with the plan as it is now.
+    var cantDo: ((LockInPlan) -> Void)? = nil
     let next: () -> Void
-    @State private var easier = 0
     @State private var lines = 0
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private var plan: LockInPlan {
         var p = PlanRules.make(hoursIndex: hoursIndex, pulls: categories, goals: goals)
         for _ in 0..<easier { p = PlanRules.apply(.easier, to: p) }
+        if let timeChoice {
+            p.startMinute = timeChoice.startMinute
+            p.weekdays = timeChoice.weekdays
+            p.dayStarts = timeChoice.dayStarts
+        }
         return p
+    }
+
+    /// "VIDEO + SOCIAL" -> "STUDYING", when both are known.
+    private var swap: (from: String, to: String)? {
+        let p = plan
+        guard !p.pulls.isEmpty, let task = p.task else { return nil }
+        return (p.pulls.prefix(2).joined(separator: " + ").uppercased(), task.uppercased())
     }
 
     private var rows: [(label: String, value: String)] {
         let p = plan
         var out: [(label: String, value: String)] = []
         if let hoursIndex, !realShown { out.append(("PHONE NOW", "\(hoursTabs[min(max(hoursIndex, 0), 3)]) A DAY")) }
-        if !p.pulls.isEmpty { out.append(("PULLS YOU IN", p.pulls.prefix(2).joined(separator: " + ").uppercased())) }
-        if let task = p.task { out.append(("FOR", task.uppercased())) }
+        if swap == nil {
+            if !p.pulls.isEmpty { out.append(("PULLS YOU IN", p.pulls.prefix(2).joined(separator: " + ").uppercased())) }
+            if let task = p.task { out.append(("FOR", task.uppercased())) }
+        }
         out.append(("LOCK-INS", "\(p.sessionsPerDay) \u{00D7} \(p.minutes) MIN"))
-        out.append(("WHEN", "WEEKDAYS " + DailyNudge.timeText(minute: p.startMinute).uppercased()))
         return out
     }
 
@@ -1104,6 +1124,21 @@ struct PlanStep: View {
         let m = plan.minutesPerDay
         if m < 60 { return "\(m) MIN" }
         return m % 60 == 0 ? "\(m / 60)H" : "\(m / 60)H \(m % 60)M"
+    }
+
+    private var daysText: String {
+        let d = plan.weekdays
+        if d == [2, 3, 4, 5, 6] { return "WEEKDAYS AT" }
+        if d.count == 7 { return "EVERY DAY AT" }
+        let names = [2: "MON", 3: "TUE", 4: "WED", 5: "THU", 6: "FRI", 7: "SAT", 1: "SUN"]
+        return d.sorted { ($0 + 5) % 7 < ($1 + 5) % 7 }.compactMap { names[$0] }.joined(separator: " ") + " AT"
+    }
+
+    /// The stub's time: one time, or "fitted" when it changes per day.
+    private var timeText: String {
+        let p = plan
+        let starts = Set(p.weekdays.map { p.startMinute(weekday: $0) })
+        return starts.count > 1 ? "EACH DAY, FITTED" : DailyNudge.timeText(minute: p.startMinute).uppercased()
     }
 
     private var easeAction: (() -> Void)? {
@@ -1119,62 +1154,120 @@ struct PlanStep: View {
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
             VStack(spacing: 0) {
-                Capsule().fill(Color.black).frame(height: 16)
-                    .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("PLAN FOR: YOU")
-                        .font(PrintFont.mono(15, .heavy)).tracking(2)
-                        .frame(maxWidth: .infinity)
-                        .padding(.bottom, 4)
-                    ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(row.label)
-                            Spacer(minLength: 12)
-                            Text(row.value).fontWeight(.heavy).lineLimit(1).minimumScaleFactor(0.7)
-                        }
-                        .font(PrintFont.mono(15))
-                        .opacity(i < lines ? 1 : 0)
-                        if i == rows.count - 3 { dashes }
-                    }
-                    dashes
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("YOU WIN BACK").font(PrintFont.mono(15))
-                        Spacer(minLength: 8)
-                        Text("\(wonBack) / DAY")
-                            .font(PrintFont.head(36))
-                            .foregroundStyle(Ink.blue)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.6)
-                            .contentTransition(.numericText())
-                    }
-                    HStack {
-                        Text("THIS YEAR")
-                        Spacer()
-                        Text("\u{2248} \(PlanRules.daysPerYear(plan)) DAYS").fontWeight(.heavy)
-                    }
-                    .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.soft)
-                }
-                .foregroundStyle(Ink.ink)
-                .padding(.horizontal, 20)
-                .padding(.top, 22)
-                .padding(.bottom, 30)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(ReceiptEdge().fill(Color.white).shadow(color: .black.opacity(0.16), radius: 12, y: 10))
-                .padding(.horizontal, 10)
-                .offset(y: -8)
+                receipt
+                stub
             }
             .padding(.top, 4)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(accessibilitySummary)
         }
         .task {
-            if effectiveReduceMotion(systemReduceMotion) { lines = rows.count; return }
-            for i in 1...rows.count {
+            let count = rows.count + (swap == nil ? 0 : 1)
+            if effectiveReduceMotion(systemReduceMotion) { lines = count; return }
+            for i in 1...count {
                 guard await printPause(0.3) else { return }
                 withAnimation(.easeOut(duration: 0.2)) { lines = i }
             }
         }
+    }
+
+    private var receipt: some View {
+        VStack(spacing: 0) {
+            Capsule().fill(Color.black).frame(height: 16)
+                .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+            VStack(alignment: .leading, spacing: 10) {
+                Text("PLAN FOR: YOU")
+                    .font(PrintFont.mono(15, .heavy)).tracking(2)
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 4)
+                if let swap {
+                    SwapRow(from: swap.from, to: swap.to)
+                        .opacity(lines > 0 ? 1 : 0)
+                }
+                let offset = swap == nil ? 0 : 1
+                ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(row.label)
+                        Spacer(minLength: 12)
+                        Text(row.value).fontWeight(.heavy).lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                    .font(PrintFont.mono(15))
+                    .opacity(i + offset < lines ? 1 : 0)
+                }
+                dashes
+                HStack(alignment: .firstTextBaseline) {
+                    Text("YOU WIN BACK").font(PrintFont.mono(15))
+                    Spacer(minLength: 8)
+                    Text("\(wonBack) / DAY")
+                        .font(PrintFont.head(36))
+                        .foregroundStyle(Ink.blue)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .contentTransition(.numericText())
+                }
+                HStack {
+                    Text("THIS YEAR")
+                    Spacer()
+                    Text("\u{2248} \(PlanRules.daysPerYear(plan)) DAYS").fontWeight(.heavy)
+                }
+                .font(PrintFont.mono(14))
+                .foregroundStyle(Ink.soft)
+            }
+            .foregroundStyle(Ink.ink)
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .padding(.bottom, 22)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(ReceiptEdge().fill(Color.white).shadow(color: .black.opacity(0.16), radius: 12, y: 10))
+            .padding(.horizontal, 10)
+            .offset(y: -8)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilitySummary)
+    }
+
+    /// The tear-off stub: the time, and "Can't do 4:00?".
+    private var stub: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(daysText)
+                    .font(PrintFont.mono(10, .bold)).tracking(1.4)
+                    .foregroundStyle(Ink.soft)
+                Text(timeText)
+                    .font(PrintFont.head(timeText.count > 9 ? 22 : 30))
+                    .foregroundStyle(Ink.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .contentTransition(.numericText())
+            }
+            Spacer(minLength: 0)
+            if let cantDo {
+                Button { cantDo(plan) } label: {
+                    Text(timeChoice == nil ? "Can\u{2019}t do \(DailyNudge.timeText(minute: plan.startMinute))?" : "Change time")
+                        .font(PrintFont.body(13, .heavy))
+                        .foregroundStyle(Ink.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 40)
+                        .background(Capsule().fill(Color.white))
+                        .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2))
+                        .background(Capsule().fill(Ink.ink).offset(y: 3))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("plan-cant-do")
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(Color(hex: 0xF4F4F0))
+        .overlay(alignment: .top) {
+            DashLine()
+                .stroke(Ink.ink.opacity(0.35), style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                .frame(height: 2)
+        }
+        .shadow(color: .black.opacity(0.12), radius: 8, y: 6)
+        .rotationEffect(.degrees(1.2), anchor: .topLeading)
+        .padding(.horizontal, 10)
+        .offset(y: -8)
     }
 
     private var dashes: some View {
@@ -1188,12 +1281,59 @@ struct PlanStep: View {
 
     private var accessibilitySummary: String {
         let p = plan
-        return "Your lock-in plan: \(p.sessionsPerDay) lock-ins of \(p.minutes) minutes, weekdays at \(DailyNudge.timeText(minute: p.startMinute)). You win back \(p.minutesPerDay) minutes a day, about \(PlanRules.daysPerYear(p)) days this year."
+        var s = "Your lock-in plan:"
+        if let swap { s += " \(swap.from.lowercased()) swapped for \(swap.to.lowercased())." }
+        s += " \(p.sessionsPerDay) lock-ins of \(p.minutes) minutes, \(daysText.lowercased()) \(timeText.lowercased())."
+        s += " You win back \(p.minutesPerDay) minutes a day, about \(PlanRules.daysPerYear(p)) days this year."
+        return s
     }
 
     private func accept() {
         PlanStore.save(plan)
         next()
+    }
+}
+
+/// "VIDEO + SOCIAL" with a red pen strike, an arrow, and a blue "STUDYING" sticker.
+private struct SwapRow: View {
+    let from: String
+    let to: String
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(from)
+                .font(PrintFont.mono(15, .bold))
+                .foregroundStyle(Ink.ink.opacity(0.55))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .overlay {
+                    GeometryReader { g in
+                        Path { p in
+                            p.move(to: CGPoint(x: -3, y: g.size.height * 0.58))
+                            p.addCurve(to: CGPoint(x: g.size.width + 3, y: g.size.height * 0.45),
+                                       control1: CGPoint(x: g.size.width * 0.3, y: g.size.height * 0.4),
+                                       control2: CGPoint(x: g.size.width * 0.6, y: g.size.height * 0.62))
+                        }
+                        .stroke(Ink.red, style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
+                    }
+                }
+            Image(systemName: "arrow.right")
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(Ink.ink)
+            Text(to)
+                .font(PrintFont.head(22))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(RoundedRectangle(cornerRadius: 9).fill(Ink.blue))
+                .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Ink.ink, lineWidth: 2))
+                .background(RoundedRectangle(cornerRadius: 9).fill(Ink.ink).offset(y: 3))
+                .rotationEffect(.degrees(-3))
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
     }
 }
 

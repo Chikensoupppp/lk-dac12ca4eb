@@ -17,8 +17,14 @@ struct LockInPlan: Codable, Equatable {
     var task: String?
     /// When the plan started; weeks are counted from here.
     var since: Date
+    /// Start minute per weekday when the time is fitted to each day around the calendar (Plus);
+    /// nil means `startMinute` on every plan day. Older saved plans decode it as nil.
+    var dayStarts: [Int: Int]? = nil
 
     var minutesPerDay: Int { sessionsPerDay * minutes }
+
+    /// When the first lock-in starts on a given weekday.
+    func startMinute(weekday: Int) -> Int { dayStarts?[weekday] ?? startMinute }
 
     func isPlanDay(_ date: Date, calendar: Calendar = FocusLog.calendar) -> Bool {
         weekdays.contains(calendar.component(.weekday, from: date))
@@ -27,8 +33,9 @@ struct LockInPlan: Codable, Equatable {
     /// Start times of the day's lock-ins.
     func slots(on date: Date, calendar: Calendar = FocusLog.calendar) -> [Date] {
         let day = calendar.startOfDay(for: date)
+        let start = startMinute(weekday: calendar.component(.weekday, from: date))
         return (0..<sessionsPerDay).compactMap {
-            calendar.date(byAdding: .minute, value: startMinute + $0 * minutes, to: day)
+            calendar.date(byAdding: .minute, value: start + $0 * minutes, to: day)
         }
     }
 }
