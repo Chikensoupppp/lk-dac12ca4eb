@@ -8,7 +8,7 @@ on:
 jobs:
   screens:
     runs-on: macos-15
-    timeout-minutes: 50
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - name: Generate project
@@ -26,7 +26,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/build.log" | grep -E "error:|warning: .*FocusView|BUILD" || true
           test -d "$RUNNER_TEMP/D/Build/Products/Debug-iphonesimulator/LockIn.app"
       - name: Photograph every screen
-        timeout-minutes: 30
+        timeout-minutes: 55
         shell: bash
         run: |
           set -uo pipefail
@@ -53,6 +53,11 @@ jobs:
           if [[ "${GITHUB_REF_NAME:-}" == screens-look* ]]; then SHOTS="idle active goals"; fi
           # A `screens-ob*` tag photographs only the how-it-works first-run slides.
           if [[ "${GITHUB_REF_NAME:-}" == screens-ob* ]]; then SHOTS="ob-10 ob-11 ob-12"; fi
+          # A `screens-sizes*` tag checks the fit: every slide and main screen on the smallest,
+          # a regular, a Pro and the biggest phone.
+          if [[ "${GITHUB_REF_NAME:-}" == screens-sizes* ]]; then
+            SPECS=("SE:iPhone SE (3rd generation)" "16e:iPhone 16e:iPhone 16" "Pro:iPhone 16 Pro:iPhone 15 Pro" "ProMax:iPhone 16 Pro Max:iPhone 15 Pro Max")
+          fi
           for spec in "${SPECS[@]}"; do
             label="${spec%%:*}"; names="${spec#*:}"
             IFS=: read -ra list <<< "$names"
@@ -60,7 +65,7 @@ jobs:
             xcrun simctl boot "$id"; xcrun simctl bootstatus "$id" -b >/dev/null
             xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100
             for s in $SHOTS; do shoot "$id" "$label" "$s"; done
-            if [[ "${GITHUB_REF_NAME:-}" != screens-new* && "${GITHUB_REF_NAME:-}" != screens-pick* && "${GITHUB_REF_NAME:-}" != screens-look* ]]; then
+            if [[ "${GITHUB_REF_NAME:-}" != screens-new* && "${GITHUB_REF_NAME:-}" != screens-pick* && "${GITHUB_REF_NAME:-}" != screens-look* && "${GITHUB_REF_NAME:-}" != screens-sizes* ]]; then
               xcrun simctl ui "$id" content_size accessibility-extra-large
               for s in idle goals quit-type; do shoot "$id" "$label-bigtext" "$s"; done
             fi
