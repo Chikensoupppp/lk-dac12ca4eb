@@ -214,23 +214,22 @@ final class FocusUITests: XCTestCase {
         step("onboarding-1-hook", tap: "LET\u{2019}S GO")
         step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
-        step("onboarding-3-check", tap: "ENABLE SCREEN TIME")
+        step("onboarding-3-check", tap: "SHOW MY TIME")
         step("onboarding-5-brain", tap: "CONTINUE")
-        step("onboarding-6-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
+        step("onboarding-6-slide", tap: "NEXT", pre: { app.buttons["onboarding-slide-knob"].tap() })
+        step("onboarding-7-apps-wait", tap: "NEXT")
+        step("onboarding-8-come-back", tap: "NEXT")
+        step("onboarding-9-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
         // Back returns to the previous slide with the choice kept.
         XCTAssertTrue(app.buttons["Skip for now"].waitForExistence(timeout: 10))
         app.buttons["Back"].tap()
         XCTAssertTrue(app.buttons["NEXT"].waitForExistence(timeout: 5))
         app.buttons["NEXT"].tap()
-        step("onboarding-7-lock", tap: "Skip for now")
-        step("onboarding-8-year", tap: "LET\u{2019}S DO IT")
-        step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
-        step("onboarding-10-slide", tap: "NEXT", pre: { app.buttons["onboarding-slide-knob"].tap() })
-        step("onboarding-11-apps-wait", tap: "NEXT")
-        step("onboarding-12-come-back", tap: "NEXT")
-        // The plan receipt is built from the answers; taking it ends the introduction. No promise to
-        // sign, no Plus offer here. The coach takes over on the real Focus screen.
-        step("onboarding-13-plan", tap: "THIS IS MY PLAN")
+        step("onboarding-10-lock", tap: "Skip for now")
+        step("onboarding-11-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
+        // The plan receipt is built from the answers; taking it ends the introduction.
+        // The coach takes over on the real Focus screen.
+        step("onboarding-12-plan", tap: "THIS IS MY PLAN")
         XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
         runCoachToSession(app)
     }

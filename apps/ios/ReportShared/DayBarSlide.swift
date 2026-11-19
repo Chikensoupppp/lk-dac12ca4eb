@@ -11,6 +11,9 @@ struct DayBarSlide: View {
     let hours: Double
     /// The big headline, e.g. "5H 12M\nA DAY." for real data or "5–6 hours\na day." for a guess.
     let headline: String
+    /// False inside the report extension: Apple's report view stops animating partway, so it is
+    /// drawn finished there.
+    var animated = true
 
     @Environment(\.accessibilityReduceMotion) private var reduce
 
@@ -254,7 +257,7 @@ struct DayBarSlide: View {
 
     @MainActor
     private func run() async {
-        if reduce {
+        if reduce || !animated {
             fill = 1
             chipsShown = true
             itemsShown = things.count

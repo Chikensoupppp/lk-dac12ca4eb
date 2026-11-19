@@ -8,13 +8,14 @@ import SwiftUI
 /// your year, goals, three how-it-works slides, making your plan. There is no promise to sign and no Plus offer here; Plus is
 /// shown once, after the first finished free session.
 /// The real hours can only be drawn by Apple's report extension (Lock In can never read them), so
-/// the user taps the band that matches what they see. Without Screen Time access, or without the
-/// extension, the rest of the flow uses the guess.
+/// slides 4 and 5 are drawn by it. Without Screen Time access, or without the extension, slide 5
+/// uses the guess. Order: the problem (1-5), how SwipeLater fixes it (6-8), make it yours (9-11),
+/// the plan (12).
 struct OnboardingFlow: View {
-    static let stepCount = 13
+    static let stepCount = 12
 
     enum Step: Int {
-        case hook = 1, guess, check, reveal, brain, pulls, lock, year, goals, slide, appsWait, comeBack, plan
+        case hook = 1, guess, check, reveal, brain, slide, appsWait, comeBack, pulls, lock, goals, plan
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
@@ -73,16 +74,15 @@ struct OnboardingFlow: View {
         case .guess: advance(to: .check)
         case .check:
             if screenTimeOn && ScreenTimeReport.isAvailable { usedReport = true; advance(to: .reveal) }
-            else { advance(to: hoursIndex == nil ? .pulls : .brain) }
+            else { advance(to: hoursIndex == nil ? .slide : .brain) }
         case .reveal: advance(to: .brain)
-        case .brain: advance(to: .pulls)
-        case .pulls: advance(to: .lock)
-        case .lock: advance(to: hoursIndex == nil || usedReport ? .goals : .year)
-        case .year: advance(to: .goals)
-        case .goals: advance(to: .slide)
+        case .brain: advance(to: .slide)
         case .slide: advance(to: .appsWait)
         case .appsWait: advance(to: .comeBack)
-        case .comeBack: advance(to: .plan)
+        case .comeBack: advance(to: .pulls)
+        case .pulls: advance(to: .lock)
+        case .lock: advance(to: .goals)
+        case .goals: advance(to: .plan)
         case .plan: finish()
         }
     }
@@ -90,7 +90,7 @@ struct OnboardingFlow: View {
     /// "Not now (keep my guess)" on the why-we-ask slide.
     private func skipCheck() {
         usedReport = false
-        advance(to: hoursIndex == nil ? .pulls : .brain)
+        advance(to: hoursIndex == nil ? .slide : .brain)
     }
 
     private func finish() {
@@ -111,7 +111,6 @@ struct OnboardingFlow: View {
                 case .brain: HeartBrainStep(hoursIndex: hoursIndex, useReport: usedReport, next: next)
                 case .pulls: PullsStep(categories: $categories, next: next)
                 case .lock: LockAppsStep(restrictions: restrictions, next: next)
-                case .year: YearStep(hoursIndex: hoursIndex ?? 1, next: next)
                 case .goals: GoalsStep(goals: $goals, next: next)
                 case .slide: SlideToLockStep(next: next)
                 case .appsWait: LaterStep(next: next)

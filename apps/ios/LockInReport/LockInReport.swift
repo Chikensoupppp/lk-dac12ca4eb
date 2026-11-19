@@ -44,7 +44,7 @@ struct DayBarReportView: View {
             DayBarSlide.paper.ignoresSafeArea()
             if let hours {
                 let m = Int((hours * 60).rounded())
-                DayBarSlide(hours: hours, headline: "\(m / 60)H \(String(format: "%02d", m % 60))M\na day.")
+                DayBarSlide(hours: hours, headline: "\(m / 60)H \(String(format: "%02d", m % 60))M\na day.", animated: false)
             } else {
                 Text("No Screen Time history on this iPhone yet.")
                     .font(.system(size: 17, weight: .semibold))

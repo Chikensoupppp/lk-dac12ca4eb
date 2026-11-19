@@ -103,10 +103,6 @@ struct GuessStep: View {
                     .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 poster
-                if guessIndex != nil {
-                    Stamp(text: "Just guess", color: Ink.ink, size: 18, tilt: -4, fill: nil)
-                        .transition(.scale(scale: 0.4).combined(with: .opacity))
-                }
             }
             .animation(.spring(response: 0.45, dampingFraction: 0.6), value: guessIndex)
         }
@@ -213,18 +209,11 @@ struct CheckStep: View {
     @ObservedObject var restrictions: RestrictionController
     let next: () -> Void
     let skip: () -> Void
-    @State private var printed: CGFloat = 0
-    @State private var rows = 0
     @State private var asking = false
+    @State private var bob = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
-
-    private static let reasons = [
-        "See your screen-time report.",
-        "Choose your distracting apps.",
-        "Block them during focus sessions."
-    ]
 
     /// iOS shows its Screen Time box only once. After that the answer sticks until the app is
     /// deleted, so this slide says what the answer already is instead of silently moving on.
@@ -241,51 +230,30 @@ struct CheckStep: View {
     private var primaryTitle: String {
         if asking { return "ASKING..." }
         switch access {
-        // Apple's guidance: the screen before a system permission box says "Continue", not "Allow".
-        // This button opens Apple's Screen Time permission box.
-        case .ask: return "ENABLE SCREEN TIME"
+        // Not "Allow": this button opens Apple's own Screen Time box, which asks.
+        case .ask: return "SHOW MY TIME"
         case .on: return "NEXT"
         case .off: return "OPEN SETTINGS"
         }
     }
 
     var body: some View {
-        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Let\u{2019}s\ncheck.", grain: true,
+        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Let\u{2019}s see your\nreal number.", titleSize: 46, grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
-                      secondaryTitle: access == .on ? nil : "Not now (keep my guess)", secondaryAction: skip) {
+                      secondaryTitle: access == .on ? nil : "Not now", secondaryAction: skip) {
             VStack(alignment: .leading, spacing: 22) {
-                Text("See how much time you spend on your phone and choose which apps SwipeLater can pause.")
-                    .font(PrintFont.body(16))
-                    .foregroundStyle(Ink.ink)
+                Text("Allow Screen Time. It never leaves your iPhone.")
+                    .font(PrintFont.bold(18))
+                    .foregroundStyle(Ink.ink.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
-                printer
+                peek
                 if access == .on {
                     Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
                 } else if access == .off {
-                    Text("Screen Time is off for SwipeLater. iPhone only asks once, so turn it on in Settings > Screen Time > Apps with Screen Time Access.")
+                    Text("Screen Time is off. Turn it on in Settings > Screen Time > Apps with Screen Time Access.")
                         .font(PrintFont.body(15))
                         .foregroundStyle(Ink.red)
                         .fixedSize(horizontal: false, vertical: true)
-                }
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(Array(Self.reasons.enumerated()), id: \.offset) { i, text in
-                        HStack(spacing: 12) {
-                            Text("\(i + 1)")
-                                .font(PrintFont.mono(14, .heavy))
-                                .foregroundStyle(.white)
-                                .frame(width: 28, height: 28)
-                                .background(Circle().fill(Ink.blue))
-                            Text(text).font(PrintFont.bold(19)).foregroundStyle(Ink.ink)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .opacity(rows > i ? 1 : 0)
-                        .offset(x: rows > i ? 0 : -12)
-                    }
-                    // Kept from before: the privacy promise.
-                    Text("Your screen-time data stays on this iPhone.")
-                        .font(PrintFont.mono(12))
-                        .foregroundStyle(Ink.ink.opacity(0.65))
-                        .opacity(rows >= 3 ? 1 : 0)
                 }
             }
         }
@@ -293,55 +261,51 @@ struct CheckStep: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { restrictions.refresh() }
         }
-        .task {
-            if effectiveReduceMotion(systemReduceMotion) { printed = 1; rows = 3; return }
-            withAnimation(.easeOut(duration: 1.0)) { printed = 1 }
-            guard await printPause(1.0) else { return }
-            for i in 1...3 {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { rows = i }
-                guard await printPause(0.4) else { return }
-            }
+        .onAppear {
+            guard !effectiveReduceMotion(systemReduceMotion) else { return }
+            withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) { bob = true }
         }
     }
 
-    private var printer: some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Ink.ink)
-                Text("SWIPELATER \u{00B7} PRINTER")
-                    .font(PrintFont.mono(11)).tracking(2)
-                    .foregroundStyle(Ink.paper.opacity(0.7))
-                    .padding(.leading, 22).padding(.top, 18)
-                Circle().fill(Ink.blue).frame(width: 12, height: 12)
-                    .shadow(color: Ink.blue, radius: 6)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, 22).padding(.top, 20)
-                Capsule().fill(Color.black).frame(height: 12)
-                    .padding(.horizontal, 22)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                    .padding(.bottom, 16)
+    /// The brain peeking at a hidden number through a magnifying glass.
+    private var peek: some View {
+        ZStack {
+            VStack(spacing: 6) {
+                Text("YOUR SCREEN TIME")
+                    .font(PrintFont.mono(11, .bold)).tracking(1.6)
+                    .foregroundStyle(Ink.ink.opacity(0.6))
+                Text("?H ??M")
+                    .font(PrintFont.head(64))
+                    .foregroundStyle(Ink.ink)
+                Text("A DAY")
+                    .font(PrintFont.mono(12, .bold)).tracking(1.6)
+                    .foregroundStyle(Ink.ink.opacity(0.6))
             }
-            .frame(height: 92)
-            .zIndex(1)
+            .padding(.vertical, 22)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color(hex: 0xF4F4F0)))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
+            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Ink.ink).offset(y: 5))
+            .padding(.trailing, 70)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("YOUR SCREEN TIME").font(PrintFont.mono(14, .heavy)).tracking(2)
-                    .frame(maxWidth: .infinity)
-                ReceiptRow(label: "\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}", value: "?h ??m")
-                ReceiptRow(label: "\u{2588}\u{2588}\u{2588}\u{2588}", value: "?h ??m")
-                ReceiptRow(label: "TOTAL", value: "?h ??m", bold: true)
+            ZStack(alignment: .bottomTrailing) {
+                Image("BrainExact")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120)
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 54, weight: .bold))
+                    .foregroundStyle(Ink.blue)
+                    .rotationEffect(.degrees(bob ? -8 : 4))
+                    .offset(x: 10, y: 12)
             }
-            .padding(16)
-            .padding(.bottom, 10)
-            .background(ReceiptEdge().fill(Ink.receipt))
-            .padding(.horizontal, 30)
-            .offset(y: -10)
-            .mask(alignment: .top) {
-                Rectangle().frame(height: 200 * printed).frame(maxHeight: .infinity, alignment: .top)
-            }
+            .offset(y: bob ? -4 : 4)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .offset(y: 48)
         }
+        .padding(.bottom, 50)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("A blank Screen Time receipt")
+        .accessibilityLabel("Your screen time, hidden until you allow it")
     }
 
     private func ask() {
@@ -367,20 +331,94 @@ struct CheckStep: View {
 // MARK: 4. Real hours
 
 /// The real numbers, drawn by Apple's report view inside the LockInReport extension. Lock In
-/// cannot read them; slide 5 is drawn by the report too, so nothing needs to be tapped here.
+/// cannot read them. A short "reading your week" moment plays first, then the report fades in on
+/// top of it (Apple's report can take a moment to draw; the loading view keeps the slide from
+/// ever looking blank).
 struct RevealStep: View {
     let guessIndex: Int?
     let next: () -> Void
+    @State private var showReport = false
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
         PrintScaffold(step: 4, tag: "Your real screen time", grain: true,
-                      primaryTitle: "NEXT", primaryAction: next) {
-            VStack(alignment: .leading, spacing: 14) {
-                DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
-                    .frame(height: 540)
-                    .frame(maxWidth: .infinity)
+                      primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
+            ZStack(alignment: .top) {
+                ReadingWeek(done: showReport)
+                if showReport {
+                    DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
+                        .frame(height: 560)
+                        .frame(maxWidth: .infinity)
+                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                }
             }
         }
+        .task {
+            let wait = effectiveReduceMotion(systemReduceMotion) ? 0.6 : 2.8
+            guard await printPause(wait) else { return }
+            withAnimation(.easeOut(duration: 0.35)) { showReport = true }
+        }
+    }
+}
+
+/// "Reading your week": the brain thinks, seven day dots fill in, and the digits roll.
+private struct ReadingWeek: View {
+    let done: Bool
+    @State private var days = 0
+    @State private var roll = 0
+    @State private var bob = false
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    private static let letters = ["M", "T", "W", "T", "F", "S", "S"]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("READING\nYOUR WEEK\u{2026}")
+                .font(PrintFont.head(52))
+                .lineSpacing(-6)
+                .foregroundStyle(Ink.ink)
+            HStack(spacing: 8) {
+                ForEach(0..<7, id: \.self) { i in
+                    Text(Self.letters[i])
+                        .font(PrintFont.mono(13, .bold))
+                        .foregroundStyle(i < days ? Color.white : Ink.ink.opacity(0.45))
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(i < days ? Ink.blue : Color.clear))
+                        .overlay(Circle().strokeBorder(i < days ? Ink.ink : Ink.ink.opacity(0.2), lineWidth: 2))
+                        .scaleEffect(i < days ? 1 : 0.88)
+                }
+            }
+            Text(rolled)
+                .font(PrintFont.head(96))
+                .monospacedDigit()
+                .foregroundStyle(Ink.ink.opacity(0.85))
+                .contentTransition(.numericText())
+            Image("BrainExact")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 130)
+                .rotationEffect(.degrees(bob ? 6 : -6), anchor: .bottom)
+                .frame(maxWidth: .infinity)
+        }
+        .opacity(done ? 0 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Reading your week")
+        .task {
+            if effectiveReduceMotion(systemReduceMotion) { days = 7; return }
+            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { bob = true }
+            for i in 1...7 {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { days = i }
+                for _ in 0..<2 {
+                    withAnimation(.snappy(duration: 0.15)) { roll += 1 }
+                    guard await printPause(0.17) else { return }
+                }
+            }
+        }
+    }
+
+    private var rolled: String {
+        guard roll > 0 else { return "?H ??M" }
+        let h = (roll * 7) % 10, m = (roll * 37) % 60
+        return "\(h)H \(String(format: "%02d", m))M"
     }
 }
 
@@ -421,7 +459,7 @@ struct PullsStep: View {
     private static let canvas = CGSize(width: 345, height: 430)
 
     var body: some View {
-        PrintScaffold(step: 6, tag: "What distracts you", title: "What pulls\nyou in?", grain: true,
+        PrintScaffold(step: 9, tag: "What distracts you", title: "What pulls\nyou in?", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("Which apps tend to keep you longer than you planned?")
@@ -522,7 +560,7 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 7, tag: "Pick apps to lock", title: words.title, grain: true,
+        PrintScaffold(step: 10, tag: "Pick apps to lock", title: words.title, grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
@@ -737,7 +775,7 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 9, tag: "What you want more of", background: Ink.notebook, title: "What\u{2019}s worth\nyour time?",
+        PrintScaffold(step: 11, tag: "What you want more of", background: Ink.notebook, title: "What\u{2019}s worth\nyour time?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("What would you like to make more room for?")
@@ -836,7 +874,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 13, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
+        PrintScaffold(step: 12, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
             Text("Made from your answers.")

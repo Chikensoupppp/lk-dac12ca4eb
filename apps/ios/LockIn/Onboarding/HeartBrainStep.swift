@@ -11,15 +11,36 @@ struct HeartBrainStep: View {
     let useReport: Bool
     let next: () -> Void
 
+    @State private var showReport = false
+
     private static let titles = ["1\u{2013}2 hours\na day.", "3\u{2013}4 hours\na day.", "5\u{2013}6 hours\na day.", "7+ hours\na day."]
     private static let midpoints = [1.5, 3.5, 5.5, 7.5]
 
     var body: some View {
         PrintScaffold(step: 5, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
-                DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
-                    .frame(height: 700)
+                ZStack(alignment: .top) {
+                    // Under the report while it draws, so the slide is never blank.
+                    VStack(spacing: 14) {
+                        ProgressView().tint(Ink.ink)
+                        Text("Adding up your day\u{2026}")
+                            .font(PrintFont.mono(13, .bold))
+                            .foregroundStyle(Ink.ink.opacity(0.6))
+                    }
                     .frame(maxWidth: .infinity)
+                    .padding(.top, 160)
+                    if showReport {
+                        DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
+                            .frame(height: 700)
+                            .frame(maxWidth: .infinity)
+                            .transition(.opacity)
+                    }
+                }
+                // Only one Screen Time report on screen at a time: start after slide 4's is gone.
+                .task {
+                    guard await printPause(0.7) else { return }
+                    withAnimation(.easeOut(duration: 0.3)) { showReport = true }
+                }
             } else {
                 let band = min(max(hoursIndex ?? 0, 0), 3)
                 DayBarSlide(hours: Self.midpoints[band], headline: Self.titles[band])
