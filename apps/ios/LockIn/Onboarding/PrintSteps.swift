@@ -1013,10 +1013,10 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "What you want more of", background: Ink.notebook, title: "What\u{2019}s worth\nyour time?",
+        PrintScaffold(step: 11, tag: "What you want more of", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
-            Text("What would you like to make more room for?")
+            Text("Tap everything you\u{2019}d rather spend your time on.")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
                 .fixedSize(horizontal: false, vertical: true)
