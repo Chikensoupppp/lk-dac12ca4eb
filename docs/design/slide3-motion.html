@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slide 3 motion options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #E7E8E3; --ink: #1B1B1B; --blue: #3255A4; --sun: #FFB511; --red: #D25A44; --card: #F4F4F0; --white: #FBFBF7; }
+body { margin: 0; background: #cfd0cb; display: flex; gap: 40px; padding: 40px; font-family: Inter, sans-serif; color: var(--ink); }
+.ph { width: 390px; height: 844px; border-radius: 44px; overflow: hidden; position: relative; background: var(--paper); box-shadow: 0 20px 40px rgba(0,0,0,.18); flex: none; }
+.dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(27,27,27,.06) 1px, transparent 1.4px); background-size: 7px 7px; }
+.blob { position: absolute; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(closest-side, rgba(27,27,27,.055), rgba(27,27,27,0)); }
+.chrome { position: absolute; left: 24px; right: 24px; top: 70px; }
+.prog { display: flex; gap: 3px; } .prog i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.18); } .prog i.on { background: var(--ink); }
+.back { font-size: 26px; margin-top: 12px; height: 30px; }
+.tag { display: flex; gap: 7px; align-items: center; font: 700 11px/1 'IBM Plex Mono', monospace; letter-spacing: 1.4px; color: var(--blue); margin-top: 8px; }
+.tag b { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+h1 { margin: 10px 0 0; font: 400 48px/.95 Anton, sans-serif; text-transform: uppercase; }
+.a { position: absolute; }
+.btn { position: absolute; left: 24px; right: 24px; bottom: 72px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--paper); font: 800 19px/60px Inter, sans-serif; letter-spacing: 2px; text-align: center; box-shadow: 0 4px 0 var(--blue); }
+.not { position: absolute; left: 0; right: 0; bottom: 32px; text-align: center; font: 600 15px Inter, sans-serif; color: rgba(27,27,27,.65); }
+.bubble { position: absolute; background: #fff; border: 2px solid var(--ink); border-radius: 16px; box-shadow: 3px 3px 0 var(--ink); padding: 7px 13px 8px; font: 400 20px/1.05 'Caveat Brush', cursive; white-space: nowrap; }
+.bubble span { display: inline-block; }
+.brain { position: absolute; width: 108px; height: 92px; object-fit: contain; }
+.alert { position: absolute; width: 272px; left: 59px; background: rgba(250,250,247,.97); border-radius: 14px; box-shadow: 0 10px 24px rgba(27,27,27,.16), 0 0 0 1px rgba(27,27,27,.08); text-align: center; overflow: hidden; }
+.alert .t { padding: 12px 18px 10px; font: 600 13px/1.25 -apple-system, Inter, sans-serif; }
+.alert .r { display: flex; border-top: 1px solid rgba(27,27,27,.14); font: 400 15px/1 -apple-system, Inter, sans-serif; color: #0A7AFF; }
+.alert .r div { flex: 1; padding: 11px 0; } .alert .r div:first-child { border-right: 1px solid rgba(27,27,27,.14); } .alert .r div:last-child { font-weight: 600; }
+.mono { font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+/* D: slot machine */
+.machine { left: 34px; top: 262px; width: 272px; height: 236px; box-sizing: border-box; background: var(--red); border: 3px solid var(--ink); border-radius: 26px; box-shadow: 0 6px 0 var(--ink); overflow: hidden; }
+.marq { position: absolute; left: 0; right: 0; top: 0; height: 54px; background: var(--ink); }
+.bulb { position: absolute; top: 9px; width: 9px; height: 9px; border-radius: 50%; }
+.marq .lbl { position: absolute; left: 0; right: 0; top: 24px; text-align: center; font: 400 19px/1 Anton, sans-serif; letter-spacing: 2px; color: var(--sun); }
+.win { position: absolute; left: 14px; right: 14px; top: 66px; height: 108px; box-sizing: border-box; background: var(--white); border: 3px solid var(--ink); border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 3px; }
+.reel { position: relative; width: 52px; height: 96px; overflow: hidden; background: var(--white); border-left: 2px solid rgba(27,27,27,.12); border-right: 2px solid rgba(27,27,27,.12); }
+.reel .strip { position: absolute; left: 0; right: 0; top: 0; }
+.reel .cell { height: 96px; display: flex; align-items: center; justify-content: center; font: 400 66px/1 Anton, sans-serif; }
+.reel .shade { position: absolute; inset: 0; background: linear-gradient(rgba(27,27,27,.28), rgba(27,27,27,0) 32%, rgba(27,27,27,0) 68%, rgba(27,27,27,.28)); }
+.unit { font: 400 30px/1 Anton, sans-serif; width: 24px; text-align: center; }
+.tray { position: absolute; left: 34px; right: 34px; top: 186px; height: 30px; border-radius: 10px; background: #8E3424; border: 2px solid var(--ink); font: 700 10px/28px 'IBM Plex Mono', monospace; letter-spacing: 1.2px; color: #F7DCD4; text-align: center; }
+/* E: polaroid */
+.pola { left: 40px; top: 262px; width: 232px; height: 278px; background: var(--white); box-shadow: 0 14px 24px rgba(27,27,27,.2), 0 0 0 1px rgba(27,27,27,.06); transform-origin: 50% 20%; }
+.photo { position: absolute; left: 16px; top: 16px; width: 200px; height: 200px; overflow: hidden; background: linear-gradient(160deg, #2E2D2A, #46443F); }
+.photo .lay { position: absolute; inset: 0; }
+.cap { position: absolute; left: 16px; right: 16px; top: 226px; display: flex; justify-content: space-between; align-items: baseline; }
+.lines path { stroke: var(--ink); stroke-width: 3; fill: none; stroke-linecap: round; }
+/* F: rehearsal */
+.mini { left: 62px; top: 258px; width: 226px; height: 316px; box-sizing: border-box; border: 3px solid var(--ink); border-radius: 30px; background: var(--paper); overflow: hidden; box-shadow: 0 6px 0 var(--ink); }
+.mini .alert { width: 186px; left: 17px; top: 104px; border-radius: 12px; }
+.mini .alert .t { font-size: 11px; padding: 10px 12px 8px; }
+.mini .alert .r { font-size: 12.5px; } .mini .alert .r div { padding: 9px 0; }
+.finger { width: 38px; height: 38px; border-radius: 50%; background: rgba(50,85,164,.28); border: 3px solid var(--blue); box-sizing: border-box; }
+.ripple { width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--blue); box-sizing: border-box; }
+.result { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 176px; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; padding: 12px; box-sizing: border-box; }
+.rbars { position: absolute; left: 14px; right: 14px; bottom: 30px; height: 96px; display: flex; gap: 7px; align-items: flex-end; border-bottom: 2px solid var(--ink); }
+.rbars i { flex: 1; background: var(--blue); border: 2px solid var(--ink); border-bottom: 0; border-radius: 5px 5px 0 0; transform-origin: bottom; }
+.sticker { padding: 6px 10px; border: 3px solid var(--ink); border-radius: 10px; background: var(--sun); font: 400 17px/1 Anton, sans-serif; letter-spacing: 1px; box-shadow: 2px 2px 0 var(--ink); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+const BRAIN = "../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png";
+const T = 6;
+
+// Easing: strong curves from the animate skill, solved as real cubic-beziers.
+function bez(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const sx = t => ((ax * t + bx) * t + cx) * t, sy = t => ((ay * t + by) * t + cy) * t;
+  const dx = t => (3 * ax * t + 2 * bx) * t + cx;
+  return x => {
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 8; i++) { const e = sx(t) - x; const d = dx(t); if (Math.abs(e) < 1e-5 || !d) break; t -= e / d; }
+    return sy(Math.min(1, Math.max(0, t)));
+  };
+}
+const EO = bez(0.23, 1, 0.32, 1), EIO = bez(0.77, 0, 0.175, 1), DR = bez(0.32, 0.72, 0, 1);
+const seg = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+const spring = p => p <= 0 ? 0 : p >= 1 ? 1 : 1 - Math.exp(-6 * p) * Math.cos(10 * p); // ~bounce 0.2
+const lerp = (a, b, p) => a + (b - a) * p;
+
+function chrome(title, btn) {
+  return `<div class="a" style="inset:-80px" data-bg>
+      <div class="blob" style="left:-40px;top:120px"></div><div class="blob" style="left:180px;top:420px"></div><div class="blob" style="left:40px;top:700px"></div>
+    </div><div class="dots"></div>
+    <div class="chrome"><div class="prog">${Array.from({length: 13}, (_, i) => `<i class="${i < 3 ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="back">‹</div><div class="tag"><b></b>ALLOW SCREEN TIME</div><h1>${title}</h1></div>
+    <div class="btn">${btn}</div><div class="not">Not now</div>`;
+}
+const ALERT = `<div class="t">“SwipeLater” Would Like to Access Screen Time</div><div class="r"><div>Don’t Allow</div><div data-cont>Continue</div></div>`;
+function miniAlert() {
+  return `<div class="alert" style="top:598px">${ALERT}</div>
+    <svg class="a" width="160" height="56" viewBox="0 0 160 56" style="left:185px;top:640px;overflow:visible"><path data-ring d="M18 30 C 20 10, 140 4, 150 24 C 158 44, 36 54, 14 38 C 6 31, 22 16, 46 14" fill="none" stroke="#D25A44" stroke-width="3" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/></svg>`;
+}
+
+const SYM = ['?', '4', '7', '2', '9', '5', '1', '8', '3', '6'];
+function reel() { return `<div class="reel"><div class="strip">${[...SYM, ...SYM].map(s => `<div class="cell" style="color:${s === '?' ? 'var(--blue)' : 'var(--ink)'}">${s}</div>`).join('')}</div><div class="shade"></div></div>`; }
+
+const phones = [
+  // D · slot machine
+  `<div class="ph" id="D">${chrome("What’s your<br>number?", "SPIN IT")}
+    <div class="a machine"><div class="marq">${Array.from({length: 13}, (_, i) => `<div class="bulb" style="left:${14 + i * 19}px"></div>`).join('')}<div class="lbl">HOURS A DAY</div></div>
+      <div class="win">${reel()}<div class="unit">H</div>${reel()}${reel()}<div class="unit">M</div></div>
+      <div class="tray">ONLY ON YOUR IPHONE</div></div>
+    <div class="a" style="left:306px;top:372px;width:16px;height:46px;background:var(--ink);border-radius:0 8px 8px 0"></div>
+    <div class="a" data-stick style="left:316px;top:286px;width:8px;height:110px;background:linear-gradient(90deg,#555,#1B1B1B);border-radius:4px;transform-origin:50% 100%"></div>
+    <div class="a" data-ball style="left:304px;top:266px;width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE08A,#FFB511 55%,#C98800);border:3px solid var(--ink);box-sizing:border-box"></div>
+    <img class="brain" data-brain src="${BRAIN}" style="left:2px;top:482px">
+    <div class="bubble" data-bub style="left:104px;top:514px"><span data-b1>Ooh. Pull it!</span><span data-b2 style="position:absolute;left:13px;top:7px">Tap Continue. Then see it.</span></div>
+    ${miniAlert()}</div>`,
+  // E · developing polaroid
+  `<div class="ph" id="E">${chrome("Your week,<br>developing.", "DEVELOP IT")}
+    <svg class="a lines" data-lines width="300" height="300" style="left:6px;top:262px;overflow:visible">
+      <path d="M22 70 q -14 40 0 80"/><path d="M8 90 q -10 26 0 52"/><path d="M286 70 q 14 40 0 80"/><path d="M300 90 q 10 26 0 52"/></svg>
+    <div class="a pola" data-pola>
+      <div class="photo">
+        <div class="lay" data-swirl style="background:radial-gradient(60px 60px at 30% 40%, rgba(120,110,90,.35), transparent), radial-gradient(70px 70px at 70% 65%, rgba(90,90,110,.35), transparent)"></div>
+        <div class="lay" data-cream style="background:#ECEAE2"></div>
+        <div class="lay" data-bars style="display:flex;gap:8px;align-items:flex-end;padding:30px 18px 22px;box-sizing:border-box">
+          ${[62, 48, 70, 55, 80, 92, 74].map((h, i) => `<i style="flex:1;height:${h}%;background:${i === 5 ? 'var(--red)' : 'var(--blue)'};border-radius:5px 5px 0 0"></i>`).join('')}</div>
+        <div class="lay" data-q style="display:flex;align-items:center;justify-content:center;font:400 84px/1 Anton,sans-serif;color:var(--ink)">?H</div>
+      </div>
+      <div class="cap"><span style="font:400 24px/1 'Caveat Brush',cursive">my week</span><span class="mono" style="font-size:12px;color:#45473F">?H ??M / DAY</span></div>
+    </div>
+    <img class="brain" data-brain src="${BRAIN}" style="left:272px;top:446px">
+    <div class="bubble" data-bub style="right:14px;top:548px"><span data-b1>Shake it!</span><span data-b2 style="position:absolute;right:13px;top:7px">Needs your OK first.</span></div>
+    ${miniAlert()}</div>`,
+  // F · one-tap rehearsal
+  `<div class="ph" id="F">${chrome("One tap.<br>That’s it.", "SHOW MY TIME")}
+    <div class="a mini">
+      <div class="a" style="left:16px;top:24px;font:400 22px/1 Anton,sans-serif">SWIPELATER</div>
+      <div class="a" style="left:16px;top:56px;width:120px;height:8px;border-radius:4px;background:rgba(27,27,27,.12)"></div>
+      <div class="a" style="left:16px;top:72px;width:150px;height:8px;border-radius:4px;background:rgba(27,27,27,.12)"></div>
+      <div class="result" data-result><div class="mono" style="font-size:10px;letter-spacing:1.2px;color:#45473F">YOUR REAL WEEK</div>
+        <div class="rbars">${[62, 48, 70, 55, 80, 92, 74].map(h => `<i style="height:${h}%"></i>`).join('')}</div>
+        <div class="a mono" style="left:14px;right:14px;bottom:10px;display:flex;justify-content:space-between;font-size:9px;color:#45473F">${'MTWTFSS'.split('').map(d => `<span>${d}</span>`).join('')}</div></div>
+      <div class="a" data-dim style="inset:0;background:rgba(27,27,27,.32)"></div>
+      <div class="alert" data-alert>${ALERT}</div>
+      <div class="a sticker" data-sticker style="right:14px;top:96px">UNLOCKED</div>
+    </div>
+    <div class="a ripple" data-ripple style="left:0;top:0"></div>
+    <div class="a finger" data-finger style="left:0;top:0"></div>
+    <img class="brain" data-brain src="${BRAIN}" style="left:0;top:500px">
+    <div class="bubble" data-bub style="left:232px;top:300px"><span data-b1>Watch.</span><span data-b2 style="position:absolute;left:13px;top:7px">That’s it!</span></div>
+    <div class="a mono" style="left:24px;right:24px;top:612px;text-align:center;font-size:12.5px;line-height:1.35;color:#45473F;font-weight:600">iPhone keeps it private.<br>SwipeLater never sees your apps.</div>
+  </div>`,
+];
+document.getElementById('stage').outerHTML = phones.join('');
+
+const $ = (id, sel) => document.querySelector(`#${id} [${sel}]`);
+const $$ = (id, sel) => [...document.querySelectorAll(`#${id} ${sel}`)];
+
+function background(id, t) {
+  const a = 2 * Math.PI * t / T;
+  $$(id, '.blob').forEach((b, i) => {
+    const r = 26 + i * 8, ph = a + i * 2.1;
+    b.style.transform = `translate(${(r * Math.cos(ph)).toFixed(1)}px, ${(r * Math.sin(ph)).toFixed(1)}px)`;
+  });
+}
+function bubble(id, t, swap, back) {
+  // Crossfade with a small blur so the two lines read as one bubble changing its mind.
+  const p = seg(t, swap, swap + 0.18) * (1 - seg(t, back, back + 0.18));
+  const b1 = $(id, 'data-b1'), b2 = $(id, 'data-b2');
+  b1.style.opacity = 1 - p; b1.style.filter = `blur(${(p * 2).toFixed(2)}px)`;
+  b2.style.opacity = p; b2.style.filter = `blur(${((1 - p) * 2).toFixed(2)}px)`;
+  const w = lerp(b1.offsetWidth, b2.offsetWidth, EIO(p));
+  $(id, 'data-bub').style.width = w.toFixed(1) + 'px';
+}
+function ring(id, t, a) {
+  const p = EO(seg(t, a, a + 0.5)) * (1 - seg(t, 5.5, 5.8));
+  const r = $(id, 'data-ring'); r.style.strokeDashoffset = (1 - p).toFixed(3); r.style.opacity = seg(t, a, a + 0.05) * (1 - seg(t, 5.5, 5.8));
+}
+
+function renderD(t) {
+  background('D', t);
+  // Lever: pulled toward the viewer, faked with a cosine-scaled stick.
+  const pull = EIO(seg(t, 0.4, 0.8));
+  const back = spring(seg(t, 0.8, 1.5));
+  const th = (150 * pull * (1 - back)) * Math.PI / 180;
+  $('D', 'data-stick').style.transform = `scaleY(${Math.cos(th).toFixed(3)})`;
+  $('D', 'data-ball').style.transform = `translateY(${(110 * (1 - Math.cos(th))).toFixed(1)}px) scale(${(1 + 0.25 * Math.sin(th)).toFixed(3)})`;
+  // Reels: fast start, staggered decelerating stops, a small settle wobble on landing.
+  const stops = [2.3, 2.7, 3.1];
+  $$('D', '.strip').forEach((s, i) => {
+    const cyc = 10 * (3 + i), x = seg(t, 0.8, stops[i]);
+    const f = q => cyc * (1 - Math.pow(1 - q, 3));
+    let pos = f(x);
+    const v = (f(seg(t + 0.01, 0.8, stops[i])) - pos) / 0.01;
+    const q = t - stops[i];
+    if (q > 0 && q < 0.5) pos += 0.1 * Math.exp(-9 * q) * Math.sin(22 * q);
+    if (t > 5.6) pos = cyc;
+    const y = -((((pos % 10) + 10) % 10) * 96);
+    s.style.transform = `translateY(${y.toFixed(1)}px)`;
+    s.style.filter = `blur(${Math.min(4, Math.abs(v) * 0.12).toFixed(2)}px)`;
+  });
+  const jack = t > 3.15 && t < 4.2;
+  $$('D', '.bulb').forEach((b, i) => {
+    const on = jack ? Math.floor(t * 7) % 2 === 0 : (Math.floor(t * 10) + i) % 4 === 0;
+    b.style.background = on ? '#FFD66B' : '#5A4416';
+    b.style.boxShadow = on ? '0 0 8px #FFB511' : 'none';
+  });
+  // Brain: idle bob, plus a happy hop when the last reel lands.
+  const hop = Math.sin(Math.PI * seg(t, 3.1, 3.5));
+  $('D', 'data-brain').style.transform = `translateY(${(-3 * Math.sin(2 * Math.PI * t / 1.5) - 18 * hop).toFixed(1)}px) rotate(${(-4 + 6 * hop).toFixed(1)}deg)`;
+  bubble('D', t, 3.2, 5.6);
+  ring('D', t, 3.5);
+}
+
+function renderE(t) {
+  background('E', t);
+  const env = seg(t, 0.5, 0.8) * (1 - seg(t, 2.6, 3.1));
+  const w = Math.sin(2 * Math.PI * 3.2 * (t - 0.5));
+  $('E', 'data-pola').style.transform = `translate(${(7 * w * env).toFixed(1)}px, ${(-2 * Math.abs(w) * env).toFixed(1)}px) rotate(${(-3 + 4 * w * env).toFixed(2)}deg)`;
+  $('E', 'data-lines').style.opacity = (env * (0.55 + 0.45 * Math.abs(w))).toFixed(2);
+  // Develops while shaken, fades back to dark to loop.
+  const dev = EIO(seg(t, 0.6, 3.4)) * (1 - EIO(seg(t, 5.4, 6)));
+  $('E', 'data-swirl').style.transform = `rotate(${(t * 40).toFixed(1)}deg) scale(1.4)`;
+  $('E', 'data-swirl').style.opacity = (1 - dev).toFixed(2);
+  $('E', 'data-cream').style.opacity = dev.toFixed(3);
+  const bars = $('E', 'data-bars'); bars.style.opacity = (dev * 0.85).toFixed(3); bars.style.filter = `blur(${(9 - 3 * dev).toFixed(2)}px)`;
+  const q = EO(seg(t, 3.1, 3.6)) * (1 - seg(t, 5.4, 5.7));
+  const qe = $('E', 'data-q'); qe.style.opacity = q.toFixed(3); qe.style.transform = `scale(${(0.94 + 0.06 * q).toFixed(3)})`;
+  const hop = Math.sin(Math.PI * seg(t, 3.3, 3.7));
+  $('E', 'data-brain').style.transform = `translateY(${(-3 * Math.sin(2 * Math.PI * t / 1.5) - 14 * hop).toFixed(1)}px) rotate(${(5 - 3 * w * env).toFixed(1)}deg)`;
+  bubble('E', t, 3.3, 5.6);
+  ring('E', t, 3.7);
+}
+
+function renderF(t) {
+  background('F', t);
+  const box = document.querySelector('#F .mini').getBoundingClientRect();
+  const ph = document.getElementById('F').getBoundingClientRect();
+  const cont = $('F', 'data-cont').getBoundingClientRect();
+  // Alert enters like the real one: scale .95 -> 1 with opacity, 350ms strong ease-out.
+  const ain = EO(seg(t, 0.3, 0.65)), aout = EO(seg(t, 2.1, 2.3));
+  const al = $('F', 'data-alert');
+  al.style.opacity = (ain * (1 - aout)).toFixed(3);
+  al.style.transform = `scale(${(0.95 + 0.05 * ain - 0.03 * aout).toFixed(3)})`;
+  $('F', 'data-dim').style.opacity = (ain * (1 - aout)).toFixed(3);
+  // Finger travels in, presses Continue, leaves.
+  const tx = cont.left - ph.left + cont.width / 2 - 19, ty = cont.top - ph.top + cont.height / 2 - 19;
+  const go = EIO(seg(t, 0.9, 1.7)), leave = EIO(seg(t, 2.2, 2.9));
+  const fx = lerp(lerp(300, tx, go), 330, leave), fy = lerp(lerp(900, ty, go), 900, leave);
+  const press = Math.sin(Math.PI * seg(t, 1.8, 2.0));
+  const fi = $('F', 'data-finger');
+  fi.style.transform = `translate(${fx.toFixed(1)}px, ${fy.toFixed(1)}px) scale(${(1 - 0.12 * press).toFixed(3)})`;
+  $('F', 'data-cont').style.background = `rgba(27,27,27,${(0.1 * seg(t, 1.8, 1.85) * (1 - aout)).toFixed(3)})`;
+  const rp = seg(t, 1.85, 2.4);
+  const ri = $('F', 'data-ripple');
+  ri.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${(1 + 1.4 * EO(rp)).toFixed(3)})`;
+  ri.style.opacity = rp > 0 && rp < 1 ? (0.7 * (1 - rp)).toFixed(3) : 0;
+  // Result card rises on the drawer curve; bars grow in a 50ms stagger.
+  const up = DR(seg(t, 2.35, 2.85)) * (1 - DR(seg(t, 5.3, 5.8)));
+  $('F', 'data-result').style.transform = `translateY(${((1 - up) * 200).toFixed(1)}px)`;
+  $$('F', '.rbars i').forEach((b, i) => {
+    const g = EO(seg(t, 2.6 + i * 0.05, 3.0 + i * 0.05)) * (1 - seg(t, 5.3, 5.5));
+    b.style.transform = `scaleY(${Math.max(0.02, g).toFixed(3)})`;
+  });
+  const st = spring(seg(t, 3.1, 3.7)) * (1 - seg(t, 5.3, 5.5));
+  const sk = $('F', 'data-sticker');
+  sk.style.opacity = Math.min(1, seg(t, 3.1, 3.2) * (1 - seg(t, 5.3, 5.5))).toFixed(3);
+  sk.style.transform = `rotate(${(-12 + 4 * st).toFixed(1)}deg) scale(${(0.9 + 0.1 * st).toFixed(3)})`;
+  $('F', 'data-brain').style.transform = `translateY(${(-3 * Math.sin(2 * Math.PI * t / 1.5) - 16 * Math.sin(Math.PI * seg(t, 3.1, 3.5))).toFixed(1)}px) rotate(-6deg)`;
+  bubble('F', t, 2.5, 5.5);
+}
+
+window.render = t => { t = ((t % T) + T) % T; renderD(t); renderE(t); renderF(t); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!new URLSearchParams(location.search).has('still')) {
+  const t0 = performance.now();
+  const loop = now => { window.render(reduce ? 3.9 : (now - t0) / 1000); if (!window.frozen) requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+document.fonts.ready.then(() => { window.render(0); window.ready = true; });
+</script>
+</body>
+</html>

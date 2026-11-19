@@ -215,6 +215,9 @@ struct CheckStep: View {
     @State private var bob = false
     @State private var shown = false
     @State private var drawn = false
+    @State private var pulledAt: Date?
+    @State private var landAt: Date?
+    @State private var won = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
@@ -232,22 +235,30 @@ struct CheckStep: View {
     }
 
     private var primaryTitle: String {
-        if asking { return "ASKING..." }
+        if asking { return "SPINNING..." }
         switch access {
-        // Not "Allow": this button opens Apple's own Screen Time box, which asks.
-        case .ask: return "OK, SHOW ME"
+        // Not "Allow": this button pulls the lever, and Apple's own Screen Time box asks.
+        case .ask: return "SPIN IT"
         case .on: return "NEXT"
         case .off: return "OPEN SETTINGS"
         }
     }
 
     var body: some View {
-        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "Your real time,\none tap away.", titleSize: 46, grain: true,
+        PrintScaffold(step: 3, tag: "Allow Screen Time", title: "What\u{2019}s your\nnumber?", titleSize: 46, grain: true,
                       primaryTitle: primaryTitle, primaryEnabled: !asking, primaryAction: ask,
                       secondaryTitle: access == .on ? nil : "Not now", secondaryAction: skip) {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 16) {
+                SlotMachine(pulledAt: pulledAt, landAt: landAt, won: won,
+                            reduceMotion: effectiveReduceMotion(systemReduceMotion),
+                            pull: { if !asking, access == .ask { ask() } })
+                    .padding(.top, 4)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: pulledAt)
+                    .sensoryFeedback(.success, trigger: won)
                 preview
-                if access == .on {
+                if asking || won {
+                    EmptyView()
+                } else if access == .on {
                     Stamp(text: "Screen Time is already on", color: Ink.blue, size: 20, tilt: -3)
                 } else if access == .off {
                     Text("Screen Time is off. Turn it on in Settings > Screen Time > Apps with Screen Time Access.")
@@ -274,48 +285,40 @@ struct CheckStep: View {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "SwipeLater"
     }
 
-    /// A printed picture of the Screen Time box iOS shows next, with Continue circled and the brain
-    /// pointing at it (the way Opal primes it). Drawn tilted and inked so it reads as a picture of
-    /// the box; its Continue opens Apple's real box, its Don't Allow is "Not now". Mock: docs/design/slide3-options.html, option B.
-    /// Only while the answer is still to come.
+    /// The brain's line, then a printed picture of the Screen Time box iOS shows next, with Continue
+    /// circled (the way Opal primes it). Its Continue pulls the lever like the big button; its
+    /// Don't Allow is "Not now". Only while the answer is still to come.
     @ViewBuilder
     private var preview: some View {
-        if access == .ask {
-            VStack(spacing: 0) {
-                alertPicture
-                    .padding(.horizontal, 22)
-                    .rotationEffect(.degrees(-2))
-                    .scaleEffect(shown ? 1 : 0.86)
-                    .opacity(shown ? 1 : 0)
-                    .padding(.top, 14)
-                ZStack(alignment: .topLeading) {
-                    PointArrow()
-                        .trim(from: 0, to: drawn ? 1 : 0)
-                        .stroke(Ink.ink, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
-                        .frame(width: 96, height: 92)
-                        .offset(x: 20, y: 0)
-                    HStack(alignment: .center, spacing: 10) {
-                        Image("BrainExact")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 92)
-                            .offset(y: bob ? -3 : 3)
-                            .rotationEffect(.degrees(bob ? 3 : -3))
-                        Text("this one!\nthen your\nreal time")
-                            .font(PrintFont.hand(21))
-                            .foregroundStyle(Ink.ink)
-                            .opacity(drawn ? 1 : 0)
-                    }
-                    .offset(x: 112, y: 34)
+        // Stays up while the reels land, even though the answer has already turned access on.
+        if access == .ask || asking || won {
+            VStack(spacing: 14) {
+                HStack(spacing: 8) {
+                    Image("BrainExact")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 84)
+                        .offset(y: bob ? -3 : 3)
+                        .rotationEffect(.degrees(bob ? 3 : -3))
+                        .offset(y: won ? -14 : 0)
+                    Text(won ? "Your number\u{2019}s next!" : "Pull it! iPhone asks first.")
+                        .font(PrintFont.hand(19))
+                        .foregroundStyle(Ink.ink)
+                        .contentTransition(.opacity)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+                        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Ink.ink, lineWidth: 2))
+                        .background(RoundedRectangle(cornerRadius: 16).fill(Ink.ink).offset(x: 3, y: 3))
+                    Spacer(minLength: 0)
                 }
-                .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-                Text("It never leaves your iPhone.")
-                    .font(PrintFont.mono(13))
-                    .foregroundStyle(Ink.ink)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 6)
+                .animation(.spring(response: 0.4, dampingFraction: 0.55), value: won)
+                .accessibilityElement(children: .combine)
+                alertPicture
+                    .padding(.horizontal, 18)
+                    .rotationEffect(.degrees(-2))
+                    .scaleEffect(shown ? 1 : 0.9)
+                    .opacity(shown ? 1 : 0)
             }
         } else {
             Text("It never leaves your iPhone.")
@@ -328,19 +331,14 @@ struct CheckStep: View {
         let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         let blue = Color(hex: 0x0A62D8)
         return VStack(spacing: 0) {
-            VStack(spacing: 6) {
-                Text("\u{201C}\(Self.appName)\u{201D} Would Like to Access Screen Time")
-                    .font(.system(size: 15, weight: .semibold))
-                Text("Providing \u{201C}\(Self.appName)\u{201D} access to Screen Time may allow it to see your activity data, restrict content, and limit the usage of apps and websites.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: 0x333333))
-            }
-            .multilineTextAlignment(.center)
-            .foregroundStyle(Ink.ink)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 14)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
+            Text("\u{201C}\(Self.appName)\u{201D} Would Like to Access Screen Time")
+                .font(.system(size: 14, weight: .semibold))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 14)
+                .padding(.top, 13)
+                .padding(.bottom, 11)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Next, iPhone asks to allow Screen Time.")
             Rectangle().fill(Color(hex: 0xC8C8C8)).frame(height: 1)
@@ -354,12 +352,13 @@ struct CheckStep: View {
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .contentShape(Rectangle())
                         .overlay {
-                            Capsule()
-                                .strokeBorder(Ink.sun, lineWidth: 3)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .scaleEffect(drawn ? (bob ? 1.04 : 0.98) : 0.6)
-                                .opacity(drawn ? 1 : 0)
+                            // A hand-drawn red ring that draws itself around Continue.
+                            Ellipse()
+                                .trim(from: 0, to: drawn ? 1 : 0)
+                                .stroke(Ink.red, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                .rotationEffect(.degrees(-4))
+                                .padding(.horizontal, 2)
+                                .padding(.vertical, 1)
                         }
                 }
                 .buttonStyle(AlertPictureButtonStyle())
@@ -392,8 +391,22 @@ struct CheckStep: View {
         switch access {
         case .ask:
             asking = true
+            let still = effectiveReduceMotion(systemReduceMotion)
+            if !still { pulledAt = .now }
             Task {
+                // Let the lever come down and the reels get going before Apple's box covers them.
+                if !still { _ = await printPause(0.5) }
                 await restrictions.requestAuthorization()
+                let granted = access == .on
+                if !still, let pulledAt {
+                    let now = Date.now
+                    landAt = now
+                    let land = now.timeIntervalSince(pulledAt) - SlotMachine.leverTime
+                    let settle = SlotMachine.settleTime(afterLand: land) - land
+                    _ = await printPause(settle)
+                }
+                won = granted
+                if granted, !still { _ = await printPause(0.9) }
                 asking = false
                 next()
             }
@@ -410,21 +423,6 @@ private struct AlertPictureButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(Color.black.opacity(configuration.isPressed ? 0.08 : 0))
-    }
-}
-
-/// The hand-drawn arrow on slide 3: from beside the brain, up and right to Continue, with a head.
-private struct PointArrow: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX + r.width * 0.08, y: r.maxY))
-        p.addCurve(to: CGPoint(x: r.maxX - r.width * 0.08, y: r.minY + r.height * 0.12),
-                   control1: CGPoint(x: r.minX + r.width * 0.18, y: r.minY + r.height * 0.45),
-                   control2: CGPoint(x: r.minX + r.width * 0.45, y: r.minY + r.height * 0.22))
-        p.move(to: CGPoint(x: r.maxX - r.width * 0.26, y: r.minY))
-        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.06, y: r.minY + r.height * 0.11))
-        p.addLine(to: CGPoint(x: r.maxX - r.width * 0.2, y: r.minY + r.height * 0.3))
-        return p
     }
 }
 
