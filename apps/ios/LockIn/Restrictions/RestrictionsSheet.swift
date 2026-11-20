@@ -50,6 +50,7 @@ struct RestrictionsSheet: View {
     /// Rows stay on screen when switched off, so they can be switched back on.
     @State private var rows: [Shielded] = []
     @State private var appeared = false
+    @State private var shareStats = Analytics.consent == true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// One shared entrance: fade and rise, in order. With Reduce Motion it is a fade only.
@@ -153,6 +154,18 @@ struct RestrictionsSheet: View {
                     .foregroundStyle(Ink.soft)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.vertical, 12)
+                if Analytics.consentRequired {
+                    // Where a yes was needed, taking it back is just as easy.
+                    HStack(spacing: 18) {
+                        Text("Share usage stats")
+                            .font(PrintFont.mono(13))
+                            .foregroundStyle(Ink.ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        SwitchPill(on: $shareStats, label: "Share usage stats")
+                            .scaleEffect(0.8)
+                    }
+                    .padding(.bottom, 8)
+                }
             }
             .padding(.horizontal, 24)
         }
@@ -160,6 +173,7 @@ struct RestrictionsSheet: View {
             rows = currentRows()
             appeared = true
         }
+        .onChange(of: shareStats) { _, on in Analytics.setConsent(on) }
         .onChange(of: restrictions.selection) { _, _ in
             // Picker changes add new rows; switched-off rows stay.
             withAnimation(.easeOut(duration: 0.25)) {
@@ -305,6 +319,7 @@ private struct LockedStamp: View {
 /// The black switch: a pill track with a paper knob, in the printed ink.
 private struct SwitchPill: View {
     @Binding var on: Bool
+    var label = "Lock"
 
     var body: some View {
         Button { on.toggle() } label: {
@@ -319,7 +334,7 @@ private struct SwitchPill: View {
         .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: on)
         .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel("Lock")
+        .accessibilityLabel(label)
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
     }
