@@ -1,0 +1,22 @@
+name: Share build with testers
+# Adds a build to the external TestFlight group (scripts/asc-beta-share.py). The TestFlight workflow
+# does this by itself after each upload; push an `asc-share-N` tag to (re)share the newest build.
+on:
+  push:
+    tags: ['asc-share-*']
+jobs:
+  share:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyjwt cryptography requests
+      - name: Share the newest build
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: python scripts/asc-beta-share.py
