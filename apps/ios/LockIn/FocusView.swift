@@ -1094,9 +1094,13 @@ private struct DurationSelector: View {
     private var reduceMotion: Bool { effectiveReduceMotion(systemReduceMotion) }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var optionFontSize: CGFloat = 15
+    @State private var showCustom = false
+
+    /// A length that is not one of the presets (typed here, or from the plan) shows in the last cell.
+    private var isCustom: Bool { !options.contains(selection) }
 
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: dynamicTypeSize.isAccessibilitySize ? 3 : options.count), spacing: 4) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: dynamicTypeSize.isAccessibilitySize ? 3 : options.count + 1), spacing: 4) {
             ForEach(options, id: \.self) { minutes in
                 let selected = minutes == selection
                 Button {
@@ -1117,6 +1121,38 @@ private struct DurationSelector: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(minutes) minutes")
                 .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+            Button { showCustom = true } label: {
+                Group {
+                    if isCustom {
+                        Text("\(selection)")
+                            .font(Cream.rounded(optionFontSize, .bold).monospacedDigit())
+                    } else {
+                        Image(systemName: "pencil")
+                            .font(.system(size: optionFontSize, weight: .semibold))
+                    }
+                }
+                .foregroundStyle(isCustom ? FocusPaper.page : FocusPaper.ink)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background {
+                    if isCustom {
+                        RoundedRectangle(cornerRadius: 13, style: .continuous).fill(FocusPaper.ink)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isCustom ? "\(selection) minutes, custom. Change" : "Custom minutes")
+            .accessibilityAddTraits(isCustom ? .isSelected : [])
+            .accessibilityIdentifier("custom-minutes")
+        }
+        .sheet(isPresented: $showCustom) {
+            CustomMinutesSheet(current: selection) { minutes in
+                selection = minutes
+                showCustom = false
+                onSelection()
+            } close: {
+                showCustom = false
             }
         }
         .padding(4)
