@@ -15,15 +15,21 @@ final class RiveClip: RiveViewModel {
         Bundle.main.url(forResource: file, withExtension: "riv") != nil
     }
 
-    static func make(_ file: String, artboard: String, stateMachine: String) -> RiveClip? {
+    static func make(_ file: String, artboard: String, stateMachine: String,
+                     alignment: RiveAlignment = .center, autoPlay: Bool = true) -> RiveClip? {
         guard isBundled(file) else { return nil }
-        return RiveClip(file, artboard: artboard, stateMachine: stateMachine)
+        return RiveClip(file, artboard: artboard, stateMachine: stateMachine, alignment: alignment, autoPlay: autoPlay)
     }
 
-    private init(_ file: String, artboard: String, stateMachine: String) {
-        super.init(fileName: file, stateMachineName: stateMachine, artboardName: artboard, loadCdn: false)
+    private init(_ file: String, artboard: String, stateMachine: String, alignment: RiveAlignment, autoPlay: Bool) {
+        super.init(fileName: file, stateMachineName: stateMachine, alignment: alignment, autoPlay: autoPlay,
+                   artboardName: artboard, loadCdn: false)
         // Keep the instance: the runtime only applies property changes made through this one.
         riveModel?.enableAutoBind { [weak self] instance in self?.boundInstance = instance }
+    }
+
+    func set(_ name: String, text: String) {
+        boundInstance?.stringProperty(fromPath: name)?.value = text
     }
 
     func fire(_ trigger: String) {

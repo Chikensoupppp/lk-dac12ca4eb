@@ -1,0 +1,820 @@
+<Rive version="1" kind="fragment">
+    <!--
+        SwipeLater "session done" screen, one full-screen scene (390 x 844 pt, iPhone 15 frame).
+        Idea: the ring closes. The amber arc from the Focus dial finishes its lap, snaps shut around the
+        brain and throws a spark burst; the time lands; today's day fills in and sends a spark up into
+        the streak counter, which rolls over. Palette is the Focus screen's (DESIGN.md): paper F6F3EC,
+        ink 171513, soft 6F6A60, hairline E4DED3, amber A97029, plus the brain's pink.
+        Borrowed from: Apple Fitness (closing ring + burst), Duolingo (rolling streak number, today lights
+        up, built in Rive), Headspace (one calm hero on a warm ground, little text).
+        View model "Complete": strings focused, task, streakFrom, streakTo.
+        "Footer (preview)" draws the buttons for renders only; the app draws real SwiftUI buttons there.
+        Rive paints the first sibling on top, so children read front to back.
+    -->
+    <Artboard defaultStateMachineId="0:7" styleId="0:5" viewModelId="0:40" viewModelInstanceId="0:49" width="390" height="844" name="Complete" id="0:2">
+        <LayoutComponentStyle name="Artboard Style" id="0:5"/>
+
+        <!-- ===== Footer: preview only. The app sets `footer` to 0 and draws real SwiftUI buttons here. ===== -->
+        <Node name="Footer Gate" id="0:191">
+            <DataBindContext sourcePathIds="0:40-0:203" propertyKey="18"/>
+        <Node opacity="0" name="Footer (preview)" id="0:190">
+            <Text sizingValue="fixed" width="342" height="22" alignValue="center" overflowValue="fitFontSize" wrapValue="noWrap" originX="0.5" originY="0.5" x="195" y="704" name="Next">
+                <TextStylePaint fontSize="14" fontAssetId="0:30" name="Next Style" id="0:37">
+                    <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                    <TextStyleAxis tag="2003265652" axisValue="500" name="Weight"/>
+                </TextStylePaint>
+                <TextValueRun styleId="0:37" text="Next time: Studying · 25 min" name="Run"/>
+            </Text>
+            <Text sizingValue="fixed" width="200" height="24" alignValue="center" overflowValue="fitFontSize" wrapValue="noWrap" originX="0.5" originY="0.5" x="195" y="756" name="Keep Label">
+                <TextStylePaint fontSize="17" fontAssetId="0:30" name="Keep Style" id="0:38">
+                    <Fill name="Fill"><SolidColor colorValue="FFF6F3EC" name="Color"/></Fill>
+                    <TextStyleAxis tag="2003265652" axisValue="650" name="Weight"/>
+                </TextStylePaint>
+                <TextValueRun styleId="0:38" text="Keep it" name="Run"/>
+            </Text>
+            <Shape x="195" y="756" name="Keep Button">
+                <Rectangle width="342" height="56" cornerRadiusTL="28" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+            </Shape>
+            <Text sizingValue="fixed" width="200" height="24" alignValue="center" overflowValue="fitFontSize" wrapValue="noWrap" originX="0.5" originY="0.5" x="195" y="806" name="Change">
+                <TextStylePaint fontSize="16" fontAssetId="0:30" name="Change Style" id="0:39">
+                    <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                    <TextStyleAxis tag="2003265652" axisValue="550" name="Weight"/>
+                </TextStylePaint>
+                <TextValueRun styleId="0:39" text="Change task" name="Run"/>
+            </Text>
+        </Node>
+        </Node>
+
+        <!-- ===== The spark today's day sends to the counter, and its landing ring ===== -->
+        <Node x="195" y="606" opacity="0" name="Flyer" id="0:170">
+            <Shape name="Dot">
+                <Ellipse width="11" height="11" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="CCF3C57A" name="Color"/>
+                    <Feather strength="8" name="Feather"/>
+                </Fill>
+                <Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill>
+            </Shape>
+        </Node>
+        <Node x="53" y="563" opacity="0" name="Impact" id="0:171">
+            <Shape name="Ring">
+                <Ellipse width="22" height="22" name="Path"/>
+                <Stroke thickness="2.5" name="Line"><SolidColor colorValue="FFDE9440" name="Color"/></Stroke>
+            </Shape>
+        </Node>
+
+        <!-- ===== Week panel ===== -->
+        <Node x="195" y="596" opacity="0" name="Panel" id="0:150">
+            <!-- Streak row: the number rolls from streakFrom to streakTo when the spark lands. -->
+            <Node x="-151" y="-33" name="Streak Row" id="0:151">
+                <Node name="Digits" id="0:152">
+                    <ClippingShape sourceId="0:153" name="Clip"/>
+                    <Text sizingValue="fixed" width="44" height="36" alignValue="right" overflowValue="fitFontSize" wrapValue="noWrap" originX="1" originY="0.5" x="17" y="0" name="From" id="0:154">
+                        <TextStylePaint fontSize="30" letterSpacing="-0.5" fontAssetId="0:30" name="Digit Style" id="0:34">
+                            <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="800" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:34" text="3" name="Run">
+                            <DataBindContext sourcePathIds="0:40-0:43" propertyKey="268"/>
+                        </TextValueRun>
+                    </Text>
+                    <Text sizingValue="fixed" width="44" height="36" alignValue="right" overflowValue="fitFontSize" wrapValue="noWrap" originX="1" originY="0.5" x="17" y="34" opacity="0" name="To" id="0:155">
+                        <TextStylePaint fontSize="30" letterSpacing="-0.5" fontAssetId="0:30" name="Digit Style To" id="0:36">
+                            <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="800" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:36" text="4" name="Run">
+                            <DataBindContext sourcePathIds="0:40-0:44" propertyKey="268"/>
+                        </TextValueRun>
+                    </Text>
+                </Node>
+                <Shape x="-5" y="0" name="Digit Window" id="0:153">
+                    <Rectangle width="48" height="38" name="Path"/>
+                </Shape>
+                <Text sizingValue="fixed" width="220" height="24" alignValue="left" overflowValue="fitFontSize" wrapValue="noWrap" originX="0" originY="0.5" x="24" y="1" name="Label">
+                    <TextStylePaint fontSize="17" fontAssetId="0:30" name="Label Style" id="0:35">
+                        <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+                        <TextStyleAxis tag="2003265652" axisValue="650" name="Weight"/>
+                    </TextStylePaint>
+                    <TextValueRun styleId="0:35" text="day streak" name="Run"/>
+                </Text>
+            </Node>
+
+            <!-- Seven days, today in the middle: three before, three after. -->
+            <Node y="10" name="Days" id="0:156">
+                <!-- Past days: the filled disc shows when p1..p3 is 1 (a finished day), the empty ring otherwise. -->
+                <Node x="-136" opacity="0" name="Day 1" id="0:160">
+                    <Node name="Done" id="0:220">
+                        <DataBindContext sourcePathIds="0:40-0:204" propertyKey="18"/>
+                        <Shape name="Check">
+                            <PointsPath name="Path"><StraightVertex x="-6" y="0.5"/><StraightVertex x="-1.5" y="5"/><StraightVertex x="6.5" y="-4.5"/></PointsPath>
+                            <Stroke thickness="3.2" cap="round" join="round" name="Line"><SolidColor colorValue="FFF6F3EC" name="Color"/></Stroke>
+                        </Shape>
+                        <Shape name="Disc"><Ellipse width="30" height="30" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape>
+                    </Node>
+                    <Shape name="Missed"><Ellipse width="28" height="28" name="Path"/><Stroke thickness="2" name="Line"><SolidColor colorValue="FFE4DED3" name="Color"/></Stroke></Shape>
+                </Node>
+                <Node x="-90.67" opacity="0" name="Day 2" id="0:161">
+                    <Node name="Done" id="0:221">
+                        <DataBindContext sourcePathIds="0:40-0:205" propertyKey="18"/>
+                        <Shape name="Check">
+                            <PointsPath name="Path"><StraightVertex x="-6" y="0.5"/><StraightVertex x="-1.5" y="5"/><StraightVertex x="6.5" y="-4.5"/></PointsPath>
+                            <Stroke thickness="3.2" cap="round" join="round" name="Line"><SolidColor colorValue="FFF6F3EC" name="Color"/></Stroke>
+                        </Shape>
+                        <Shape name="Disc"><Ellipse width="30" height="30" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape>
+                    </Node>
+                    <Shape name="Missed"><Ellipse width="28" height="28" name="Path"/><Stroke thickness="2" name="Line"><SolidColor colorValue="FFE4DED3" name="Color"/></Stroke></Shape>
+                </Node>
+                <Node x="-45.33" opacity="0" name="Day 3" id="0:162">
+                    <Node name="Done" id="0:222">
+                        <DataBindContext sourcePathIds="0:40-0:206" propertyKey="18"/>
+                        <Shape name="Check">
+                            <PointsPath name="Path"><StraightVertex x="-6" y="0.5"/><StraightVertex x="-1.5" y="5"/><StraightVertex x="6.5" y="-4.5"/></PointsPath>
+                            <Stroke thickness="3.2" cap="round" join="round" name="Line"><SolidColor colorValue="FFF6F3EC" name="Color"/></Stroke>
+                        </Shape>
+                        <Shape name="Disc"><Ellipse width="30" height="30" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape>
+                    </Node>
+                    <Shape name="Missed"><Ellipse width="28" height="28" name="Path"/><Stroke thickness="2" name="Line"><SolidColor colorValue="FFE4DED3" name="Color"/></Stroke></Shape>
+                </Node>
+                <!-- Today: an empty ring that fills, then the check draws on. -->
+                <Node x="0" opacity="0" name="Today" id="0:163">
+                    <Shape name="Check">
+                        <PointsPath name="Path"><StraightVertex x="-6" y="0.5"/><StraightVertex x="-1.5" y="5"/><StraightVertex x="6.5" y="-4.5"/></PointsPath>
+                        <Stroke thickness="3.2" cap="round" join="round" name="Line">
+                            <SolidColor colorValue="FFF6F3EC" name="Color"/>
+                            <TargetEffect targetId="0:82" name="Use Trim"/>
+                        </Stroke>
+                    </Shape>
+                    <Shape scaleX="0" scaleY="0" name="Fill Disc" id="0:164">
+                        <Ellipse width="30" height="30" name="Path"/>
+                        <Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill>
+                    </Shape>
+                    <Shape name="Today Ring">
+                        <Ellipse width="30" height="30" name="Path"/>
+                        <Stroke thickness="2" name="Line"><SolidColor colorValue="FFDE9440" name="Color"/></Stroke>
+                    </Shape>
+                    <Shape name="Halo" id="0:165">
+                        <Ellipse width="42" height="42" name="Path"/>
+                        <Fill name="Fill"><SolidColor colorValue="40F3C57A" name="Color"/></Fill>
+                    </Shape>
+                </Node>
+                <Node x="45.33" opacity="0" name="Day 5" id="0:166">
+                    <Shape name="Ring"><Ellipse width="28" height="28" name="Path"/><Stroke thickness="2" name="Line"><SolidColor colorValue="FFE4DED3" name="Color"/></Stroke></Shape>
+                </Node>
+                <Node x="90.67" opacity="0" name="Day 6" id="0:167">
+                    <Shape name="Ring"><Ellipse width="28" height="28" name="Path"/><Stroke thickness="2" name="Line"><SolidColor colorValue="FFE4DED3" name="Color"/></Stroke></Shape>
+                </Node>
+                <Node x="136" opacity="0" name="Day 7" id="0:168">
+                    <Shape name="Ring"><Ellipse width="28" height="28" name="Path"/><Stroke thickness="2" name="Line"><SolidColor colorValue="FFE4DED3" name="Color"/></Stroke></Shape>
+                </Node>
+
+                <!-- Day letters. Today's is ink and heavier. -->
+                <Node y="31" name="Letters">
+                    <Text sizingValue="fixed" width="30" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="-136" name="L1">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Letter Style" id="0:180">
+                            <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="600" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:180" text="M" name="Run"><DataBindContext sourcePathIds="0:40-0:207" propertyKey="268"/></TextValueRun>
+                    </Text>
+                    <Text sizingValue="fixed" width="30" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="-90.67" name="L2">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Letter Style 2" id="0:181">
+                            <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="600" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:181" text="T" name="Run"><DataBindContext sourcePathIds="0:40-0:208" propertyKey="268"/></TextValueRun>
+                    </Text>
+                    <Text sizingValue="fixed" width="30" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="-45.33" name="L3">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Letter Style 3" id="0:182">
+                            <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="600" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:182" text="W" name="Run"><DataBindContext sourcePathIds="0:40-0:209" propertyKey="268"/></TextValueRun>
+                    </Text>
+                    <Text sizingValue="fixed" width="40" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="0" name="L4">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Today Letter Style" id="0:183">
+                            <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="800" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:183" text="Today" name="Run"/>
+                    </Text>
+                    <Text sizingValue="fixed" width="30" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="45.33" name="L5">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Letter Style 5" id="0:184">
+                            <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="600" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:184" text="F" name="Run"><DataBindContext sourcePathIds="0:40-0:210" propertyKey="268"/></TextValueRun>
+                    </Text>
+                    <Text sizingValue="fixed" width="30" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="90.67" name="L6">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Letter Style 6" id="0:185">
+                            <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="600" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:185" text="S" name="Run"><DataBindContext sourcePathIds="0:40-0:211" propertyKey="268"/></TextValueRun>
+                    </Text>
+                    <Text sizingValue="fixed" width="30" height="18" alignValue="center" wrapValue="noWrap" originX="0.5" originY="0.5" x="136" name="L7">
+                        <TextStylePaint fontSize="12" fontAssetId="0:30" name="Letter Style 7" id="0:186">
+                            <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                            <TextStyleAxis tag="2003265652" axisValue="600" name="Weight"/>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:186" text="S" name="Run"><DataBindContext sourcePathIds="0:40-0:212" propertyKey="268"/></TextValueRun>
+                    </Text>
+                </Node>
+            </Node>
+
+            <!-- The panel itself: a lighter sheet with a warm, soft shadow. -->
+            <Shape name="Sheet">
+                <Rectangle width="342" height="140" cornerRadiusTL="26" name="Path"/>
+                <Fill fillRule="clockwise" name="Shadow">
+                    <SolidColor colorValue="245A4632" name="Color"/>
+                    <Feather strength="22" offsetY="10" name="Feather"/>
+                </Fill>
+                <Fill name="Fill"><SolidColor colorValue="FFFDFBF7" name="Color"/></Fill>
+                <Stroke thickness="1" name="Edge"><SolidColor colorValue="FFEDE7DC" name="Color"/></Stroke>
+            </Shape>
+        </Node>
+
+        <!-- ===== Headline and line under it ===== -->
+        <Node x="195" y="446" opacity="0" name="Headline" id="0:140">
+            <Text sizingValue="fixed" width="350" height="78" alignValue="center" overflowValue="fitFontSize" wrapValue="noWrap" originX="0.5" originY="0.5" name="Focused">
+                <TextStylePaint fontSize="66" letterSpacing="-2.5" fontAssetId="0:30" name="Headline Style" id="0:31">
+                    <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+                    <TextStyleAxis tag="2003265652" axisValue="800" name="Weight"/>
+                </TextStylePaint>
+                <TextValueRun styleId="0:31" text="25 min" name="Run">
+                    <DataBindContext sourcePathIds="0:40-0:41" propertyKey="268"/>
+                </TextValueRun>
+            </Text>
+        </Node>
+        <Node x="195" y="494" opacity="0" name="Subline" id="0:141">
+            <Text sizingValue="fixed" width="342" height="26" alignValue="center" overflowValue="fitFontSize" wrapValue="noWrap" originX="0.5" originY="0.5" name="Locked In On">
+                <TextStylePaint fontSize="18" fontAssetId="0:30" name="Soft Style" id="0:32">
+                    <Fill name="Fill"><SolidColor colorValue="FF6F6A60" name="Color"/></Fill>
+                    <TextStyleAxis tag="2003265652" axisValue="500" name="Weight"/>
+                </TextStylePaint>
+                <TextStylePaint fontSize="18" fontAssetId="0:30" name="Task Style" id="0:33">
+                    <Fill name="Fill"><SolidColor colorValue="FF171513" name="Color"/></Fill>
+                    <TextStyleAxis tag="2003265652" axisValue="650" name="Weight"/>
+                </TextStylePaint>
+                <TextValueRun styleId="0:32" text="locked in on " name="Lead"><DataBindContext sourcePathIds="0:40-0:200" propertyKey="268"/></TextValueRun>
+                <TextValueRun styleId="0:33" text="Studying" name="Task">
+                    <DataBindContext sourcePathIds="0:40-0:42" propertyKey="268"/>
+                </TextValueRun>
+            </Text>
+        </Node>
+
+        <!-- ===== Spark burst thrown when the ring closes: scaling the group pushes every dash outward ===== -->
+        <Node x="195" y="262" opacity="0" scaleX="0.9" scaleY="0.9" name="Burst" id="0:130">
+            <Node rotation="0.314" name="S1"><Shape y="-150"><Rectangle width="5" height="15" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape></Node>
+            <Node rotation="0.942" name="S2"><Shape y="-146"><Rectangle width="5" height="11" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFE9A3BC" name="Color"/></Fill></Shape></Node>
+            <Node rotation="1.571" name="S3"><Shape y="-150"><Rectangle width="5" height="15" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape></Node>
+            <Node rotation="2.199" name="S4"><Shape y="-146"><Rectangle width="5" height="11" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFE9A3BC" name="Color"/></Fill></Shape></Node>
+            <Node rotation="2.827" name="S5"><Shape y="-150"><Rectangle width="5" height="15" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape></Node>
+            <Node rotation="3.456" name="S6"><Shape y="-146"><Rectangle width="5" height="11" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFE9A3BC" name="Color"/></Fill></Shape></Node>
+            <Node rotation="4.084" name="S7"><Shape y="-150"><Rectangle width="5" height="15" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape></Node>
+            <Node rotation="4.712" name="S8"><Shape y="-146"><Rectangle width="5" height="11" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFE9A3BC" name="Color"/></Fill></Shape></Node>
+            <Node rotation="5.341" name="S9"><Shape y="-150"><Rectangle width="5" height="15" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFDE9440" name="Color"/></Fill></Shape></Node>
+            <Node rotation="5.969" name="S10"><Shape y="-146"><Rectangle width="5" height="11" cornerRadiusTL="2.5" name="Path"/><Fill name="Fill"><SolidColor colorValue="FFE9A3BC" name="Color"/></Fill></Shape></Node>
+        </Node>
+
+        <!-- ===== Hero: the ring closes around the brain ===== -->
+        <!-- Paused under Reduce Motion (`still`): no hop, no squash. -->
+        <NestedArtboard artboardId="1:2" isStateful="true" x="94.9" y="146.5" scaleX="0.44" scaleY="0.44" name="Brain" id="0:115">
+            <DataBindContext sourcePathIds="0:40-0:202" propertyKey="895"/>
+            <ViewModelInstance viewModelId="1:40" exports="true" name="Brain Instance" id="0:116">
+                <ViewModelInstanceTrigger viewModelPropertyId="1:41"/>
+                <ViewModelInstanceBoolean viewModelPropertyId="1:42"/>
+            </ViewModelInstance>
+            <NestedStateMachine animationId="1:7" name="Brain SM"/>
+        </NestedArtboard>
+
+        <Node x="195" y="262" name="Ring" id="0:111">
+            <Shape name="Progress">
+                <Ellipse width="250" height="250" name="Path"/>
+                <Stroke thickness="11" cap="round" name="Line">
+                    <LinearGradient startX="-125" startY="-125" endX="125" endY="125" name="Honey">
+                        <GradientStop colorValue="FFF4C26E" position="0"/>
+                        <GradientStop colorValue="FFD9832E" position="1"/>
+                    </LinearGradient>
+                    <TargetEffect targetId="0:80" name="Use Trim"/>
+                </Stroke>
+            </Shape>
+            <Shape name="Track">
+                <Ellipse width="250" height="250" name="Path"/>
+                <Stroke thickness="11" name="Line"><SolidColor colorValue="FFEDE6DA" name="Color"/></Stroke>
+            </Shape>
+            <!-- The dial face: a slightly lighter plate with a soft warm shadow under it. -->
+            <Shape name="Face">
+                <Ellipse width="238" height="238" name="Path"/>
+                <Fill fillRule="clockwise" name="Shadow">
+                    <SolidColor colorValue="2E6B4F2A" name="Color"/>
+                    <Feather strength="30" offsetY="16" name="Feather"/>
+                </Fill>
+                <Fill name="Fill"><SolidColor colorValue="FFFCFAF6" name="Color"/></Fill>
+            </Shape>
+        </Node>
+
+        <!-- Warm bloom behind the ring when it closes. -->
+        <Shape x="195" y="262" opacity="0" name="Glow" id="0:117">
+            <Ellipse width="252" height="252" name="Path"/>
+            <Stroke thickness="30" name="Line">
+                <SolidColor colorValue="FFF6CB80" name="Color"/>
+                <Feather strength="22" name="Feather"/>
+            </Stroke>
+        </Shape>
+
+        <!-- ===== Living ground: big soft tone-on-tone shapes drifting slowly ===== -->
+        <Shape x="70" y="190" name="Blob A" id="0:101">
+            <Ellipse width="430" height="380" name="Path"/>
+            <Fill fillRule="clockwise" name="Fill">
+                <SolidColor colorValue="FFEEE5D3" name="Color"/>
+                <Feather strength="90" name="Feather"/>
+            </Fill>
+        </Shape>
+        <Shape x="340" y="700" name="Blob B" id="0:102">
+            <Ellipse width="380" height="360" name="Path"/>
+            <Fill fillRule="clockwise" name="Fill">
+                <SolidColor colorValue="FFF3E0E4" name="Color"/>
+                <Feather strength="90" name="Feather"/>
+            </Fill>
+        </Shape>
+        <Shape x="350" y="120" name="Blob C" id="0:103">
+            <Ellipse width="260" height="240" name="Path"/>
+            <Fill fillRule="clockwise" name="Fill">
+                <SolidColor colorValue="FFF6E2E9" name="Color"/>
+                <Feather strength="80" name="Feather"/>
+            </Fill>
+        </Shape>
+        <Shape x="195" y="422" name="Ground" id="0:100">
+            <Rectangle width="390" height="844" name="Path"/>
+            <Fill name="Fill"><SolidColor colorValue="FFF6F3EC" name="Color"/></Fill>
+        </Shape>
+
+        <GroupEffect name="Ring Trim" id="0:80">
+            <TrimPath start="0" end="0" name="Trim" id="0:81"/>
+        </GroupEffect>
+        <GroupEffect name="Check Trim" id="0:82">
+            <TrimPath start="0" end="0" name="Trim" id="0:83"/>
+        </GroupEffect>
+
+        <!--
+            The app writes every view model value before the first frame, so these entry choices see them.
+            Main: Settled under Reduce Motion (`still`), else Play.
+            Streak: Static when `still` or not `newDay`, else Streak Beat.
+            Ambient: drifts unless `still`.
+        -->
+        <StateMachine name="Complete" id="0:7">
+            <StateMachineLayer name="Main" id="0:8">
+                <AnyState x="0" y="-120"/>
+                <ExitState x="400" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:52">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:202" propertyKey="634"/></BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="true"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                    <StateTransition stateToId="0:50"/>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="0:60" id="0:50"/>
+                <AnimationState x="200" y="120" animationId="0:64" id="0:52"/>
+            </StateMachineLayer>
+            <StateMachineLayer name="Streak" id="0:10">
+                <AnyState x="0" y="-120"/>
+                <ExitState x="400" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:54">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:202" propertyKey="634"/></BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="true"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                    <StateTransition stateToId="0:54">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:201" propertyKey="634"/></BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="false"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                    <StateTransition stateToId="0:53"/>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="0:62" id="0:53"/>
+                <AnimationState x="200" y="120" animationId="0:63" id="0:54"/>
+            </StateMachineLayer>
+            <StateMachineLayer name="Ambient" id="0:9">
+                <AnyState x="0" y="-120"/>
+                <ExitState x="400" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:51">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:202" propertyKey="634"/></BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="false"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </EntryState>
+                <AnimationState x="200" y="0" animationId="0:61" id="0:51"/>
+            </StateMachineLayer>
+        </StateMachine>
+
+        <!--
+            Play, 60 fps, once:
+              6-46    ring draws closed (strong ease-out)
+              44-70   ring pops, bloom, spark burst
+              ~54     brain cheers (its own state machine, 0.9 s in)
+              52-80   headline rises; subline 60-86
+              78-102  panel rises; days pop in 86-108
+              116-140 today fills and its check draws
+              128-150 spark arcs up into the counter
+              150-172 counter rolls over, impact ring, row pops
+        -->
+        <LinearAnimation duration="200" loopValue="oneShot" name="Play" id="0:60">
+            <!-- Ring draw -->
+            <KeyedObject objectId="0:81">
+                <KeyedProperty propertyKey="115">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="6" interpolationType="cubic"><CubicEaseInterpolator x1="0.33" y1="0" x2="0.12" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="46" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Ring pop -->
+            <KeyedObject objectId="0:111">
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="44" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.055" frame="52" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.99" frame="64" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="74" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="44" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.055" frame="52" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.99" frame="64" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="74" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Bloom -->
+            <KeyedObject objectId="0:117">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="42" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.95" frame="52" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.35" frame="110" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Spark burst -->
+            <KeyedObject objectId="0:130">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="45" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="56" interpolationType="cubic"><CubicEaseInterpolator x1="0.33" y1="0" x2="0.67" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0" frame="78" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="0.9" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.9" frame="45" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.3" frame="78" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="0.9" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.9" frame="45" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.3" frame="78" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Headline -->
+            <KeyedObject objectId="0:140">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="52" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="76" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="464" interpolationType="hold"/>
+                    <KeyFrameDouble value="464" frame="52" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="446" frame="82" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:141">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="60" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="84" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="508" interpolationType="hold"/>
+                    <KeyFrameDouble value="508" frame="60" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="494" frame="88" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Panel -->
+            <KeyedObject objectId="0:150">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="78" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="100" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="622" interpolationType="hold"/>
+                    <KeyFrameDouble value="622" frame="78" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="596" frame="108" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Days pop in, left to right -->
+            <KeyedObject objectId="0:160">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="86" interpolationType="linear"/><KeyFrameDouble value="1" frame="92" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="16"><KeyFrameDouble value="0.6" interpolationType="hold"/><KeyFrameDouble value="0.6" frame="86" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/></KeyFrameDouble><KeyFrameDouble value="1" frame="100" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="17"><KeyFrameDouble value="0.6" interpolationType="hold"/><KeyFrameDouble value="0.6" frame="86" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/></KeyFrameDouble><KeyFrameDouble value="1" frame="100" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:161">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="89" interpolationType="linear"/><KeyFrameDouble value="1" frame="95" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="16"><KeyFrameDouble value="0.6" interpolationType="hold"/><KeyFrameDouble value="0.6" frame="89" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/></KeyFrameDouble><KeyFrameDouble value="1" frame="103" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="17"><KeyFrameDouble value="0.6" interpolationType="hold"/><KeyFrameDouble value="0.6" frame="89" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/></KeyFrameDouble><KeyFrameDouble value="1" frame="103" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:162">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="92" interpolationType="linear"/><KeyFrameDouble value="1" frame="98" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="16"><KeyFrameDouble value="0.6" interpolationType="hold"/><KeyFrameDouble value="0.6" frame="92" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/></KeyFrameDouble><KeyFrameDouble value="1" frame="106" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="17"><KeyFrameDouble value="0.6" interpolationType="hold"/><KeyFrameDouble value="0.6" frame="92" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.56" x2="0.64" y2="1"/></KeyFrameDouble><KeyFrameDouble value="1" frame="106" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:163">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="95" interpolationType="linear"/><KeyFrameDouble value="1" frame="101" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:166">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="98" interpolationType="linear"/><KeyFrameDouble value="1" frame="104" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:167">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="101" interpolationType="linear"/><KeyFrameDouble value="1" frame="107" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:168">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/><KeyFrameDouble value="0" frame="104" interpolationType="linear"/><KeyFrameDouble value="1" frame="110" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <!-- Today fills, its halo swells and fades, the check draws -->
+            <KeyedObject objectId="0:164">
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="116" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.18" frame="126" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="136" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="116" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.18" frame="126" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="136" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:165">
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="116" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.7" frame="146" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="116" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.7" frame="146" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="116" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="146" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:83">
+                <KeyedProperty propertyKey="115">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="124" interpolationType="cubic"><CubicEaseInterpolator x1="0.33" y1="0" x2="0.12" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="138" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Footer (preview) fades in with the panel -->
+            <KeyedObject objectId="0:190">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="96" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="116" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <!-- Streak Beat: only when this session is the first finished one today (`newDay`). Same clock as Play. -->
+        <LinearAnimation duration="200" loopValue="oneShot" name="Streak Beat" id="0:62">
+            <!-- The spark arcs from today up into the counter -->
+            <KeyedObject objectId="0:170">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="128" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="150" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="13">
+                    <KeyFrameDouble value="195" interpolationType="hold"/>
+                    <KeyFrameDouble value="195" frame="128" interpolationType="cubic"><CubicEaseInterpolator x1="0.5" y1="0" x2="0.6" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="53" frame="150" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="606" interpolationType="hold"/>
+                    <KeyFrameDouble value="606" frame="128" interpolationType="cubic"><CubicEaseInterpolator x1="0.2" y1="0.8" x2="0.4" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="512" frame="140" interpolationType="cubic"><CubicEaseInterpolator x1="0.6" y1="0" x2="0.8" y2="0.2"/></KeyFrameDouble>
+                    <KeyFrameDouble value="563" frame="150" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Impact ring at the counter -->
+            <KeyedObject objectId="0:171">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="150" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="172" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="0.5" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.5" frame="150" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="2.8" frame="172" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="0.5" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.5" frame="150" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="2.8" frame="172" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <!-- Counter roll: the old number slides up and out, the new one rises in -->
+            <KeyedObject objectId="0:154">
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="150" interpolationType="cubic"><CubicEaseInterpolator x1="0.5" y1="0" x2="0.75" y2="0"/></KeyFrameDouble>
+                    <KeyFrameDouble value="-34" frame="162" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="150" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="160" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:155">
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="34" interpolationType="hold"/>
+                    <KeyFrameDouble value="34" frame="153" interpolationType="cubic"><CubicEaseInterpolator x1="0.34" y1="1.4" x2="0.64" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0" frame="170" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="153" interpolationType="linear"/>
+                    <KeyFrameDouble value="1" frame="160" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:151">
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="150" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.07" frame="157" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="174" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="1" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="150" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.07" frame="157" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="174" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <!-- Streak Static: a later session today, or Reduce Motion. The number just sits at streakTo. -->
+        <LinearAnimation duration="1" loopValue="oneShot" name="Streak Static" id="0:63">
+            <KeyedObject objectId="0:154">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:155">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="14"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:170">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:171">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <!-- Settled (Reduce Motion): Play's last frame, held. No draw-on, no burst, nothing travels. -->
+        <LinearAnimation duration="1" loopValue="oneShot" name="Settled" id="0:64">
+            <KeyedObject objectId="0:81"><KeyedProperty propertyKey="115"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:117"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0.35" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:130"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:140">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="14"><KeyFrameDouble value="446" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:141">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="14"><KeyFrameDouble value="494" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:150">
+                <KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="14"><KeyFrameDouble value="596" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:160"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:161"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:162"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:163"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:166"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:167"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:168"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:164">
+                <KeyedProperty propertyKey="16"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="17"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:165"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:83"><KeyedProperty propertyKey="115"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:190"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+        </LinearAnimation>
+
+        <!-- Ambient, 10 s loop: the ground drifts, slow enough to read as warmth, not as motion. -->
+        <LinearAnimation duration="600" loopValue="loop" name="Ambient" id="0:61">
+            <KeyedObject objectId="0:101">
+                <KeyedProperty propertyKey="13">
+                    <KeyFrameDouble value="70" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="112" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="70" frame="600" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="190" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="226" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="190" frame="600" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:102">
+                <KeyedProperty propertyKey="13">
+                    <KeyFrameDouble value="340" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="296" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="340" frame="600" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="700" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="664" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="700" frame="600" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:103">
+                <KeyedProperty propertyKey="13">
+                    <KeyFrameDouble value="350" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="318" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="350" frame="600" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="14">
+                    <KeyFrameDouble value="120" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="160" frame="300" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="120" frame="600" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+    </Artboard>
+
+    <ComponentAsset artboardId="1:2" name="Brain"/>
+    <FontAsset file="Onest.ttf" name="Onest" id="0:30"/>
+
+    <ViewModel defaultInstanceId="0:49" name="Complete" id="0:40">
+        <ViewModelPropertyString name="focused" id="0:41"/>
+        <ViewModelPropertyString name="task" id="0:42"/>
+        <ViewModelPropertyString name="streakFrom" id="0:43"/>
+        <ViewModelPropertyString name="streakTo" id="0:44"/>
+        <ViewModelPropertyString name="lead" id="0:200"/>
+        <ViewModelPropertyBoolean name="newDay" id="0:201"/>
+        <ViewModelPropertyBoolean name="still" id="0:202"/>
+        <ViewModelPropertyNumber name="footer" id="0:203"/>
+        <ViewModelPropertyNumber name="p1" id="0:204"/>
+        <ViewModelPropertyNumber name="p2" id="0:205"/>
+        <ViewModelPropertyNumber name="p3" id="0:206"/>
+        <ViewModelPropertyString name="l1" id="0:207"/>
+        <ViewModelPropertyString name="l2" id="0:208"/>
+        <ViewModelPropertyString name="l3" id="0:209"/>
+        <ViewModelPropertyString name="l5" id="0:210"/>
+        <ViewModelPropertyString name="l6" id="0:211"/>
+        <ViewModelPropertyString name="l7" id="0:212"/>
+        <!-- Preview values. The app overwrites all of them (and sets footer to 0). -->
+        <ViewModelInstance exports="true" name="Default" id="0:49">
+            <ViewModelInstanceString propertyValue="25 min" viewModelPropertyId="0:41"/>
+            <ViewModelInstanceString propertyValue="Studying" viewModelPropertyId="0:42"/>
+            <ViewModelInstanceString propertyValue="3" viewModelPropertyId="0:43"/>
+            <ViewModelInstanceString propertyValue="4" viewModelPropertyId="0:44"/>
+            <ViewModelInstanceString propertyValue="locked in on " viewModelPropertyId="0:200"/>
+            <ViewModelInstanceBoolean propertyValue="true" viewModelPropertyId="0:201"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="0:202"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="0:203"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="0:204"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="0:205"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="0:206"/>
+            <ViewModelInstanceString propertyValue="M" viewModelPropertyId="0:207"/>
+            <ViewModelInstanceString propertyValue="T" viewModelPropertyId="0:208"/>
+            <ViewModelInstanceString propertyValue="W" viewModelPropertyId="0:209"/>
+            <ViewModelInstanceString propertyValue="F" viewModelPropertyId="0:210"/>
+            <ViewModelInstanceString propertyValue="S" viewModelPropertyId="0:211"/>
+            <ViewModelInstanceString propertyValue="S" viewModelPropertyId="0:212"/>
+        </ViewModelInstance>
+    </ViewModel>
+</Rive>

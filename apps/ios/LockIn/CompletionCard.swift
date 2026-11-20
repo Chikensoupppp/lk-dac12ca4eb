@@ -10,6 +10,10 @@ struct CompletionInfo: Identifiable, Equatable {
     let firstEver: Bool
     /// The time (minutes after midnight) to offer a daily reminder for; nil when it is already on.
     var nudgeMinute: Int? = nil
+    /// The streak before and after this session. They differ when this was today's first finished
+    /// session; nil means "read the store now" (debug shots).
+    var streakBefore: Int? = nil
+    var streakAfter: Int? = nil
 }
 
 struct CompletionCard: View {
@@ -32,10 +36,12 @@ struct CompletionCard: View {
 
     /// The top of the card: the stamp slams down on the first ever session, otherwise the brain cheers.
     @ViewBuilder private var hero: some View {
+        // The clip fills what the card has to spare: tall phones get the big stamp, an iPhone SE
+        // shrinks it so the buttons stay on screen.
         if riveStamp {
-            RiveStampView().frame(height: 150)
+            RiveStampView().frame(maxWidth: .infinity, minHeight: 120, maxHeight: 220)
         } else if riveBrain {
-            RiveBrainCheer().frame(width: 130, height: 130)
+            RiveBrainCheer().frame(maxWidth: .infinity, minHeight: 100, maxHeight: 170)
         } else {
             BrainCanvas(stage: 0, expression: .cheer).frame(width: 110, height: 92)
         }

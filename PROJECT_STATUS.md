@@ -1,5 +1,9 @@
 # Project status
 
+## Session-done screen in Rive - 2026-11-20
+
+- New full-screen Rive scene (`apps/rive/complete`) replaces the completion card and the streak screen after a session: ring closes around the brain, time lands, today fills, streak rolls over. Approved from a Rive render; wired through `SessionDoneView.swift`. Uncommitted, not compiled. Details in `HANDOFF.md`.
+
 ## Rive animations - 2026-11-20
 
 - Built with the Rive CLI in `apps/rive/` (brain, lock, stamp, streak), compiled with 0 errors, published signed-in. Wired into the iOS code, uncommitted: the `Rive` SPM package (rive-ios 6.30.1+) in both project specs, `LockIn/Rive/RiveClip.swift`, streak week row (`StreakView.swift`), completion card stamp and brain cheer (`CompletionCard.swift`). Reduce Motion keeps the old static art.

@@ -31,6 +31,19 @@ The pink brain sits inside the dial above the time. Use the bundled `BrainExact`
   Opal (tips on the real screen, first reward).
 - Reduce Motion: fades only; no travel, squash, shake or confetti.
 
+## Session done (Rive, 2026-11-20, approved from a Rive render)
+- One full-screen Rive scene, `apps/rive/complete` (`complete.riv`), shown by `SessionDoneView.swift`.
+  It replaces the completion card and, for today's first session, the separate streak screen.
+- Idea: the ring closes. A honey ring (gradient `#F4C26E` to `#D9832E`) draws shut around the brain,
+  pops with a warm bloom and a spark burst; the brain cheers; the time lands (Onest 800, 66 pt);
+  "locked in on <task>"; a week panel with today in the middle fills today, and on a new day a spark
+  flies into the streak number, which rolls over. Ground `#F6F3EC` with slow tone-on-tone drifting blobs.
+- Rejected before it: small clip-art animations (stamp, sticker row) dropped into the old layouts.
+- Buttons, reminder pill and VoiceOver text are SwiftUI on top (black pill "Keep it", "Change task").
+- Reduce Motion or Low Power Mode: the scene starts settled, the brain is paused, the ground is still.
+- Borrowed from: Apple Fitness (closing ring + burst), Duolingo (rolling streak number, built in Rive),
+  Headspace (one calm hero, little text).
+
 ## Copy
 - Short labels and one-line status only. No explanatory, legal or how-to paragraphs.
 

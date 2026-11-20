@@ -402,9 +402,8 @@ struct FocusView: View {
                               saved: { self.plan = $0 }, close: { showSchedule = false })
             }
         }
-        .sheet(item: $completion, onDismiss: advanceAfterSession) { info in
-            CompletionCard(info: info, keep: { completion = nil }, change: { pendingTaskPicker = true; completion = nil })
-                .presentationDetents([.large])
+        .fullScreenCover(item: $completion, onDismiss: advanceAfterSession) { info in
+            SessionDoneView(info: info, keep: { completion = nil }, change: { pendingTaskPicker = true; completion = nil })
         }
         .fullScreenCover(isPresented: $showQuit) {
             QuitSheet(focusedMinutes: focusedMinutesSoFar, onQuit: { showQuit = false; endSession() }, onStay: { showQuit = false })
@@ -1058,15 +1057,20 @@ struct FocusView: View {
         Analytics.track("session_completed", ["minutes": Int((session.duration / 60).rounded()), "while_closed": false])
         FocusLog.recordFinished(minutes: Int((session.duration / 60).rounded()))
         goals.reschedule()
+        let streakBefore = StreakStore.current()
         let firstToday = StreakStore.record()
+        let streakAfter = StreakStore.current()
         sendWeekToPC()
         let minutes = Int((session.duration / 60).rounded())
         streakMinutes = minutes
-        pendingStreak = firstToday && streakScreenAllowed
+        // The session-done screen rolls the streak itself, so the separate streak screen only
+        // comes when that screen is not shown (UI tests that ask for it).
+        pendingStreak = firstToday && streakScreenAllowed && !completionCardAllowed
         pendingPlus = plusOfferAllowed
         let info = CompletionInfo(minutes: minutes, task: tasks.selected, nextMinutes: selectedMinutes,
                                   firstEver: !UserDefaults.standard.bool(forKey: "lockin.firstWin.v1"),
-                                  nudgeMinute: DailyNudge.isOn ? nil : DailyNudge.suggestedMinute(focusedMinutes: minutes))
+                                  nudgeMinute: DailyNudge.isOn ? nil : DailyNudge.suggestedMinute(focusedMinutes: minutes),
+                                  streakBefore: streakBefore, streakAfter: streakAfter)
         // Let the finished glow play first.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(1800))

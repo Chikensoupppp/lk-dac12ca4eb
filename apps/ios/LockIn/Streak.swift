@@ -86,4 +86,18 @@ enum StreakStore {
             return (symbols[(weekday - 1) % symbols.count], days.contains(number))
         }
     }
+
+    /// Seven days centred on today, for the session-done row: one-letter names for all seven
+    /// (index 3 is today) and whether each of the three days before today was finished.
+    static func around(now: Date = .now, calendar: Calendar = .current, defaults: UserDefaults = .standard) -> (letters: [String], past: [Bool]) {
+        let days = finishedDays(defaults)
+        let today = dayNumber(now, calendar)
+        let symbols = calendar.veryShortWeekdaySymbols
+        let letters = [-3, -2, -1, 0, 1, 2, 3].map { offset -> String in
+            let date = calendar.date(byAdding: .day, value: offset, to: now) ?? now
+            return symbols[(calendar.component(.weekday, from: date) - 1) % symbols.count]
+        }
+        let past = [-3, -2, -1].map { days.contains(today + $0) }
+        return (letters, past)
+    }
 }

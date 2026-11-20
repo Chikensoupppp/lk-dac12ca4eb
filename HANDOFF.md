@@ -303,7 +303,20 @@ Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved 
 
 > **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.
 
-## Rive animations · 2026-11-20 (brain, stamp, streak wired into the iOS code; uncommitted, never compiled)
+## Session-done screen in Rive · 2026-11-20 (uncommitted, not compiled)
+
+Brandon said the stamp/sticker version below "sucks" and asked for a very modern redo with Rive. He approved the render of a new full-screen scene and said "Wire it in". Design notes are in DESIGN.md ("Session done").
+
+- `apps/rive/complete/`: `scene.rml` (artboard `Complete`, 390 x 844) plus `brain.rml`, a copy of the brain artboard renumbered to client id 1, used as a component. In this copy the brain cheers once by itself 0.9 s in and its own confetti is hidden. View model `Complete`: strings `focused`, `lead`, `task`, `streakFrom`, `streakTo`, `l1`-`l3`, `l5`-`l7` (day letters, today is fixed "Today"); numbers `p1`-`p3` (past days finished, 1 or 0) and `footer` (1 = draw the preview buttons, the app sets 0); booleans `newDay` (streak rolls over) and `still` (Reduce Motion: Settled state, brain paused through `isPaused`, no drift).
+- State machine `Complete`, three layers: Main (Play, or Settled when `still`), Streak (Streak Beat, or Streak Static when `still` or not `newDay`), Ambient (drift unless `still`). The choices are made on entry, so the app writes every value before the first frame. Headless renders proved both (values preset in a scratch copy).
+- Published `complete.riv` is in `apps/ios/LockIn/Resources/Rive/`. Re-publish with `rive apps/rive/complete --publish` and copy `build/complete.riv` over after any change.
+- `SessionDoneView.swift` (new): the Rive view full screen (fit contain, top aligned, starts 350 ms after the cover slides up), SwiftUI footer ("Next time: …", black "Keep it" pill, "Change task", or "Done" with no task), a reminder pill at the top when the daily nudge is off, clear Text views for VoiceOver and the UI test ids (`completion-card`, `completion-minutes`, `first-lock-in-stamp`, `completion-keep`/`-change`/`-done`/`-nudge`). Success haptic when the ring closes, a light tick when the number rolls. Falls back to `CompletionCard` if the file is missing.
+- `FocusView.swift`: the completion sheet is now a full-screen cover with `SessionDoneView`; `completeSession` records the streak before and after; the separate streak screen only shows when the completion screen is off (UI tests that ask for it).
+- `Streak.swift`: `StreakStore.around()` gives the seven day letters around today and whether the three days before were finished. `CompletionInfo` gained `streakBefore`/`streakAfter`.
+- Layout check (math, not rendered on device): the panel ends at 666 of 844 pt; the SwiftUI footer starts about 9 pt below it on iPhone SE and 6 pt below on the 13 mini. Tight but clear.
+- NOT verified: compile (needs CI), real device look, haptic timing, VoiceOver order, the trailing space in "locked in on " surviving data binding on device (it does in the authored default).
+
+## Rive animations · 2026-11-20 (brain, stamp, streak wired into the iOS code; pushed e010502; TestFlight export built)
 
 - `apps/rive/brain/`: BrainExact mascot. States: idle breathing, blink (own layer), win cheer (squash, jump, star eyes, sparkles, confetti), sleepy. View model `Brain`: trigger `win`, boolean `sleepy`. Body art is `BrainBody0.png` with the baked sparkles removed (the iOS asset is unchanged).
 - `apps/rive/lock/`: hold-to-lock button in the riso palette. View model `Lock`: boolean `holding`. 1.2s linear charge, slam + burst on completion, 220ms unwind on early release. The "Paper (preview ground)" shape is for the previewer only; delete it where the app supplies its own paper.
