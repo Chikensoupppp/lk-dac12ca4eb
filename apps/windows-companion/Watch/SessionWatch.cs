@@ -446,8 +446,9 @@ public sealed class SessionWatch : IDisposable
         }
 
         var front = FrontWindow.Current();
-        var key = Distractions.KeyOf(front);
-        var isDistraction = Distractions.IsDistraction(front);
+        // Every distraction in view on any monitor, not only the one in focus: a video on the second screen
+        // distracts as much as one in front. Work is judged by the front window alone (below).
+        var candidates = VisibleWindows.FindDistractions(front, ownProcessId);
         var now = clock.GetUtcNow();
         var fraction = total.TotalSeconds > 0 ? Math.Clamp((now - started).TotalSeconds / total.TotalSeconds, 0, 1) : 0;
 
@@ -455,6 +456,10 @@ public sealed class SessionWatch : IDisposable
         BuddyMood mood;
         string words;
         bool ask = false, scrolling = false;
+        // The window the rest of this tick is about: a distraction that is not allowed right now, else the front window.
+        var subject = front;
+        string? key = null;
+        bool isDistraction;
         lock (gate)
         {
             if (sessionId != id) return;
@@ -465,21 +470,28 @@ public sealed class SessionWatch : IDisposable
                 sayMood = BuddyMood.Fresh;
                 sayUntil = now + SayTime;
             }
-            app = Distractions.NameOf(front);
+            subject = ChooseSubject(front, candidates, now);
+            key = Distractions.KeyOf(subject);
+            isDistraction = Distractions.IsDistraction(subject);
+            app = Distractions.NameOf(subject);
             appKey = key;
-            partnerTitle = PartnerShare.On ? PartnerShare.CleanTitle(front?.Title) : null;
-            // A pause the partner set: keep that app or site minimized until it runs out.
-            if (PartnerShare.On && key is not null && front is not null
-                && partnerPaused.TryGetValue(key, out var pausedTo) && now < pausedTo)
+            partnerTitle = PartnerShare.On ? PartnerShare.CleanTitle(subject?.Title) : null;
+            // A pause the partner set: keep that app or site minimized until it runs out, on any monitor.
+            if (PartnerShare.On)
             {
-                FrontWindow.Minimize(front.Handle);
-                if (now >= partnerSayAt)
+                foreach (var seen in candidates.Prepend(front).Where(w => w is not null).DistinctBy(w => w!.Handle))
                 {
-                    // Say why the window went away, so it is not a silent surprise.
-                    sayText = $"Your partner paused {Distractions.FriendlyName(key)}. Back in {Math.Max(1, (int)Math.Ceiling((pausedTo - now).TotalMinutes))} min.";
-                    sayMood = BuddyMood.Curious;
-                    sayUntil = now + SayTime;
-                    partnerSayAt = now + TimeSpan.FromSeconds(30);
+                    var seenKey = Distractions.KeyOf(seen);
+                    if (seenKey is null || !partnerPaused.TryGetValue(seenKey, out var pausedTo) || now >= pausedTo) continue;
+                    FrontWindow.Minimize(seen!.Handle);
+                    if (now >= partnerSayAt)
+                    {
+                        // Say why the window went away, so it is not a silent surprise.
+                        sayText = $"Your partner paused {Distractions.FriendlyName(seenKey)}. Back in {Math.Max(1, (int)Math.Ceiling((pausedTo - now).TotalMinutes))} min.";
+                        sayMood = BuddyMood.Curious;
+                        sayUntil = now + SayTime;
+                        partnerSayAt = now + TimeSpan.FromSeconds(30);
+                    }
                 }
             }
             var off = isDistraction && key is not null && !allowed.Contains(key) && !passes.IsOpen(key, now);
@@ -528,12 +540,12 @@ public sealed class SessionWatch : IDisposable
             {
                 // Already answered "no": keep it minimized until the user leaves it.
                 onTask = false;
-                minimize = front!.Handle;
+                minimize = subject!.Handle;
                 stayedHidden = true;
             }
             else if (asking == key)
             {
-                askHandle = front!.Handle;
+                askHandle = subject!.Handle;
                 onTask = false;
                 if (now - askStarted >= AskTime)
                 {
@@ -548,9 +560,9 @@ public sealed class SessionWatch : IDisposable
                 declined = key;
                 wasOff = true;
                 onTask = false;
-                minimize = front!.Handle;
+                minimize = subject!.Handle;
                 stayedHidden = true;
-                sayText = BuddyWords.LockedOut(Distractions.FriendlyName(Distractions.NameOf(front)));
+                sayText = BuddyWords.LockedOut(Distractions.FriendlyName(Distractions.NameOf(subject)));
                 sayMood = BuddyMood.Droopy;
                 sayUntil = now + SayTime;
             }
@@ -561,18 +573,18 @@ public sealed class SessionWatch : IDisposable
                 declined = key;
                 wasOff = true;
                 onTask = false;
-                minimize = front!.Handle;
+                minimize = subject!.Handle;
                 stayedHidden = true;
-                sayText = BuddyWords.NoPasses(Distractions.FriendlyName(Distractions.NameOf(front)));
+                sayText = BuddyWords.NoPasses(Distractions.FriendlyName(Distractions.NameOf(subject)));
                 sayMood = BuddyMood.Droopy;
                 sayUntil = now + SayTime;
             }
             else
             {
                 asking = key;
-                askName = Distractions.FriendlyName(Distractions.NameOf(front));
+                askName = Distractions.FriendlyName(Distractions.NameOf(subject));
                 askStarted = now;
-                askHandle = front!.Handle;
+                askHandle = subject!.Handle;
                 onTask = false;
             }
 
@@ -580,7 +592,7 @@ public sealed class SessionWatch : IDisposable
             // and never on top of the "Is it for work?" question.
             if (reminding && (off || asking is not null || now - remindStarted >= AskTime))
                 reminding = false; // no answer counts as "not now"; the cooldown started when it was shown
-            if (!reminding && !off && asking is null && Distractions.IsBrowser(front) && guard.ShouldRemind(now))
+            if (!reminding && !off && asking is null && (Distractions.IsBrowser(front) || Distractions.IsBrowser(subject)) && guard.ShouldRemind(now))
             {
                 reminding = true;
                 remindStarted = now;
@@ -619,9 +631,27 @@ public sealed class SessionWatch : IDisposable
             if (sessionId != id) return;
             // Minimize the distraction. Never close it: unsaved work must survive.
             if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
-            var canSave = ask && Distractions.IsBrowser(front) && key is "youtube" or "reddit";
-            BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling, canSave);
+            // "Save for later" reads the page in front, so it only shows when the asked-about page is that one.
+            var canSave = ask && Distractions.IsBrowser(front) && subject?.Handle == front?.Handle && key is "youtube" or "reddit";
+            // The question appears on the screen the asked-about window is on.
+            BuddyWindow.Instance.SetMood(mood, true, words, ask, scrolling, canSave, ask ? subject?.Handle ?? IntPtr.Zero : IntPtr.Zero);
         }
+    }
+
+    /// <summary>
+    /// The window this tick is about. Among the distractions in view, the first one that is not allowed right now
+    /// (the one already being asked about or already declined first, so the question does not jump between windows
+    /// as they shuffle); with none of those, the front window. Call with the lock held.
+    /// </summary>
+    private FrontWindow.Snapshot? ChooseSubject(FrontWindow.Snapshot? front, IReadOnlyList<FrontWindow.Snapshot> candidates, DateTimeOffset now)
+    {
+        var offending = candidates
+            .Select(c => (Window: c, Key: Distractions.KeyOf(c)))
+            .Where(c => c.Key is not null && !allowed.Contains(c.Key) && !passes.IsOpen(c.Key, now))
+            .ToList();
+        if (offending.Count == 0) return front;
+        var sticky = offending.FirstOrDefault(c => c.Key == asking || c.Key == declined);
+        return (sticky.Window ?? offending[0].Window);
     }
 
     /// <summary>The user said "no" (or did not answer in time). Call with the lock held.</summary>

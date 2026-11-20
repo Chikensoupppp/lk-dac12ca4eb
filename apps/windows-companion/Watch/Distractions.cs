@@ -12,14 +12,89 @@ public static class Distractions
         "floorp", "zen", "arc", "thorium", "iexplore", "palemoon", "seamonkey", "maxthon", "whale",
         "slimjet", "iridium", "wavebox", "sidekick",
     };
-    private static readonly string[] Games = { "steam", "steamwebhelper", "epicgameslauncher", "riotclientux", "leagueclient" };
-    private static readonly string[] Chat = { "discord", "telegram", "whatsapp" };
+    // Game launchers and the games people most often leave running: process name (lower case, no ".exe") to the
+    // name the buddy says. Editors and engines (Unity, Unreal, Godot, Blender, Roblox Studio) are work, not here.
+    private static readonly Dictionary<string, string> GameNames = new()
+    {
+        // Launchers and stores
+        ["steam"] = "Steam", ["steamwebhelper"] = "Steam", ["epicgameslauncher"] = "Epic Games", ["riotclientux"] = "Riot Client",
+        ["leagueclient"] = "League of Legends", ["battle.net"] = "Battle.net", ["eadesktop"] = "EA app",
+        ["ubisoftconnect"] = "Ubisoft Connect", ["upc"] = "Ubisoft Connect", ["galaxyclient"] = "GOG Galaxy", ["xboxpcapp"] = "Xbox app",
+        // Shooters and battle royales
+        ["cs2"] = "Counter-Strike 2", ["csgo"] = "CS:GO", ["valorant-win64-shipping"] = "Valorant", ["r5apex"] = "Apex Legends",
+        ["r5apex_dx12"] = "Apex Legends", ["overwatch"] = "Overwatch", ["rainbowsix"] = "Rainbow Six Siege",
+        ["rainbowsix_vulkan"] = "Rainbow Six Siege", ["tslgame"] = "PUBG", ["cod"] = "Call of Duty",
+        ["fortniteclient-win64-shipping"] = "Fortnite", ["marvelrivals-win64-shipping"] = "Marvel Rivals", ["destiny2"] = "Destiny 2",
+        ["left4dead2"] = "Left 4 Dead 2", ["bf6"] = "Battlefield 6", ["bf2042"] = "Battlefield 2042", ["bfv"] = "Battlefield V",
+        ["bf1"] = "Battlefield 1", ["helldivers2"] = "Helldivers 2", ["fallguys_client_game"] = "Fall Guys",
+        // Strategy, MOBAs and card games
+        ["dota2"] = "Dota 2", ["league of legends"] = "League of Legends", ["heroesofthestorm"] = "Heroes of the Storm",
+        ["sc2"] = "StarCraft II", ["sc2_x64"] = "StarCraft II", ["civilizationvi"] = "Civilization VI",
+        ["civilizationvi_dx12"] = "Civilization VI", ["stellaris"] = "Stellaris", ["eu4"] = "Europa Universalis IV",
+        ["hoi4"] = "Hearts of Iron IV", ["ck3"] = "Crusader Kings III", ["aoe2de_s"] = "Age of Empires II", ["aoe4"] = "Age of Empires IV",
+        ["hearthstone"] = "Hearthstone",
+        // Sandbox, survival and sim
+        ["minecraftlauncher"] = "Minecraft", ["minecraft.windows"] = "Minecraft", ["robloxplayerbeta"] = "Roblox",
+        ["terraria"] = "Terraria", ["stardew valley"] = "Stardew Valley", ["valheim"] = "Valheim", ["rustclient"] = "Rust",
+        ["factorio"] = "Factorio", ["factorygame-win64-shipping"] = "Satisfactory", ["rimworldwin64"] = "RimWorld",
+        ["palworld-win64-shipping"] = "Palworld", ["nms"] = "No Man's Sky", ["seaofthieves"] = "Sea of Thieves",
+        ["lethal company"] = "Lethal Company", ["phasmophobia"] = "Phasmophobia", ["ts4_x64"] = "The Sims 4",
+        ["eurotrucks2"] = "Euro Truck Simulator 2", ["among us"] = "Among Us", ["deadbydaylight-win64-shipping"] = "Dead by Daylight",
+        ["fivem"] = "FiveM", ["gta5"] = "GTA V", ["rdr2"] = "Red Dead Redemption 2", ["davethediver"] = "Dave the Diver",
+        // RPGs and online worlds
+        ["eldenring"] = "Elden Ring", ["sekiro"] = "Sekiro", ["darksoulsiii"] = "Dark Souls III", ["witcher3"] = "The Witcher 3",
+        ["cyberpunk2077"] = "Cyberpunk 2077", ["bg3"] = "Baldur's Gate 3", ["bg3_dx11"] = "Baldur's Gate 3",
+        ["hogwartslegacy"] = "Hogwarts Legacy", ["diablo iv"] = "Diablo IV", ["wow"] = "World of Warcraft",
+        ["wowclassic"] = "World of Warcraft", ["pathofexile"] = "Path of Exile", ["pathofexile_x64"] = "Path of Exile",
+        ["pathofexilesteam"] = "Path of Exile", ["lostark"] = "Lost Ark", ["ffxiv_dx11"] = "Final Fantasy XIV",
+        ["gw2-64"] = "Guild Wars 2", ["warframe.x64"] = "Warframe", ["skyrimse"] = "Skyrim", ["fallout4"] = "Fallout 4",
+        ["starfield"] = "Starfield", ["genshinimpact"] = "Genshin Impact", ["starrail"] = "Honkai: Star Rail",
+        ["zenlesszonezero"] = "Zenless Zone Zero", ["hollow_knight"] = "Hollow Knight",
+        // Sports, racing and arcade
+        ["rocketleague"] = "Rocket League", ["fc26"] = "EA Sports FC", ["fc25"] = "EA Sports FC", ["fc24"] = "EA Sports FC",
+        ["forzahorizon5"] = "Forza Horizon 5", ["osu!"] = "osu!", ["geometrydash"] = "Geometry Dash", ["balatro"] = "Balatro",
+        // Emulators
+        ["retroarch"] = "RetroArch", ["dolphin"] = "Dolphin", ["ryujinx"] = "Ryujinx", ["rpcs3"] = "RPCS3", ["cemu"] = "Cemu",
+        ["pcsx2-qt"] = "PCSX2", ["ppssppwindows"] = "PPSSPP",
+        // Android emulators and game streaming
+        ["hd-player"] = "BlueStacks", ["bluestacks"] = "BlueStacks", ["bluestacksx"] = "BlueStacks", ["dnplayer"] = "LDPlayer",
+        ["mumuplayer"] = "MuMu Player", ["nemuplayer"] = "MuMu Player", ["noxplayer"] = "Nox", ["nox"] = "Nox", ["memu"] = "MEmu",
+        ["geforcenow"] = "GeForce Now", ["moonlight"] = "Moonlight",
+        // Desktop apps of video and social sites (the same names the browser sites use)
+        ["netflix"] = "Netflix", ["tiktok"] = "TikTok", ["instagram"] = "Instagram", ["disneyplus"] = "Disney+",
+        ["primevideo"] = "Prime Video", ["twitch"] = "Twitch", ["hulu"] = "Hulu",
+    };
+    private static readonly string[] Chat = { "discord", "telegram", "whatsapp", "signal", "viber", "messenger" };
 
+    // The title is only the fallback when the address bar cannot be read, so only names that rarely turn up in
+    // a work document's title are listed here. Sites such as X are caught by their address (BrowserSites).
     private static readonly (string Needle, string Name)[] SiteTitles =
     {
         ("youtube", "YouTube"), ("tiktok", "TikTok"), ("reddit", "Reddit"),
         ("instagram", "Instagram"), ("netflix", "Netflix"), ("twitch", "Twitch"),
+        ("facebook", "Facebook"), ("snapchat", "Snapchat"), ("disney+", "Disney+"), ("hulu", "Hulu"),
+        // Game portals: titles like "Subway Surfers - Play on CrazyGames".
+        ("crazygames", "CrazyGames"), ("miniclip", "Miniclip"), ("newgrounds", "Newgrounds"), ("kongregate", "Kongregate"),
+        ("coolmathgames", "Cool Math Games"), ("unblocked games", "Unblocked Games"), ("free online games", "Online Games"),
+        ("on poki", "Poki"), ("chess.com", "Chess.com"), ("on itch.io", "itch.io"),
     };
+
+    /// <summary>Store apps (Netflix, TikTok...) run inside "ApplicationFrameHost", so their window title is the only name there is.</summary>
+    private static readonly string[] AppTitleNames = { "Netflix", "Disney+", "Prime Video", "TikTok", "Instagram", "Twitch", "Facebook", "Hulu" };
+
+    private static string? StoreApp(string proc, string title)
+    {
+        if (proc != "applicationframehost") return null;
+        foreach (var name in AppTitleNames)
+            if (title.Equals(name, StringComparison.OrdinalIgnoreCase)
+                || (title.StartsWith(name, StringComparison.OrdinalIgnoreCase) && title.Length > name.Length && " -|:".Contains(title[name.Length])))
+                return name;
+        return null;
+    }
+
+    /// <summary>Minecraft Java runs as a plain "javaw" whose window is titled "Minecraft 1.21...". Other Java programs are left alone.</summary>
+    private static string? JavaGame(string proc, string title) =>
+        proc is "javaw" or "java" && title.StartsWith("Minecraft", StringComparison.OrdinalIgnoreCase) ? "Minecraft" : null;
 
     /// <summary>A plain name for the front app, for the phone. Null when nothing is in front.</summary>
     public static string? NameOf(FrontWindow.Snapshot? front)
@@ -35,6 +110,7 @@ public static class Distractions
                 if (title.Contains(needle)) return name;
             return "Browser";
         }
+        if ((StoreApp(proc, front.Title) ?? JavaGame(proc, front.Title)) is { } known) return known;
         return front.Process.Length == 0 ? null : front.Process;
     }
 
@@ -46,7 +122,7 @@ public static class Distractions
     {
         ("youtube", "YouTube"), ("discord", "Discord"), ("reddit", "Reddit"), ("tiktok", "TikTok"),
         ("instagram", "Instagram"), ("netflix", "Netflix"), ("twitch", "Twitch"), ("steam", "Steam"),
-        ("telegram", "Telegram"), ("whatsapp", "WhatsApp"),
+        ("telegram", "Telegram"), ("whatsapp", "WhatsApp"), ("x", "X"), ("facebook", "Facebook"), ("snapchat", "Snapchat"),
     };
 
     /// <summary>Same app, same key: "YouTube" and "youtube" match, and Steam's helper counts as Steam.</summary>
@@ -54,9 +130,9 @@ public static class Distractions
 
     private static readonly Dictionary<string, string> Friendly = new()
     {
-        ["steam"] = "Steam", ["epicgameslauncher"] = "Epic Games", ["riotclientux"] = "Riot Client",
-        ["leagueclient"] = "League of Legends", ["chrome"] = "Chrome", ["msedge"] = "Edge", ["firefox"] = "Firefox",
-        ["brave"] = "Brave", ["opera"] = "Opera", ["vivaldi"] = "Vivaldi", ["discord"] = "Discord", ["telegram"] = "Telegram", ["whatsapp"] = "WhatsApp",
+        ["chrome"] = "Chrome", ["msedge"] = "Edge", ["firefox"] = "Firefox", ["brave"] = "Brave", ["opera"] = "Opera",
+        ["vivaldi"] = "Vivaldi", ["discord"] = "Discord", ["telegram"] = "Telegram", ["whatsapp"] = "WhatsApp",
+        ["signal"] = "Signal", ["viber"] = "Viber", ["messenger"] = "Messenger",
     };
 
     /// <summary>A stable lower-case name for allow lists ("youtube", "discord"). Null when nothing is in front.</summary>
@@ -72,7 +148,8 @@ public static class Distractions
         if (name is null) return "this";
         var key = name.ToLowerInvariant();
         if (Alias.TryGetValue(key, out var canonical)) key = canonical;
-        return Friendly.TryGetValue(key, out var nice) ? nice : name;
+        if (Friendly.TryGetValue(key, out var nice) || GameNames.TryGetValue(key, out nice)) return nice;
+        return GameDetector.NameFor(key) ?? name;
     }
 
     /// <summary>Windows that are part of Windows itself, not somewhere the user works.</summary>
@@ -111,8 +188,9 @@ public static class Distractions
     {
         if (front is null) return false;
         var proc = front.Process.ToLowerInvariant();
-        if (Games.Contains(proc) || Chat.Contains(proc)) return true;
-        if (!Browsers.Contains(proc)) return false;
+        if (GameNames.ContainsKey(proc) || Chat.Contains(proc)) return true;
+        if (StoreApp(proc, front.Title) is not null || JavaGame(proc, front.Title) is not null) return true;
+        if (!Browsers.Contains(proc)) return GameDetector.IsGame(front); // a game that is not named above
         if (BrowserSites.For(front.Handle) is not null) return true;
         var title = front.Title.ToLowerInvariant();
         return SiteTitles.Any(s => title.Contains(s.Needle));

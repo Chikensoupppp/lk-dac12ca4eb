@@ -5,13 +5,16 @@ using System.Windows.Automation;
 namespace LockIn.Companion.Watch;
 
 /// <summary>
-/// Watches the browser in front without any extension, and feeds the same <see cref="GuardianSignal"/>
-/// the extension would send. Every second it reads the front browser's address bar through Windows
-/// accessibility (UI Automation). On a feed (YouTube Shorts, a Reddit feed) it counts new addresses (a new
-/// Short, a new page) and how far the page scrolled; when the page's scroll position cannot be read, mouse
-/// wheel notches stand in for it. Every 15 seconds the counts go to the scroll guard. It never stores or
-/// sends an address: each one is only matched against the feed list and the site list, and then dropped
-/// (only the site's name, such as "Reddit", is kept for a few seconds, see <see cref="BrowserSites"/>).
+/// Watches the browsers without any extension, and feeds the same <see cref="GuardianSignal"/> the extension
+/// would send. Every second it reads the address bar of the browser being used through Windows accessibility
+/// (UI Automation): the one in front, or the one the mouse wheel is scrolling (Windows scrolls what the pointer
+/// is over, so a feed on the second monitor counts even while another window has focus). The other open
+/// browser windows, on any monitor, are read a couple at a time so a distraction site left open beside the work
+/// is known by its address too. On a feed (YouTube Shorts, a Reddit feed) it counts new addresses (a new Short,
+/// a new page) and how far the page scrolled; when the page's scroll position cannot be read, mouse wheel
+/// notches stand in for it. Every 15 seconds the counts go to the scroll guard. It never stores or sends an
+/// address: each one is only matched against the feed list and the site list, and then dropped (only the
+/// site's name, such as "Reddit", is kept for a few seconds, see <see cref="BrowserSites"/>).
 /// </summary>
 public sealed class BrowserWatch : IDisposable
 {
@@ -19,6 +22,8 @@ public sealed class BrowserWatch : IDisposable
     private const int ReportEveryTicks = 15;
     /// <summary>A wheel notch moves about 100 px; a screen is about 900 px.</summary>
     private const double ScreensPerNotch = 0.11;
+    /// <summary>How many background browser windows get their address read each second.</summary>
+    private const int OthersPerTick = 2;
 
     private readonly Action<GuardianSignal> report;
     private readonly Action<string>? log;
@@ -26,10 +31,11 @@ public sealed class BrowserWatch : IDisposable
     private readonly Thread loop;
     private readonly WheelCounter wheel = new();
 
-    // Cached per front window: walking a browser's accessibility tree is slow, so it is done once.
-    private IntPtr cachedWindow;
-    private AutomationElement? addressBar;
-    private AutomationElement? document;
+    // Cached per browser window: walking a browser's accessibility tree is slow, so it is done once per window.
+    private readonly Dictionary<IntPtr, AutomationElement> bars = new();
+    private readonly Dictionary<IntPtr, AutomationElement> docs = new();
+    private IntPtr countedWindow;
+    private int otherCursor;
 
     private string? lastSite;
     private string? lastAddress;
@@ -64,14 +70,24 @@ public sealed class BrowserWatch : IDisposable
 
     private void Step()
     {
-        var notches = wheel.Take();
+        var counts = wheel.Take();
         var front = GetForegroundWindow();
-        var inBrowser = front != IntPtr.Zero && IsBrowser(front);
-        var site = inBrowser ? Classify(ReadAddress(front)) : null;
-        // Hand over only the site's name (YouTube, Reddit...), so a page cannot pass as work by its title.
-        if (inBrowser) BrowserSites.Record(front, BrowserSites.NameOf(lastAddressRead));
+        var browsers = VisibleWindows.BrowserWindows(Environment.ProcessId);
+        if (bars.Count > 24) Forget(); // windows come and go; start the cache over rather than let it grow
 
-        log?.Invoke($"front={(inBrowser ? "browser" : "other")} site={site ?? "-"} addressRead={lastAddressRead is not null} notches={notches}");
+        // The browser being counted: the one in front, unless the mouse wheel is scrolling another browser window.
+        var target = front != IntPtr.Zero && (browsers.Contains(front) || IsBrowser(front)) ? front : IntPtr.Zero;
+        var scrolled = counts.Where(c => browsers.Contains(c.Key)).OrderByDescending(c => c.Value).Select(c => c.Key).FirstOrDefault();
+        if (scrolled != IntPtr.Zero) target = scrolled;
+        var notches = target != IntPtr.Zero && counts.TryGetValue(target, out var n) ? n : 0;
+        var inBrowser = target != IntPtr.Zero;
+        var site = inBrowser ? Classify(ReadAddress(target)) : null;
+        // Hand over only the site's name (YouTube, Reddit...), so a page cannot pass as work by its title.
+        if (inBrowser) BrowserSites.Record(target, BrowserSites.NameOf(lastAddressRead));
+        ReadOthers(browsers, target);
+
+        log?.Invoke($"front={(inBrowser ? "browser" : "other")} site={site ?? "-"} addressRead={lastAddressRead is not null} notches={notches} browsers={browsers.Count}");
+        if (target != countedWindow) { countedWindow = target; lastScroll = null; }
         if (site is null)
         {
             Flush();
@@ -86,13 +102,31 @@ public sealed class BrowserWatch : IDisposable
         else if (address != lastAddress) { items++; lastAddress = address; lastScroll = null; }
         lastSite = site;
 
-        var moved = ScreensMoved();
+        var moved = ScreensMoved(target);
         if (moved is { } m) screens += m;
         else screens += notches * ScreensPerNotch;
         scrolls += notches;
 
         log?.Invoke($"  items={items} screens={screens:F2} scrollReadable={moved is not null}");
         if (++ticks >= ReportEveryTicks) Flush();
+    }
+
+    /// <summary>Reads a couple of the other open browser windows' addresses, round and round, so each is known within a few seconds.</summary>
+    private void ReadOthers(List<IntPtr> browsers, IntPtr target)
+    {
+        var others = browsers.Where(h => h != target).ToList();
+        if (others.Count == 0) { otherCursor = 0; return; }
+        for (var i = 0; i < Math.Min(OthersPerTick, others.Count); i++)
+        {
+            var window = others[(otherCursor + i) % others.Count];
+            try { BrowserSites.Record(window, BrowserSites.NameOf(ReadValue(window))); }
+            catch (Exception e) when (e is ElementNotAvailableException or COMException or InvalidOperationException)
+            {
+                bars.Remove(window);
+                docs.Remove(window);
+            }
+        }
+        otherCursor = (otherCursor + OthersPerTick) % others.Count;
     }
 
     /// <summary>Sends what was counted since the last report (if a feed was in front) and starts over.</summary>
@@ -110,13 +144,20 @@ public sealed class BrowserWatch : IDisposable
 
     private string? ReadAddress(IntPtr window)
     {
-        if (window != cachedWindow) Forget();
-        cachedWindow = window;
-        addressBar ??= FindAddressBar(AutomationElement.FromHandle(window));
-        lastAddressRead = addressBar?.TryGetCurrentPattern(ValuePattern.Pattern, out var p) == true
-            ? ((ValuePattern)p).Current.Value
-            : null;
+        lastAddressRead = ReadValue(window);
         return lastAddressRead;
+    }
+
+    /// <summary>The text of a browser window's address bar, or null when it cannot be found.</summary>
+    private string? ReadValue(IntPtr window)
+    {
+        if (!bars.TryGetValue(window, out var bar))
+        {
+            var found = FindAddressBar(AutomationElement.FromHandle(window));
+            if (found is null) return null;
+            bars[window] = bar = found;
+        }
+        return bar.TryGetCurrentPattern(ValuePattern.Pattern, out var p) ? ((ValuePattern)p).Current.Value : null;
     }
 
     /// <summary>
@@ -138,12 +179,17 @@ public sealed class BrowserWatch : IDisposable
     }
 
     /// <summary>How many screens the page moved since the last second, or null when the page's scroll cannot be read.</summary>
-    private double? ScreensMoved()
+    private double? ScreensMoved(IntPtr window)
     {
-        if (cachedWindow == IntPtr.Zero) return null;
-        document ??= AutomationElement.FromHandle(cachedWindow).FindFirst(TreeScope.Descendants,
-            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document));
-        if (document is null || !document.TryGetCurrentPattern(ScrollPattern.Pattern, out var p)) return null;
+        if (window == IntPtr.Zero) return null;
+        if (!docs.TryGetValue(window, out var document))
+        {
+            var found = AutomationElement.FromHandle(window).FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document));
+            if (found is null) return null;
+            docs[window] = document = found;
+        }
+        if (!document.TryGetCurrentPattern(ScrollPattern.Pattern, out var p)) return null;
         var scroll = (ScrollPattern)p;
         if (!scroll.Current.VerticallyScrollable) return null;
         var percent = scroll.Current.VerticalScrollPercent;
@@ -157,9 +203,8 @@ public sealed class BrowserWatch : IDisposable
 
     private void Forget()
     {
-        cachedWindow = IntPtr.Zero;
-        addressBar = null;
-        document = null;
+        bars.Clear();
+        docs.Clear();
     }
 
     private static bool IsBrowser(IntPtr window)
@@ -207,18 +252,21 @@ public sealed class BrowserWatch : IDisposable
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
 
     /// <summary>
-    /// Counts mouse wheel notches anywhere (a low-level mouse hook on its own thread). Only the count is kept:
-    /// no position, no clicks, no keys.
+    /// Counts mouse wheel notches anywhere (a low-level mouse hook on its own thread), per browser-sized window: the
+    /// top-level window under the pointer, because that is the one Windows scrolls. Only counts are kept: no
+    /// position, no clicks, no keys.
     /// </summary>
     private sealed class WheelCounter : IDisposable
     {
         private const int WhMouseLl = 14;
         private const int WmMouseWheel = 0x020A;
         private const uint WmQuit = 0x0012;
+        private const uint GaRoot = 2;
         private readonly HookProc proc;
         private readonly Thread thread;
+        private readonly object gate = new();
         private uint threadId;
-        private int notches;
+        private Dictionary<IntPtr, int> notches = new();
 
         public WheelCounter()
         {
@@ -233,7 +281,16 @@ public sealed class BrowserWatch : IDisposable
             thread.Start();
         }
 
-        public int Take() => Interlocked.Exchange(ref notches, 0);
+        /// <summary>The notches since the last call, by the top-level window they went to.</summary>
+        public Dictionary<IntPtr, int> Take()
+        {
+            lock (gate)
+            {
+                var taken = notches;
+                notches = new Dictionary<IntPtr, int>();
+                return taken;
+            }
+        }
 
         private IntPtr Hook(int code, IntPtr wParam, IntPtr lParam)
         {
@@ -241,7 +298,9 @@ public sealed class BrowserWatch : IDisposable
             {
                 var data = Marshal.PtrToStructure<MsLlHookStruct>(lParam);
                 var delta = (short)(data.MouseData >> 16);
-                Interlocked.Add(ref notches, Math.Max(1, Math.Abs(delta) / 120));
+                var under = WindowFromPoint(new Point { X = data.X, Y = data.Y });
+                var root = under == IntPtr.Zero ? IntPtr.Zero : GetAncestor(under, GaRoot);
+                lock (gate) notches[root] = notches.GetValueOrDefault(root) + Math.Max(1, Math.Abs(delta) / 120);
             }
             return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
@@ -259,6 +318,9 @@ public sealed class BrowserWatch : IDisposable
         [StructLayout(LayoutKind.Sequential)]
         private struct Msg { public IntPtr Hwnd; public uint Message; public IntPtr WParam, LParam; public uint Time; public int X, Y; }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Point { public int X, Y; }
+
         [DllImport("user32.dll")] private static extern IntPtr SetWindowsHookEx(int id, HookProc proc, IntPtr module, uint threadId);
         [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(IntPtr hook);
         [DllImport("user32.dll")] private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr wParam, IntPtr lParam);
@@ -266,6 +328,8 @@ public sealed class BrowserWatch : IDisposable
         [DllImport("user32.dll")] private static extern bool TranslateMessage(ref Msg msg);
         [DllImport("user32.dll")] private static extern IntPtr DispatchMessage(ref Msg msg);
         [DllImport("user32.dll")] private static extern bool PostThreadMessage(uint threadId, uint message, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(Point point);
+        [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint flags);
         [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr GetModuleHandle(string? name);
     }

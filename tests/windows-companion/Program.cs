@@ -267,6 +267,153 @@ finally
     Check(Distractions.IsBrowserProcess("palemoon") && Distractions.IsBrowserProcess("Whale") && !Distractions.IsBrowserProcess("notepad"),
         "more browsers are known by process name");
 
+    // The wider list: more sites by address, more chat apps and the common games.
+    Check(BrowserSites.NameOf("https://x.com/home") == "X" && BrowserSites.NameOf("mobile.twitter.com/someone") == "X"
+        && BrowserSites.NameOf("https://www.facebook.com/reel/1") == "Facebook" && BrowserSites.NameOf("fb.watch/abc") == "Facebook"
+        && BrowserSites.NameOf("https://www.snapchat.com/") == "Snapchat" && BrowserSites.NameOf("https://www.disneyplus.com/home") == "Disney+"
+        && BrowserSites.NameOf("https://www.hulu.com/watch/1") == "Hulu" && BrowserSites.NameOf("https://www.primevideo.com/") == "Prime Video",
+        "more sites are recognized by their address");
+    Check(BrowserSites.NameOf("https://box.com/") is null && BrowserSites.NameOf("https://notx.com/") is null
+        && BrowserSites.NameOf("https://x.com.example.org/") is null && BrowserSites.NameOf("https://fb.com.example.org/") is null,
+        "look-alikes of the new sites are not mistaken for them");
+    Check(Distractions.IsDistraction(Win(61, "cs2", "Counter-Strike 2")) && Distractions.IsDistraction(Win(62, "RobloxPlayerBeta", "Roblox"))
+        && Distractions.IsDistraction(Win(63, "Signal", "Signal")) && Distractions.IsDistraction(Win(64, "League of Legends", "League of Legends (TM) Client"))
+        && Distractions.FriendlyName("cs2") == "Counter-Strike 2" && Distractions.FriendlyName("RobloxPlayerBeta") == "Roblox",
+        "common games and one more chat app count as distractions, with plain names");
+    Check(Distractions.IsWorkWindow(Win(65, "RobloxStudioBeta", "Place1 - Roblox Studio"), me)
+        && Distractions.IsWorkWindow(Win(66, "Code", "Program.cs - Visual Studio Code"), me),
+        "a game maker's editor stays work");
+    Check(new[] { "UnrealEditor", "Unity", "blender", "godot", "Code", "EXCEL" }
+            .Select((p, i) => Win(70 + i, p, "Project - " + p)).All(w => Distractions.IsWorkWindow(w, me)),
+        "game engines, editors and office apps are work");
+    var moreGames = new (string Proc, string Name)[]
+    {
+        ("tslgame", "PUBG"), ("cod", "Call of Duty"), ("RainbowSix", "Rainbow Six Siege"), ("Terraria", "Terraria"),
+        ("Stardew Valley", "Stardew Valley"), ("Cyberpunk2077", "Cyberpunk 2077"), ("bg3", "Baldur's Gate 3"),
+        ("Wow", "World of Warcraft"), ("FC26", "EA Sports FC"), ("osu!", "osu!"), ("retroarch", "RetroArch"),
+        ("FactoryGame-Win64-Shipping", "Satisfactory"), ("XboxPcApp", "Xbox app"), ("steamwebhelper", "Steam"),
+    };
+    Check(moreGames.Select((g, i) => (g, w: Win(80 + i, g.Proc, g.Proc))).All(x =>
+            Distractions.IsDistraction(x.w) && !Distractions.IsWorkWindow(x.w, me) && Distractions.FriendlyName(x.g.Proc) == x.g.Name),
+        "more games are distractions, each with its plain name");
+
+    // Any game, not just the named ones: the rules behind GameDetector (the signals themselves are checked live).
+    Check(GameDetector.InLibrary(@"D:\SteamLibrary\steamapps\common\Hades\Hades.exe")
+        && GameDetector.InLibrary(@"C:\Program Files\Epic Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe")
+        && GameDetector.InLibrary("D:/Games/Foo/foo.exe") && GameDetector.InLibrary(@"C:\XboxGames\Halo\Gamelaunch.exe"),
+        "a program inside a game library counts as a game");
+    Check(!GameDetector.InLibrary(@"C:\Program Files\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor.exe")
+        && !GameDetector.InLibrary(@"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE")
+        && !GameDetector.InLibrary(@"C:\Users\me\Documents\Notes\todo.exe") && !GameDetector.InLibrary(null) && !GameDetector.InLibrary(""),
+        "work programs, the Unreal editor and empty paths are not in a game library");
+    Check(GameDetector.IsLauncher("Steam") && GameDetector.IsLauncher("EpicGamesLauncher") && GameDetector.IsLauncher("Battle.net")
+        && GameDetector.IsLauncher("RiotClientServices") && !GameDetector.IsLauncher("explorer") && !GameDetector.IsLauncher("chrome"),
+        "game launchers are known, ordinary parents are not");
+    Check(GameDetector.IsSdkFile("Steam_API64.dll") && GameDetector.IsSdkFile("UnityPlayer.dll") && GameDetector.IsSdkFile("EOSSDK-Win64-Shipping.dll")
+        && !GameDetector.IsSdkFile("kernel32.dll") && !GameDetector.IsSdkFile("d3d11.dll"),
+        "game SDK files are known, system and graphics libraries are not");
+    var sdkRoot = Path.Combine(Path.GetTempPath(), "sdkfiles-" + Guid.NewGuid().ToString("N")[..8]);
+    try
+    {
+        var sdkBin = Path.Combine(sdkRoot, "bin", "deep");
+        Directory.CreateDirectory(sdkBin);
+        var plain = Path.Combine(sdkRoot, "plain");
+        Directory.CreateDirectory(plain);
+        File.WriteAllText(Path.Combine(sdkRoot, "bin", "steam_api64.dll"), "x");
+        Check(GameDetector.SdkFilesNear(Path.Combine(sdkRoot, "bin", "game.exe")) && GameDetector.SdkFilesNear(Path.Combine(sdkBin, "game.exe")),
+            "a game SDK file next to the program, or one folder up, marks a game");
+        Check(!GameDetector.SdkFilesNear(Path.Combine(plain, "tool.exe")) && !GameDetector.SdkFilesNear(Path.Combine(sdkBin, "deeper", "x", "tool.exe"))
+            && !GameDetector.SdkFilesNear(null) && !GameDetector.SdkFilesNear(""),
+            "no SDK file near, two folders away, or no path: not a game");
+    }
+    finally { try { Directory.Delete(sdkRoot, true); } catch (IOException) { } }
+    var chain = GameDetector.Ancestors(Environment.ProcessId, 3);
+    Check(chain.Count > 0 && chain.All(n => n == n.ToLowerInvariant() && !n.EndsWith(".exe")) && GameDetector.Ancestors(-5, 3).Count == 0,
+        "the launcher chain is read from a process list, lower case, and is empty for a process that does not exist");
+    Check(GameDetector.CoversScreen(0, 0, 1920, 1080, 0, 0, 1920, 1080) && GameDetector.CoversScreen(-8, -8, 1928, 1088, 0, 0, 1920, 1080)
+        && !GameDetector.CoversScreen(100, 100, 1500, 900, 0, 0, 1920, 1080) && !GameDetector.CoversScreen(0, 0, 1920, 1040, 0, 0, 1920, 1080),
+        "only a window that covers the whole monitor counts as full screen");
+    Check(GameDetector.CleanName("FortniteClient-Win64-Shipping") == "FortniteClient" && GameDetector.CleanName("Some_Game_x64") == "Some Game"
+        && GameDetector.CleanName("hades") == "hades" && !GameDetector.UsableProductName("Unity") && !GameDetector.UsableProductName(null)
+        && GameDetector.UsableProductName("Hades"),
+        "an unknown game gets a readable name");
+    Check(!Distractions.IsDistraction(Win(90, "blender", "Blender"))
+        && !Distractions.IsDistraction(Win(91, "notepad", "Untitled - Notepad", Environment.ProcessId)),
+        "work programs and Lock In itself are never taken for games");
+    Check(Distractions.IsDistraction(Win(67, "chrome", "Reels | Facebook - Google Chrome")) && Distractions.NameOf(Win(67, "chrome", "Reels | Facebook - Google Chrome")) == "Facebook",
+        "a Facebook tab is caught by its title when the address cannot be read");
+    Check(new[] { "x", "facebook", "snapchat" }.All(k => Distractions.Choices.Any(c => c.Key == k))
+        && Distractions.Choices.Select(c => c.Key).Distinct().Count() == Distractions.Choices.Count,
+        "the phone chips include the new sites once each");
+
+    // Browser games, by address.
+    Check(BrowserSites.NameOf("https://poki.com/en/g/subway-surfers") == "Poki" && BrowserSites.NameOf("https://www.crazygames.com/game/x") == "CrazyGames"
+        && BrowserSites.NameOf("https://somebody.itch.io/jam-game") == "itch.io" && BrowserSites.NameOf("https://krunker.io/") == "Krunker"
+        && BrowserSites.NameOf("https://www.roblox.com/games/1/x") == "Roblox" && BrowserSites.NameOf("https://www.chess.com/play/online") == "Chess.com"
+        && BrowserSites.NameOf("https://lichess.org/") == "Lichess" && BrowserSites.NameOf("https://play.geforcenow.com/mall/") == "GeForce Now",
+        "browser game sites and portals are recognized by address");
+    Check(BrowserSites.NameOf("https://www.xbox.com/en-US/play") == "Xbox Cloud Gaming" && BrowserSites.NameOf("https://www.xbox.com/en-US/games/store") is null
+        && BrowserSites.NameOf("https://www.nytimes.com/games/wordle/index.html") == "NYT Games" && BrowserSites.NameOf("https://www.nytimes.com/section/world") is null,
+        "a site is matched on its path where only part of it is a game (cloud gaming, news games)");
+    Check(BrowserSites.NameOf("https://create.roblox.com/dashboard") is null && BrowserSites.NameOf("https://devforum.roblox.com/") is null
+        && BrowserSites.NameOf("https://www.notpoki.com/") is null && BrowserSites.NameOf("https://poki.com.example.org/") is null
+        && BrowserSites.NameOf("https://github.com/itch-io/x") is null,
+        "game site look-alikes and Roblox's developer sites are not taken for games");
+    Check(BrowserSites.NameOf("https://some-unblocked-games.example.org/") == "Unblocked Games"
+        && BrowserSites.NameOf("https://sites.google.com/view/unblocked-games-77") == "Unblocked Games"
+        && BrowserSites.NameOf("https://docs.example.org/blocked-ips") is null,
+        "'unblocked games' sites are caught by the word, the rest of the web is not");
+
+    // Two browser windows: each keeps its own site (the work page in front, a game on the other monitor).
+    BrowserSites.Record(300, null, 1_000);
+    BrowserSites.Record(301, "Poki", 1_200);
+    Check(BrowserSites.For(300, 2_000) is null && BrowserSites.For(301, 2_000) == "Poki" && BrowserSites.For(302, 2_000) is null,
+        "each browser window keeps its own site: a game on the other monitor does not leak onto the work window");
+    var gameTab = Win(301, "msedge", "Subway Surfers - Play Online - Personal - Microsoft Edge");
+    var workTab = Win(300, "msedge", "Essay - Google Docs - Personal - Microsoft Edge");
+    BrowserSites.Record(300, null);
+    BrowserSites.Record(301, "Poki");
+    Check(Distractions.IsDistraction(gameTab) && Distractions.NameOf(gameTab) == "Poki" && !Distractions.IsDistraction(workTab),
+        "a game tab whose title does not say so is a distraction once its address is read; the other window stays work");
+    BrowserSites.Clear();
+
+    // Store apps and Minecraft, which only show up through a title.
+    Check(Distractions.IsDistraction(Win(310, "ApplicationFrameHost", "Netflix")) && Distractions.NameOf(Win(310, "ApplicationFrameHost", "Netflix")) == "Netflix"
+        && Distractions.IsDistraction(Win(311, "ApplicationFrameHost", "TikTok")) && !Distractions.IsDistraction(Win(312, "ApplicationFrameHost", "Settings")),
+        "a Store app window titled Netflix or TikTok is a distraction, Settings is not");
+    Check(Distractions.IsDistraction(Win(313, "javaw", "Minecraft 1.21.4 - Singleplayer")) && Distractions.NameOf(Win(313, "javaw", "Minecraft 1.21.4")) == "Minecraft"
+        && !Distractions.IsDistraction(Win(314, "javaw", "IntelliJ IDEA")),
+        "Minecraft running in Java is a game, other Java programs are not");
+    Check(new[] { "bluestacks", "dnplayer", "geforcenow", "moonlight" }.Select((p, i) => Win(320 + i, p, p)).All(Distractions.IsDistraction),
+        "Android emulators and game streaming apps are distractions");
+
+    // Which parts of a window show, on any monitor (pure rectangle math).
+    var whole = new Box(0, 0, 1000, 1000);
+    Check(VisibleWindows.VisibleArea(whole, Array.Empty<Box>()) == 1_000_000
+        && VisibleWindows.VisibleArea(whole, new[] { new Box(0, 0, 500, 1000) }) == 500_000
+        && VisibleWindows.VisibleArea(whole, new[] { new Box(-10, -10, 1100, 1100) }) == 0
+        && VisibleWindows.VisibleArea(new Box(5, 5, 5, 50), Array.Empty<Box>()) == 0,
+        "visible area: nothing in front, half covered, fully covered, empty window");
+    Check(VisibleWindows.VisibleArea(whole, new[] { new Box(0, 0, 600, 500), new Box(400, 0, 1000, 500) }) == 500_000
+        && VisibleWindows.VisibleArea(whole, new[] { new Box(0, 0, 500, 500), new Box(0, 0, 500, 500) }) == 750_000,
+        "visible area: overlapping windows in front are not counted twice");
+    Check(VisibleWindows.VisibleArea(whole, new[] { new Box(2000, 0, 3000, 1000), new Box(-1920, 0, -1, 1080) }) == 1_000_000
+        && VisibleWindows.VisibleArea(new Box(1920, 0, 3840, 1080), new[] { new Box(0, 0, 1920, 1080) }) == 1920L * 1080,
+        "visible area: a window on another monitor covers nothing");
+    Check(VisibleWindows.Prominent(500_000, 1_000_000) && VisibleWindows.Prominent(60_000, 200_000)
+        && !VisibleWindows.Prominent(59_999, 100_000) && !VisibleWindows.Prominent(100_000, 1_000_000) && !VisibleWindows.Prominent(0, 0),
+        "a window counts as in view with enough of it showing (60,000 px and a quarter of it), not a sliver");
+    var tree = new Dictionary<uint, ProcessList.Entry>
+    {
+        [10] = new(0, "System"), [20] = new(10, "Steam"), [30] = new(20, "Game.exe-host"), [40] = new(30, "Game"), [50] = new(999, "Orphan"),
+    };
+    Check(ProcessList.Ancestors(tree, 40, 3).SequenceEqual(new[] { "game.exe-host", "steam", "system" })
+        && ProcessList.Ancestors(tree, 40, 1).SequenceEqual(new[] { "game.exe-host" })
+        && ProcessList.Ancestors(tree, 50, 3).Count == 0 && ProcessList.Ancestors(tree, 77, 3).Count == 0 && ProcessList.Ancestors(tree, 10, 3).Count == 0,
+        "ancestors: nearest first, lower case, stops at a missing parent or at the top");
+    Check(Distractions.Choices.Any(c => c.Key == "netflix") && Distractions.Choices.Any(c => c.Key == "twitch") && Distractions.Choices.Count == 13,
+        "the phone chips are the 13 sites and apps");
+
     // The PC clock moved in small steps: the steps add up instead of each one passing under the limit.
     var drift = new ClockDrift();
     var driftWall = new DateTimeOffset(2026, 11, 20, 12, 0, 0, TimeSpan.Zero);

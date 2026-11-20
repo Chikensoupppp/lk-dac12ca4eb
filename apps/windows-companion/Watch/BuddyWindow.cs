@@ -70,6 +70,11 @@ public sealed class BuddyWindow : Form
     private Point dragStart;
     private bool dragged;
 
+    // The scene is drawn at 100% (240 x 288) and enlarged by the screen's scale (150% = 1.5), so the window,
+    // the picture and the buttons all grow together. Mouse positions are shrunk back before the scene is asked.
+    private float DpiScale => Math.Max(1f, DeviceDpi / 96f);
+    private Point InScene(Point p) => new((int)(p.X / DpiScale), (int)(p.Y / DpiScale));
+
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
@@ -85,14 +90,14 @@ public sealed class BuddyWindow : Form
             }
             return;
         }
-        Cursor = scene.HitTest(e.Location) == AskChoice.None ? Cursors.SizeAll : Cursors.Hand;
+        Cursor = scene.HitTest(InScene(e.Location)) == AskChoice.None ? Cursors.SizeAll : Cursors.Hand;
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
         if (e.Button != MouseButtons.Left) return;
-        var choice = scene.HitTest(e.Location);
+        var choice = scene.HitTest(InScene(e.Location));
         if (choice != AskChoice.None) { Chosen?.Invoke(choice); return; }
         dragFrom = Cursor.Position;
         dragStart = Location;
@@ -153,10 +158,8 @@ public sealed class BuddyWindow : Form
         TopMost = true;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
-        Size = new Size(BuddyScene.Width, BuddyScene.Height);
-        Location = LoadPosition(Size) ?? new Point(
-            Screen.PrimaryScreen!.WorkingArea.Right - Width - 12,
-            Screen.PrimaryScreen.WorkingArea.Bottom - Height - 12);
+        Size = new Size((int)Math.Round(BuddyScene.Width * DpiScale), (int)Math.Round(BuddyScene.Height * DpiScale));
+        Location = HomeSpot(Size);
         Visible = false;
         frame.Tick += (_, _) => Render();
     }
@@ -180,15 +183,45 @@ public sealed class BuddyWindow : Form
     }
 
     /// <summary>Show or hide the buddy, and set its mood and words. Safe to call from any thread.</summary>
-    public void SetMood(BuddyMood next, bool show, string? words = null, bool ask = false, bool scrolling = false, bool canSave = false)
+    /// <param name="near">The window the question is about. While asking, the buddy moves to that window's screen.</param>
+    public void SetMood(BuddyMood next, bool show, string? words = null, bool ask = false, bool scrolling = false, bool canSave = false, IntPtr near = default)
     {
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => Apply(next, show, words, ask, scrolling, canSave));
+            BeginInvoke(() => Apply(next, show, words, ask, scrolling, canSave, near));
             return;
         }
-        Apply(next, show, words, ask, scrolling, canSave);
+        Apply(next, show, words, ask, scrolling, canSave, near);
+    }
+
+    // With several monitors the question must appear where the distraction is, or it is asked on a screen nobody
+    // is looking at. The saved (dragged) spot stays the home position and the buddy goes back to it afterwards.
+    private bool movedForQuestion;
+
+    private static Point DefaultSpot(Screen screen, Size size) =>
+        new(screen.WorkingArea.Right - size.Width - 12, screen.WorkingArea.Bottom - size.Height - 12);
+
+    private static Point HomeSpot(Size size) => LoadPosition(size) ?? DefaultSpot(Screen.PrimaryScreen!, size);
+
+    private void FollowQuestion(bool ask, IntPtr near)
+    {
+        if (dragFrom is not null) return; // never move it out from under the user's hand
+        if (ask && near != IntPtr.Zero)
+        {
+            var target = Screen.FromHandle(near);
+            var here = Screen.FromPoint(new Point(Left + Width / 2, Top + Height / 2));
+            if (target.DeviceName == here.DeviceName) return;
+            var home = HomeSpot(Size);
+            var homeOnTarget = Screen.FromPoint(new Point(home.X + Width / 2, home.Y + Height / 2)).DeviceName == target.DeviceName;
+            Location = Clamp(homeOnTarget ? home : DefaultSpot(target, Size));
+            movedForQuestion = true;
+        }
+        else if (!ask && movedForQuestion)
+        {
+            Location = Clamp(HomeSpot(Size));
+            movedForQuestion = false;
+        }
     }
 
     public void ShowLater(LaterStore store)
@@ -198,7 +231,7 @@ public sealed class BuddyWindow : Form
         new LaterWindow(store).Show();
     }
 
-    private void Apply(BuddyMood next, bool show, string? words, bool ask, bool scrolling, bool canSave)
+    private void Apply(BuddyMood next, bool show, string? words, bool ask, bool scrolling, bool canSave, IntPtr near)
     {
         if (!show)
         {
@@ -207,6 +240,7 @@ public sealed class BuddyWindow : Form
             scene.Reset();
             return;
         }
+        FollowQuestion(ask, near);
         // Same mood and same words: the scene keeps going, so the bubble does not restart every 2 seconds.
         scene.Set(next, words ?? BuddyWords.For(next, null, 0), Now, ask, scrolling, canSave);
         Visible = true;
@@ -227,6 +261,7 @@ public sealed class BuddyWindow : Form
         using (var g = Graphics.FromImage(bitmap))
         {
             g.Clear(Color.Transparent);
+            g.ScaleTransform(DpiScale, DpiScale);
             scene.Render(g, now);
         }
 

@@ -216,9 +216,78 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
   by its address, yes after 7.5 s -> last pass, then a TikTok page -> "No passes left" and declined. Not observed:
   the window actually minimizing on that last step (same code path as a "no"), a pass expiring after 15 min (unit
   checks only), the phone (nothing changed there; phone-side friction for free users is not built).
+  Later run (same day, fake clock + real Edge): a pass expired after +16 min and YouTube was asked about again,
+  and the Edge window was minimized (IsIconic true) after "No passes left". Both gaps above are now observed.
+- Wider distraction list (2026-11-20, PC app, not released): addresses now also cover X/Twitter, Facebook,
+  Snapchat, Disney+, Hulu and Prime Video (`BrowserSites.cs`); chat adds Signal, Viber, Messenger; games add the
+  launchers Battle.net, EA app, Ubisoft Connect, GOG Galaxy, Xbox app and about 100 game and emulator processes
+  (shooters, MOBAs, sandbox, RPGs, sports, RetroArch, Dolphin and others). They are one table,
+  `Distractions.GameNames` (process -> plain name), so adding a game is one line. A process name is the exe name
+  lower case without ".exe"; some are guesses by game, so a game that is missed needs its real exe name added. Title fallback adds only Facebook, Snapchat, Disney+, Hulu (names that rarely sit in a work
+  title); X is address-only. Phone chips (`/session/choices`) add X, Facebook, Snapchat. Not listed on purpose:
+  Spotify and other music, Roblox Studio, game editors. Checks: 164 before the generic detector below.
+- Any-game detection (2026-11-20, PC app, not released): `Watch/GameDetector.cs` catches games that are not in
+  `GameNames`. Any one signal is enough: (1) the exe sits in a game library (steamapps\common, Epic Games, Riot
+  Games, XboxGames, GOG, EA, Ubisoft, itch, any "\Games\" folder), (2) one of its 3 nearest ancestors is a game
+  launcher (Steam, Epic, Battle.net, EA, Ubisoft, GOG, Riot, Xbox), (3) a game SDK or engine file sits next to
+  the exe or one folder up (steam_api64, steam_appid.txt, EOSSDK, UnityPlayer, GameAssembly, galaxy, DLSS,
+  OpenVR, Bink; looked up on disk), (4) Windows reports a Direct3D exclusive full-screen program and the front
+  window covers its monitor. 1-3 are read once per window and cached; names come from the exe's ProductName,
+  else the exe name. ANTI-CHEAT SAFE: the game process is never read or opened with more than
+  PROCESS_QUERY_LIMITED_INFORMATION (its path, what Task Manager asks); the launcher chain is a Toolhelp
+  process-list snapshot (no handle) and signal 3 reads files, not memory. Never add Process.Modules,
+  Process.Handle or VM_READ to `GameDetector` (an earlier draft did, and the "no SDK yet" verdict was also
+  cached forever; both are gone). `NeverGames` (Blender, Godot, Krita, Unity,
+  Unreal Editor, Roblox Studio, OBS, Wallpaper Engine...) and the Unreal install folder are excluded, and the
+  buddy's "It's for work" still lets a wrong guess through. Hooked in at `Distractions.IsDistraction` (any
+  non-browser window) and `FriendlyName`. Also in a Locked session (no question there), so a wrong guess is
+  costly: add the exe to `NeverGames`. Checks: 174. Live (real processes): game-library path, launcher parent
+  (cmd copy named steam.exe), and a steam_api64.dll next to the exe were each caught; a plain program, this
+  shell and protected processes (MsMpEng, csrss, lsass, System) were not, and none crashed it. NOT tested:
+  signal 4 (needs a real exclusive full-screen D3D game; only its screen-cover math is checked; modern Windows
+  may report most games as "busy", not "D3D full screen", so it may miss many), minimizing a real fullscreen
+  game, and any real game or anti-cheat. The `\Games\` folder marker is broad.
+- Browser games, multi-monitor and other cases (2026-11-20, PC app, not released, Checks: 189):
+  (a) Browser games by address (`BrowserSites.cs`, now a table of `Site(Host, Name, Path?, Exact)`): Poki,
+  CrazyGames, Miniclip, Y8, Kongregate, Newgrounds, itch.io, Game Jolt, Roblox (exact host, so create.roblox.com
+  and devforum stay work), Chess.com, Lichess, .io games, cloud gaming (GeForce Now, Luna, xbox.com/play with a
+  language prefix, nytimes.com/games) and any host or path containing "unblocked". Anything not in the table is
+  still missed: a game on an unlisted site is work. The extension is NOT used to guess web games (deliberately).
+  (b) Every visible window on any monitor is judged, not only the front one: `VisibleWindows.FindDistractions`
+  (open, not minimized, not on another virtual desktop, not a tool/click-through/no-activate overlay, on a
+  monitor) keeps a distraction only when at least 60,000 px and 25% of it shows past the windows above it (pure
+  rectangle math, `VisibleArea`). `SessionWatch.Tick` picks a subject among them (the one already asked or
+  declined first, so the question does not jump), asks, and minimizes THAT window; work is still judged by the
+  front window. A fully covered window is ignored. Costs about 8 ms a tick. The process is already system-DPI
+  aware (measured: `GetProcessDpiAwareness` = 1 on the installed app; it comes from the SDK/WPF default, not from
+  our code), so `Enumerate` switches its own thread to per-monitor awareness (`SetThreadDpiAwarenessContext`,
+  restored after) to get real pixels on mixed-scaling monitors. Because the process is DPI aware, windows must
+  scale themselves: `HomeWindow` already did (`Px`/`Pf`); `BuddyWindow` (scene drawn at 100% and scaled by
+  `DeviceDpi / 96`, mouse positions divided back) and `LaterWindow` (`Px`) did not, so they were physically small on
+  a 125-200% screen until now. Checked only at 100% scaling: the buddy scene was rendered at 100/150/200% and its
+  hit test checked by math; HomeWindow and LaterWindow at a scaled screen were not seen.
+  (c) `BrowserWatch` reads the address of every open browser window (2 background windows per second, front
+  first), keeps the site per window (`BrowserSites.Record(window, name)`), and counts wheel notches per window
+  under the pointer, so a feed scrolled on the second monitor counts while another window has focus.
+  (d) The buddy follows the question to the monitor of the window it asks about and returns to its saved
+  spot afterwards (`BuddyWindow.FollowQuestion`); "Save for later" only shows when the asked page is the front
+  one. (e) Store apps (Netflix, Disney+, Prime Video, TikTok, Instagram, Twitch, Facebook, Hulu by title in an
+  ApplicationFrameHost window), Minecraft Java (javaw titled Minecraft, `.minecraft` folder, its launchers),
+  Android emulators (BlueStacks, LDPlayer, MuMu, Nox, MEmu) and GeForce Now / Moonlight are named distractions.
+  Live (real Edge, one monitor): a background Edge window with a stand-in YouTube address and an innocent title
+  was read, asked about while the work window kept focus, then minimized (IsIconic) while the other stayed open;
+  the same window fully covered by the work window was never asked about, and was asked once uncovered.
+  NOT tested: a real second monitor (this PC has one, so buddy placement on another screen and negative or
+  mixed-DPI coordinates are only reasoned, and the 60,000 px rule is not tuned on real layouts), picture-in-picture
+  windows, background-tab audio, real browser games, and whether minimizing a window on another monitor
+  interrupts a game or video the user chose to leave playing.
+- Brandon's PC (2026-11-20): the installed app is this build (unsigned). His `native-host.json` pointed at a
+  missing `Nogbox.exe`; `SwipeLater.exe --register-browser` rewrote it (backup in the session scratchpad). I
+  rewrote `docs/pc/index.html` to three steps (no extension step) and he asked for it back as it was, so it is
+  unchanged and still shows the old CONNECT BROWSERS step.
 - Not verified: the extension's own counting on real YouTube Shorts and Reddit pages (DOM and scroll
   behavior can change), Edge, a packed or store-installed extension (the store assigns a new ID), long
-  sessions, multi-monitor, and whether Windows always allows Back to work to take the front.
+  sessions, a real second monitor, and whether Windows always allows Back to work to take the front.
 
 ## Git and collaboration
 
