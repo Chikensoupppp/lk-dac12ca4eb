@@ -28,7 +28,8 @@ def call(method, path, **kw):
     return r.json() if r.content else {}
 
 files = sorted(glob.glob("docs/aso/screenshots/6.9/*.png"))
-assert len(files) == 6, files
+# Apple takes 1 to 10 screenshots per device size.
+assert 1 <= len(files) <= 10, files
 
 app = call("GET", f"/apps?filter[bundleId]={BUNDLE}")["data"]
 assert app, "no app with that bundle ID"
