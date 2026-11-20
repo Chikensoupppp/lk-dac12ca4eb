@@ -55,8 +55,15 @@ jobs:
           codesign --force --sign - --entitlements apps/ios/Config/LockInMonitor.entitlements "$APP/PlugIns/LockInMonitor.appex"
           codesign --force --sign - --entitlements apps/ios/Config/LockInReport.entitlements "$APP/Extensions/LockInReport.appex"
           codesign --force --sign - --entitlements apps/ios/Config/LockInWidget.entitlements "$APP/PlugIns/LockInWidget.appex"
+          # The block screen extensions are only in the archive once project.testflight.yml embeds them.
+          for x in LockInShield LockInShieldAction; do
+            if [ -d "$APP/PlugIns/$x.appex" ]; then
+              codesign --force --sign - --entitlements "apps/ios/Config/$x.entitlements" "$APP/PlugIns/$x.appex"
+            fi
+          done
           codesign --force --sign - --entitlements apps/ios/Config/LockIn.entitlements "$APP"
-          for t in "$APP" "$APP/PlugIns/LockInMonitor.appex" "$APP/Extensions/LockInReport.appex" "$APP/PlugIns/LockInWidget.appex"; do
+          for t in "$APP" "$APP/PlugIns/LockInMonitor.appex" "$APP/Extensions/LockInReport.appex" "$APP/PlugIns/LockInWidget.appex" "$APP"/PlugIns/LockInShield*.appex; do
+            [ -e "$t" ] || continue
             echo "== $t"
             codesign -d --entitlements :- "$t" 2>/dev/null | grep -o 'com.apple.developer.[a-z.-]*' || echo "no entitlements found"
           done

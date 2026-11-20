@@ -28,6 +28,8 @@ targets:
       - target: LockInMonitor
       - target: LockInWidget
       - target: LockInReport
+      - target: LockInShield
+      - target: LockInShieldAction
       - package: RevenueCat
         product: RevenueCat
     settings:
@@ -86,6 +88,50 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.report
+        GENERATE_INFOPLIST_FILE: NO
+  # SwipeLater's own block screen (cream paper, the brain, "Instagram can wait."), shown instead of
+  # iOS's grey one when a blocked app is opened. Reads the session's end from the app group.
+  LockInShield:
+    type: app-extension
+    platform: iOS
+    sources: [LockInShield, Shared, BrainArt/Assets.xcassets]
+    entitlements:
+      path: Config/LockInShield.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
+    info:
+      path: Config/LockInShield-Info.plist
+      properties:
+        CFBundleDisplayName: SwipeLater Shield
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).LockInShield
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.shield
+        GENERATE_INFOPLIST_FILE: NO
+  # The block screen's buttons: "Back to focus" closes the app, "Swipe it later" also leaves a
+  # reminder for the session's end.
+  LockInShieldAction:
+    type: app-extension
+    platform: iOS
+    sources: [LockInShieldAction, Shared]
+    entitlements:
+      path: Config/LockInShieldAction.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.brandon132199.lockin]
+    info:
+      path: Config/LockInShieldAction-Info.plist
+      properties:
+        CFBundleDisplayName: SwipeLater Shield Actions
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).LockInShieldAction
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin.shieldaction
         GENERATE_INFOPLIST_FILE: NO
   # The home screen brain widget. Reads the day's level from the shared app group (BrainLevel).
   LockInWidget:

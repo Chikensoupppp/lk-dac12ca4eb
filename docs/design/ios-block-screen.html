@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Block screen options</title>
+<style>
+/* Apple's shield is a fixed template: background (color and/or blur), icon, title, subtitle,
+   a filled primary button and a plain secondary button. Only colors, the picture and the words
+   are ours, and text uses the system font. These mocks keep that layout so they are honest. */
+:root { --paper: #E7E8E3; --ink: #1B1B1B; --blue: #3255A4; --orange: #FF6C2F; --orangeDeep: #E85A1E; }
+body { margin: 0; background: #cfd0cb; display: flex; gap: 36px; padding: 36px; font-family: -apple-system, "SF Pro", "Segoe UI", system-ui, sans-serif; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.lab { font: 700 13px/1.3 ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: 1.2px; color: rgba(27,27,27,.6); text-align: center; }
+.ph { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,.2); flex: none; }
+/* a made-up feed behind the shield (no real app) */
+.feed { position: absolute; inset: 0; background: #fff; }
+.feed i { position: absolute; left: 0; right: 0; }
+.blur { position: absolute; inset: 0; backdrop-filter: blur(28px) saturate(1.2); -webkit-backdrop-filter: blur(28px) saturate(1.2); }
+.status { position: absolute; top: 18px; left: 34px; right: 30px; display: flex; justify-content: space-between; font: 600 16px/1 -apple-system, system-ui; z-index: 3; }
+.island { position: absolute; top: 11px; left: 50%; width: 124px; height: 36px; margin-left: -62px; border-radius: 20px; background: #000; z-index: 3; }
+.sh { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.icon { margin-top: 238px; width: 108px; height: 108px; object-fit: contain; }
+.t { margin-top: 22px; font: 700 26px/1.15 -apple-system, system-ui; text-align: center; padding: 0 34px; letter-spacing: -.3px; }
+.s { margin-top: 10px; font: 400 17px/1.35 -apple-system, system-ui; text-align: center; padding: 0 40px; }
+.b1 { position: absolute; left: 24px; right: 24px; bottom: 98px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font: 600 17px/1 -apple-system, system-ui; }
+.b2 { position: absolute; left: 24px; right: 24px; bottom: 50px; height: 40px; display: flex; align-items: center; justify-content: center; font: 600 17px/1 -apple-system, system-ui; }
+.home { position: absolute; bottom: 9px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); opacity: .85; z-index: 3; }
+</style>
+</head>
+<body>
+
+<div class="col">
+<div class="ph" style="background:var(--paper)">
+  <div class="island"></div><div class="status"><span>4:07</span><span>●●● 87%</span></div>
+  <div class="sh" style="color:var(--ink)">
+    <img class="icon" src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png">
+    <div class="t">Instagram can wait.</div>
+    <div class="s" style="color:rgba(27,27,27,.65)">You’re locked in. 18 min left.<br>It’ll still be here after.</div>
+  </div>
+  <div class="b1" style="background:var(--ink);color:var(--paper)">Back to focus</div>
+  <div class="b2" style="color:rgba(27,27,27,.55)">Swipe it later</div>
+  <div class="home"></div>
+</div>
+<div class="lab">A · PAPER<br>calm, same cream as the app</div>
+</div>
+
+<div class="col">
+<div class="ph">
+  <div class="feed">
+    <i style="top:0;height:110px;background:#f2f2f2"></i>
+    <i style="top:120px;height:300px;background:linear-gradient(135deg,#f6b26b,#e06666 60%,#8e7cc3)"></i>
+    <i style="top:430px;height:24px;left:16px;right:180px;background:#ddd;border-radius:6px"></i>
+    <i style="top:470px;height:260px;background:linear-gradient(160deg,#6fa8dc,#93c47d)"></i>
+    <i style="top:745px;height:100px;background:#f2f2f2"></i>
+  </div>
+  <div class="blur" style="background:rgba(231,232,227,.72)"></div>
+  <div class="island"></div><div class="status"><span>4:07</span><span>●●● 87%</span></div>
+  <div class="sh" style="color:var(--ink)">
+    <img class="icon" src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png">
+    <div class="t" style="color:var(--orangeDeep)">Not now.</div>
+    <div class="s" style="color:rgba(27,27,27,.7)">Instagram opens again at 4:25.<br>You’ve got this.</div>
+  </div>
+  <div class="b1" style="background:var(--orange);color:var(--ink)">Back to focus</div>
+  <div class="b2" style="color:rgba(27,27,27,.6)">Swipe it later</div>
+  <div class="home"></div>
+</div>
+<div class="lab">B · FROSTED<br>the app blurs behind, orange accents</div>
+</div>
+
+<div class="col">
+<div class="ph" style="background:var(--paper)">
+  <div class="island"></div><div class="status"><span>4:07</span><span>●●● 87%</span></div>
+  <div class="sh" style="color:var(--ink)">
+    <img class="icon" src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png">
+    <div class="t">Locked till 4:25.</div>
+    <div class="s" style="color:rgba(27,27,27,.65)">No way out this time.<br>That was the deal.</div>
+  </div>
+  <div class="b1" style="background:var(--blue);color:#fff">OK</div>
+  <div class="home"></div>
+</div>
+<div class="lab">C · LOCKED MODE (PLUS)<br>no second button</div>
+</div>
+
+<script>window.ready = true; window.render = () => {};</script>
+</body>
+</html>

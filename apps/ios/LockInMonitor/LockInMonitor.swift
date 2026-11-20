@@ -27,7 +27,7 @@ final class LockInMonitor: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
         if AutoLock.isAuto(activity.rawValue) {
-            applyAutoLock()
+            applyAutoLock(activity)
             return
         }
         if activity.rawValue == BrainLevel.activityName {
@@ -48,9 +48,13 @@ final class LockInMonitor: DeviceActivityMonitor {
     }
 
     /// Plus "Lock by itself": shield the apps the user picked (copied into the app group by the app).
-    private func applyAutoLock() {
+    private func applyAutoLock(_ activity: DeviceActivityName) {
         guard let data = BrainLevel.shared?.data(forKey: AutoLock.selectionKey),
               let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else { return }
+        // The block screen's "N min left": the interval started now and runs `minutes`.
+        if let auto = AutoLock.parse(activity.rawValue) {
+            ShieldNote.save(endsAt: Date().addingTimeInterval(TimeInterval(auto.minutes * 60)), locked: false)
+        }
         let store = ManagedSettingsStore(named: .init(RestrictionNaming.storeName))
         store.shield.applications = selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
         store.shield.applicationCategories = selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)

@@ -1,5 +1,6 @@
 import FamilyControls
 import Foundation
+import UserNotifications
 
 /// Owns the restriction lifecycle for a focus session. It never decides whether a session
 /// is running; callers pass the session in. Every path that ends a session calls `end()`,
@@ -114,6 +115,8 @@ final class RestrictionController: ObservableObject {
             if locked { client.applyLock(true) }
             let marker = AppliedMarker(sessionID: record.id, endsAt: record.timing.endsAt)
             if let data = try? JSONEncoder().encode(marker) { defaults.set(data, forKey: Self.markerKey) }
+            // For SwipeLater's block screen: "18 min left" or "Locked till 4:25".
+            if defaults == .standard { ShieldNote.save(endsAt: record.timing.endsAt, locked: locked) }
             status = .active
         }
     }
@@ -124,6 +127,14 @@ final class RestrictionController: ObservableObject {
         client.stopMonitoring()
         client.clearShield()
         defaults.removeObject(forKey: Self.markerKey)
+        if defaults == .standard {
+            // Ended early (time was still left): a "Swipe it later" reminder would fire at the old
+            // end, so drop it. At the natural end it is due now and stays.
+            if ShieldNote.current() != nil {
+                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [ShieldNote.reminderID])
+            }
+            ShieldNote.clear()
+        }
         status = .needsAuthorization
         refresh()
     }
