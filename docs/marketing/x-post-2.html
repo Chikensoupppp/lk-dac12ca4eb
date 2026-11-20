@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SwipeLater X post 2</title>
+<style>
+@font-face{font-family:Onest;src:url("file:///C:/Users/brand/Projects/LockIn/apps/ios/LockIn/Resources/Fonts/Onest.ttf");font-weight:100 900}
+:root{--paper:#F6F3EC;--ink:#171513;--soft:#6F6A60}
+*{box-sizing:border-box;margin:0}
+html,body{width:1600px;height:900px;overflow:hidden}
+body{background:#E7E8E3;font-family:Onest,sans-serif;color:var(--ink);position:relative}
+.blob{position:absolute;border-radius:50%;filter:blur(90px)}
+.b1{width:760px;height:640px;left:-200px;bottom:-280px;background:#F3E0E4}
+.b2{width:720px;height:620px;right:-120px;top:-260px;background:#EEE5D3}
+.left{position:absolute;left:112px;top:96px;width:800px}
+.mark{font-weight:800;font-size:34px;letter-spacing:-.03em}
+h1{margin-top:140px;font-weight:800;font-size:82px;line-height:.98;letter-spacing:-.045em}
+.sub{margin-top:30px;font-size:31px;line-height:1.35;color:var(--soft);font-weight:500;max-width:560px}
+.url{position:absolute;left:112px;bottom:64px;font-size:24px;font-weight:600;color:var(--soft)}
+/* phone sitting on the paper, real shadow, no glow */
+.phone{position:absolute;left:1040px;top:68px;width:368px;height:764px;border-radius:60px;background:#111;padding:14px;
+  box-shadow:0 60px 80px -30px rgba(90,70,50,.45),0 18px 30px rgba(90,70,50,.18)}
+.phone img{width:340px;height:736px;border-radius:48px;display:block}
+.island{position:absolute;left:50%;top:28px;width:110px;height:32px;border-radius:20px;background:#000;transform:translateX(-50%)}
+.sticker{position:absolute;left:112px;top:690px;transform:rotate(-4deg);background:var(--ink);color:var(--paper);font-weight:800;font-size:22px;padding:14px 24px;border-radius:999px;box-shadow:0 10px 24px rgba(23,21,19,.18)}
+.sticker b{color:#F4C26E}
+</style></head>
+<body>
+<canvas id="field" style="position:absolute;left:0;top:0;width:1600px;height:900px"></canvas>
+
+<div class="left">
+  <div class="mark">SwipeLater</div>
+  <h1>Finish the session.<br>Watch it count.</h1>
+  <p class="sub">The ring closes, the brain cheers and your streak rolls over.</p>
+</div>
+<div class="url">swipelater.app</div>
+<div class="phone">
+  <img src="file:///C:/Users/brand/Projects/LockIn/apps/rive/complete/build/session-done-still.png" alt="">
+  <div class="island"></div>
+</div>
+<div class="sticker">Coming soon to <b>iPhone</b></div>
+<script src="field.js"></script>
+<script>drawField(document.getElementById("field"), 2, 0, 0.5, []);</script>
+</body></html>

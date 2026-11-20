@@ -1,0 +1,83 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SwipeLater X post 1</title>
+<style>
+@font-face{font-family:Onest;src:url("file:///C:/Users/brand/Projects/LockIn/apps/ios/LockIn/Resources/Fonts/Onest.ttf");font-weight:100 900}
+:root{--paper:#F6F3EC;--ink:#171513;--soft:#6F6A60;--amber:#DE9440;--sheet:#FDFBF7;--edge:#EDE7DC}
+*{box-sizing:border-box;margin:0}
+html,body{width:1600px;height:900px;overflow:hidden}
+body{background:#E7E8E3;font-family:Onest,sans-serif;color:var(--ink);position:relative}
+.blob{position:absolute;border-radius:50%;filter:blur(90px)}
+.b1{width:760px;height:640px;left:-180px;top:-200px;background:#EEE5D3}
+.b2{width:720px;height:620px;right:-160px;bottom:-260px;background:#F3E0E4}
+.b3{width:420px;height:380px;right:260px;top:-160px;background:#F6E2E9}
+.left{position:absolute;left:112px;top:96px;width:780px}
+.mark{font-weight:800;font-size:34px;letter-spacing:-.03em}
+h1{margin-top:110px;font-weight:800;font-size:100px;line-height:.98;letter-spacing:-.045em}
+.sub{margin-top:30px;font-size:31px;line-height:1.35;color:var(--soft);font-weight:500;max-width:600px}
+.slide{margin-top:46px;width:500px;height:96px;border-radius:48px;background:var(--ink);display:flex;align-items:center;padding:6px;position:relative}
+.knob{width:84px;height:84px;border-radius:50%;background:var(--paper);display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.slide span{position:absolute;left:124px;color:#F6F3EC;font-weight:800;font-size:21px;letter-spacing:.16em}
+.trail{position:absolute;left:6px;top:6px;width:148px;height:84px;border-radius:42px;background:linear-gradient(90deg,rgba(222,148,64,.0),rgba(222,148,64,.55))}
+.dial{position:absolute;left:1160px;top:450px;transform:translate(-50%,-50%);width:560px;height:560px}
+.dial svg{position:absolute;inset:0;overflow:visible}
+.face{position:absolute;left:30px;top:30px;width:500px;height:500px;border-radius:50%;background:#FCFAF6;box-shadow:0 34px 60px rgba(107,79,42,.20)}
+.brain{position:absolute;left:50%;top:51%;width:400px;transform:translate(-50%,-50%)}
+.sticker{position:absolute;left:1262px;top:58px;transform:rotate(6deg);background:var(--ink);color:var(--paper);font-weight:800;font-size:22px;letter-spacing:.01em;padding:14px 24px;border-radius:999px;box-shadow:0 10px 24px rgba(23,21,19,.18)}
+.sticker b{color:#F4C26E;font-weight:800}
+.url{position:absolute;left:112px;bottom:64px;font-size:24px;font-weight:600;color:var(--soft)}
+</style></head>
+<body>
+<canvas id="field" style="position:absolute;left:0;top:0;width:1600px;height:900px"></canvas>
+
+
+<div class="left">
+  <div class="mark">SwipeLater</div>
+  <h1>One slide.<br>You're locked in.</h1>
+  <p class="sub">Instagram, TikTok and YouTube wait until your work is done.</p>
+  <div class="slide">
+    
+    <div class="knob">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#171513" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    </div>
+    <span>SLIDE TO LOCK IN</span>
+  </div>
+</div>
+<div class="url">swipelater.app</div>
+
+<div class="dial">
+  <div class="face"></div>
+  <svg viewBox="0 0 560 560">
+    <defs>
+      <linearGradient id="honey" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#F4C26E"/><stop offset="1" stop-color="#D9832E"/>
+      </linearGradient>
+      <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+    </defs>
+    <circle cx="280" cy="280" r="262" fill="none" stroke="#F6CB80" stroke-width="40" opacity=".35" filter="url(#soft)"/>
+    <circle cx="280" cy="280" r="262" fill="none" stroke="#EDE6DA" stroke-width="22"/>
+    <circle cx="280" cy="280" r="262" fill="none" stroke="url(#honey)" stroke-width="22" stroke-linecap="round"
+            stroke-dasharray="1646" stroke-dashoffset="0" transform="rotate(-90 280 280)"/>
+    <g transform="translate(280 280)">
+      <g fill="#DE9440">
+        <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(18)"/>
+        <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(90)"/>
+        <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(162)"/>
+        <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(234)"/>
+        <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(306)"/>
+      </g>
+      <g fill="#E9A3BC">
+        <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(54)"/>
+        <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(126)"/>
+        <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(198)"/>
+        <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(270)"/>
+        <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(342)"/>
+      </g>
+    </g>
+  </svg>
+  <img class="brain" src="file:///C:/Users/brand/Projects/LockIn/docs/design/brain-mascot-exact.png" alt="">
+</div>
+
+<div class="sticker">Coming soon to <b>iPhone</b></div>
+<script src="field.js"></script>
+<script>drawField(document.getElementById("field"), 2, 0, 0.5, []);</script>
+</body></html>

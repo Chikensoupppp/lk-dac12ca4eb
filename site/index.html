@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SwipeLater: Focus App Blocker</title>
+<meta name="description" content="SwipeLater blocks the apps that eat your time. Slide to lock in. Your distractions can wait.">
+<style>
+:root{--paper:#F6F3EC;--ink:#171513;--soft:#6F6A60;--line:#E4DED3;--inset:#EDE9E0;--amber:#A97029}
+@media (prefers-color-scheme:dark){:root{--paper:#171513;--ink:#F6F3EC;--soft:#A39C8E;--line:#2B2824;--inset:#201E1B;--amber:#D9993F}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:18px/1.55 ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif}
+main{width:min(980px,100% - 32px);margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.logo{font-weight:900;font-size:1.25rem;letter-spacing:-.04em}
+header a{color:var(--soft);text-decoration:none;font-size:.95rem}
+header a:hover,header a:focus-visible{color:var(--ink);text-decoration:underline}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:48px 0 64px}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98;letter-spacing:-.05em;margin:0 0 18px;font-weight:900}
+h1 em{font-style:normal;color:var(--amber)}
+.lede{font-size:1.2rem;color:var(--soft);max-width:30ch;margin:0 0 28px}
+.slide{position:relative;display:flex;align-items:center;width:min(268px,100%);height:64px;border-radius:99px;background:var(--ink);color:var(--paper);padding:4px;font-weight:900;font-size:.9rem;letter-spacing:.14em}
+.slide .k{width:56px;height:56px;border-radius:50%;background:var(--paper);color:var(--ink);display:grid;place-items:center;font-size:1.3rem;animation:nudge 3.2s ease-in-out infinite}
+.slide span{flex:1;text-align:center;padding-right:14px}
+@keyframes nudge{0%,55%,100%{transform:translateX(0)}70%{transform:translateX(30px)}85%{transform:translateX(0)}}
+.note{margin-top:14px;color:var(--soft);font-size:.9rem}
+.brainwrap{display:grid;place-items:center;aspect-ratio:1;border-radius:50%;background:var(--inset);border:2px solid var(--line);position:relative}
+.brainwrap img{width:58%;height:auto}
+.brainwrap::after{content:"25:00";position:absolute;bottom:14%;font-weight:900;font-size:1.6rem;letter-spacing:-.03em}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:2px solid var(--ink)}
+.three div{padding:26px 22px 30px 0}
+.three div+div{padding-left:22px;border-left:1px solid var(--line)}
+.three b{display:block;font-size:2.4rem;font-weight:900;color:var(--amber);letter-spacing:-.04em;line-height:1}
+.three h2{font-size:1.15rem;margin:10px 0 6px}
+.three p{margin:0;color:var(--soft);font-size:1rem}
+footer{border-top:1px solid var(--line);margin-top:56px;padding:28px 0 48px;color:var(--soft);font-size:.92rem;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+footer a{color:var(--ink)}
+@media (max-width:760px){.hero{grid-template-columns:1fr;padding:24px 0 40px}.brainwrap{max-width:320px;order:-1}.three{grid-template-columns:1fr}.three div+div{border-left:0;border-top:1px solid var(--line);padding-left:0}}
+@media (prefers-reduced-motion:reduce){.slide .k{animation:none}}
+</style></head><body><main>
+<header><div class="logo">SwipeLater.</div><a href="#support">Support</a></header>
+<section class="hero">
+ <div>
+  <h1>Your distractions<br>can <em>wait.</em></h1>
+  <p class="lede">Pick the apps that eat your time. Slide to lock in. They come back when the timer ends.</p>
+  <div class="slide" aria-hidden="true"><div class="k">&rarr;</div><span>SLIDE TO LOCK IN</span></div>
+  <p class="note">iPhone app. Coming soon to the App Store.</p>
+ </div>
+ <div class="brainwrap" aria-hidden="true"><img src="brain.png" alt=""></div>
+</section>
+<section class="three" aria-label="How it works">
+ <div><b>1</b><h2>Pick a task</h2><p>Say what you are working on. One thing at a time.</p></div>
+ <div><b>2</b><h2>Slide to lock in</h2><p>A slide is a real choice. It cannot start by accident in a pocket.</p></div>
+ <div><b>3</b><h2>Your apps wait</h2><p>Blocked apps stay blocked until the timer ends. Your PC can join too.</p></div>
+</section>
+<footer id="support">
+ <div>Questions or help: <a href="mailto:help@swipelater.app">help@swipelater.app</a></div>
+ <div><a href="privacy/">Privacy policy</a></div>
+ <div>&copy; 2026 SwipeLater</div>
+</footer>
+</main></body></html>

@@ -1,0 +1,223 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SwipeLater coming soon (Instagram Reel, safe)</title>
+<style>
+@font-face{font-family:Onest;src:url("/apps/ios/LockIn/Resources/Fonts/Onest.ttf");font-weight:100 900}
+:root{--ink:#171513;--soft:#6F6A60;--paper:#F6F3EC;--honey-a:#F4C26E;--honey-b:#D9832E}
+*{box-sizing:border-box;margin:0}
+/* Instagram Reel, 1080 x 1920. The whole 4:5 layout (ig-post.html) sits scaled to 0.8 inside the
+   area every Instagram view keeps: below the Reels header, above the caption and buttons, and inside
+   the 4:5 feed crop and the 3:4 grid crop, with room under the Reels header (x 108-972, y 412-1492). The dots fill the whole frame. */
+html,body{width:1080px;height:1920px;overflow:hidden}
+body{background:#E7E8E3;font-family:Onest,sans-serif;color:var(--ink)}
+#field{position:absolute;left:0;top:0;width:1080px;height:1920px}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1350px;transform:translate(108px,412px) scale(0.8);transform-origin:0 0}
+.scene{position:absolute;inset:0;will-change:transform,opacity}
+.abs{position:absolute;will-change:transform,opacity}
+.center{left:0;width:1080px;text-align:center}
+.mark{top:58px;font-weight:800;font-size:40px;letter-spacing:-.03em}
+.url{top:1300px;font-size:28px;font-weight:600;color:var(--soft)}
+.h1{font-weight:800;letter-spacing:-.045em;line-height:1;white-space:nowrap}
+.sub{font-size:38px;line-height:1.35;color:var(--soft);font-weight:500}
+.sticker{background:var(--ink);color:var(--paper);font-weight:800;font-size:27px;padding:16px 28px;border-radius:999px;box-shadow:0 12px 28px rgba(23,21,19,.2);white-space:nowrap}
+.sticker b{color:var(--honey-a)}
+
+.slide{left:220px;top:990px;width:640px;height:108px;border-radius:54px;background:var(--ink);overflow:hidden}
+.fill{position:absolute;left:7px;top:7px;width:626px;height:94px;border-radius:47px;background:linear-gradient(90deg,var(--honey-a),var(--honey-b))}
+.slide .label{position:absolute;left:140px;top:0;height:108px;display:flex;align-items:center;color:var(--paper);font-weight:800;font-size:28px;letter-spacing:.16em}
+.slide .done{position:absolute;left:50px;top:0;height:108px;display:flex;align-items:center;color:var(--ink);font-weight:800;font-size:28px;letter-spacing:.16em}
+.knob{position:absolute;left:7px;top:7px;width:94px;height:94px;border-radius:50%;background:var(--paper);display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+
+.dial{left:260px;top:150px;width:560px;height:560px}
+.dial svg{position:absolute;inset:0;overflow:visible}
+.face{position:absolute;left:30px;top:30px;width:500px;height:500px;border-radius:50%;background:#FCFAF6;box-shadow:0 34px 60px rgba(107,79,42,.20)}
+.brain{position:absolute;left:80px;top:122px;width:400px;transform-origin:50% 100%}
+
+.phone{left:343px;top:380px;width:394px;height:820px;border-radius:64px;background:#111;padding:15px;
+  box-shadow:0 70px 90px -34px rgba(90,70,50,.45),0 20px 34px rgba(90,70,50,.18)}
+.phone img{width:364px;height:790px;border-radius:50px;display:block}
+.island{position:absolute;left:50%;top:30px;width:120px;height:34px;border-radius:20px;background:#000;transform:translateX(-50%)}
+</style></head>
+<body>
+<canvas id="field"></canvas>
+<div id="stage">
+
+<div class="abs mark center" id="mark1">SwipeLater</div>
+<div class="abs url center" id="url1">swipelater.app</div>
+
+<!-- ========== Scene 1 ========== -->
+<div class="scene" id="s1">
+  <div class="abs dial" id="dial">
+    <div class="face"></div>
+    <svg viewBox="0 0 560 560">
+      <defs>
+        <linearGradient id="honey" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#F4C26E"/><stop offset="1" stop-color="#D9832E"/>
+        </linearGradient>
+        <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+      </defs>
+      <circle id="bloom" cx="280" cy="280" r="262" fill="none" stroke="#F6CB80" stroke-width="44" filter="url(#soft)" opacity="0"/>
+      <circle cx="280" cy="280" r="262" fill="none" stroke="#EDE6DA" stroke-width="22"/>
+      <g id="ringG" style="transform-origin:280px 280px">
+        <circle id="ring" cx="280" cy="280" r="262" fill="none" stroke="url(#honey)" stroke-width="22" stroke-linecap="round"
+                stroke-dasharray="1646.2" stroke-dashoffset="1646.2" transform="rotate(-90 280 280)"/>
+      </g>
+      <g id="burst" style="transform-origin:280px 280px" opacity="0">
+        <g transform="translate(280 280)">
+          <g fill="#DE9440">
+            <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(18)"/>
+            <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(90)"/>
+            <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(162)"/>
+            <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(234)"/>
+            <rect x="-4.5" y="-334" width="9" height="28" rx="4.5" transform="rotate(306)"/>
+          </g>
+          <g fill="#E9A3BC">
+            <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(54)"/>
+            <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(126)"/>
+            <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(198)"/>
+            <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(270)"/>
+            <rect x="-4.5" y="-326" width="9" height="20" rx="4.5" transform="rotate(342)"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+    <img class="brain" id="brain" src="/docs/design/brain-mascot-exact.png" alt="">
+  </div>
+  <div class="abs sticker" id="stick1" style="left:666px;top:176px">Coming soon to <b>iPhone</b></div>
+
+  <div class="abs h1 center" id="h1a" style="top:672px;font-size:96px">One slide.</div>
+  <div class="abs h1 center" id="h1b" style="top:766px;font-size:96px">You're locked in.</div>
+  <p class="abs sub center" id="sub1" style="top:886px;font-size:35px">Your apps wait until your work is done.</p>
+
+  <div class="abs slide" id="slide">
+    <div class="fill" id="fill"></div>
+    <div class="label" id="label">SLIDE TO LOCK IN</div>
+    <div class="done" id="done">LOCKED IN</div>
+    <div class="knob" id="knob">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#171513" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="11" width="14" height="10" rx="2.5"/>
+        <path id="shackle" d="M8 11V8a4 4 0 0 1 7.6-1.8"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Scene 2 ========== -->
+<div class="scene" id="s2" style="opacity:0">
+  <div class="abs h1 center" id="h2a" style="top:140px;font-size:76px">Finish the session.</div>
+  <div class="abs h1 center" id="h2b" style="top:218px;font-size:76px">Watch it count.</div>
+  <p class="abs sub center" id="sub2" style="top:314px;font-size:30px">The ring closes and your streak rolls over.</p>
+  <div class="abs phone" id="phone">
+    <img id="screen" src="/apps/rive/complete/build/vidphone/v000.jpg" alt="">
+    <div class="island"></div>
+  </div>
+  <div class="abs sticker" id="stick2" style="left:368px;top:1220px">Coming soon to <b>iPhone</b></div>
+</div>
+
+</div>
+<script src="field.js"></script>
+<script>
+// Same strong curves and timing as the X video (x-post-video.html), laid out tall.
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const sx = t => ((ax * t + bx) * t + cx) * t, sy = t => ((ay * t + by) * t + cy) * t;
+  const dx = t => (3 * ax * t + 2 * bx) * t + cx;
+  return x => {
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 8; i++) { const e = sx(t) - x; const d = dx(t); if (Math.abs(e) < 1e-6 || !d) break; t -= e / d; }
+    return sy(Math.min(1, Math.max(0, t)));
+  };
+}
+const OUT = bezier(0.23, 1, 0.32, 1);
+const INOUT = bezier(0.77, 0, 0.175, 1);
+const DRAW = bezier(0.33, 0, 0.12, 1);
+const seg = (t, a, d, ease = OUT) => ease(Math.min(1, Math.max(0, (t - a) / d)));
+const lerp = (a, b, p) => a + (b - a) * p;
+const pulse = (t, a, d, amp) => { const p = (t - a) / d; return p <= 0 || p >= 1 ? 0 : amp * Math.sin(Math.PI * p) * (1 - p * 0.35); };
+const $ = id => document.getElementById(id);
+function rise(el, t, a, d = 0.6, dist = 26) {
+  const p = seg(t, a, d);
+  el.style.opacity = p;
+  el.style.transform = `translateY(${lerp(dist, 0, p)}px)`;
+}
+function pop(el, t, a, rot = 0, d = 0.5) {
+  const p = seg(t, a, d);
+  el.style.opacity = Math.min(1, p * 1.6);
+  el.style.transform = `rotate(${rot}deg) scale(${lerp(0.92, 1, p) + pulse(t, a + 0.08, 0.4, 0.04)})`;
+}
+
+const RING = 1646.2, TRAVEL = 640 - 14 - 94;
+const SCREEN_START = 5.8, FRAMES = 276;
+const RIPPLES = [
+  { x: 108 + 0.8 * (220 + 7 + TRAVEL + 47), y: 412 + 0.8 * (990 + 54), start: 2.15 },
+  { x: 540, y: 412 + 0.8 * 1200, start: 5.7, amp: 0.7 },
+];
+
+window.renderAt = function (t) {
+  drawField($('field'), t + 2, t, 0.62, RIPPLES);
+
+  rise($('mark1'), t, 0.1, 0.5, 12);
+  rise($('url1'), t, 1.0, 0.5, 12);
+
+  const dp = seg(t, 0.3, 0.7);
+  $('dial').style.opacity = dp;
+  $('dial').style.transform = `scale(${lerp(0.94, 1, dp) * 0.78})`;
+  rise($('h1a'), t, 0.45);
+  rise($('h1b'), t, 0.53);
+  rise($('sub1'), t, 0.75);
+  rise($('slide'), t, 0.9, 0.5, 18);
+
+  const sp = seg(t, 1.35, 0.8, INOUT);
+  $('knob').style.transform = `translateX(${sp * TRAVEL}px) scale(${1 - pulse(t, 2.15, 0.22, 0.07)})`;
+  $('fill').style.clipPath = `inset(0 ${(1 - sp) * TRAVEL}px 0 0 round 47px)`;
+  $('label').style.opacity = Math.max(0, 1 - sp * 2.2);
+  const lp = seg(t, 2.1, 0.3);
+  $('done').style.opacity = lp;
+  $('done').style.transform = `translateX(${lerp(-8, 0, lp)}px)`;
+  $('shackle').setAttribute('d', t >= 2.15 ? 'M8 11V8a4 4 0 0 1 8 0v3' : 'M8 11V8a4 4 0 0 1 7.6-1.8');
+
+  const rp = seg(t, 2.15, 0.7, DRAW);
+  $('ring').setAttribute('stroke-dashoffset', RING * (1 - rp));
+  $('ring').style.opacity = rp > 0.002 ? 1 : 0;
+  const closeT = 2.85;
+  $('ringG').style.transform = `scale(${1 + pulse(t, closeT, 0.45, 0.045)})`;
+  const bloom = t < closeT ? 0 : (t < closeT + 0.17 ? seg(t, closeT, 0.17) * 0.95 : lerp(0.95, 0.4, seg(t, closeT + 0.17, 1.0, INOUT)));
+  $('bloom').setAttribute('opacity', bloom);
+  const bp = seg(t, closeT, 0.6);
+  $('burst').setAttribute('opacity', t < closeT ? 0 : 1 - seg(t, closeT + 0.15, 0.45, INOUT));
+  $('burst').style.transform = `scale(${lerp(0.9, 1.25, bp)})`;
+  const hop = pulse(t, closeT + 0.05, 0.5, 22);
+  const squash = pulse(t, closeT, 0.16, 0.06) - pulse(t, closeT + 0.5, 0.18, 0.05);
+  $('brain').style.transform = `translateY(${-hop}px) scale(${1 - squash * 0.5}, ${1 + squash})`;
+  pop($('stick1'), t, 3.25, 6);
+
+  const xp = seg(t, 4.75, 0.4, INOUT);
+  $('s1').style.opacity = 1 - xp;
+  $('s1').style.transform = `translateY(${-28 * xp}px)`;
+  $('s2').style.opacity = t >= 4.75 ? 1 : 0;
+
+  rise($('h2a'), t, 5.2);
+  rise($('h2b'), t, 5.28);
+  rise($('sub2'), t, 5.45);
+  const pp = seg(t, 5.25, 0.75);
+  $('phone').style.opacity = pp;
+  $('phone').style.transform = `translateY(${lerp(70, 0, pp)}px)`;
+  pop($('stick2'), t, 9.3, -4);
+
+  const fi = Math.max(0, Math.min(FRAMES - 1, Math.round((t - SCREEN_START) * 60)));
+  const src = `/apps/rive/complete/build/vidphone/v${String(fi).padStart(3, '0')}.jpg`;
+  const img = $('screen');
+  if (img.getAttribute('src') === src) return Promise.resolve();
+  img.setAttribute('src', src);
+  return img.decode().catch(() => {});
+};
+
+window.ready = (async () => {
+  await document.fonts.ready;
+  await $('brain').decode().catch(() => {});
+  await window.renderAt(0);
+  return true;
+})();
+</script>
+</body></html>

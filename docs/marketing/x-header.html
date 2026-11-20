@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SwipeLater X header</title>
+<style>
+@font-face{font-family:Onest;src:url("file:///C:/Users/brand/Projects/LockIn/apps/ios/LockIn/Resources/Fonts/Onest.ttf");font-weight:100 900}
+:root{--ink:#171513;--soft:#6F6A60;--paper:#F6F3EC}
+*{box-sizing:border-box;margin:0}
+/* X header: 1500 x 500. The profile photo covers the lower left, and phones trim the top and
+   bottom a little, so everything that matters sits right of center and inside y 70-430. */
+html,body{width:1500px;height:500px;overflow:hidden}
+body{background:#E7E8E3;font-family:Onest,sans-serif;color:var(--ink);position:relative}
+#field{position:absolute;left:0;top:0;width:1500px;height:500px}
+.copy{position:absolute;left:452px;top:118px;width:600px}
+.mark{font-weight:800;font-size:28px;letter-spacing:-.03em;color:var(--soft)}
+h1{margin-top:14px;font-weight:800;font-size:78px;line-height:.98;letter-spacing:-.045em;white-space:nowrap}
+.pill{display:inline-block;margin-top:26px;background:var(--ink);color:var(--paper);font-weight:800;font-size:20px;padding:12px 22px;border-radius:999px;transform:rotate(-3deg);box-shadow:0 8px 20px rgba(23,21,19,.18)}
+.pill b{color:#F4C26E}
+.dial{position:absolute;left:1058px;top:58px;width:384px;height:384px;transform:scale(.92)}
+.dial svg{position:absolute;inset:0;overflow:visible}
+.face{position:absolute;left:24px;top:24px;width:336px;height:336px;border-radius:50%;background:#FCFAF6;box-shadow:0 24px 44px rgba(107,79,42,.20)}
+.brain{position:absolute;left:58px;top:84px;width:268px}
+</style></head>
+<body>
+<canvas id="field"></canvas>
+<div class="copy">
+  <div class="mark">SwipeLater</div>
+  <h1>One slide.<br>You're locked in.</h1>
+  <div class="pill">Coming soon to <b>iPhone</b></div>
+</div>
+<div class="dial">
+  <div class="face"></div>
+  <svg viewBox="0 0 384 384">
+    <defs>
+      <linearGradient id="honey" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#F4C26E"/><stop offset="1" stop-color="#D9832E"/>
+      </linearGradient>
+      <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
+    </defs>
+    <circle cx="192" cy="192" r="178" fill="none" stroke="#F6CB80" stroke-width="30" opacity=".4" filter="url(#soft)"/>
+    <circle cx="192" cy="192" r="178" fill="none" stroke="url(#honey)" stroke-width="15" stroke-linecap="round"/>
+    <g transform="translate(192 192)">
+      <g fill="#DE9440">
+        <rect x="-3.5" y="-224" width="7" height="20" rx="3.5" transform="rotate(18)"/>
+        <rect x="-3.5" y="-224" width="7" height="20" rx="3.5" transform="rotate(162)"/>
+        <rect x="-3.5" y="-224" width="7" height="20" rx="3.5" transform="rotate(234)"/>
+        <rect x="-3.5" y="-224" width="7" height="20" rx="3.5" transform="rotate(306)"/>
+      </g>
+      <g fill="#E9A3BC">
+        <rect x="-3.5" y="-218" width="7" height="14" rx="3.5" transform="rotate(126)"/>
+        <rect x="-3.5" y="-218" width="7" height="14" rx="3.5" transform="rotate(198)"/>
+        <rect x="-3.5" y="-218" width="7" height="14" rx="3.5" transform="rotate(270)"/>
+      </g>
+    </g>
+  </svg>
+  <img class="brain" src="file:///C:/Users/brand/Projects/LockIn/docs/design/brain-mascot-exact.png" alt="">
+</div>
+<script src="field.js"></script>
+<script>drawField(document.getElementById("field"), 2.6, 0, 0.38, []);</script>
+</body></html>

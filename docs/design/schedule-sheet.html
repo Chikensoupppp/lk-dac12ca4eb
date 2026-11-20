@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Schedule sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@500;600;700;800&family=IBM+Plex+Mono:wght@600;700&display=block" rel="stylesheet">
+<style>
+  /* The "Your schedule" line on the Focus screen, and the sheet it opens (ScheduleSheet.swift). */
+  :root { --page:#E7E8E3; --ink:#1B1B1B; --blue:#3255A4; --sun:#FFB511; --red:#D25A44; --soft:#45473F; --sheet:#F4F4F0; --fp:#F6F3EC; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #CFD0CA; font-family: Inter, sans-serif; }
+  .row { display: flex; gap: 22px; padding: 22px; width: max-content; }
+  .lab { font: 700 13px/1 "IBM Plex Mono", monospace; color: #3b3b3b; margin: 0 0 8px 6px; }
+  .phone { position: relative; width: 393px; height: 852px; overflow: hidden; border-radius: 44px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .focus { background: var(--fp); padding: 70px 20px 0; }
+  .card { background: #fff; border-radius: 20px; padding: 14px; box-shadow: 0 6px 12px rgba(23,21,19,.08); }
+  .card small { font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 2px; color: #6F6A60; display: flex; justify-content: space-between; }
+  .chips { display: flex; gap: 8px; margin-top: 12px; } .chips span { padding: 7px 10px; border-radius: 999px; background: var(--fp); font: 700 15px/1 Inter; display: flex; gap: 6px; align-items: center; }
+  .chips i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink); display: inline-block; }
+  .line { display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 48px; font: 600 15px/1 Inter; color: var(--ink); }
+  .line b { margin-left: auto; padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--ink); font: 700 15px/1 Inter; }
+  .clock { margin: 40px auto 0; width: 300px; height: 300px; border-radius: 50%; border: 14px solid #EAE5DA; display: grid; place-items: center; font: 800 64px/1 Inter; color: var(--ink); }
+  .hl { position: absolute; left: 12px; right: 12px; top: 196px; height: 52px; border: 3px solid var(--sun); border-radius: 18px; }
+  .sh { background: var(--page); padding: 70px 24px 0; }
+  .top { display: flex; justify-content: space-between; align-items: center; font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--blue); }
+  .top b { font: 600 17px/1 Inter; color: var(--ink); letter-spacing: 0; }
+  h1 { font: 400 44px/.95 Anton, sans-serif; color: var(--ink); margin: 18px 0; }
+  .time { height: 96px; border-radius: 22px; background: var(--sheet); border: 2px solid var(--ink); box-shadow: 0 5px 0 var(--ink); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; }
+  .time .pm { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; display: grid; place-items: center; font: 800 24px/1 Inter; }
+  .time b { font: 400 50px/1 Anton, sans-serif; }
+  .days { display: flex; justify-content: space-between; margin: 18px 0; } .days span { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font: 700 13px/1 "IBM Plex Mono", monospace; background: #fff; } .days span.on { background: var(--blue); color: #fff; }
+  .q { font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: var(--soft); margin-bottom: 12px; }
+  .two { display: flex; gap: 12px; } .ch { position: relative; flex: 1; height: 132px; border-radius: 18px; border: 2px solid rgba(27,27,27,.18); background: #fff; padding: 14px; }
+  .ch.on { border-color: var(--ink); background: var(--blue); color: #fff; box-shadow: 0 5px 0 var(--ink); }
+  .ch .ic { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--ink); background: var(--sun); display: grid; place-items: center; } .ch.on .ic { background: #fff; }
+  .ch b { display: block; font: 800 17px/1.1 Inter; margin-top: 10px; } .ch span { display: block; font: 500 12.5px/1.25 Inter; margin-top: 4px; opacity: .85; }
+  .plus { position: absolute; right: 10px; top: -11px; padding: 3px 8px; background: var(--sun); color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; font: 700 10px/1 "IBM Plex Mono", monospace; letter-spacing: 1px; }
+  .save { margin-top: 20px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--page); display: grid; place-items: center; font: 800 19px/1 Inter; letter-spacing: 2px; }
+  .off { text-align: center; margin-top: 14px; font: 600 15px/1 Inter; color: var(--red); }
+</style>
+</head>
+<body>
+<div class="row">
+  <div><div class="lab">FOCUS SCREEN: NEW LINE</div><div class="phone focus">
+    <div class="card"><small><span>TODAY’S PLAN</span><span>0 OF 2 DONE</span></small>
+      <div class="chips"><span><i></i>5:30 PM</span><span><i style="border-color:#E6E2D9"></i>5:55 PM</span></div></div>
+    <div class="line">🔒 Auto-lock · 5:30 PM<b>Change</b></div>
+    <i class="hl"></i>
+    <div class="clock">25:00</div>
+  </div></div>
+  <div><div class="lab">TAP CHANGE</div><div class="phone sh">
+    <div class="top"><span>YOUR SCHEDULE</span><b>Done</b></div>
+    <h1>WHEN DO YOU<br>LOCK IN?</h1>
+    <div class="time"><div class="pm">−</div><b>5:30 PM</b><div class="pm">+</div></div>
+    <div class="days">${""}</div>
+    <div class="q">AND THEN?</div>
+    <div class="two"><div class="ch"><div class="ic">🔔</div><b>Remind me</b><span>A nudge at 5:30. You start it.</span></div>
+      <div class="ch on"><span class="plus">PLUS</span><div class="ic">🔒</div><b>Lock by itself</b><span>Your apps lock at 5:30, every week.</span></div></div>
+    <div class="save">SAVE</div>
+    <div class="off">Turn off reminders and auto-lock</div>
+  </div></div>
+</div>
+<script>
+document.querySelector(".days").innerHTML = ["M","T","W","T","F","S","S"].map((d,i)=>`<span class="${i<5?"on":""}">${d}</span>`).join("");
+document.fonts.ready.then(() => { window.ready = true; }); window.render = () => {};
+</script>
+</body>
+</html>
