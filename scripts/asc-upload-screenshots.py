@@ -91,5 +91,5 @@ for loc in call("GET", f"/appStoreVersions/{version['id']}/appStoreVersionLocali
 
     call("PATCH", f"/appScreenshotSets/{set_id}/relationships/appScreenshots",
          json={"data": [{"type": "appScreenshots", "id": sid} for sid, _ in ids]})
-    print(locale, "order set: 1 to 6")
+    print(locale, f"order set: 1 to {len(ids)}")
 print("done")
