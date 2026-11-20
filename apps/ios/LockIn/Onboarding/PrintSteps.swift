@@ -981,7 +981,6 @@ struct GoalsStep: View {
         PrintScaffold(step: 9, tag: "Make it yours", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
-                .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Self.items, id: \.key) { item in
                     let on = goals.contains(item.key)
