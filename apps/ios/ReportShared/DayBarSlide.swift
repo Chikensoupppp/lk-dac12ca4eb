@@ -56,14 +56,25 @@ struct DayBarSlide: View {
         }
     }
 
+    /// The headline's first line (the number) in orange sticker type, the rest in ink (orange O1).
+    private var headlineView: some View {
+        let lines = headline.uppercased().split(separator: "\n", maxSplits: 1).map(String.init)
+        let font = Font.system(size: 46, weight: .black).width(.compressed)
+        return VStack(alignment: .leading, spacing: -2) {
+            OutlinedText(text: lines.first ?? "", font: font, ink: Self.ink, outline: 1.5, drop: 3)
+            if lines.count > 1 {
+                Text(lines[1])
+                    .font(font)
+                    .foregroundStyle(Self.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     private var finished: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
-                Text(headline.uppercased())
-                    .font(.system(size: 46, weight: .black).width(.compressed))
-                    .foregroundStyle(Self.ink)
-                    .lineSpacing(-4)
-                    .fixedSize(horizontal: false, vertical: true)
+                headlineView
                 Spacer(minLength: 8)
                 brain
             }
@@ -122,10 +133,9 @@ struct DayBarSlide: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, -10)
             VStack(alignment: .leading, spacing: 0) {
-                Text("\(spin(t, 0, below: 13))H \(spin(t, 1, below: 6))\(spin(t, 2))M")
-                    .font(.system(size: 56, weight: .black).width(.compressed))
-                    .monospacedDigit()
-                    .foregroundStyle(Self.ink)
+                OutlinedText(text: "\(spin(t, 0, below: 13))H \(spin(t, 1, below: 6))\(spin(t, 2))M",
+                             font: .system(size: 56, weight: .black).width(.compressed).monospacedDigit(),
+                             ink: Self.ink, outline: 1, drop: 0)
                 Text("ON YOUR PHONE, OUT OF 16 HOURS AWAKE")
                     .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.2)
                     .foregroundStyle(soft)
@@ -155,7 +165,7 @@ struct DayBarSlide: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("EVERY DAY, THAT\u{2019}S ENOUGH TIME FOR")
                     .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.6)
-                    .foregroundStyle(soft)
+                    .foregroundStyle(Self.blue)
                 spinRow(t, 0, "tv.fill", Self.red, .white, "\(spin(t, 12))\(spin(t, 13))", "episodes of a show")
                 spinRow(t, 1, "book.fill", Self.sun, Self.ink, "\(spin(t, 14))\(spin(t, 15))\(spin(t, 16))", "pages of a book")
                 spinRow(t, 2, "dumbbell.fill", Self.blue, .white, spin(t, 17), "gym sessions")
@@ -286,11 +296,8 @@ struct DayBarSlide: View {
         let left = max(Self.awake * 60 - minutes, 0)
         let soft = Self.ink.opacity(0.6)
         return VStack(alignment: .leading, spacing: 0) {
-            Text(Self.hm(minutes))
-                .font(.system(size: 56, weight: .black).width(.compressed))
-                .monospacedDigit()
-                .foregroundStyle(Self.ink)
-                .contentTransition(.numericText(value: minutes))
+            OutlinedText(text: Self.hm(minutes), font: .system(size: 56, weight: .black).width(.compressed).monospacedDigit(),
+                         ink: Self.ink, outline: 1, drop: 0)
             Text("ON YOUR PHONE, OUT OF 16 HOURS AWAKE")
                 .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.2)
                 .foregroundStyle(soft)
@@ -390,7 +397,7 @@ struct DayBarSlide: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("EVERY DAY, THAT\u{2019}S ENOUGH TIME FOR")
                 .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.6)
-                .foregroundStyle(Self.ink.opacity(0.6))
+                .foregroundStyle(Self.blue)
             ForEach(Array(things.enumerated()), id: \.offset) { i, t in
                 let on = i < itemsShown
                 HStack(spacing: 12) {

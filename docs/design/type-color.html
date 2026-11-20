@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colored type options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat+Brush&family=Inter:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #E7E8E3; --ink: #1B1B1B; }
+body { margin: 0; background: #cfd0cb; padding: 40px; font-family: Inter, sans-serif; }
+.grid { display: grid; grid-template-columns: repeat(3, 390px); gap: 40px; }
+.label { font: 700 13px/1.3 'IBM Plex Mono', monospace; letter-spacing: 1.4px; color: #1B1B1B; margin-bottom: -24px; }
+.label small { display: block; font: 600 12px/1.35 Inter, sans-serif; letter-spacing: 0; color: #45473F; margin-top: 4px; }
+.ph { width: 390px; height: 844px; border-radius: 44px; overflow: hidden; position: relative; background: var(--paper); box-shadow: 0 20px 40px rgba(0,0,0,.18);
+  background-image: radial-gradient(rgba(27,27,27,.06) 1px, transparent 1.4px); background-size: 7px 7px; color: var(--ink); }
+.in { position: absolute; left: 24px; right: 24px; top: 58px; }
+.prog { display: flex; gap: 3px; padding-top: 12px; } .prog i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.18); } .prog i.on { background: var(--ink); }
+.back { font-size: 26px; margin: 8px 0 6px; }
+.tag { display: flex; gap: 7px; align-items: center; font: 700 11px/1 'IBM Plex Mono', monospace; letter-spacing: 1.4px; }
+.tag b { width: 7px; height: 7px; border-radius: 50%; }
+.h { font: 400 46px/.96 Anton, sans-serif; text-transform: uppercase; margin-top: 12px; }
+.mono { font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+.big { font: 400 92px/1 Anton, sans-serif; margin-top: 10px; }
+.btn { position: absolute; left: 24px; right: 24px; bottom: 34px; height: 60px; border-radius: 30px; background: var(--ink); color: var(--paper); font: 800 19px/60px Inter; letter-spacing: 2px; text-align: center; }
+.receipt { margin-top: 14px; background: #F3EFE6; padding: 14px 16px 16px; transform: rotate(-1deg); box-shadow: 0 6px 14px rgba(0,0,0,.14); position: relative; }
+.rrow { display: flex; font: 600 12px/1 'IBM Plex Mono', monospace; margin-top: 8px; align-items: center; gap: 6px; }
+.rrow .dots { flex: 1; border-bottom: 1.5px dotted rgba(27,27,27,.35); transform: translateY(-3px); }
+.av { width: 16px; height: 16px; border-radius: 50%; background: #1B1B1B; color: #fff; font: 700 9px/16px Inter; text-align: center; }
+.stamp { position: absolute; right: -6px; bottom: -14px; padding: 5px 10px; border: 3px solid; border-radius: 8px; font: 400 18px/1 Anton, sans-serif; transform: rotate(-9deg); background: rgba(243,239,230,.95); }
+.card { margin-top: 14px; background: #F4F4F0; border: 2px solid var(--ink); border-radius: 24px; box-shadow: 0 5px 0 var(--ink); padding: 14px 16px; }
+.track { height: 34px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; margin-top: 10px; position: relative; overflow: hidden; }
+.chips { display: flex; gap: 7px; margin-top: 10px; } .chip { flex: 1; background: #fff; border: 1.5px solid rgba(27,27,27,.14); border-radius: 12px; padding: 7px 9px; }
+.chip .l { font: 700 8px/1 'IBM Plex Mono', monospace; letter-spacing: .8px; color: rgba(27,27,27,.6); } .chip .v { font: 400 20px/1 Anton, sans-serif; margin-top: 5px; }
+.row { display: flex; align-items: center; gap: 12px; margin-top: 9px; font: 800 15px/1 Inter; letter-spacing: -.3px; }
+.ico { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); box-sizing: border-box; }
+.n { font: 400 27px/1 Anton, sans-serif; min-width: 50px; }
+.bub { background: #fff; border-radius: 18px 4px 18px 18px; padding: 9px 14px; font: 400 20px/1 'Caveat Brush', cursive; margin-top: 8px; box-shadow: 0 6px 14px rgba(0,0,0,.1); }
+.brain { position: absolute; right: 22px; top: 140px; width: 96px; }
+</style>
+</head>
+<body>
+<div class="grid" id="g"></div>
+<script>
+const BRAIN = "../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png";
+// Three ways to put color in the type. Paper stays cream; only words, numbers and marks change.
+const T = [
+  { name: 'A · TWO-INK MISPRINT', note: 'Headlines in riso blue with a sunflower ghost printed off-register. Big numbers in bright riso red.',
+    tag: '#3255A4', head: 'color:#3255A4;text-shadow:3px 3px 0 #FFB511', big: 'color:#E8433F;text-shadow:3px 3px 0 #3255A4',
+    accent: '#E8433F', label: '#3255A4', strong: '#3255A4', stamp: '#E8433F', n: 'color:#3255A4', small: '#3255A4', bubble: '#1B1B1B', fill: '#3255A4' },
+  { name: 'B · FLUORO PINK', note: 'Riso fluorescent pink for every number and the key line, black headlines. Loud but only on what matters.',
+    tag: '#FF3D9A', head: 'color:#1B1B1B', big: 'color:#FF3D9A;-webkit-text-stroke:2px #1B1B1B;text-shadow:4px 4px 0 #1B1B1B',
+    accent: '#FF3D9A', label: '#FF3D9A', strong: '#FF3D9A', stamp: '#FF3D9A', n: 'color:#FF3D9A;-webkit-text-stroke:1px #1B1B1B', small: '#FF3D9A', bubble: '#FF3D9A', fill: '#FF3D9A' },
+  { name: 'C · STICKER TYPE', note: 'Each headline line in its own ink, numbers as sunflower sticker type with a thick black outline.',
+    tag: '#E8433F', head: '', lines: ['#3255A4', '#E8433F'], big: 'color:#FFB511;-webkit-text-stroke:3px #1B1B1B;paint-order:stroke fill;text-shadow:0 5px 0 #1B1B1B',
+    accent: '#E8433F', label: '#E8433F', strong: '#3255A4', stamp: '#3255A4', n: 'color:#FFB511;-webkit-text-stroke:2px #1B1B1B;paint-order:stroke fill', small: '#3255A4', bubble: '#3255A4', fill: '#3255A4' },
+];
+const prog = n => Array.from({length: 12}, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('');
+const head = (t, lines) => t.lines ? lines.map((l, i) => `<span style="color:${t.lines[i % 2]}">${l}</span>`).join('<br>') : `<span style="${t.head}">${lines.join('<br>')}</span>`;
+
+function slide3(t) {
+  const rows = [['Y', 'YouTube', '2H 57M'], ['C', 'ChatGPT', '1H 41M'], ['C', 'Claude', '1H 02M'], ['P', 'Paramount+', '0H 48M']];
+  return `<div class="ph"><div class="in">
+    <div class="prog">${prog(3)}</div><div class="back">‹</div>
+    <div class="tag" style="color:${t.tag}"><b style="background:${t.tag}"></b>YOUR REAL SCREEN TIME</div>
+    <div class="h">${head(t, ['Here’s your number.'])}</div>
+    <div class="mono" style="font-size:12px;margin-top:10px">YOU GUESSED: <s>5–6 HRS</s></div>
+    <div class="big" style="${t.big}">9H 33M</div>
+    <div class="mono" style="font-size:12.5px;font-weight:500;margin-top:8px">That’s your average daily screen time.</div>
+    <div style="font:800 15px/1.3 Inter;margin-top:4px;color:${t.strong}">That’s more than you guessed.</div>
+    <div class="receipt">
+      <div class="mono" style="text-align:center;font-size:13px;letter-spacing:2px">YOUR RECEIPT</div>
+      <div class="mono" style="text-align:center;font-size:9.5px;font-weight:600;margin-top:3px;letter-spacing:1px">THIS WEEK · PER DAY</div>
+      ${rows.map(r => `<div class="rrow"><span class="av">${r[0]}</span>${r[1]}<span class="dots"></span>${r[2]}</div>`).join('')}
+      <div class="rrow" style="font-size:15px;font-weight:700;margin-top:12px">TOTAL<span class="dots"></span><span style="color:${t.accent}">9H 33M</span></div>
+      <div class="rrow" style="color:${t.label}">PICKUPS<span class="dots"></span>×117</div>
+      <div class="stamp" style="color:${t.stamp};border-color:${t.stamp}">THAT’S A LOT</div>
+    </div>
+    <div class="h" style="font-size:24px;margin-top:22px">${t.lines ? `THAT’S <span style="color:${t.lines[1]}">145 DAYS</span> A YEAR.` : `THAT’S <span style="${t.big};text-shadow:none;-webkit-text-stroke:0">145 DAYS</span> A YEAR.`}</div>
+  </div><div class="btn">NEXT</div></div>`;
+}
+
+function slide4(t) {
+  return `<div class="ph"><div class="in">
+    <div class="prog">${prog(4)}</div><div class="back">‹</div>
+    <div class="tag" style="color:${t.tag}"><b style="background:${t.tag}"></b>WHAT THAT MEANS FOR YOUR DAY</div>
+    <div class="h" style="font-size:44px">${t.lines ? `<span style="${t.big};text-shadow:0 4px 0 #1B1B1B">9H 33M</span><br><span style="color:${t.lines[0]}">A DAY.</span>` : `<span style="${t.big}">9H 33M</span><br><span style="${t.head}">A DAY.</span>`}</div>
+    <div class="bub" style="color:${t.bubble}">Half your day?! Let’s fix this.</div>
+    <div class="card">
+      <div style="font:400 50px/1 Anton,sans-serif;${t.n}">9H 33M</div>
+      <div class="mono" style="font-size:9.5px;letter-spacing:1px;color:rgba(27,27,27,.6);margin-top:4px">ON YOUR PHONE, OUT OF 16 HOURS AWAKE</div>
+      <div class="track"><div style="position:absolute;left:0;top:0;bottom:0;width:60%;background:${t.fill};border-right:2px solid #1B1B1B"></div>
+        <div class="mono" style="position:absolute;left:10px;top:10px;font-size:11px;color:#fff">60%</div>
+        <div class="mono" style="position:absolute;right:8px;top:10px;font-size:9.5px;color:rgba(27,27,27,.6)">6H 27M LEFT FOR YOU</div></div>
+      <div class="chips"><div class="chip"><div class="l">EVERY WEEK</div><div class="v" style="color:${t.small}">66H 52M</div></div><div class="chip"><div class="l">A MONTH</div><div class="v" style="color:${t.small}">12 DAYS</div></div><div class="chip"><div class="l">A YEAR</div><div class="v" style="color:${t.small}">145 DAYS</div></div></div>
+    </div>
+    <div class="mono" style="font-size:9.5px;letter-spacing:1.5px;color:${t.label};margin-top:18px">EVERY DAY, THAT’S ENOUGH TIME FOR</div>
+    <div class="row"><div class="ico" style="background:#E8433F"></div><span class="n" style="color:${t.small}">12</span>episodes of a show</div>
+    <div class="row"><div class="ico" style="background:#FFB511"></div><span class="n" style="color:${t.small}">380</span>pages of a book</div>
+    <div class="row"><div class="ico" style="background:#3255A4"></div><span class="n" style="color:${t.small}">9</span>gym sessions</div>
+  </div><img class="brain" src="${BRAIN}"><div class="btn">CONTINUE</div></div>`;
+}
+
+// ?b: option B with less pink, three ways.
+const BIG = p => `color:${p};-webkit-text-stroke:2px #1B1B1B;text-shadow:4px 4px 0 #1B1B1B`;
+const B = [
+  { name: 'B1 · PINK ONLY ON THE BIG NUMBER', note: 'Same hot pink, but just the big number. Everything else black, with blue for small details.',
+    tag: '#3255A4', head: 'color:#1B1B1B', big: BIG('#FF3D9A'), accent: '#1B1B1B', label: '#3255A4', strong: '#1B1B1B', stamp: '#E8433F',
+    n: 'color:#FF3D9A;-webkit-text-stroke:1px #1B1B1B', small: '#1B1B1B', bubble: '#1B1B1B', fill: '#3255A4' },
+  { name: 'B2 · SOFTER PINK', note: 'Pink in the same places as B, toned down to a dusty rose.',
+    tag: '#D9638F', head: 'color:#1B1B1B', big: BIG('#E9779F'), accent: '#D9638F', label: '#D9638F', strong: '#D9638F', stamp: '#D9638F',
+    n: 'color:#E9779F;-webkit-text-stroke:1px #1B1B1B', small: '#D9638F', bubble: '#D9638F', fill: '#E9779F' },
+  { name: 'B3 · LESS AND SOFTER', note: 'Dusty rose on the big numbers only, blue for the small details.',
+    tag: '#3255A4', head: 'color:#1B1B1B', big: BIG('#E9779F'), accent: '#1B1B1B', label: '#3255A4', strong: '#1B1B1B', stamp: '#3255A4',
+    n: 'color:#E9779F;-webkit-text-stroke:1px #1B1B1B', small: '#3255A4', bubble: '#1B1B1B', fill: '#3255A4' },
+];
+// ?o: the same three, in riso orange instead of pink.
+const OR = '#FF6C2F', ORD = '#E85A1E';
+const O = [
+  { ...B[0], name: 'O1 · ORANGE ON THE BIG NUMBER', note: 'Orange just on the big numbers. Everything else black, with blue for small details.',
+    big: BIG(OR), n: `color:${OR};-webkit-text-stroke:1px #1B1B1B` },
+  { ...B[1], name: 'O2 · ORANGE EVERYWHERE B HAD PINK', note: 'Big numbers, small numbers, the key line, stamps and the bar all in orange.',
+    tag: ORD, big: BIG(OR), accent: ORD, label: ORD, strong: ORD, stamp: ORD, n: `color:${OR};-webkit-text-stroke:1px #1B1B1B`, small: ORD, bubble: ORD, fill: OR },
+  { ...B[2], name: 'O3 · ORANGE + BLUE', note: 'Orange on the big numbers, blue for the small numbers and labels.',
+    big: BIG(OR), n: `color:${OR};-webkit-text-stroke:1px #1B1B1B` },
+];
+const qs = new URLSearchParams(location.search);
+const shown = qs.has('o') ? O : qs.has('b') ? B : T;
+document.getElementById('g').innerHTML =
+  shown.map(t => `<div class="label">${t.name}<small>${t.note}</small></div>`).join('') +
+  shown.map(slide4).join('') + shown.map(slide3).join('');
+document.fonts.ready.then(() => { window.ready = true; window.render = () => {}; });
+</script>
+</body>
+</html>

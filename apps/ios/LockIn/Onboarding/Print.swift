@@ -38,6 +38,8 @@ struct PrintScaffold<Content: View>: View {
     let step: Int
     /// What this slide is for, in a few words, above the headline (e.g. "TAKE A GUESS").
     var tag: String? = nil
+    /// The tag's ink when it should not be the usual blue.
+    var tagColor: Color? = nil
     var background: Color = Ink.paper
     var foreground: Color = Ink.ink
     var title: String?
@@ -91,11 +93,11 @@ struct PrintScaffold<Content: View>: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let tag {
                         HStack(spacing: 7) {
-                            Circle().fill(foreground == Ink.ink ? Ink.blue : foreground).frame(width: 7, height: 7)
+                            Circle().fill(tagColor ?? (foreground == Ink.ink ? Ink.blue : foreground)).frame(width: 7, height: 7)
                             Text(tag.uppercased())
                                 .font(PrintFont.mono(11, .bold))
                                 .tracking(1.4)
-                                .foregroundStyle(foreground == Ink.ink ? Ink.blue : foreground.opacity(0.8))
+                                .foregroundStyle(tagColor ?? (foreground == Ink.ink ? Ink.blue : foreground.opacity(0.8)))
                         }
                         .padding(.bottom, -6)
                         .accessibilityElement(children: .combine)

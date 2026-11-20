@@ -223,7 +223,7 @@ struct RevealStep: View {
 
     var body: some View {
         // No grain here: the cover below is flat paper, and grain would show its edges.
-        PrintScaffold(step: 3, tag: "Your real screen time",
+        PrintScaffold(step: 3, tag: "Your real screen time", tagColor: OutlinedText.orangeDeep,
                       primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
             ZStack(alignment: .top) {
                 // Only seen if Apple's report is still drawing when the cover lifts.

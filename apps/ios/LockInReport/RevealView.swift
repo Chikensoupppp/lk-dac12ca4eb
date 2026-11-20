@@ -11,7 +11,9 @@ struct RevealView: View {
     private static let paper = Color(red: 0.906, green: 0.910, blue: 0.890)
     private static let ink = Color(red: 0.08, green: 0.07, blue: 0.06)
     private static let receipt = Color(red: 0.965, green: 0.945, blue: 0.906)
-    private static let red = Color(red: 0.82, green: 0.35, blue: 0.27)
+    /// Everything that was red on this slide is riso orange now (orange option O2).
+    private static let red = OutlinedText.orangeDeep
+    private static let orange = OutlinedText.orangeDeep
     private static let bands = ["1\u{2013}2 HRS", "3\u{2013}4 HRS", "5\u{2013}6 HRS", "7+ HRS"]
     /// Top of each guess band, in hours; 7+ has no top.
     private static let bandTop: [Double] = [2, 4, 6, .infinity]
@@ -64,19 +66,21 @@ struct RevealView: View {
                 }
                 .font(.system(size: 14, weight: .heavy, design: .monospaced))
             }
-            Text(Self.duration(data.perDay))
-                .font(.system(size: 110, weight: .black).width(.compressed))
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
+            OutlinedText(text: Self.duration(data.perDay), font: .system(size: 110, weight: .black).width(.compressed),
+                         ink: Self.ink, outline: 2.5, drop: 5)
+                .padding(.bottom, 4)
             Text("That\u{2019}s your average daily screen time.")
                 .font(.system(size: 14, weight: .semibold, design: .monospaced))
             if let verdict {
                 Text(verdict)
                     .font(.system(size: 20, weight: .heavy).width(.condensed))
+                    .foregroundStyle(Self.orange)
             }
             receipt
                 .padding(.top, 10)
-            Text("THAT\u{2019}S \(Int((hours * 365 / 24).rounded())) DAYS A YEAR.")
+            (Text("THAT\u{2019}S ")
+                + Text("\(Int((hours * 365 / 24).rounded())) DAYS").foregroundColor(Self.orange)
+                + Text(" A YEAR."))
                 .font(.system(size: 26, weight: .black).width(.compressed))
                 .padding(.top, 8)
         }
@@ -103,7 +107,12 @@ struct RevealView: View {
                 }
             }
             dashes
-            row("TOTAL", Self.duration(data.perDay), bold: true)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("TOTAL").lineLimit(1)
+                Text(String(repeating: ".", count: 60)).lineLimit(1).opacity(0.35).layoutPriority(-1)
+                Text(Self.duration(data.perDay)).lineLimit(1).layoutPriority(1).foregroundStyle(Self.orange)
+            }
+            .font(.system(size: 18, weight: .heavy, design: .monospaced))
             row("PICKUPS", "\u{00D7}\(data.pickupsPerDay)", bold: false).foregroundStyle(Self.red)
         }
         .padding(18)
