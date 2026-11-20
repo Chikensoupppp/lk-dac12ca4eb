@@ -1,0 +1,25 @@
+name: Attach build to version
+# Attaches the newest processed build to App Store version 1.0 (scripts/asc-attach-build.py).
+# Never submits for review. Run by pushing an `asc-attach-N` tag; N is the lowest build number to accept.
+on:
+  push:
+    tags: ['asc-attach-*']
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyjwt cryptography requests
+      - name: Attach the newest build
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          MIN_BUILD: ${{ github.ref_name }}
+        run: |
+          export MIN_BUILD="${MIN_BUILD#asc-attach-}"
+          python scripts/asc-attach-build.py
