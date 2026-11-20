@@ -574,6 +574,7 @@ struct FocusView: View {
                 // The session ended while the app was closed. It counts for the streak,
                 // The streak screen is not shown for it.
                 StreakStore.record()
+                Analytics.track("session_completed", ["minutes": expiredMinutes, "while_closed": true])
                 FocusLog.recordFinished(minutes: expiredMinutes)
                 sendWeekToPC()
             }
@@ -907,6 +908,7 @@ struct FocusView: View {
         guard change != .none else { return }
         WidgetCenter.shared.reloadTimelines(ofKind: BrainLevel.widgetKind)
         if change == .turnedOff, timing != nil {
+            Analytics.track("screen_time_turned_off_in_session")
             QuitRules.recordEarlyEnd()
             FocusLog.recordQuit()
             showProofBroken = true
@@ -982,6 +984,9 @@ struct FocusView: View {
         let locked = lockedNext && plus.hasPlus && restrictions.hasSelection
         QuitRules.markLocked(locked ? record.id : nil)
         restrictions.begin(record, locked: locked)
+        Analytics.track("session_started", ["minutes": selectedMinutes, "locked_mode": locked,
+                                            "apps_blocked": restrictions.status == .active,
+                                            "first_session": coachStep == .celebrate])
         LiveCountdown.start(record, locked: locked)
         pc.sessionStarted(record, extras: pcExtras)
         flashTask?.cancel()
@@ -1013,6 +1018,8 @@ struct FocusView: View {
         // Time already focused still counts (goals and the weekly report), but not as a finished
         // session, so it does not move the streak.
         let focused = focusedMinutesSoFar
+        Analytics.track("session_ended_early", ["minutes_focused": focused,
+                                                "minutes_planned": Int(((timing?.duration ?? 0) / 60).rounded())])
         QuitRules.recordEarlyEnd()
         FocusLog.recordQuit(minutes: focused)
         sendWeekToPC()
@@ -1048,6 +1055,7 @@ struct FocusView: View {
         LiveCountdown.end()
         if let sessionID { pc.sessionEnded(sessionID) }
         completionCount += 1
+        Analytics.track("session_completed", ["minutes": Int((session.duration / 60).rounded()), "while_closed": false])
         FocusLog.recordFinished(minutes: Int((session.duration / 60).rounded()))
         goals.reschedule()
         let firstToday = StreakStore.record()

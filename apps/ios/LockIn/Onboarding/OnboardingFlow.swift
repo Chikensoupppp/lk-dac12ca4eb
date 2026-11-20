@@ -21,6 +21,9 @@ struct OnboardingFlow: View {
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
+
+        /// For analytics: "hook", "guess", ... "whenPick".
+        var name: String { String(describing: self) }
     }
 
     @ObservedObject var restrictions: RestrictionController
@@ -63,6 +66,7 @@ struct OnboardingFlow: View {
 
     private func move(to target: Step, back: Bool) {
         goingBack = back
+        Analytics.track("onboarding_step_viewed", ["step": target.name, "back": back])
         let change = { step = target }
         if reduceMotion { withAnimation(.easeInOut(duration: 0.2), change) }
         else { withAnimation(.spring(response: 0.5, dampingFraction: 0.86), change) }
@@ -83,16 +87,30 @@ struct OnboardingFlow: View {
     private func next() {
         switch step {
         case .hook: advance(to: .guess)
-        case .guess: askScreenTime()
+        case .guess:
+            Analytics.track("guess_chosen", ["hours": guessIndex.map { ["1-2h", "3-4h", "5-6h", "7h+"][min(max($0, 0), 3)] } ?? "skipped"])
+            askScreenTime()
         case .reveal: advance(to: .brain)
         case .brain: advance(to: .appsWait)
         case .appsWait: advance(to: .comeBack)
         case .comeBack: advance(to: .pulls)
-        case .pulls: advance(to: .lock)
-        case .lock: advance(to: .goals)
+        case .pulls:
+            Analytics.track("pulls_chosen", ["pulls": categories.sorted(), "count": categories.count])
+            advance(to: .lock)
+        case .lock:
+            // Counts only: which apps were picked stays with Apple.
+            Analytics.track("apps_chosen", ["apps": restrictions.selection.applicationTokens.count,
+                                            "categories": restrictions.selection.categoryTokens.count])
+            advance(to: .goals)
         // The user picks their own time; the plan then shows it (nothing is set for them).
-        case .goals: openWhen(draftFromAnswers)
-        case .plan: advance(to: .plus)
+        case .goals:
+            Analytics.track("goals_chosen", ["goals": goals.sorted(), "count": goals.count])
+            openWhen(draftFromAnswers)
+        case .plan:
+            let p = draftFromAnswers
+            Analytics.track("plan_accepted", ["sessions_per_day": p.sessionsPerDay, "minutes": p.minutes,
+                                              "made_easier": easier])
+            advance(to: .plus)
         case .plus: advance(to: .slide)
         case .slide: finish(startNow: true)
         case .whenAsk, .whenFree, .whenPick: break
@@ -142,6 +160,11 @@ struct OnboardingFlow: View {
     /// A time was chosen: on to the plan (first time), or back to it (from "Change time").
     private func chooseTime(_ choice: TimeChoice) {
         timeChoice = choice
+        Analytics.track("time_picked", ["start_time": DailyNudge.timeText(minute: choice.startMinute),
+                                        "start_minute": choice.startMinute, "days": choice.weekdays.count,
+                                        "fitted_each_day": choice.dayStarts != nil,
+                                        "calendar": CalendarAccess.state == .allowed,
+                                        "then": String(describing: choice.schedule.then)])
         guard history.contains(.plan) else { advance(to: .plan); return }
         while let last = history.last, last != .plan { history.removeLast() }
         if history.last == .plan { history.removeLast() }
@@ -154,6 +177,7 @@ struct OnboardingFlow: View {
     private func askScreenTime() {
         guard !askingScreenTime else { return }
         let afterAnswer = {
+            Analytics.track("screen_time_answered", ["allowed": screenTimeOn])
             if screenTimeOn && ScreenTimeReport.isAvailable { usedReport = true; advance(to: .reveal) }
             else { usedReport = false; advance(to: hoursIndex == nil ? .appsWait : .brain) }
         }
@@ -174,6 +198,8 @@ struct OnboardingFlow: View {
     }
 
     private func finish(startNow: Bool = false) {
+        Analytics.track("onboarding_completed", ["start_now": startNow, "skipped_intro": step == .hook,
+                                                 "last_step": step.name])
         OnboardingStore.save(hoursIndex: hoursIndex, categories: categories, goals: goals)
         if let choice = timeChoice, var plan = PlanStore.load() {
             let hasPlus = plus.hasPlus
@@ -235,6 +261,7 @@ struct OnboardingFlow: View {
                     removal: .move(edge: goingBack ? .trailing : .leading).combined(with: .opacity)))
         }
         .preferredColorScheme(step.isDark ? .dark : .light)
+        .onAppear { Analytics.track("onboarding_step_viewed", ["step": step.name, "back": false]) }
         #if DEBUG
         .onAppear {
             if let n = DebugShot.onboardingStep, let target = Step(rawValue: n) {

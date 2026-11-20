@@ -148,8 +148,11 @@ final class PlusStore: ObservableObject {
                 await transaction.finish()
                 await refreshEntitlement()
                 await scheduleTrialReminder(for: transaction)
+                Analytics.track("plus_purchased", ["product": product.id])
+                Analytics.set(["has_plus": true])
                 return true
             case .userCancelled, .pending:
+                Analytics.track("plus_purchase_cancelled", ["product": product.id])
                 return false
             @unknown default:
                 return false

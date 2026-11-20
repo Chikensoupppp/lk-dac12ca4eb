@@ -4,6 +4,7 @@ import SwiftUI
 struct LockInApp: App {
     init() {
         PlusStore.configureRevenueCat()
+        Analytics.start()
         FreshStart.runIfNewBuild()
         AppFont.register()
         AppFont.styleNavigationBar()

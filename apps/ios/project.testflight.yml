@@ -3,6 +3,9 @@ packages:
   RevenueCat:
     url: https://github.com/RevenueCat/purchases-ios-spm
     from: 5.0.0
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    from: 3.98.0
 # Release spec for TestFlight. Apple approved Family Controls (Distribution) for both
 # bundle IDs, so this build carries the entitlement and the Device Activity extension.
 options:
@@ -37,11 +40,15 @@ targets:
       - target: LockInShieldAction
       - package: RevenueCat
         product: RevenueCat
+      - package: PostHog
+        product: PostHog
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin
         # RevenueCat's public Apple SDK key (made to ship in apps). Same as project.yml.
         REVENUECAT_API_KEY: appl_isEkAeKkQaltkFfNOQNsiZPrjEg
+        # PostHog project token (phc_..., public, made to ship in apps). Empty = analytics off.
+        POSTHOG_PROJECT_TOKEN: ""
         INFOPLIST_FILE: AppInfo/LockIn-Extra.plist
         DEVELOPMENT_TEAM: D6TH2NSZLT
         CODE_SIGN_STYLE: Automatic
