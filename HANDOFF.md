@@ -189,6 +189,20 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
   window has no CONNECT BROWSERS button (removed in 5964e3a) and nothing calls `Installer.OpenExtensionHelp`
   or `--register-browser` on install. swipelater.app/pc dropped its extension step; `docs/pc/index.html` in this
   repo still has the old one. The 0.9.14 build also lacks the `FindAddressBar` fix; it ships with the next PC release.
+- Bypass hardening (2026-11-20, PC app, not released): (1) a site is judged by the front browser's address
+  as well as its title (`Watch/BrowserSites.cs`, fed by `BrowserWatch` every second; only the site's name is
+  kept, for 5 s, for that window): a Reddit post's title never says "Reddit", so it used to count as work.
+  The title check stays as the fallback. (2) The clock check adds drift up since the last correction
+  (`ClockDrift`, 10 s limit) instead of judging each 2 s step against 30 s, so many small steps no longer
+  run a Locked session out. (3) While Locked, the watchdog task and the startup entry are checked every 30 s
+  and put back if deleted (`ShieldController.Repair`, `ShieldTask.Exists`). (4) Palemoon, SeaMonkey,
+  Maxthon, Whale, Slimjet, Iridium, Wavebox and Sidekick count as browsers. Checks: 147 pass (13 new).
+  Live: real Edge on a stand-in Reddit post page titled "Funny cat : r/aww" is judged Reddit, distraction,
+  not work; the real `ShieldController` with a fake Locked session re-created the deleted task after 24 s and
+  removed it at the session's end. Not tested live: the clock check (moving the clock needs admin; unit
+  checks only) and the startup-entry repair. Still open by design: the extension is only required once it
+  has connected (people who never set it up are not locked out), an elevated admin can still end the app,
+  and a browser that is not in the list is not watched.
 - Not verified: the extension's own counting on real YouTube Shorts and Reddit pages (DOM and scroll
   behavior can change), Edge, a packed or store-installed extension (the store assigns a new ID), long
   sessions, multi-monitor, and whether Windows always allows Back to work to take the front.

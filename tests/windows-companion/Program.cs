@@ -239,6 +239,54 @@ finally
         && !Distractions.IsWorkWindow(Win(7, "msedge", "New Tab - Personal - Microsoft Edge"), me),
         "a browser still loading (Untitled, New Tab) is not a work window");
 
+    // Judged by address, not by title: a Reddit post's title never says "Reddit".
+    Check(BrowserSites.NameOf("https://www.reddit.com/r/aww/comments/abc/funny_cat/") == "Reddit"
+        && BrowserSites.NameOf("old.reddit.com/r/all") == "Reddit"
+        && BrowserSites.NameOf("https://m.youtube.com/watch?v=x") == "YouTube"
+        && BrowserSites.NameOf("youtu.be/abc") == "YouTube"
+        && BrowserSites.NameOf("https://www.twitch.tv/somebody") == "Twitch",
+        "sites are recognized by their address");
+    Check(BrowserSites.NameOf("https://docs.google.com/document/d/1") is null
+        && BrowserSites.NameOf("https://notreddit.com/") is null
+        && BrowserSites.NameOf("https://youtube.com.example.org/") is null
+        && BrowserSites.NameOf("") is null && BrowserSites.NameOf(null) is null,
+        "look-alike and other addresses are not mistaken for a distraction site");
+    var postTab = Win(50, "chrome", "Funny cat : r/aww - Google Chrome");
+    Check(Distractions.IsWorkWindow(postTab, me), "a Reddit post page passes as work when only its title is read");
+    BrowserSites.Record(50, "Reddit", 1_000);
+    Check(BrowserSites.For(50, 3_000) == "Reddit" && BrowserSites.For(51, 3_000) is null && BrowserSites.For(50, 7_000) is null,
+        "the site read from the address counts for 5 s, for that window only");
+    BrowserSites.Record(50, "Reddit");
+    Check(Distractions.IsDistraction(postTab) && !Distractions.IsWorkWindow(postTab, me)
+        && Distractions.NameOf(postTab) == "Reddit" && Distractions.KeyOf(postTab) == "reddit",
+        "a Reddit post page is a distraction once its address is read");
+    BrowserSites.Record(50, null);
+    Check(Distractions.IsWorkWindow(Win(50, "chrome", "Essay - Google Docs - Google Chrome"), me),
+        "a work page stays work after its address is read");
+    BrowserSites.Clear();
+    Check(Distractions.IsBrowserProcess("palemoon") && Distractions.IsBrowserProcess("Whale") && !Distractions.IsBrowserProcess("notepad"),
+        "more browsers are known by process name");
+
+    // The PC clock moved in small steps: the steps add up instead of each one passing under the limit.
+    var drift = new ClockDrift();
+    var driftWall = new DateTimeOffset(2026, 11, 20, 12, 0, 0, TimeSpan.Zero);
+    long driftTicks = 1_000_000;
+    Check(drift.Observe(driftWall, driftTicks) is null, "clock drift: the first look only sets the start");
+    var quiet = true;
+    for (var i = 0; i < 30; i++) { driftWall = driftWall.AddSeconds(2); driftTicks += 2000; quiet &= drift.Observe(driftWall, driftTicks) is null; }
+    Check(quiet, "clock drift: a clock that keeps time is never flagged");
+    TimeSpan? caught = null;
+    var steps = 0;
+    while (caught is null && steps < 20) { driftWall = driftWall.AddSeconds(2 + 4); driftTicks += 2000; steps++; caught = drift.Observe(driftWall, driftTicks); }
+    Check(steps == 3 && caught is { } c1 && c1 > TimeSpan.FromSeconds(10) && c1 < TimeSpan.FromSeconds(14),
+        "clock drift: three 4 s steps forward add up to a correction");
+    driftWall = driftWall.AddSeconds(2); driftTicks += 2000;
+    Check(drift.Observe(driftWall, driftTicks) is null, "clock drift: the correction starts over");
+    driftWall = driftWall.AddSeconds(2 - 3600); driftTicks += 2000;
+    Check(drift.Observe(driftWall, driftTicks) is { } back && back < TimeSpan.FromMinutes(-59), "clock drift: an hour back is caught at once");
+    drift.Reset();
+    Check(drift.Observe(driftWall.AddHours(5), driftTicks + 2000) is null, "clock drift: after a reset the next look is the new start");
+
     var memory = new WorkWindowMemory();
     void SeenFor(int seconds, FrontWindow.Snapshot w) { for (var i = 0; i < seconds; i++) memory.Seen(w, me); }
     Check(memory.TargetFor(Win(9, "chrome", "x - YouTube")) is null, "no work seen yet: nothing to bring back");

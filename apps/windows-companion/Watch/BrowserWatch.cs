@@ -10,7 +10,8 @@ namespace LockIn.Companion.Watch;
 /// accessibility (UI Automation). On a feed (YouTube Shorts, a Reddit feed) it counts new addresses (a new
 /// Short, a new page) and how far the page scrolled; when the page's scroll position cannot be read, mouse
 /// wheel notches stand in for it. Every 15 seconds the counts go to the scroll guard. It never stores or
-/// sends an address: each one is only matched against the feed list and then dropped.
+/// sends an address: each one is only matched against the feed list and the site list, and then dropped
+/// (only the site's name, such as "Reddit", is kept for a few seconds, see <see cref="BrowserSites"/>).
 /// </summary>
 public sealed class BrowserWatch : IDisposable
 {
@@ -65,9 +66,12 @@ public sealed class BrowserWatch : IDisposable
     {
         var notches = wheel.Take();
         var front = GetForegroundWindow();
-        var site = front != IntPtr.Zero && IsBrowser(front) ? Classify(ReadAddress(front)) : null;
+        var inBrowser = front != IntPtr.Zero && IsBrowser(front);
+        var site = inBrowser ? Classify(ReadAddress(front)) : null;
+        // Hand over only the site's name (YouTube, Reddit...), so a page cannot pass as work by its title.
+        if (inBrowser) BrowserSites.Record(front, BrowserSites.NameOf(lastAddressRead));
 
-        log?.Invoke($"front={(front != IntPtr.Zero && IsBrowser(front) ? "browser" : "other")} site={site ?? "-"} addressRead={lastAddressRead is not null} notches={notches}");
+        log?.Invoke($"front={(inBrowser ? "browser" : "other")} site={site ?? "-"} addressRead={lastAddressRead is not null} notches={notches}");
         if (site is null)
         {
             Flush();

@@ -9,7 +9,8 @@ public static class Distractions
     private static readonly string[] Browsers =
     {
         "chrome", "msedge", "firefox", "brave", "opera", "vivaldi", "chromium", "waterfox", "librewolf",
-        "floorp", "zen", "arc", "thorium", "iexplore",
+        "floorp", "zen", "arc", "thorium", "iexplore", "palemoon", "seamonkey", "maxthon", "whale",
+        "slimjet", "iridium", "wavebox", "sidekick",
     };
     private static readonly string[] Games = { "steam", "steamwebhelper", "epicgameslauncher", "riotclientux", "leagueclient" };
     private static readonly string[] Chat = { "discord", "telegram", "whatsapp" };
@@ -27,6 +28,8 @@ public static class Distractions
         var proc = front.Process.ToLowerInvariant();
         if (Browsers.Contains(proc))
         {
+            // The address wins over the title: a Reddit post's title never says "Reddit".
+            if (BrowserSites.For(front.Handle) is { } bySite) return bySite;
             var title = front.Title.ToLowerInvariant();
             foreach (var (needle, name) in SiteTitles)
                 if (title.Contains(needle)) return name;
@@ -110,6 +113,7 @@ public static class Distractions
         var proc = front.Process.ToLowerInvariant();
         if (Games.Contains(proc) || Chat.Contains(proc)) return true;
         if (!Browsers.Contains(proc)) return false;
+        if (BrowserSites.For(front.Handle) is not null) return true;
         var title = front.Title.ToLowerInvariant();
         return SiteTitles.Any(s => title.Contains(s.Needle));
     }

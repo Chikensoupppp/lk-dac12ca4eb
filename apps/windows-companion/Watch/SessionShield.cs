@@ -149,16 +149,53 @@ public sealed class ShieldFile : IDisposable
     public void Dispose() => stream.Dispose();
 }
 
+/// <summary>
+/// Notices the PC clock being moved to run a Locked session out. The clock is compared with a counter the
+/// clock cannot change, and the difference is added up since the last correction, so many small steps
+/// (a few seconds each, every tick) add up to a correction just like one big step does.
+/// </summary>
+public sealed class ClockDrift
+{
+    public static readonly TimeSpan Threshold = TimeSpan.FromSeconds(10);
+
+    private DateTimeOffset? wall;
+    private long ticks;
+
+    /// <summary>Forget the starting point (no Locked session is running).</summary>
+    public void Reset() => wall = null;
+
+    /// <param name="nowWall">The PC clock.</param>
+    /// <param name="nowTicks">Milliseconds from a counter that ignores clock changes (Environment.TickCount64).</param>
+    /// <returns>How far the clock moved (positive = forward) once it is more than the threshold; otherwise null.</returns>
+    public TimeSpan? Observe(DateTimeOffset nowWall, long nowTicks)
+    {
+        if (wall is not { } start)
+        {
+            wall = nowWall;
+            ticks = nowTicks;
+            return null;
+        }
+        var drift = (nowWall - start) - TimeSpan.FromMilliseconds(nowTicks - ticks);
+        if (drift.Duration() <= Threshold) return null;
+        wall = nowWall;
+        ticks = nowTicks;
+        return drift;
+    }
+}
+
 /// <summary>Runs inside the app: mirrors the Locked session into shield.json and applies the protection.</summary>
 public sealed class ShieldController : IDisposable
 {
+    /// <summary>How often (in 2 s ticks) the watchdog task and the startup entry are checked while Locked.</summary>
+    private const int RepairEveryTicks = 15;
+
     private readonly ShieldFile file;
     private readonly Func<ShieldState?> snapshot;
     private readonly Action<TimeSpan> onClockJump;
     private readonly System.Threading.Timer timer;
+    private readonly ClockDrift drift = new();
     private bool active;
-    private DateTimeOffset? lastWall;
-    private long lastTicks;
+    private int repairTicks;
 
     /// <param name="onClockJump">Called with how far the PC clock moved against real elapsed time (positive = forward).</param>
     public ShieldController(string stateDir, Func<ShieldState?> snapshot, Action<TimeSpan> onClockJump)
@@ -173,23 +210,18 @@ public sealed class ShieldController : IDisposable
     {
         try
         {
+            var state = snapshot();
             // Environment.TickCount64 keeps counting through sleep and ignores clock changes, so wall time
             // moving faster or slower than it means someone changed the clock to run the session out.
-            var wall = DateTimeOffset.UtcNow;
-            var ticks = Environment.TickCount64;
-            if (lastWall is { } before)
-            {
-                var jump = (wall - before) - TimeSpan.FromMilliseconds(ticks - lastTicks);
-                if (jump.Duration() > TimeSpan.FromSeconds(30) && snapshot() is not null) onClockJump(jump);
-            }
-            lastWall = wall;
-            lastTicks = ticks;
+            if (state is null) drift.Reset();
+            else if (drift.Observe(DateTimeOffset.UtcNow, Environment.TickCount64) is { } jump) onClockJump(jump);
 
-            var state = snapshot();
+            state = snapshot();
             file.Write(state);
             if (state is not null)
             {
-                if (!active) ShieldTask.Install();
+                if (!active) { ShieldTask.Install(); repairTicks = 0; }
+                else if (++repairTicks >= RepairEveryTicks) { repairTicks = 0; Repair(); }
                 active = true;
                 ProcessShield.Protect(true);
                 ProcessShield.EnsureWatchdog();
@@ -202,6 +234,17 @@ public sealed class ShieldController : IDisposable
             }
         }
         catch (Exception) { }
+    }
+
+    /// <summary>
+    /// Someone may delete the watchdog task or switch the startup entry off during a Locked session, so a
+    /// restart would not bring the app back. Put both back (the task is the stronger of the two).
+    /// </summary>
+    private static void Repair()
+    {
+        if (!ShieldTask.Exists()) ShieldTask.Install();
+        if (Environment.ProcessPath is { } exe && Installer.IsInstalledCopy(exe) && !Installer.StartsWithWindows())
+            Installer.SetStartWithWindows(true);
     }
 
     public void Dispose() { timer.Dispose(); file.Dispose(); }
@@ -252,6 +295,22 @@ public static class ShieldTask
     }
 
     public static void Remove() => Run($"/Delete /TN \"{Name}\" /F");
+
+    /// <summary>True when the task is registered (schtasks exits with 0).</summary>
+    public static bool Exists()
+    {
+        try
+        {
+            using var p = Process.Start(new ProcessStartInfo("schtasks.exe", $"/Query /TN \"{Name}\"")
+            { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true });
+            if (p is null) return true; // cannot ask: do not churn the task
+            p.StandardOutput.ReadToEnd();
+            p.StandardError.ReadToEnd();
+            if (!p.WaitForExit(10000)) return true;
+            return p.ExitCode == 0;
+        }
+        catch (Exception) { return true; }
+    }
 
     private static string Run(string arguments)
     {
