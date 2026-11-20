@@ -24,7 +24,7 @@ Top results for "app blocker focus": Opal (91k ratings), Brick (60k), Foqos (6k)
 - **Keyword field (100):** `block,lock,social media,brain rot,doomscroll,homework,limit,distraction,screentime,detox,scroll,task`
   (exactly 100). No spaces after commas. Do not repeat words from the name or subtitle.
 - **Promo text (170 max, can change without review):**
-  `Slide to lock in. SwipeLater blocks the apps that eat your time, so your distractions can wait.` (95)
+  `Slide to lock in. See your real screen time, then make your distractions wait.` (live 2026-11-20)
 - **Category:** Productivity. Secondary: Health & Fitness (optional).
 - **Support URL:** https://swipelater.app
 - **Marketing URL:** https://swipelater.app
@@ -32,36 +32,38 @@ Top results for "app blocker focus": Opal (91k ratings), Brick (60k), Foqos (6k)
 
 ## Description (4000 max)
 
+Live in App Store Connect since 2026-11-20 (replaced the old "Nogbox" text).
+
 Your phone eats your day. SwipeLater gives it back.
 
-Pick the apps that pull you in. Slide to lock in. Until your timer ends, those apps stay closed. No
-willpower needed.
+See your real screen time, pick the apps that pull you in, and slide to lock in. Until your timer ends, those apps stay closed.
 
 HOW IT WORKS
-- Choose the apps you want to pause, once. Change them any time.
-- Set a time and slide to lock in. Apple's Screen Time tools close the apps for you.
-- Watch the brain on your home screen get happier as your focus time grows.
+- See your real daily screen time, right in the first minute.
+- Pick the apps you want to block, once. Change them any time.
+- Pick your time, then slide to lock in. Apple's Screen Time tools block the apps for you.
+- Open a blocked app and the brain tells you how long is left. It'll still be there after.
 
 THINGS THAT MAKE IT STICK
-- A friend as your Key Holder. If you want out early, your friend has to say yes.
 - A weekly goal and a streak, so a good week feels like a win.
-- Optional Windows app. Your PC and phone start a session together, and the desk buddy nudges you if
-  you drift to a distracting window.
-- A live timer on your Lock Screen.
+- A reminder at your lock-in time, on the days you pick.
+- A friend as your Key Holder. Want out early? They have to say yes.
+- A live timer on your Lock Screen, and a brain on your home screen that gets happier as you focus.
+- Optional Windows app: your PC and phone lock in together.
+
+SWIPELATER PLUS
+- Locked mode: no quit button. Only your Key Holder, or one emergency exit a week, ends it early.
+- Lock by itself: your apps lock at your time, every week.
+- Your whole history, not just the last 3 weeks.
+Try it free for 7 days on the yearly plan. Also available monthly.
 
 PRIVATE BY DESIGN
-No account. No ads. No tracking. Your focus history stays on your phone. Your app list stays inside
-Apple's Screen Time and SwipeLater never sees the names.
+No account. No ads. No tracking across other apps. Your app list stays inside Apple's Screen Time, and SwipeLater never sees the app names or your screen time numbers. Anonymous usage stats help us make the app better.
 
-SwipeLater Plus unlocks all features. Payment is charged to your Apple ID. A subscription renews
-automatically unless you cancel at least 24 hours before the period ends. Manage or cancel it in
-Settings > Apple ID > Subscriptions.
+Payment is charged to your Apple ID. A subscription renews automatically unless you cancel at least 24 hours before the period ends. Manage or cancel it in Settings > Apple ID > Subscriptions.
 
 Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Privacy Policy: https://swipelater.app/privacy/
-
-(Check against the real Plus products in App Store Connect before pasting: if Plus is a one-time
-purchase, delete the subscription sentences.)
 
 ## What's New (version 1.0)
 
