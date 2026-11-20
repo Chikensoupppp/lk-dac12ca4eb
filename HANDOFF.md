@@ -171,6 +171,15 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
   Not verified live: the "all good" case with private windows on (Chromium keeps that switch in
   protected preferences, so the test could not flip it; unit tests cover it), Edge, Brave, Firefox
   with the extension installed.
+- Opera (2026-11-20): live-tested with Opera 140 (Chromium 157), unpacked extension, stand-in hosts on every
+  Chromium key at once: Opera started the host only through `HKCU\Software\Chromium\NativeMessagingHosts`
+  (already written by `--register-browser`); it ignored Chrome's key and the two Opera-named keys. So no Opera
+  key is needed. The host's parent chain was `cmd.exe <- opera.exe`, so `ParentProcess.NameOf` gives "opera".
+  Not run: the real host and companion with Opera (a heartbeat would have flipped the user's live app to
+  extension-required). The window-reading watch (`BrowserWatch`, `Distractions`) covers Opera without the
+  extension. Note: the shipped 0.9.14
+  window has no CONNECT BROWSERS button (removed in 5964e3a) and nothing calls `Installer.OpenExtensionHelp`
+  or `--register-browser` on install, so the extension setup on the website (step 3) no longer matches the app.
 - Not verified: the extension's own counting on real YouTube Shorts and Reddit pages (DOM and scroll
   behavior can change), Edge, a packed or store-installed extension (the store assigns a new ID), long
   sessions, multi-monitor, and whether Windows always allows Back to work to take the front.

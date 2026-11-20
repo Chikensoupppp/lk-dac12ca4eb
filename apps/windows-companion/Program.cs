@@ -30,14 +30,14 @@ if (args.Contains("--watchdog"))
 }
 if (args.Contains("--register-browser"))
 {
-    Console.WriteLine("Chrome and Edge can now reach SwipeLater. Host file: "
+    Console.WriteLine("Chrome, Edge, Brave, Vivaldi, Opera and Firefox can now reach SwipeLater. Host file: "
         + BrowserRegistration.Register(stateDir, Environment.ProcessPath!));
     return;
 }
 if (args.Contains("--unregister-browser"))
 {
     BrowserRegistration.Unregister();
-    Console.WriteLine("Removed the Chrome and Edge link.");
+    Console.WriteLine("Removed the browser links.");
     return;
 }
 if (args.Contains("--later"))

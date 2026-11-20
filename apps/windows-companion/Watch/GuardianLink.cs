@@ -234,7 +234,7 @@ public sealed class GuardianPipe : IDisposable
 }
 
 /// <summary>
-/// One-time setup so Chrome and Edge know where the host is:
+/// One-time setup so Chrome, Edge, Brave, Vivaldi, Opera and Firefox know where the host is:
 /// <c>LockIn.Companion.exe --register-browser</c> (and <c>--unregister-browser</c>). Per user, no admin.
 /// </summary>
 public static class BrowserRegistration
@@ -246,6 +246,8 @@ public static class BrowserRegistration
         @"Software\Chromium\NativeMessagingHosts\" + NativeHost.Name,
         @"Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\" + NativeHost.Name,
         @"Software\Vivaldi\NativeMessagingHosts\" + NativeHost.Name,
+        // Opera needs no key of its own: Opera 140 (Windows, 2026-11-20) started the host through the Chromium key
+        // above, and ignored Chrome's key and both Opera-named keys, even when all of them were present.
     };
 
     /// <summary>Firefox reads its own key, and its host file names the extension by ID instead of by origin.</summary>
