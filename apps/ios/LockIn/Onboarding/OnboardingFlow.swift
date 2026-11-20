@@ -5,13 +5,14 @@ import SwiftUI
 /// The long way is the default: the first slide opens it, and "Skip intro" ends it so the Focus screen's
 /// coach takes over (task, minutes, distracting apps, one hold to start). The introduction goes:
 /// guess, real hours, what they mean, two how-it-works slides, what pulls you in, lock apps, goals,
+/// when works for you (no time is set for the user),
 /// the plan, the Plus offer ("Not now" is one tap), and last a real "slide to lock in" that starts
 /// the first session. Seeing Plus here counts as the one Plus offer, so it is not shown again after
 /// the first session. The real hours can only be drawn by Apple's report extension (Lock In can
 /// never read them), so slides 3 and 4 are drawn by it. Without Screen Time access, or without the
 /// extension, slide 4 uses the guess.
 struct OnboardingFlow: View {
-    static let stepCount = 12
+    static let stepCount = 13
 
     enum Step: Int {
         case hook = 1, guess, reveal, brain, appsWait, comeBack, pulls, lock, goals, plan, plus, slide
@@ -89,7 +90,8 @@ struct OnboardingFlow: View {
         case .comeBack: advance(to: .pulls)
         case .pulls: advance(to: .lock)
         case .lock: advance(to: .goals)
-        case .goals: advance(to: .plan)
+        // The user picks their own time; the plan then shows it (nothing is set for them).
+        case .goals: openWhen(draftFromAnswers)
         case .plan: advance(to: .plus)
         case .plus: advance(to: .slide)
         case .slide: finish(startNow: true)
@@ -97,18 +99,25 @@ struct OnboardingFlow: View {
         }
     }
 
-    // MARK: "Can't do 4:00?"
+    // MARK: When works for you
 
-    /// Calendar on: the free-time screen (or picking, if the calendar is empty). Not asked yet:
-    /// the ask screen. Said no before: straight to picking, no nagging.
+    /// The plan the answers make, before a time is picked (its length and days, not its time).
+    private var draftFromAnswers: LockInPlan {
+        var p = PlanRules.make(hoursIndex: hoursIndex, pulls: categories, goals: goals)
+        for _ in 0..<easier { p = PlanRules.apply(.easier, to: p) }
+        return p
+    }
+
+    /// After the goals, and from the plan's "Change time". Calendar on: the free-time screen (or
+    /// picking, if the calendar is empty). Otherwise picking, where "Use my calendar" is offered
+    /// once; no separate ask screen in the way.
     private func openWhen(_ plan: LockInPlan) {
         draftPlan = plan
-        switch CalendarAccess.state {
-        case .allowed:
+        if CalendarAccess.state == .allowed {
             loadDays(plan)
             advance(to: calendarHasEvents ? .whenFree : .whenPick)
-        case .notAsked: advance(to: .whenAsk)
-        case .refused: advance(to: .whenPick)
+        } else {
+            advance(to: .whenPick)
         }
     }
 
@@ -116,7 +125,9 @@ struct OnboardingFlow: View {
         Task { @MainActor in
             let allowed = await CalendarAccess.ask()
             if allowed, let plan = draftPlan { loadDays(plan) }
-            advance(to: allowed && calendarHasEvents ? .whenFree : .whenPick)
+            let target: Step = allowed && calendarHasEvents ? .whenFree : .whenPick
+            // Already picking: stay on this screen (it now checks the calendar, if allowed).
+            if target != step { advance(to: target) }
         }
     }
 
@@ -128,9 +139,10 @@ struct OnboardingFlow: View {
         calendarDays.contains { !$0.busy.isEmpty || $0.dayOff != nil }
     }
 
-    /// A time was chosen: back to the plan, which now shows it.
+    /// A time was chosen: on to the plan (first time), or back to it (from "Change time").
     private func chooseTime(_ choice: TimeChoice) {
         timeChoice = choice
+        guard history.contains(.plan) else { advance(to: .plan); return }
         while let last = history.last, last != .plan { history.removeLast() }
         if history.last == .plan { history.removeLast() }
         move(to: .plan, back: true)
@@ -208,7 +220,9 @@ struct OnboardingFlow: View {
                     if let plan = draftPlan {
                         let allowed = CalendarAccess.state == .allowed
                         WhenPickStep(plan: plan, days: allowed ? calendarDays : [], calendarAllowed: allowed,
-                                     backToSuggestions: history.last == .whenFree ? back : nil, done: chooseTime)
+                                     backToSuggestions: history.last == .whenFree ? back : nil,
+                                     useCalendar: CalendarAccess.state == .notAsked ? useCalendar : nil,
+                                     done: chooseTime)
                     }
                 }
             }

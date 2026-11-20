@@ -225,11 +225,15 @@ final class FocusUITests: XCTestCase {
         app.buttons["NEXT"].tap()
         step("onboarding-8-lock", tap: "Skip for now")
         step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
+        // No time is set for the user: SET stays off until one is picked.
+        XCTAssertTrue(app.buttons["when-time-960"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["PICK A TIME"].isEnabled)
+        step("onboarding-10-when", tap: "SET 4:00 PM", pre: { app.buttons["when-time-960"].tap() })
         // The plan receipt is built from the answers, then the Plus offer. The last slide is a real
         // "slide to lock in": sliding ends the introduction with the first session running.
-        step("onboarding-10-plan", tap: "THIS IS MY PLAN")
-        step("onboarding-11-plus", tap: "Not now")
-        step("onboarding-12-slide", tap: "onboarding-slide-knob")
+        step("onboarding-11-plan", tap: "THIS IS MY PLAN")
+        step("onboarding-12-plus", tap: "Not now")
+        step("onboarding-13-slide", tap: "onboarding-slide-knob")
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.staticTexts["first-lock-in-stamp"].exists, "the badge belongs to a finished session")
         capture("onboarding-session-running")
@@ -373,7 +377,7 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 5))
     }
 
-    /// Skipping everything reaches the main screen with no session, and leaves out the year slide.
+    /// Skipping every optional answer still reaches the end; the last slide starts the first session.
     func testFirstRunCanBeSkipped() {
         let app = XCUIApplication()
         app.launchArguments += ["-ui-testing-calm-background", "-ui-testing-reset-state", "-ui-testing-onboarding"]
@@ -385,21 +389,20 @@ final class FocusUITests: XCTestCase {
             button.tap()
         }
         tap("LET\u{2019}S FIND OUT")
-        tap("Skip")                      // guess
-        tap("Not now")                   // Screen Time (no guess, so the hours slide is left out)
-        tap("onboarding-slide-knob")     // one slide, you're in (moves on by itself)
-        sleep(2)
-        tap("NEXT")                      // swipe later (notifications go to Later)
-        tap("NEXT")                      // stack up the days (the week stacks up)
+        tap("Skip")                      // guess (no guess and no Screen Time: no hours slides)
+        tap("NEXT")                      // apps and pings wait
+        tap("NEXT")                      // every session fills in a day
         tap("Skip")                      // what pulls you in
         tap("Skip for now")              // lock apps
         XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
         tap("Skip")                      // goals
+        tap("when-time-1140")            // when works for you (no time until one is picked)
+        tap("SET 7:00 PM")
         tap("THIS IS MY PLAN")           // the plan receipt
         tap("Not now")                   // the Plus offer
-        // The plan prints, then the introduction ends by itself and the coach starts.
-        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
-        app.buttons["skip-focus-coach"].tap()
+        tap("onboarding-slide-knob")     // slide to start: the first session runs
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
+        app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
     }
 

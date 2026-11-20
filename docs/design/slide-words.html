@@ -3,46 +3,61 @@
 <head>
 <meta charset="utf-8">
 <title>Slide words</title>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@700;800&display=swap" rel="stylesheet">
 <style>
-/* The top of each intro slide with its new words (2026-11-20): progress bars, the part label,
-   the headline and the one short line. Anton stands in for Apple's compressed black. */
+/* The top of each intro slide (2026-11-20, v2): the big headline says it all, no small lines.
+   Anton stands in for Apple's compressed black. Slide 8's icons are stand-ins: the app shows the
+   real icons of the apps you pick, drawn by Apple. */
 :root { --paper: #E7E8E3; --ink: #1B1B1B; --blue: #3255A4; --orange: #E85A1E; }
 body { margin: 0; background: #cfd0cb; padding: 28px; font-family: 'IBM Plex Mono', monospace; color: var(--ink); }
-.grid { display: grid; grid-template-columns: repeat(4, 342px); gap: 22px; }
-.s { background: var(--paper); border-radius: 26px; padding: 18px 22px 22px; box-sizing: border-box; min-height: 250px; box-shadow: 0 10px 22px rgba(0,0,0,.14); }
+.grid { display: grid; grid-template-columns: repeat(5, 300px); gap: 20px; }
+.s { background: var(--paper); border-radius: 26px; padding: 16px 20px 20px; box-sizing: border-box; min-height: 300px; box-shadow: 0 10px 22px rgba(0,0,0,.14); }
 .bars { display: flex; gap: 3px; } .bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(27,27,27,.18); } .bars i.on { background: var(--ink); }
-.tag { display: flex; gap: 7px; align-items: center; margin-top: 22px; font: 700 11px/1 'IBM Plex Mono'; letter-spacing: 1.4px; text-transform: uppercase; color: var(--blue); }
+.tag { display: flex; gap: 7px; align-items: center; margin-top: 20px; font: 700 10px/1 'IBM Plex Mono'; letter-spacing: 1.4px; text-transform: uppercase; color: var(--blue); }
 .tag b { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.t { font: 400 46px/.98 Anton, sans-serif; text-transform: uppercase; margin-top: 10px; white-space: pre-line; }
-.l { font: 500 13px/1.35 'IBM Plex Mono'; margin-top: 12px; }
-.n { float: right; font: 700 10px/1 'IBM Plex Mono'; color: rgba(27,27,27,.4); margin-top: 22px; }
-.btn { margin-top: 14px; display: inline-block; padding: 8px 16px; border-radius: 20px; background: var(--ink); color: var(--paper); font: 700 11px/1 'IBM Plex Mono'; letter-spacing: 1.4px; }
+.t { font: 400 40px/.98 Anton, sans-serif; text-transform: uppercase; margin-top: 10px; white-space: pre-line; }
+.n { float: right; font: 700 10px/1 'IBM Plex Mono'; color: rgba(27,27,27,.4); margin-top: 20px; }
+.btn { margin-top: 14px; display: inline-block; padding: 8px 14px; border-radius: 20px; background: var(--ink); color: var(--paper); font: 700 10px/1 'IBM Plex Mono'; letter-spacing: 1.3px; }
+.btn.off { opacity: .35; }
+.hint { margin-top: 12px; font: 500 11px/1.3 'IBM Plex Mono'; color: rgba(27,27,27,.45); font-style: italic; }
+.icons { display: grid; grid-template-columns: repeat(4, 46px); gap: 12px; margin-top: 14px; }
+.ic { width: 46px; height: 46px; border-radius: 11px; position: relative; display: flex; align-items: center; justify-content: center; color: #fff; font: 800 18px Inter; }
+.ic::after { content: "🔒"; position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 2px solid var(--paper); font-size: 8px; display: flex; align-items: center; justify-content: center; }
+.time { margin-top: 12px; height: 62px; border: 2px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); background: #F4F4F0; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
+.time .pm { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; display: flex; align-items: center; justify-content: center; font: 800 16px Inter; }
+.time .v { font: 400 38px/1 Anton; opacity: .25; }
+.chips { display: flex; gap: 4px; margin-top: 10px; }
+.chips span { flex: 1; text-align: center; padding: 7px 0; border: 2px solid var(--ink); border-radius: 20px; background: #fff; font: 800 11px Inter; }
 </style>
 </head>
 <body>
 <div class="grid" id="g"></div>
 <script>
 const S = [
-  ["Your phone time", "Where does\nthe time go?", "Let’s find out.", "LET’S FIND OUT"],
-  ["Your phone time", "How many hours\na day?", "Guess first. iPhone will ask to share your real number next.", "SEE MY ACTUAL TIME"],
-  ["Your phone time", "Let’s check\nyour guess.", "(loading bar, then your real number)", "", "o"],
-  ["Your phone time", "9H 33M\na day.", "(your real hours and what they add up to)", "CONTINUE"],
-  ["How it works", "Your apps\nwait.", "While you focus, apps and pings wait.", "NEXT"],
-  ["How it works", "Watch your\nweek fill up.", "Every session you finish adds a day.", "NEXT"],
-  ["Make it yours", "What pulls\nyou in?", "Tap what keeps you scrolling. It shapes your plan.", "NEXT"],
-  ["Make it yours", "Which apps\nto block?", "They only lock during a session.", "CHOOSE APPS"],
-  ["Make it yours", "What do you\nwant more of?", "Your plan makes room for these.", "NEXT"],
-  ["Your plan", "Your lock-in\nplan.", "When and how long you’ll lock in. Change it anytime.", "THIS IS MY PLAN"],
-  ["Optional", "Lock in\nfor real.", "(SwipeLater Plus · Not now is one tap)", "TRY 7 DAYS FREE"],
-  ["Start", "One slide.\nYou’re in.", "Slide the brain to start your first session.", "SLIDE TO LOCK IN"],
+  ["Your phone time", "Where does\nthe time go?", "LET’S FIND OUT"],
+  ["Your phone time", "How many hours\na day on your\nphone?", "SEE MY ACTUAL TIME"],
+  ["Your phone time", "Let’s check\nyour guess.", "NEXT", "after loading: YOUR DAILY AVERAGE: 9H 33M", "o"],
+  ["Your phone time", "9H 33M\na day.", "CONTINUE", "(your real number)"],
+  ["How it works", "Apps and pings\nwait till\nyou’re done.", "NEXT"],
+  ["How it works", "Every session\nfills in\na day.", "NEXT"],
+  ["Make it yours", "What pulls\nyou in?", "NEXT"],
+  ["Make it yours", "Locked while\nyou focus.", "LOOKS RIGHT", "", "", "icons"],
+  ["Make it yours", "What do you\nwant more of?", "NEXT"],
+  ["Your time", "When works\nfor you?", "PICK A TIME", "", "", "time"],
+  ["Your plan", "Your lock-in\nplan.", "THIS IS MY PLAN"],
+  ["Optional", "Lock in\nfor real.", "TRY 7 DAYS FREE"],
+  ["Start", "Slide to start\nyour first\nsession.", "SLIDE TO LOCK IN"],
 ];
+const icons = `<div class="icons">${[['#E1306C','I'],['#000','T'],['#FF0000','Y'],['#FFFC00;color:#000','S'],['#5865F2','D'],['#1DB954','S'],['#FF4500','R'],['#0866FF','F']].map(([c, l]) => `<div class="ic" style="background:${c}">${l}</div>`).join('')}</div><div class="hint">stand-ins: the app shows your real app icons</div>`;
+const time = `<div class="time"><span class="pm">−</span><span class="v">--:--</span><span class="pm">+</span></div><div class="chips"><span>8 AM</span><span>12 PM</span><span>4 PM</span><span>7 PM</span><span>9 PM</span></div>`;
 const g = document.getElementById('g');
-S.forEach(([tag, t, l, btn, o], i) => {
-  const bars = Array.from({length: 12}, (_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('');
+S.forEach(([tag, t, btn, hint, o, extra], i) => {
+  const bars = Array.from({length: 13}, (_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('');
   g.insertAdjacentHTML('beforeend', `<div class="s"><div class="bars">${bars}</div><span class="n">${i + 1}</span>
     <div class="tag" style="${o ? 'color:var(--orange)' : ''}"><b></b>${tag}</div><div class="t">${t}</div>
-    <div class="l">${l}</div>${btn ? `<div class="btn">${btn}</div>` : ''}</div>`);
+    ${extra === 'icons' ? icons : extra === 'time' ? time : ''}
+    ${hint ? `<div class="hint">${hint}</div>` : ''}
+    ${btn ? `<div class="btn ${extra === 'time' ? 'off' : ''}">${btn}</div>` : ''}</div>`);
 });
 document.fonts.ready.then(() => { window.ready = true; });
 window.render = () => {};

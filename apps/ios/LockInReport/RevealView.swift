@@ -54,7 +54,7 @@ struct RevealView: View {
 
     private var filled: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("HERE\u{2019}S YOUR NUMBER.")
+            Text("YOUR DAILY AVERAGE:")
                 .font(.system(size: 56, weight: .black).width(.compressed))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
@@ -69,8 +69,6 @@ struct RevealView: View {
             OutlinedText(text: Self.duration(data.perDay), font: .system(size: 110, weight: .black).width(.compressed),
                          ink: Self.ink, outline: 2.5, drop: 5)
                 .padding(.bottom, 4)
-            Text("That\u{2019}s your average daily screen time.")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
             if let verdict {
                 Text(verdict)
                     .font(.system(size: 20, weight: .heavy).width(.condensed))

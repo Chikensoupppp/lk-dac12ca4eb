@@ -32,10 +32,6 @@ struct HookStep: View {
                     .monospacedDigit()
                     .misprint()
                     .accessibilityLabel("Unknown hours a day")
-                Text("Let\u{2019}s find out.")
-                    .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.ink)
-                    .fixedSize(horizontal: false, vertical: true)
                 HStack(alignment: .top) {
                     Spacer()
                     ZStack(alignment: .bottomTrailing) {
@@ -96,14 +92,10 @@ struct GuessStep: View {
     let next: () -> Void
 
     var body: some View {
-        PrintScaffold(step: 2, tag: "Your phone time", title: "How many hours\na day?", titleSize: 46, grain: true,
+        PrintScaffold(step: 2, tag: "Your phone time", title: "How many hours\na day on your\nphone?", titleSize: 46, grain: true,
                       primaryTitle: "SEE MY ACTUAL TIME", primaryEnabled: guessIndex != nil, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: { guessIndex = nil; next() }) {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Guess first. iPhone will ask to share your real number next.")
-                    .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.ink)
-                    .fixedSize(horizontal: false, vertical: true)
                 poster
             }
             .animation(.spring(response: 0.45, dampingFraction: 0.6), value: guessIndex)
@@ -582,10 +574,6 @@ struct PullsStep: View {
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             header
-            Text("Tap what keeps you scrolling. It shapes your plan.")
-                .font(PrintFont.mono(14))
-                .foregroundStyle(Ink.ink)
-                .fixedSize(horizontal: false, vertical: true)
             sheet
         }
         .task {
@@ -782,18 +770,11 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 8, tag: "Make it yours", title: has ? words.title : "Which apps\nto block?", grain: true,
+        PrintScaffold(step: 8, tag: "Make it yours", title: has ? "Locked while\nyou focus." : "Which apps\nto block?", grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
             VStack(alignment: .leading, spacing: 18) {
-                Text(has ? "They lock when you start a session." : "They only lock during a session.")
-                    .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("You can change your selection anytime.")
-                    .font(PrintFont.mono(12))
-                    .foregroundStyle(Ink.ink.opacity(0.65))
                 tiles(has)
                 if has {
                     Stamp(text: words.stamp(lockedCount), color: Ink.blue, size: 22, tilt: -5)
@@ -831,29 +812,28 @@ struct LockAppsStep: View {
         }
     }
 
-    /// One plain colored tile per picked app (not the apps' real icons), with a small lock on each
-    /// corner. Before anything is picked, a grid of empty dashed slots.
+    /// The picked apps' real icons, drawn by Apple from the Screen Time picks (the app itself never
+    /// sees which apps they are), each with a small lock. Before anything is picked, a grid of empty
+    /// dashed slots.
     @ViewBuilder
     private func tiles(_ has: Bool) -> some View {
         let apps = Array(restrictions.selection.applicationTokens)
         let cats = Array(restrictions.selection.categoryTokens)
         if has {
-            let columns = [GridItem(.adaptive(minimum: 44, maximum: 56), spacing: 18)]
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 18) {
-                // Plain locked tiles, one per pick, not the apps' own icons.
-                ForEach(0..<min(apps.count + cats.count, 15), id: \.self) { i in
-                    lockedIcon {
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill([Ink.blue, Ink.red, Ink.sun, Ink.ink][i % 4])
-                            .scaleEffect(1 / 2.8)
-                    }
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 4)
+            LazyVGrid(columns: columns, spacing: 18) {
+                ForEach(Array(apps.prefix(15).enumerated()), id: \.offset) { _, token in
+                    lockedIcon { Label(token).labelStyle(.iconOnly) }
+                }
+                ForEach(Array(cats.prefix(max(0, 15 - apps.count)).enumerated()), id: \.offset) { _, token in
+                    lockedIcon { Label(token).labelStyle(.iconOnly) }
                 }
                 if lockedCount > 15 {
                     Text("+\(lockedCount - 15)")
-                        .font(PrintFont.bold(16))
+                        .font(PrintFont.bold(20))
                         .foregroundStyle(Ink.paper)
-                        .frame(width: 30, height: 30)
-                        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Ink.ink))
+                        .frame(width: 56, height: 56)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Ink.ink))
                 }
             }
             .accessibilityElement(children: .ignore)
@@ -873,21 +853,23 @@ struct LockAppsStep: View {
         }
     }
 
+    /// Apple draws the icon small (about 20 pt) and gives no size option, so it is scaled up to a
+    /// home-screen-sized 56 pt tile.
     private func lockedIcon<Icon: View>(@ViewBuilder icon: () -> Icon) -> some View {
         icon()
-            .scaleEffect(2.8)
-            .frame(width: 30, height: 30)
-            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .scaleEffect(2.6)
+            .frame(width: 56, height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(alignment: .bottomTrailing) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 7, weight: .bold))
+                    .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 15, height: 15)
+                    .frame(width: 22, height: 22)
                     .background(Circle().fill(Ink.ink))
-                    .overlay(Circle().stroke(Ink.paper, lineWidth: 1.5))
-                    .offset(x: 5, y: 5)
+                    .overlay(Circle().stroke(Ink.paper, lineWidth: 2))
+                    .offset(x: 6, y: 6)
             }
-            .frame(width: 44, height: 44)
+            .frame(width: 62, height: 62)
     }
 }
 
@@ -999,9 +981,6 @@ struct GoalsStep: View {
         PrintScaffold(step: 9, tag: "Make it yours", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
-            Text("Your plan makes room for these.")
-                .font(PrintFont.mono(14))
-                .foregroundStyle(Ink.ink)
                 .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Self.items, id: \.key) { item in
@@ -1130,12 +1109,9 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
+        PrintScaffold(step: 11, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
-            Text("When and how long you\u{2019}ll lock in. Change it anytime.")
-                .font(PrintFont.mono(14))
-                .foregroundStyle(Ink.ink)
             VStack(spacing: 0) {
                 receipt
                 stub

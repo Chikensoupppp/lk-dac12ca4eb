@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// "Can't do 4:00?" from the plan slide. Three screens, all optional, all on the plan's step:
+/// "When works for you?", right after the goals (and again from the plan's "Change time"). No time
+/// is set for the user: they pick it. Three screens, all on one step of the progress bar:
 /// 1. `WhenAskStep`: asks for the calendar, showing what it does (mock docs/design/calendar-ask-v2.html).
 /// 2. `WhenFreeStep`: the user's real free time, the best fit first, or a time fitted to each
 ///    day (Plus) (mock docs/design/schedule-v5.html).
@@ -43,7 +44,7 @@ struct WhenAskStep: View {
     @State private var asking = false
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "When it fits", title: "Let\u{2019}s find your\nfree time.", titleSize: 48,
+        PrintScaffold(step: 10, tag: "Your time", title: "Let\u{2019}s find your\nfree time.", titleSize: 48,
                       primaryTitle: asking ? "ASKING..." : "USE MY CALENDAR", primaryEnabled: !asking,
                       primaryAction: { asking = true; useCalendar() },
                       secondaryTitle: "I\u{2019}ll pick a time", secondaryAction: pickOwn) {
@@ -196,7 +197,8 @@ struct WhenFreeStep: View {
     let pickOwn: () -> Void
 
     @State private var eachDay = false
-    @State private var picked = 0
+    /// Nothing until the user taps a suggestion: no time is chosen for them.
+    @State private var picked: Int?
     @State private var then: LockInSchedule.Then = .remind
     @State private var addToCalendar = true
 
@@ -207,18 +209,16 @@ struct WhenFreeStep: View {
     }
     private var perDay: [Int: Int] { CalendarFit.bestEachDay(days: days, minutes: minutes, near: chosen) }
     private var chosen: Int {
-        suggestions.indices.contains(picked) ? suggestions[picked].minute : plan.startMinute
+        if let picked, suggestions.indices.contains(picked) { return suggestions[picked].minute }
+        return plan.startMinute
     }
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "When it fits", title: "When will you\nbe free?", titleSize: 48,
-                      primaryTitle: eachDay ? "LOCK IN EACH DAY" : "LOCK IN AT \(clock(chosen))", primaryAction: confirm,
+        PrintScaffold(step: 10, tag: "Your time", title: "When will you\nbe free?", titleSize: 48,
+                      primaryTitle: eachDay ? "LOCK IN EACH DAY" : (picked == nil ? "PICK A TIME" : "LOCK IN AT \(clock(chosen))"),
+                      primaryEnabled: eachDay || picked != nil, primaryAction: confirm,
                       secondaryTitle: "Pick another time", secondaryAction: pickOwn) {
             VStack(alignment: .leading, spacing: 16) {
-                Text(eachDay ? "Fitted around what\u{2019}s on each day." : "Blue is your free time. Best fit first.")
-                    .font(PrintFont.mono(14))
-                    .foregroundStyle(Ink.ink)
-                    .fixedSize(horizontal: false, vertical: true)
                 ModeSwitch(eachDay: $eachDay)
                 if !eachDay {
                     if suggestions.isEmpty {
@@ -536,42 +536,59 @@ struct WhenPickStep: View {
     let days: [CalendarFit.Day]
     let calendarAllowed: Bool
     var backToSuggestions: (() -> Void)? = nil
+    /// Offered while the calendar has never been asked for.
+    var useCalendar: (() -> Void)? = nil
     let done: (TimeChoice) -> Void
 
-    @State private var minute: Int
+    /// Nothing until the user picks: no time is chosen for them.
+    @State private var picked: Int?
     @State private var weekdays: Set<Int>
     @State private var then: LockInSchedule.Then = .remind
     @State private var addToCalendar = true
 
     init(plan: LockInPlan, days: [CalendarFit.Day], calendarAllowed: Bool,
-         backToSuggestions: (() -> Void)? = nil, done: @escaping (TimeChoice) -> Void) {
+         backToSuggestions: (() -> Void)? = nil, useCalendar: (() -> Void)? = nil,
+         done: @escaping (TimeChoice) -> Void) {
         self.plan = plan
         self.days = days
         self.calendarAllowed = calendarAllowed
         self.backToSuggestions = backToSuggestions
+        self.useCalendar = useCalendar
         self.done = done
-        _minute = State(initialValue: plan.startMinute)
         _weekdays = State(initialValue: plan.weekdays)
     }
+
+    /// The picked time; before a pick, the +/- buttons start from the middle of the afternoon.
+    private var minute: Int { picked ?? 16 * 60 }
+
+    /// One tap to a starting point, then +/- for the exact time.
+    private static let quick: [(minute: Int, label: String)] = [
+        (8 * 60, "8 AM"), (12 * 60, "12 PM"), (16 * 60, "4 PM"), (19 * 60, "7 PM"), (21 * 60, "9 PM")
+    ]
 
     private var clashes: [CalendarFit.Day] {
         days.filter { weekdays.contains($0.weekday) && $0.clash(start: minute, minutes: plan.minutesPerDay) != nil }
     }
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "When it fits", title: "When works\nfor you?", titleSize: 48,
-                      primaryTitle: "SET \(clock(minute)) \(ampm(minute))", primaryEnabled: !weekdays.isEmpty,
+        PrintScaffold(step: 10, tag: "Your time", title: "When works\nfor you?", titleSize: 48,
+                      primaryTitle: picked == nil ? "PICK A TIME" : "SET \(clock(minute)) \(ampm(minute))",
+                      primaryEnabled: picked != nil && !weekdays.isEmpty,
                       primaryAction: confirm,
-                      secondaryTitle: backToSuggestions == nil ? nil : "Back to suggestions",
-                      secondaryAction: backToSuggestions) {
+                      secondaryTitle: backToSuggestions != nil ? "Back to suggestions" : (useCalendar != nil ? "Use my calendar" : nil),
+                      secondaryAction: backToSuggestions ?? useCalendar) {
             VStack(alignment: .leading, spacing: 18) {
                 bigTime
+                quickRow
                 dayStamps
-                if !days.isEmpty { calendarCheck }
-                Text("AND THEN?").font(PrintFont.mono(11, .bold)).tracking(1.4).foregroundStyle(WhenInk.soft)
-                ThenCards(then: $then, minute: minute)
-                if calendarAllowed { AddToCalendarRow(on: $addToCalendar) }
+                if picked != nil {
+                    if !days.isEmpty { calendarCheck }
+                    Text("AND THEN?").font(PrintFont.mono(11, .bold)).tracking(1.4).foregroundStyle(WhenInk.soft)
+                    ThenCards(then: $then, minute: minute)
+                    if calendarAllowed { AddToCalendarRow(on: $addToCalendar) }
+                }
             }
+            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: picked == nil)
         }
     }
 
@@ -581,13 +598,14 @@ struct WhenPickStep: View {
             step("minus", by: -15)
             Spacer(minLength: 4)
             HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text(clock(minute)).font(PrintFont.head(64)).monospacedDigit()
+                Text(picked == nil ? "--:--" : clock(minute)).font(PrintFont.head(64)).monospacedDigit()
                     .contentTransition(.numericText(value: Double(minute)))
-                Text(ampm(minute)).font(PrintFont.head(26))
+                    .opacity(picked == nil ? 0.25 : 1)
+                if picked != nil { Text(ampm(minute)).font(PrintFont.head(26)) }
             }
             .foregroundStyle(Ink.ink)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(DailyNudge.timeText(minute: minute))
+            .accessibilityLabel(picked == nil ? "No time picked" : DailyNudge.timeText(minute: minute))
             .accessibilityAdjustableAction { direction in
                 switch direction {
                 case .increment: shift(15)
@@ -620,7 +638,33 @@ struct WhenPickStep: View {
     }
 
     private func shift(_ delta: Int) {
-        withAnimation(.snappy(duration: 0.2)) { minute = min(max(minute + delta, 5 * 60), 23 * 60) }
+        // The first +/- picks the starting time itself; after that it moves it.
+        let next = picked == nil ? minute : minute + delta
+        withAnimation(.snappy(duration: 0.2)) { picked = min(max(next, 5 * 60), 23 * 60) }
+    }
+
+    private var quickRow: some View {
+        HStack(spacing: 6) {
+            ForEach(Self.quick, id: \.minute) { q in
+                let on = picked == q.minute
+                Button {
+                    withAnimation(.snappy(duration: 0.2)) { picked = q.minute }
+                } label: {
+                    Text(q.label)
+                        .font(PrintFont.bold(16))
+                        .foregroundStyle(on ? Color.white : Ink.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Capsule().fill(on ? Ink.blue : Color.white))
+                        .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2))
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.selection, trigger: on)
+                .accessibilityIdentifier("when-time-\(q.minute)")
+                .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+            }
+        }
     }
 
     private var dayStamps: some View {

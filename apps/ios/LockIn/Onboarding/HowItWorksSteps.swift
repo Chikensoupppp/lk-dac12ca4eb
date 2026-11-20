@@ -145,11 +145,10 @@ struct SlideToLockStep: View {
 
     var body: some View {
         // No NEXT: the slider sits where it was and moves on by itself. VoiceOver gets a Next after.
-        PrintScaffold(step: OnboardingFlow.stepCount, tag: "Start", title: "One slide.\nYou\u{2019}re in.",
+        PrintScaffold(step: OnboardingFlow.stepCount, tag: "Start", title: "Slide to start\nyour first\nsession.",
                       primaryView: AnyView(track.padding(.bottom, 6)),
                       secondaryTitle: voiceOver && locked ? "Next" : nil, secondaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
-            SwapCaption(first: "Slide the brain to start your first session.", second: "That\u{2019}s how every session starts.", swapped: locked)
             SessionPreview(minutes: minutes, locked: locked, lockedAt: lockedAt)
                 .padding(.top, 6)
         }
@@ -435,9 +434,8 @@ struct LaterStep: View {
     private var allGone: Bool { gone.count == Self.notes.count }
 
     var body: some View {
-        PrintScaffold(step: 5, tag: "How it works", title: "Your apps\nwait.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 5, tag: "How it works", title: "Apps and pings\nwait till\nyou\u{2019}re done.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.62, ripples: ripples))) {
-            SwapCaption(first: "While you focus, apps and pings wait.", second: "All here when you\u{2019}re done.", swapped: allGone)
             VStack(spacing: 16) {
                 lockScreen
                 pocket
@@ -652,12 +650,8 @@ struct StackDaysStep: View {
     private static let shifts: [CGFloat] = [0, 6, -5, 8, -3, 4, -6]
 
     var body: some View {
-        PrintScaffold(step: 6, tag: "How it works", title: "Watch your\nweek fill up.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 6, tag: "How it works", title: "Every session\nfills in\na day.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.6, ripples: ripples))) {
-            Text("Every session you finish adds a day.")
-                .font(PrintFont.mono(14))
-                .foregroundStyle(Ink.ink)
-                .fixedSize(horizontal: false, vertical: true)
             VStack(spacing: compactScreen ? 4 : 6) {
                 brain
                 ForEach((0..<7).reversed(), id: \.self) { i in block(i) }
