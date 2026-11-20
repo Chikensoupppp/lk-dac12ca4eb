@@ -3,7 +3,7 @@ import Foundation
 /// Rules for leaving a session early.
 ///
 /// Free: you can always end a session. It takes one tap and the time you focused still counts.
-/// Plus "Locked" sessions are strict on purpose (the user turns that on themselves) and have no quit button. The ways out are a Key Holder (in person, or a
+/// "Locked" sessions (every session with Plus, one a week without) are strict on purpose (the user turns that on themselves) and have no quit button. The ways out are a Key Holder (in person, or a
 /// remote ask through iCloud) or one emergency exit a week with a 15-minute watched wait.
 enum QuitRules {
     static let emergencyWait: TimeInterval = 15 * 60
@@ -41,6 +41,20 @@ enum QuitRules {
 
     static func useEmergency(_ defaults: UserDefaults = .standard) {
         defaults.set(weekKey(), forKey: emergencyWeekKey)
+    }
+
+    // MARK: The free weekly Locked session
+
+    private static let freeLockWeekKey = "lockin.freeLock.week.v1"
+
+    /// Free users get one Locked session a week (Plus: every session). Shown after the first run
+    /// (`FreeLockGiftStep`); used up when a Locked session starts.
+    static func freeLockAvailable(_ defaults: UserDefaults = .standard) -> Bool {
+        defaults.string(forKey: freeLockWeekKey) != weekKey()
+    }
+
+    static func useFreeLock(_ defaults: UserDefaults = .standard) {
+        defaults.set(weekKey(), forKey: freeLockWeekKey)
     }
 
     // MARK: Which session is locked

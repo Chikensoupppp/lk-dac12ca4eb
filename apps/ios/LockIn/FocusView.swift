@@ -825,11 +825,14 @@ struct FocusView: View {
         BrainWatch.update(selection: restrictions.selection, authorized: approved)
     }
 
-    /// Plus switch under the minutes. Locked needs apps picked, so the delete lock has something
-    /// to ride on (it is applied with the shield).
+    /// Locked mode can be used now: always with Plus, once a week without (QuitRules.freeLockAvailable).
+    private var canLock: Bool { plus.hasPlus || QuitRules.freeLockAvailable() }
+
+    /// Plus switch under the minutes (free users get one Locked session a week). Locked needs apps
+    /// picked, so the delete lock has something to ride on (it is applied with the shield).
     private var lockedToggle: some View {
         Button {
-            if !plus.hasPlus { showPlusOffer = true; return }
+            if !canLock { showPlusOffer = true; return }
             // Locked rides on the shield, so with no apps picked the tap opens the picker instead of doing nothing.
             if !restrictions.hasSelection { showRestrictions = true; return }
             lockedNext.toggle()
@@ -842,14 +845,16 @@ struct FocusView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
                 if !plus.hasPlus {
-                    Text("Plus").font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 2)
+                    // The free weekly one while it lasts, then the Plus tag.
+                    Text(canLock ? "1 free" : "Plus").font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 2)
                         .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(FocusPaper.line))
+                        .accessibilityLabel(canLock ? "One free this week" : "Plus")
                 }
             }
             .foregroundStyle(lockedNext ? FocusPaper.ink : FocusPaper.secondary)
             .frame(minHeight: 44)
         }
-        .opacity(plus.hasPlus && !restrictions.hasSelection ? 0.55 : 1)
+        .opacity(canLock && !restrictions.hasSelection ? 0.55 : 1)
         .accessibilityHint(restrictions.hasSelection ? "No quit button for the next session" : "Opens the app picker first. Locked mode needs apps to lock.")
     }
 
@@ -883,7 +888,7 @@ struct FocusView: View {
     private var pcExtras: PCSessionExtras {
         PCSessionExtras(task: tasks.selected, buddy: PCSheet.buddyOn,
                         allow: AllowedApps.list(for: tasks.selected), remindAfterMinutes: PCSheet.remindAfter,
-                        locked: lockedNext && plus.hasPlus && restrictions.hasSelection,
+                        locked: lockedNext && canLock && restrictions.hasSelection,
                         rcUserId: PlusStore.revenueCatUserID)
     }
 
@@ -986,7 +991,7 @@ struct FocusView: View {
         let session = SessionTiming(startedAt: .now, duration: duration)
         let record = SessionRecord(timing: session)
         store.save(record)
-        let locked = lockedNext && plus.hasPlus && restrictions.hasSelection
+        let locked = lockedNext && canLock && restrictions.hasSelection
         QuitRules.markLocked(locked ? record.id : nil)
         restrictions.begin(record, locked: locked)
         Analytics.track("session_started", ["minutes": selectedMinutes, "locked_mode": locked,
@@ -994,6 +999,11 @@ struct FocusView: View {
                                             "first_session": coachStep == .celebrate])
         LiveCountdown.start(record, locked: locked)
         pc.sessionStarted(record, extras: pcExtras)
+        if locked && !plus.hasPlus {
+            // That was this week's free Locked session; the switch goes back to off.
+            QuitRules.useFreeLock()
+            lockedNext = false
+        }
         flashTask?.cancel()
         flash = nil
         startCount += 1

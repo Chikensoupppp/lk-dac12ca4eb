@@ -59,7 +59,8 @@ struct PlusOfferStep: View {
                     .opacity(cardIn ? 1 : 0)
                 VStack(alignment: .leading, spacing: 6) {
                     feature(0, symbol: "lock.fill", color: Ink.blue, glyph: .white,
-                            title: "Locked mode", line: "No quit button. It runs to the end.")
+                            // Free users get one a week (FreeLockGiftStep); Plus is every session.
+                            title: "Unlimited Locked mode", line: "No quit button. It runs to the end.")
                     feature(1, symbol: "person.2.fill", color: Ink.sun, glyph: Ink.ink,
                             title: "A friend holds the key", line: "They end it early. Or 1 emergency exit a week.")
                     feature(2, symbol: "calendar", color: Ink.red, glyph: .white,

@@ -1,5 +1,9 @@
 # Project status
 
+## Free weekly Locked session - 2026-11-20
+
+- Free users get one Locked session a week (Plus: every session). An animated gift slide after the Plus offer says so ("One locked session a week, on us", "Unlimited with Plus"). Uncommitted, not compiled. Details in `HANDOFF.md`.
+
 ## Session-done screen - 2026-11-20
 
 - New session-done screen replaces the completion card and the streak screen: ring closes around the brain, time lands, today fills, streak rolls over. Designed and approved as a Rive render (`apps/rive/complete`); the Rive version shipped a free-plan splash screen, so it is rebuilt in pure SwiftUI (`SessionDoneView.swift`) and the Rive runtime is removed from the app. Uncommitted, not compiled. Details in `HANDOFF.md`.

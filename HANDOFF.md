@@ -303,7 +303,18 @@ Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved 
 
 > **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.
 
-## Session-done screen rebuilt in SwiftUI · 2026-11-20 (uncommitted, not compiled)
+## Free weekly Locked session + gift slide · 2026-11-20 (uncommitted, not compiled)
+
+Brandon: "make it so that the free users can kinda lock it", then "1 a week and they get one for free, make like a cool animation after the onboarding and say you get unlimited with Plus".
+
+- Rule: `QuitRules.freeLockAvailable()` / `useFreeLock()` (key `lockin.freeLock.week.v1`, same `weekKey()` as the emergency exit, so the week follows the phone's calendar). Unit test `LockInTests/FreeLockTests.swift`.
+- `FocusView`: `canLock = plus.hasPlus || QuitRules.freeLockAvailable()`. The Locked switch works for free users while the weekly one is left (tag "1 free"), else opens the Plus offer (tag "Plus"). Starting a Locked session without Plus uses it up and turns the switch back off. The ways out (Key Holder, weekly emergency exit) are the same as Plus.
+- `Onboarding/FreeLockGiftStep.swift`: new step `.freeLock` after `.plus` when the user has no Plus (`OnboardingFlow.next`), then the slide-to-start. Button GOT IT. Animation and look in DESIGN.md. Progress bars stay at 12 of 13 on it (Plus users skip it).
+- Plus offer: the first feature now reads "Unlimited Locked mode".
+- UI tests: both onboarding walkthroughs tap GOT IT after "Not now"; new capture `onboarding-12b-free-lock`.
+- NOT verified: compile, the look and timing on a device (nothing rendered yet), how the ticket fits on an SE.
+
+## Session-done screen rebuilt in SwiftUI · 2026-11-20 (pushed in b1ce53c, native CI 44825865228 passed)
 
 The Rive version below (ff3bff4) built and passed CI, but its real simulator capture showed Rive's free-plan splash (a black screen with "RIVE") over the scene. Brandon chose "Rebuild in SwiftUI" over paying for Rive Cadet.
 
@@ -313,13 +324,13 @@ The Rive version below (ff3bff4) built and passed CI, but its real simulator cap
 - Dots everywhere (Brandon, same day): `HalftoneField(fadeStart: -0.36)` so the dots cover the whole screen, not just the lower part.
 - NOT verified: compile, the look on a device (only the Rive render was approved; this port has not been rendered), haptic timing.
 
-## Block websites too + text clipping pass · 2026-11-20 (uncommitted, not compiled)
+## Block websites too + text clipping pass · 2026-11-20 (pushed in b1ce53c, CI passed)
 
 - Brandon: "make it so it blocks the browser also on the phone whenever they lock in". Lock-ins now also shield every website (`store.shield.webDomainCategories = .all()`) in `ScreenTimeClient.applyShield` and in `LockInMonitor.applyAutoLock`, so Safari is not a way around locked apps. The existing SwipeLater block screen (`LockInShield`, web-domain configurations) shows for sites. Switch "Block websites too" in the Locked apps sheet (`RestrictionsSheet`), on by default, stored in the app group under `RestrictionNaming.blockWebKey`; it applies from the next lock-in. Trade-off: school or work sites in Safari are blocked too while locked in, unless the switch is off.
 - Clipping pass over all 43 screens the last CI run captured (iPhone 16, SE, 16 Pro Max, large text) plus a code scan for single-line text. Fixed: "Locked mode" truncated to "Locke…" on an SE at the largest text size (now wraps); the coach's faded minutes picker hid the picked length's number (fade now applied after `compositingGroup`, same for the task pill); the "Every session fills in a day" brain dropped through the headline (now drops from just above the stack). Seen but fine: typewriter coach bubbles and a rolling number captured mid-animation; the UI-test-only "Completion count" label.
 - NOT verified: compile; web shielding on a device (needs Family Controls on a real phone); screens no UI test visits were only checked in code.
 
-## Paywall text + time picker · 2026-11-20 (uncommitted, not compiled)
+## Paywall text + time picker · 2026-11-20 (pushed in b1ce53c, CI passed)
 
 - Paywall (`PlusOfferStep`): no longer scaled down to fit above the button (`scaleToFit` made it ~72% on an SE, "looks shrunken"); it shows at full size and scrolls when needed. Smallest sizes raised (feature lines 14, plan notes and timeline lines 13, badge 10, legal 12.5); timeline lines wrap instead of shrinking.
 - "When works for you?" (`WhenSteps`): the "--:--" placeholder (it drew as a row of little blocks in the compressed face) is now a faded 9:00 AM; +/- start from 9 AM instead of 4 PM; quick picks are 9 AM / 12 PM / 4 PM / 7 PM / 9 PM. Holding + or - repeats and speeds up (`RepeatStepButton`: one step on touch, then every 170 ms down to 45 ms). Nothing is picked for the user: the button still says PICK A TIME until they choose (the UI test relies on that).

@@ -6,7 +6,8 @@ import SwiftUI
 /// coach takes over (task, minutes, distracting apps, one hold to start). The introduction goes:
 /// guess, real hours, what they mean, two how-it-works slides, what pulls you in, lock apps, goals,
 /// when works for you (no time is set for the user),
-/// the plan, the Plus offer ("Not now" is one tap), and last a real "slide to lock in" that starts
+/// the plan, the Plus offer ("Not now" is one tap), without Plus the free Locked session a week,
+/// and last a real "slide to lock in" that starts
 /// the first session. Seeing Plus here counts as the one Plus offer, so it is not shown again after
 /// the first session. The real hours can only be drawn by Apple's report extension (Lock In can
 /// never read them), so slides 3 and 4 are drawn by it. Without Screen Time access, or without the
@@ -18,6 +19,8 @@ struct OnboardingFlow: View {
         case hook = 1, guess, reveal, brain, appsWait, comeBack, pulls, lock, goals, plan, plus, slide
         /// "When works for you?" (`WhenSteps.swift`): after the goals, and from the plan's "Change time".
         case whenPick
+        /// The free Locked session a week (`FreeLockGiftStep.swift`): after the Plus offer, without Plus.
+        case freeLock
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
@@ -110,7 +113,9 @@ struct OnboardingFlow: View {
             Analytics.track("plan_accepted", ["sessions_per_day": p.sessionsPerDay, "minutes": p.minutes,
                                               "made_easier": easier])
             advance(to: .plus)
-        case .plus: advance(to: .slide)
+        // Without Plus, the free weekly Locked session is shown before the last slide.
+        case .plus: advance(to: plus.hasPlus ? .slide : .freeLock)
+        case .freeLock: advance(to: .slide)
         case .slide: finish(startNow: true)
         case .whenPick: break
         }
@@ -209,6 +214,7 @@ struct OnboardingFlow: View {
                     PlanStep(hoursIndex: hoursIndex, realShown: usedReport, categories: categories, goals: goals,
                              easier: $easier, timeChoice: timeChoice, cantDo: openWhen, next: next)
                 case .plus: PlusOfferStep(plus: plus, next: next)
+                case .freeLock: FreeLockGiftStep(next: next)
                 case .whenPick:
                     if let plan = draftPlan { WhenPickStep(plan: plan, done: chooseTime) }
                 }

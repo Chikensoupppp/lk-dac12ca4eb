@@ -48,6 +48,15 @@ The pink brain sits inside the dial above the time. Use the bundled `BrainExact`
 - Borrowed from: Apple Fitness (closing ring + burst), Duolingo (rolling streak number, built in Rive),
   Headspace (one calm hero, little text).
 
+## Free weekly Locked session (2026-11-20, not yet seen on device)
+- Free users get one Locked session a week; Plus is every session. Shown once, after the Plus offer
+  ("Not now"), as `FreeLockGiftStep`: "One locked session a week, on us."
+- Idea: a gift ticket. A blue riso ticket ("ADMIT ONE / LOCKED SESSION", stub "1x EVERY WEEK", torn
+  notches and a dashed tear line) tips up onto the page, a red FREE stamp slams onto it (heavy haptic,
+  ticket squish, dot ripple), the brain hops onto the stub, a shine sweeps, then "Unlimited with PLUS"
+  with a sunflower infinity disc. Newsprint ground with the moving halftone dots; color on the objects.
+- On the Focus screen the Locked switch shows a "1 free" tag while it lasts, then "Plus".
+
 ## Copy
 - Short labels and one-line status only. No explanatory, legal or how-to paragraphs.
 

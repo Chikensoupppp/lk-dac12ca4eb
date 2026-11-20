@@ -236,6 +236,8 @@ final class FocusUITests: XCTestCase {
         // "slide to lock in": sliding ends the introduction with the first session running.
         step("onboarding-11-plan", tap: "THIS IS MY PLAN")
         step("onboarding-12-plus", tap: "Not now")
+        // Without Plus: the free Locked session a week, then the last slide.
+        step("onboarding-12b-free-lock", tap: "GOT IT")
         step("onboarding-13-slide", tap: "onboarding-slide-knob")
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.staticTexts["first-lock-in-stamp"].exists, "the badge belongs to a finished session")
@@ -403,6 +405,7 @@ final class FocusUITests: XCTestCase {
         tap("SET 7:00 PM")
         tap("THIS IS MY PLAN")           // the plan receipt
         tap("Not now")                   // the Plus offer
+        tap("GOT IT")                    // one free Locked session a week
         tap("onboarding-slide-knob")     // slide to start: the first session runs
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
         app.buttons["END SESSION"].tap()
