@@ -6,6 +6,9 @@ packages:
   PostHog:
     url: https://github.com/PostHog/posthog-ios
     from: 3.98.0
+  Rive:
+    url: https://github.com/rive-app/rive-ios
+    from: 6.30.1
 # Release spec for TestFlight. Apple approved Family Controls (Distribution) for both
 # bundle IDs, so this build carries the entitlement and the Device Activity extension.
 options:
@@ -42,6 +45,8 @@ targets:
         product: RevenueCat
       - package: PostHog
         product: PostHog
+      - package: Rive
+        product: RiveRuntime
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin

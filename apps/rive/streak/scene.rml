@@ -1,0 +1,289 @@
+<Rive version="1" kind="fragment">
+    <!--
+        SwipeLater streak row: five day stickers, riso palette on newsprint E7E8E3.
+        Artboard "Week" (default) places five stateful "Sticker" components. View model "Week" has numbers
+        day1..day5: 0 = empty (dashed ring), 1 = finished (sunflower disc, ink check draws on), 2 = rest day
+        (riso blue disc, pause bars). The app sets them one after another about 120ms apart for the ripple.
+        Day labels and the count-up number stay in SwiftUI.
+        Rive paints the first sibling on top, so children read front to back.
+    -->
+    <Artboard defaultStateMachineId="0:7" styleId="0:5" viewModelId="0:40" viewModelInstanceId="0:46" width="400" height="80" name="Week" id="0:2">
+        <LayoutComponentStyle name="Artboard Style" id="0:5"/>
+
+        <NestedArtboard artboardId="0:30" isStateful="true" x="0" y="0" name="Day 1" id="0:10">
+            <ViewModelInstance viewModelId="0:50" exports="true" name="Day 1 Instance" id="0:70">
+                <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:51" name="Kind">
+                    <DataBindContext sourcePathIds="0:40-0:41" propertyKey="575"/>
+                </ViewModelInstanceNumber>
+            </ViewModelInstance>
+            <NestedStateMachine animationId="0:81" name="Sticker SM"/>
+        </NestedArtboard>
+        <NestedArtboard artboardId="0:30" isStateful="true" x="80" y="0" name="Day 2" id="0:11">
+            <ViewModelInstance viewModelId="0:50" exports="true" name="Day 2 Instance" id="0:71">
+                <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:51" name="Kind">
+                    <DataBindContext sourcePathIds="0:40-0:42" propertyKey="575"/>
+                </ViewModelInstanceNumber>
+            </ViewModelInstance>
+            <NestedStateMachine animationId="0:81" name="Sticker SM"/>
+        </NestedArtboard>
+        <NestedArtboard artboardId="0:30" isStateful="true" x="160" y="0" name="Day 3" id="0:12">
+            <ViewModelInstance viewModelId="0:50" exports="true" name="Day 3 Instance" id="0:72">
+                <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:51" name="Kind">
+                    <DataBindContext sourcePathIds="0:40-0:43" propertyKey="575"/>
+                </ViewModelInstanceNumber>
+            </ViewModelInstance>
+            <NestedStateMachine animationId="0:81" name="Sticker SM"/>
+        </NestedArtboard>
+        <NestedArtboard artboardId="0:30" isStateful="true" x="240" y="0" name="Day 4" id="0:13">
+            <ViewModelInstance viewModelId="0:50" exports="true" name="Day 4 Instance" id="0:73">
+                <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:51" name="Kind">
+                    <DataBindContext sourcePathIds="0:40-0:44" propertyKey="575"/>
+                </ViewModelInstanceNumber>
+            </ViewModelInstance>
+            <NestedStateMachine animationId="0:81" name="Sticker SM"/>
+        </NestedArtboard>
+        <NestedArtboard artboardId="0:30" isStateful="true" x="320" y="0" name="Day 5" id="0:14">
+            <ViewModelInstance viewModelId="0:50" exports="true" name="Day 5 Instance" id="0:74">
+                <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:51" name="Kind">
+                    <DataBindContext sourcePathIds="0:40-0:45" propertyKey="575"/>
+                </ViewModelInstanceNumber>
+            </ViewModelInstance>
+            <NestedStateMachine animationId="0:81" name="Sticker SM"/>
+        </NestedArtboard>
+
+        <StateMachine name="Week" id="0:7">
+            <StateMachineLayer name="Main" id="0:8"><AnyState x="0" y="-100"/><ExitState x="400" y="-100"/><EntryState x="0" y="0"/></StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+
+    <Artboard isComponent="true" x="0" y="140" defaultStateMachineId="0:81" styleId="0:129" viewModelId="0:50" viewModelInstanceId="0:52" width="80" height="80" name="Sticker" id="0:30">
+        <LayoutComponentStyle name="Artboard Style" id="0:129"/>
+
+        <Node x="40" y="40" name="Body" id="0:130">
+            <Node name="Done" id="0:131">
+                <Shape name="Check">
+                    <PointsPath name="Path">
+                        <StraightVertex x="-12" y="1"/>
+                        <StraightVertex x="-3" y="11"/>
+                        <StraightVertex x="14" y="-10"/>
+                    </PointsPath>
+                    <Stroke thickness="7" cap="round" join="round" name="Line">
+                        <SolidColor colorValue="FF1B1B1B" name="Color"/>
+                        <TargetEffect targetId="0:180" name="Use Trim"/>
+                    </Stroke>
+                </Shape>
+                <Shape name="Disc">
+                    <Ellipse width="56" height="56" name="Path"/>
+                    <Fill name="Fill"><SolidColor colorValue="FFFFB511" name="Color"/></Fill>
+                    <Stroke thickness="4" name="Outline"><SolidColor colorValue="FF1B1B1B" name="Color"/></Stroke>
+                </Shape>
+            </Node>
+            <Node opacity="0" name="Rest" id="0:132">
+                <Shape x="-8" name="Bar L">
+                    <Rectangle width="7" height="22" cornerRadiusTL="3" name="Path"/>
+                    <Fill name="Fill"><SolidColor colorValue="FFE7E8E3" name="Color"/></Fill>
+                </Shape>
+                <Shape x="8" name="Bar R">
+                    <Rectangle width="7" height="22" cornerRadiusTL="3" name="Path"/>
+                    <Fill name="Fill"><SolidColor colorValue="FFE7E8E3" name="Color"/></Fill>
+                </Shape>
+                <Shape name="Disc">
+                    <Ellipse width="56" height="56" name="Path"/>
+                    <Fill name="Fill"><SolidColor colorValue="FF3255A4" name="Color"/></Fill>
+                    <Stroke thickness="4" name="Outline"><SolidColor colorValue="FF1B1B1B" name="Color"/></Stroke>
+                </Shape>
+            </Node>
+            <Shape x="3" y="4" opacity="0" name="Ink Shadow" id="0:133">
+                <Ellipse width="56" height="56" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF1B1B1B" name="Color"/></Fill>
+            </Shape>
+        </Node>
+
+        <Node x="40" y="40" name="Empty" id="0:134">
+            <Shape name="Ring">
+                <Ellipse width="54" height="54" name="Path"/>
+                <Stroke thickness="3" cap="round" name="Line">
+                    <SolidColor colorValue="661B1B1B" name="Color"/>
+                    <DashPath name="Dashes">
+                        <Dash length="7" name="On"/>
+                        <Dash length="6" name="Off"/>
+                    </DashPath>
+                </Stroke>
+            </Shape>
+        </Node>
+
+        <GroupEffect name="Check Trim" id="0:180">
+            <TrimPath start="0" end="0" name="Trim" id="0:181"/>
+        </GroupEffect>
+
+        <StateMachine name="Sticker" id="0:81">
+            <StateMachineLayer name="Main" id="0:83">
+                <AnyState x="200" y="-140"/>
+                <ExitState x="700" y="-140"/>
+                <EntryState>
+                    <StateTransition stateToId="0:190"/>
+                </EntryState>
+
+                <AnimationState x="200" y="0" animationId="0:160" id="0:190">
+                    <StateTransition stateToId="0:191" duration="0">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyNumber>
+                                    <DataBindContext sourcePathIds="0:50-0:51" propertyKey="636"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="1"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                    <StateTransition stateToId="0:192" duration="0">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyNumber>
+                                    <DataBindContext sourcePathIds="0:50-0:51" propertyKey="636"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="2"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+
+                <AnimationState x="460" y="-80" animationId="0:161" id="0:191">
+                    <StateTransition stateToId="0:190" duration="160">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyNumber>
+                                    <DataBindContext sourcePathIds="0:50-0:51" propertyKey="636"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="0"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+
+                <AnimationState x="460" y="100" animationId="0:162" id="0:192">
+                    <StateTransition stateToId="0:190" duration="160">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyNumber>
+                                    <DataBindContext sourcePathIds="0:50-0:51" propertyKey="636"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="0"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+        </StateMachine>
+
+        <!-- Empty: dashed ring only. Pins everything Done and Rest move, so going back to empty clears them. -->
+        <LinearAnimation duration="60" loopValue="loop" name="Empty" id="0:160">
+            <KeyedObject objectId="0:130">
+                <KeyedProperty propertyKey="16"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="17"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty>
+                <KeyedProperty propertyKey="15"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:131"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:132"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:133"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:134"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:181"><KeyedProperty propertyKey="115"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+        </LinearAnimation>
+
+        <!-- Done: pops in with a little overshoot and tilt, then the check draws on. -->
+        <LinearAnimation duration="40" loopValue="oneShot" name="Done" id="0:161">
+            <KeyedObject objectId="0:130">
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="0.4" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.16" frame="8" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.96" frame="15" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="24" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="0.4" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.16" frame="8" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.96" frame="15" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="24" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble value="-0.4" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.08" frame="10" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="-0.03" frame="18" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0" frame="26" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:131"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:132"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:133"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:134">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="1" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="5" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:181">
+                <KeyedProperty propertyKey="115">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="6" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="20" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <!-- Rest: the same pop, a notch softer, with pause bars instead of a check. -->
+        <LinearAnimation duration="40" loopValue="oneShot" name="Rest" id="0:162">
+            <KeyedObject objectId="0:130">
+                <KeyedProperty propertyKey="16">
+                    <KeyFrameDouble value="0.5" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.08" frame="9" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.98" frame="16" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="26" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble value="0.5" interpolationType="cubic"><CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1.08" frame="9" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="0.98" frame="16" interpolationType="cubic"><CubicEaseInterpolator x1="0.45" y1="0" x2="0.55" y2="1"/></KeyFrameDouble>
+                    <KeyFrameDouble value="1" frame="26" interpolationType="hold"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble value="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:131"><KeyedProperty propertyKey="18"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:132"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:133"><KeyedProperty propertyKey="18"><KeyFrameDouble value="1" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:134">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble value="1" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="5" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:181">
+                <KeyedProperty propertyKey="115"><KeyFrameDouble value="0" interpolationType="hold"/></KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+    </Artboard>
+
+    <ComponentAsset artboardId="0:30" name="Sticker"/>
+
+    <ViewModel defaultInstanceId="0:46" name="Week" id="0:40">
+        <ViewModelPropertyNumber name="day1" id="0:41"/>
+        <ViewModelPropertyNumber name="day2" id="0:42"/>
+        <ViewModelPropertyNumber name="day3" id="0:43"/>
+        <ViewModelPropertyNumber name="day4" id="0:44"/>
+        <ViewModelPropertyNumber name="day5" id="0:45"/>
+        <ViewModelInstance exports="true" name="Default" id="0:46">
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:41"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:42"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:43"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:44"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:45"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <ViewModel defaultInstanceId="0:52" name="Sticker" id="0:50">
+        <ViewModelPropertyNumber componentProps="1" name="kind" id="0:51"/>
+        <ViewModelInstance exports="true" name="Default" id="0:52">
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:51"/>
+        </ViewModelInstance>
+    </ViewModel>
+</Rive>

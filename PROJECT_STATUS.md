@@ -1,5 +1,11 @@
 # Project status
 
+## Rive animations - 2026-11-20
+
+- Built with the Rive CLI in `apps/rive/` (brain, lock, stamp, streak), compiled with 0 errors, published signed-in. Wired into the iOS code, uncommitted: the `Rive` SPM package (rive-ios 6.30.1+) in both project specs, `LockIn/Rive/RiveClip.swift`, streak week row (`StreakView.swift`), completion card stamp and brain cheer (`CompletionCard.swift`). Reduce Motion keeps the old static art.
+- Not wired: the lock hold disc (no matching control; the app slides to start and holds for 2 s). The published files carry the Rive splash watermark (free plan).
+- Unverified: nothing compiled (no CI run, nothing pushed), no device look, no iPhone SE fit check. Details in `HANDOFF.md`.
+
 ## First-run slides + clock - 2026-11-19
 
 - Long intro is now the default ("LET'S GO"; "Skip intro" takes the short way). Three new slides before the plan (`Onboarding/HowItWorksSteps.swift`, mock `docs/design/how-it-works-v2.html`): moving riso halftone background with ripples, brain slider ("One slide. You're in."), notifications swiped to Later ("Swipe later."), the week stacking up ("Stack up the days."). Timer clock: faint full track, end knob, smaller brain and number, stray tally marks removed.

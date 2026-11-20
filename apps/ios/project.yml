@@ -6,6 +6,10 @@ packages:
   PostHog:
     url: https://github.com/PostHog/posthog-ios
     from: 3.98.0
+  # Plays the .riv animations built in apps/rive (brain cheer, first-lock-in stamp, streak week).
+  Rive:
+    url: https://github.com/rive-app/rive-ios
+    from: 6.30.1
 options:
   deploymentTarget:
     iOS: "17.0"
@@ -37,6 +41,8 @@ targets:
         product: RevenueCat
       - package: PostHog
         product: PostHog
+      - package: Rive
+        product: RiveRuntime
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.brandon132199.lockin

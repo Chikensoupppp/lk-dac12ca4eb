@@ -13,6 +13,49 @@ struct StreakView: View {
     private let week = StreakStore.week()
     private let restDay = StreakStore.usedRestDayRecently()
 
+    /// Sticker days (Rive) on a strip of newsprint, since their ink outlines need a light ground.
+    /// Reduce Motion, or a build without the clip, keeps the plain circles.
+    @ViewBuilder private var weekRow: some View {
+        if !effectiveReduceMotion(systemReduceMotion), RiveClip.isBundled("streak") {
+            VStack(spacing: 2) {
+                RiveWeekRow(done: week.map { $0.done })
+                HStack {
+                    ForEach(Array(week.enumerated()), id: \.offset) { _, day in
+                        Text(day.label)
+                            .font(Cream.rounded(14, day.done ? .bold : .medium))
+                            .foregroundStyle(day.done ? Ink.ink : Ink.soft)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 12)
+            .background(Ink.paper, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        } else {
+            HStack {
+                ForEach(Array(week.enumerated()), id: \.offset) { _, day in
+                    VStack(spacing: 8) {
+                        ZStack {
+                            if day.done {
+                                Circle().fill(OB.warm)
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 16, weight: .heavy))
+                                    .foregroundStyle(OB.ink)
+                            } else {
+                                Circle().strokeBorder(Matte.tickMajor, style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
+                            }
+                        }
+                        .frame(width: 44, height: 44)
+                        Text(day.label)
+                            .font(Cream.rounded(14, day.done ? .bold : .medium))
+                            .foregroundStyle(day.done ? Matte.text : Matte.textSoft)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Session done.")
@@ -45,29 +88,9 @@ struct StreakView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(streak) day streak. \(minutes) minutes focused.")
 
-            HStack {
-                ForEach(Array(week.enumerated()), id: \.offset) { _, day in
-                    VStack(spacing: 8) {
-                        ZStack {
-                            if day.done {
-                                Circle().fill(OB.warm)
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 16, weight: .heavy))
-                                    .foregroundStyle(OB.ink)
-                            } else {
-                                Circle().strokeBorder(Matte.tickMajor, style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
-                            }
-                        }
-                        .frame(width: 44, height: 44)
-                        Text(day.label)
-                            .font(Cream.rounded(14, day.done ? .bold : .medium))
-                            .foregroundStyle(day.done ? Matte.text : Matte.textSoft)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .padding(.top, 48)
-            .accessibilityHidden(true)
+            weekRow
+                .padding(.top, 48)
+                .accessibilityHidden(true)
 
             StickerNote(text: restDay ? "rest day used. nice save" : "come back tomorrow", color: OB.sage, tilt: -3)
                 .padding(.top, 40)
