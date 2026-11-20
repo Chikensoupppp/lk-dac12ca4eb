@@ -41,6 +41,16 @@ struct PlusOfferStep: View {
         }
     }
 
+    /// The room between the headline and the buttons: the screen minus the safe areas, the progress
+    /// bars and Back (60), the tag (23), the two-line 40 pt headline and its gap (86), the scroll's
+    /// bottom padding and fade (40), and the button with the footer row under it (114).
+    private static var fitHeight: CGFloat {
+        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first
+        let insets = window?.safeAreaInsets ?? .zero
+        let title: CGFloat = UIScreen.main.bounds.height < 700 ? 70 : 86
+        return max(UIScreen.main.bounds.height - insets.top - insets.bottom - 60 - 23 - title - 40 - 114, 300)
+    }
+
     private var buttonEnabled: Bool {
         plus.isPlus || (plus.loadState == .ready && !plus.busy)
     }
@@ -49,14 +59,15 @@ struct PlusOfferStep: View {
         PrintScaffold(step: OnboardingFlow.stepCount - 1, tag: "Optional", title: "Lock in\nfor real.", titleSize: 40,
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
                       footer: AnyView(footer)) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 card
                     .padding(.horizontal, 6)
+                    .padding(.bottom, 8)
                     .rotationEffect(.degrees(cardIn ? -2 : -10))
                     .scaleEffect(cardIn ? 1 : 0.8, anchor: .bottom)
                     .offset(y: cardIn ? 0 : 120)
                     .opacity(cardIn ? 1 : 0)
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     feature(0, symbol: "lock.fill", color: Ink.blue, glyph: .white,
                             title: "Locked mode", line: "No quit button. It runs to the end.")
                     feature(1, symbol: "person.2.fill", color: Ink.sun, glyph: Ink.ink,
@@ -85,6 +96,8 @@ struct PlusOfferStep: View {
                     Text(message).font(PrintFont.mono(12)).foregroundStyle(Self.softInk)
                 }
             }
+            // Everything fits above the button, no scrolling: smaller iPhones shrink it evenly.
+            .scaleToFit(height: Self.fitHeight)
         }
         .sensoryFeedback(.impact(weight: .heavy), trigger: stamped)
         .task { await play() }
@@ -131,9 +144,10 @@ struct PlusOfferStep: View {
             Image("BrainExact")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 88)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .offset(x: -6, y: 10)
+                .frame(width: 74)
+                // Centered top to bottom on the blue, at the right end.
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .padding(.trailing, 14)
             Text(plus.isPlus ? "ACTIVE" : "LOCKED IN")
                 .font(PrintFont.head(22))
                 .tracking(1)
@@ -145,9 +159,9 @@ struct PlusOfferStep: View {
                 .rotationEffect(.degrees(-9))
                 .scaleEffect(stamped ? 1 : 2.2)
                 .opacity(stamped ? 1 : 0)
-                .offset(x: 104, y: 30)
+                .offset(x: 104, y: 20)
         }
-        .frame(height: 112)
+        .frame(height: 100)
         .clipShape(shape)
         .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
         .background(shape.fill(Ink.ink).offset(y: 6))
@@ -161,7 +175,7 @@ struct PlusOfferStep: View {
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(glyph)
-                .frame(width: 34, height: 34)
+                .frame(width: 30, height: 30)
                 .background(Circle().fill(color))
                 .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
                 .background(Circle().fill(Ink.ink).offset(y: 3))
@@ -194,7 +208,7 @@ struct PlusOfferStep: View {
                          note: plus.trialDays(for: monthly).map { "\($0) days free" } ?? "No free trial", badge: nil)
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 6)
     }
 
     private func perMonth(_ product: Product) -> String? {
@@ -208,10 +222,10 @@ struct PlusOfferStep: View {
         return Button { plus.selectedID = id } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title.uppercased()).font(PrintFont.mono(11, .bold)).tracking(1.2).foregroundStyle(Self.softInk)
-                Text(price).font(PrintFont.head(26)).foregroundStyle(Ink.ink)
+                Text(price).font(PrintFont.head(24)).foregroundStyle(Ink.ink)
                 Text(note).font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
             }
-            .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
             .padding(.horizontal, 13)
             .background(shape.fill(Color.white))
             .overlay(shape.strokeBorder(on ? Ink.ink : Ink.ink.opacity(0.18), lineWidth: 2))
@@ -240,7 +254,7 @@ struct PlusOfferStep: View {
     @ViewBuilder
     private var timeline: some View {
         if let days = plus.trialDays, let price = plus.priceLine {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 ZStack(alignment: .top) {
                     GeometryReader { g in
                         Capsule().fill(Ink.ink.opacity(0.15)).frame(height: 3)
@@ -248,7 +262,7 @@ struct PlusOfferStep: View {
                     }
                     .frame(height: 3)
                     .padding(.horizontal, 12)
-                    .padding(.top, 12)
+                    .padding(.top, 10)
                     HStack(alignment: .top) {
                         stop(0, icon: "checkmark", fill: Ink.blue, glyph: .white,
                              title: "Today", line: "All of Plus, free", align: .leading)
@@ -273,13 +287,13 @@ struct PlusOfferStep: View {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .heavy))
                 .foregroundStyle(glyph)
-                .frame(width: 26, height: 26)
+                .frame(width: 22, height: 22)
                 .background(Circle().fill(fill))
                 .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
                 .scaleEffect(stops > i ? 1 : 0.5)
                 .padding(.bottom, 2)
-            Text(title).font(PrintFont.bold(15)).foregroundStyle(Ink.ink)
-            Text(line).font(PrintFont.body(13, .semibold)).foregroundStyle(Self.softInk)
+            Text(title).font(PrintFont.bold(14)).foregroundStyle(Ink.ink)
+            Text(line).font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
                 .lineLimit(1).minimumScaleFactor(0.8)
         }
         .multilineTextAlignment(align == .leading ? .leading : align == .trailing ? .trailing : .center)
