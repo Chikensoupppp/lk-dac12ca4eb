@@ -48,7 +48,7 @@ targets:
         # RevenueCat's public Apple SDK key (made to ship in apps). Same as project.yml.
         REVENUECAT_API_KEY: appl_isEkAeKkQaltkFfNOQNsiZPrjEg
         # PostHog project token (phc_..., public, made to ship in apps). Empty = analytics off.
-        POSTHOG_PROJECT_TOKEN: ""
+        POSTHOG_PROJECT_TOKEN: phc_zGVH9wd3RjTCGJuw4X3NczrhaXXPeptHaefAPUgWh24t
         INFOPLIST_FILE: AppInfo/LockIn-Extra.plist
         DEVELOPMENT_TEAM: D6TH2NSZLT
         CODE_SIGN_STYLE: Automatic
