@@ -12,6 +12,10 @@ struct HeartBrainStep: View {
     let next: () -> Void
 
     @State private var showReport = false
+    /// The print pass that wipes the "doing the math" cover off the real slide.
+    @State private var pass = 0.0
+    @State private var coverFaded = false
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private static let titles = ["1\u{2013}2 hours\na day.", "3\u{2013}4 hours\na day.", "5\u{2013}6 hours\na day.", "7+ hours\na day."]
     private static let midpoints = [1.5, 3.5, 5.5, 7.5]
@@ -30,38 +34,32 @@ struct HeartBrainStep: View {
         PrintScaffold(step: 4, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
                 ZStack(alignment: .top) {
-                    // Under the report while it draws, so the slide is never blank: the same slide from
-                    // the guess (or a typical day), marked as such. The report covers it once drawn.
-                    let band = min(max(hoursIndex ?? 1, 0), 3)
-                    DayBarSlide(hours: Self.midpoints[band], headline: Self.titles[band])
-                        .scaleToFit(height: Self.fitHeight)
-                        .overlay(alignment: .topTrailing) {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(hoursIndex == nil ? "A TYPICAL DAY" : "YOUR GUESS")
-                                    .font(PrintFont.mono(11, .bold)).tracking(1.2)
-                                Text("REAL NUMBERS LOADING\u{2026}")
-                                    .font(PrintFont.mono(8.5, .semibold))
-                            }
-                            .foregroundStyle(Ink.ink)
-                            .padding(.horizontal, 10).padding(.vertical, 6)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Ink.sun))
-                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Ink.ink, lineWidth: 2))
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Ink.ink).offset(y: 3))
-                            .rotationEffect(.degrees(5))
-                            .offset(x: -8, y: 166)
-                            .accessibilityElement(children: .combine)
-                        }
                     if showReport {
                         DeviceActivityReport(.dayBar, filter: ScreenTimeReport.lastWeek)
                             .frame(height: Self.fitHeight)
                             .frame(maxWidth: .infinity)
-                            .transition(.opacity)
                     }
+                    // Over the report while it draws: the same layout "doing the math", every number
+                    // spinning, so no made-up number shows (it used to show the guess, then jump to
+                    // the real one). A print pass then wipes it off the real slide.
+                    DayBarSlide(hours: 0, headline: "Doing the\nmath\u{2026}", computing: true)
+                        .scaleToFit(height: Self.fitHeight)
+                        .frame(maxWidth: .infinity, minHeight: Self.fitHeight, alignment: .top)
+                        .background(DayBarSlide.paper)
+                        .modifier(PrintPassWipe(progress: pass))
+                        .opacity(coverFaded ? 0 : 1)
+                        .allowsHitTesting(pass < 1 && !coverFaded)
                 }
-                // Only one Screen Time report on screen at a time: start after slide 4's is gone.
+                .sensoryFeedback(.impact(weight: .light), trigger: pass >= 1 || coverFaded)
+                // Only one Screen Time report on screen at a time: start after slide 3's is gone, then
+                // give it a moment to draw under the cover.
                 .task {
                     guard await printPause(1.0) else { return }
-                    withAnimation(.easeOut(duration: 0.3)) { showReport = true }
+                    showReport = true
+                    let still = effectiveReduceMotion(systemReduceMotion)
+                    guard await printPause(still ? 1.0 : 1.5) else { return }
+                    if still { withAnimation(.easeOut(duration: 0.3)) { coverFaded = true } }
+                    else { withAnimation(.printPass) { pass = 1 } }
                 }
             } else {
                 let band = min(max(hoursIndex ?? 0, 0), 3)

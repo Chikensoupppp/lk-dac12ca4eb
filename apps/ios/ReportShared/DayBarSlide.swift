@@ -14,6 +14,9 @@ struct DayBarSlide: View {
     /// False inside the report extension: Apple's report view stops animating partway, so it is
     /// drawn finished there.
     var animated = true
+    /// The app's cover while Apple's report draws the real slide: same layout, but every number
+    /// spins and the brain does sums, so no made-up number is ever shown. The report replaces it.
+    var computing = false
 
     @Environment(\.accessibilityReduceMotion) private var reduce
 
@@ -44,6 +47,16 @@ struct DayBarSlide: View {
                                "A third of your day? Oof.", "Half your day?! Let\u{2019}s fix this."]
 
     var body: some View {
+        if computing {
+            TimelineView(.animation(paused: reduce)) { timeline in
+                computingSlide(timeline.date.timeIntervalSinceReferenceDate)
+            }
+        } else {
+            finished
+        }
+    }
+
+    private var finished: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top) {
                 Text(headline.uppercased())
@@ -74,6 +87,167 @@ struct DayBarSlide: View {
         .sensoryFeedback(.impact(weight: .light), trigger: landed)
         .task { await run() }
     }
+
+    // MARK: Doing the math (the app's cover)
+
+    /// A digit that changes 14 times a second, or "?" with Reduce Motion.
+    private func spin(_ t: Double, _ slot: Int, below limit: Int = 10) -> String {
+        if reduce { return "?" }
+        var x = UInt64(truncatingIfNeeded: Int(t * 14) &* 7919 &+ slot &* 104_729)
+        x ^= x >> 13; x &*= 0x5bd1_e995; x ^= x >> 15
+        return String(x % UInt64(limit))
+    }
+
+    private func computingSlide(_ t: Double) -> some View {
+        let soft = Self.ink.opacity(0.6)
+        return VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .top) {
+                Text(headline.uppercased())
+                    .font(.system(size: 46, weight: .black).width(.compressed))
+                    .foregroundStyle(Self.ink)
+                    .lineSpacing(-4)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                Image("BrainExact")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 104)
+                    .offset(y: reduce ? 0 : -3 * sin(t * 4.2))
+                    .rotationEffect(.degrees(reduce ? 0 : 4 * sin(t * 2.1)))
+                    .overlay(alignment: .top) { sums(t) }
+            }
+            Text("Your hours, your week, your year. Adding it all up.")
+                .font(.system(size: 17, weight: .heavy).width(.condensed))
+                .foregroundStyle(Self.ink.opacity(0.82))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, -10)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("\(spin(t, 0, below: 13))H \(spin(t, 1, below: 6))\(spin(t, 2))M")
+                    .font(.system(size: 56, weight: .black).width(.compressed))
+                    .monospacedDigit()
+                    .foregroundStyle(Self.ink)
+                Text("ON YOUR PHONE, OUT OF 16 HOURS AWAKE")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.2)
+                    .foregroundStyle(soft)
+                    .padding(.top, 4)
+                sweepBar(t)
+                    .frame(height: 36)
+                    .padding(.top, 14)
+                HStack {
+                    ForEach(["0H", "4H", "8H", "12H", "16H"], id: \.self) { l in
+                        Text(l).font(.system(size: 9, weight: .semibold, design: .monospaced)).foregroundStyle(Self.ink.opacity(0.55))
+                        if l != "16H" { Spacer() }
+                    }
+                }
+                .padding(.top, 5)
+                HStack(spacing: 8) {
+                    spinChip("EVERY WEEK", "\(spin(t, 3, below: 9))\(spin(t, 4))H \(spin(t, 5, below: 6))\(spin(t, 6))M")
+                    spinChip("A MONTH, NONSTOP", "\(spin(t, 7))\(spin(t, 8)) DAYS")
+                    spinChip("A YEAR, NONSTOP", "\(spin(t, 9, below: 3))\(spin(t, 10))\(spin(t, 11)) DAYS")
+                }
+                .padding(.top, 12)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Self.cardFill))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
+            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Self.ink).offset(y: 5))
+            VStack(alignment: .leading, spacing: 10) {
+                Text("EVERY DAY, THAT\u{2019}S ENOUGH TIME FOR")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.6)
+                    .foregroundStyle(soft)
+                spinRow(t, 0, "tv.fill", Self.red, .white, "\(spin(t, 12))\(spin(t, 13))", "episodes of a show")
+                spinRow(t, 1, "book.fill", Self.sun, Self.ink, "\(spin(t, 14))\(spin(t, 15))\(spin(t, 16))", "pages of a book")
+                spinRow(t, 2, "dumbbell.fill", Self.blue, .white, spin(t, 17), "gym sessions")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Adding up your day")
+    }
+
+    /// Math signs floating up off the brain.
+    private func sums(_ t: Double) -> some View {
+        let signs: [(String, Color)] = [("+", Self.blue), ("\u{00D7}", Self.red), ("\u{00F7}", Self.blue),
+                                        ("=", Color(red: 0.79, green: 0.53, blue: 0)), ("%", Self.blue)]
+        return ZStack(alignment: .topLeading) {
+            ForEach(0..<signs.count, id: \.self) { i in
+                let p = ((t + Double(i) * 0.37).truncatingRemainder(dividingBy: 1.6)) / 1.6
+                Text(signs[i].0)
+                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                    .foregroundStyle(signs[i].1)
+                    .scaleEffect(0.8 + 0.4 * p)
+                    .opacity(reduce ? 0 : sin(.pi * p) * 0.9)
+                    .offset(x: Double(i) * 18 + 6 * sin(p * 6 + Double(i)), y: 10 - 60 * p)
+            }
+        }
+        .frame(width: 104, alignment: .leading)
+        .allowsHitTesting(false)
+    }
+
+    /// The day bar while the sums run: a striped segment sweeps back and forth.
+    private func sweepBar(_ t: Double) -> some View {
+        GeometryReader { g in
+            let w = g.size.width
+            let ph = (t * 0.9).truncatingRemainder(dividingBy: 2)
+            let x = ph < 1 ? Self.easeInOut(ph) : 1 - Self.easeInOut(ph - 1)
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.white)
+                Canvas { context, size in
+                    context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Self.blue))
+                    var stripes = Path()
+                    var s: CGFloat = -size.height
+                    while s < size.width {
+                        stripes.move(to: CGPoint(x: s, y: size.height)); stripes.addLine(to: CGPoint(x: s + size.height, y: 0))
+                        s += 16
+                    }
+                    context.stroke(stripes, with: .color(.white.opacity(0.18)), lineWidth: 7)
+                }
+                .frame(width: w * 0.34)
+                .overlay(Rectangle().strokeBorder(Self.ink, lineWidth: 2))
+                .offset(x: reduce ? 0 : w * 0.66 * CGFloat(x))
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
+        }
+    }
+
+    private func spinChip(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label).font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(1.1)
+                .foregroundStyle(Self.ink.opacity(0.6))
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(value).font(.system(size: 22, weight: .black).width(.compressed)).monospacedDigit().foregroundStyle(Self.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Self.ink.opacity(0.14), lineWidth: 1.5))
+    }
+
+    private func spinRow(_ t: Double, _ i: Int, _ symbol: String, _ fill: Color, _ glyph: Color, _ n: String, _ label: String) -> some View {
+        let ph = (t * 1.2 - Double(i) * 0.33).truncatingRemainder(dividingBy: 1.2)
+        let hop = ph >= 0 && ph < 0.5 ? sin(.pi * ph / 0.5) : 0
+        return HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(glyph)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(fill))
+                .overlay(Circle().strokeBorder(Self.ink, lineWidth: 2))
+                .background(Circle().fill(Self.ink).offset(y: 3))
+                .offset(y: reduce ? 0 : -6 * hop)
+            Text(n)
+                .font(.system(size: 28, weight: .black).width(.compressed))
+                .monospacedDigit()
+            Text(label)
+                .font(.system(size: 16, weight: .heavy).width(.condensed))
+        }
+        .foregroundStyle(Self.ink)
+    }
+
+    private static func easeInOut(_ x: Double) -> Double { x < 0.5 ? 4 * x * x * x : 1 - pow(-2 * x + 2, 3) / 2 }
 
     // MARK: The brain
 

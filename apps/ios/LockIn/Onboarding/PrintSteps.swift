@@ -216,8 +216,8 @@ struct RevealStep: View {
     let next: () -> Void
     @State private var showReport = false
     @State private var mountReport = false
-    /// The cover's words and pictures go first, then its paper: the two layouts never sit on top of
-    /// each other half-faded (that read as a glitch).
+    /// The print pass that wipes the cover away (0 → 1); with Reduce Motion the cover fades instead.
+    @State private var pass = 0.0
     @State private var coverFaded = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
@@ -244,21 +244,24 @@ struct RevealStep: View {
                         .frame(height: 560)
                         .frame(maxWidth: .infinity)
                 }
-                GuessCheck(guessIndex: guessIndex, done: coverFaded)
+                GuessCheck(guessIndex: guessIndex)
                     .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
-                    .background(Ink.paper.opacity(showReport ? 0 : 1))
+                    .background(Ink.paper)
+                    .modifier(PrintPassWipe(progress: pass))
+                    .opacity(coverFaded ? 0 : 1)
                     .allowsHitTesting(!showReport)
             }
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: showReport)
         .task {
             // Slide transitions settle in about a second; wait them out so only one report is up.
             guard await printPause(1.0) else { return }
             mountReport = true
-            let wait = effectiveReduceMotion(systemReduceMotion) ? 0.2 : 3.4
-            guard await printPause(wait) else { return }
-            withAnimation(.easeOut(duration: 0.2)) { coverFaded = true }
-            guard await printPause(0.2) else { return }
-            withAnimation(.easeOut(duration: 0.3)) { showReport = true }
+            let still = effectiveReduceMotion(systemReduceMotion)
+            guard await printPause(still ? 0.2 : 3.4) else { return }
+            if still { withAnimation(.easeOut(duration: 0.3)) { coverFaded = true } }
+            else { withAnimation(.printPass) { pass = 1 } }
+            showReport = true
         }
     }
 }
@@ -269,7 +272,6 @@ struct RevealStep: View {
 /// with a "?" on top. Without a guess it reads "Reading your week…" and shows only the bars.
 private struct GuessCheck: View {
     let guessIndex: Int?
-    let done: Bool
     @State private var days = 0
     @State private var bob = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
@@ -313,7 +315,6 @@ private struct GuessCheck: View {
                 .foregroundStyle(Ink.ink)
                 .frame(maxWidth: .infinity)
         }
-        .opacity(done ? 0 : 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(guessIndex == nil ? "Reading your week" : "Checking your guess against your real week")
         .task {
