@@ -45,6 +45,17 @@ public static class BuddyWords
     /// <summary>What the buddy says after the user taps "It's for work".</summary>
     public static string Allowed(string? friendly) => $"Got it. I'll leave {friendly ?? "that"} alone.";
 
+    /// <summary>The "yes" came too fast. The question stays up.</summary>
+    public static string PassWait(int seconds) => $"Hold on {seconds} s. Is it really for work?";
+
+    /// <summary>A free session's pass was spent: the site is open for a while.</summary>
+    public static string PassGiven(string? friendly, int minutes, int left) =>
+        $"Okay. {friendly ?? "That"} is open for {minutes} min. "
+        + (left == 0 ? "That was your last pass." : left == 1 ? "1 pass left." : $"{left} passes left.");
+
+    /// <summary>A free session with no passes left: the distraction was minimized without asking.</summary>
+    public static string NoPasses(string? friendly) => $"No passes left. {friendly ?? "That"} waits till you're done.";
+
     /// <summary>Locked session (Plus): a distraction was closed without asking.</summary>
     public static string LockedOut(string? friendly) => $"Locked session. {friendly ?? "That"} waits till you're done.";
 

@@ -203,6 +203,19 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
   checks only) and the startup-entry repair. Still open by design: the extension is only required once it
   has connected (people who never set it up are not locked out), an elevated admin can still end the app,
   and a browser that is not in the list is not watched.
+- Free-session passes (2026-11-20, PC app, not released): in a free (not Locked) session the buddy's "Is it for
+  work?" yes is now a pass (`Watch/FreePasses.cs`): 2 per session, each opens that site for 15 min and then it is
+  asked again, a yes within 3 s (first) or 6 s (second) of the question showing does not count ("Hold on 3 s..."),
+  passes do not refill during the session, and a yes is no longer remembered for the task's next session
+  (`AllowStore.Add` is not called any more; sites remembered earlier and the phone's allow list still apply).
+  With both passes spent the buddy stops asking and minimizes with "No passes left." Locked sessions are
+  unchanged (no question, no passes) and ending a free session is still always allowed. Numbers are constants in
+  `FreePasses`; the waits are short because the question itself times out after 12 s. Checks: 156 pass (9 new).
+  Live (real SessionWatch, BrowserWatch and buddy window, real Edge, taps raised through the buddy's event): early
+  yes -> "Hold on 3 s", yes after 4.5 s -> pass (1 left), a Reddit post page (title without "Reddit") asked about
+  by its address, yes after 7.5 s -> last pass, then a TikTok page -> "No passes left" and declined. Not observed:
+  the window actually minimizing on that last step (same code path as a "no"), a pass expiring after 15 min (unit
+  checks only), the phone (nothing changed there; phone-side friction for free users is not built).
 - Not verified: the extension's own counting on real YouTube Shorts and Reddit pages (DOM and scroll
   behavior can change), Edge, a packed or store-installed extension (the store assigns a new ID), long
   sessions, multi-monitor, and whether Windows always allows Back to work to take the front.

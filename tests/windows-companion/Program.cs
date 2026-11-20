@@ -287,6 +287,27 @@ finally
     drift.Reset();
     Check(drift.Observe(driftWall.AddHours(5), driftTicks + 2000) is null, "clock drift: after a reset the next look is the new start");
 
+    // A free session: two short passes, taken only after a moment, that do not come back.
+    var pass = new FreePasses();
+    var p0 = new DateTimeOffset(2026, 11, 20, 12, 0, 0, TimeSpan.Zero);
+    Check(pass.CanAsk && pass.Left == 2 && !pass.IsOpen("youtube", p0), "passes: two to start with, none open");
+    Check(!pass.TryUse("youtube", p0.AddSeconds(1), p0, out var toWait) && toWait > TimeSpan.FromSeconds(1.9) && toWait < TimeSpan.FromSeconds(2.1)
+        && pass.Left == 2 && !pass.IsOpen("youtube", p0.AddSeconds(1)),
+        "passes: a yes right away does not count and says how long to wait");
+    Check(pass.TryUse("youtube", p0.AddSeconds(3), p0, out _) && pass.Left == 1 && pass.CanAsk, "passes: a yes after 3 s spends one");
+    Check(pass.IsOpen("youtube", p0.AddMinutes(14)) && !pass.IsOpen("youtube", p0.AddMinutes(18)) && !pass.IsOpen("reddit", p0.AddMinutes(1)),
+        "passes: a pass opens only that site, for 15 minutes");
+    var p1 = p0.AddMinutes(20);
+    Check(!pass.TryUse("reddit", p1.AddSeconds(4), p1, out var toWait2) && toWait2 > TimeSpan.FromSeconds(1.9) && pass.Left == 1,
+        "passes: the second one makes you wait longer (6 s)");
+    Check(pass.TryUse("reddit", p1.AddSeconds(6), p1, out _) && pass.Left == 0 && !pass.CanAsk, "passes: the last pass is spent");
+    Check(!pass.TryUse("youtube", p1.AddMinutes(30), p1.AddMinutes(29), out _), "passes: none left means no");
+    pass.Reset();
+    Check(pass.Left == 2 && pass.CanAsk && !pass.IsOpen("reddit", p1.AddSeconds(7)), "passes: a new session starts with two again");
+    Check(BuddyWords.PassGiven("YouTube", 15, 1).Contains("1 pass left") && BuddyWords.PassGiven("YouTube", 15, 0).Contains("last pass")
+        && BuddyWords.NoPasses("Reddit").StartsWith("No passes left") && BuddyWords.PassWait(3).Contains("3 s"),
+        "passes: the buddy's words");
+
     var memory = new WorkWindowMemory();
     void SeenFor(int seconds, FrontWindow.Snapshot w) { for (var i = 0; i < seconds; i++) memory.Seen(w, me); }
     Check(memory.TargetFor(Win(9, "chrome", "x - YouTube")) is null, "no work seen yet: nothing to bring back");

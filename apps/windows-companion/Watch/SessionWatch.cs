@@ -57,6 +57,8 @@ public sealed class SessionWatch : IDisposable
     private TimeSpan length;
     private DateTimeOffset? cheerUntil;
     private HashSet<string> allowed = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>A free session's few, short "it's for work" passes (see <see cref="FreePasses"/>).</summary>
+    private readonly FreePasses passes = new();
     private int nudges;
     private string? app;
     private string? appKey;
@@ -123,6 +125,7 @@ public sealed class SessionWatch : IDisposable
             foreach (var item in allow ?? Array.Empty<string>())
                 if (!string.IsNullOrWhiteSpace(item)) allowed.Add(item.Trim().ToLowerInvariant());
             nudges = 0;
+            passes.Reset();
             wasOff = false;
             onTask = true;
             app = null;
@@ -479,7 +482,7 @@ public sealed class SessionWatch : IDisposable
                     partnerSayAt = now + TimeSpan.FromSeconds(30);
                 }
             }
-            var off = isDistraction && key is not null && !allowed.Contains(key);
+            var off = isDistraction && key is not null && !allowed.Contains(key) && !passes.IsOpen(key, now);
             work.Seen(front, ownProcessId);
 
             if (!showBuddy)
@@ -548,6 +551,19 @@ public sealed class SessionWatch : IDisposable
                 minimize = front!.Handle;
                 stayedHidden = true;
                 sayText = BuddyWords.LockedOut(Distractions.FriendlyName(Distractions.NameOf(front)));
+                sayMood = BuddyMood.Droopy;
+                sayUntil = now + SayTime;
+            }
+            else if (!passes.CanAsk)
+            {
+                // Free session with both passes spent: no more asking, the same as a "no".
+                nudges++;
+                declined = key;
+                wasOff = true;
+                onTask = false;
+                minimize = front!.Handle;
+                stayedHidden = true;
+                sayText = BuddyWords.NoPasses(Distractions.FriendlyName(Distractions.NameOf(front)));
                 sayMood = BuddyMood.Droopy;
                 sayUntil = now + SayTime;
             }
@@ -640,20 +656,37 @@ public sealed class SessionWatch : IDisposable
         if (TryAnswerReminder(choice)) return;
         IntPtr minimize = IntPtr.Zero;
         string? say = null;
+        var sayNow = BuddyMood.Fresh;
         lock (gate)
         {
             if (sessionId is null || asking is null) return;
             if (choice == AskChoice.ForWork)
             {
-                allowed.Add(asking);
-                allowStore.Add(task, asking);
-                say = BuddyWords.Allowed(askName);
-                sayText = say;
-                sayMood = BuddyMood.Fresh;
-                sayUntil = clock.GetUtcNow() + SayTime;
-                asking = askName = declined = null;
-                onTask = true;
-                wasOff = false;
+                // A pass, not a blanket yes: it opens the site for a while, is not remembered for next time,
+                // and only counts once the question has been up a moment.
+                var now = clock.GetUtcNow();
+                if (passes.TryUse(asking, now, askStarted, out var wait))
+                {
+                    say = BuddyWords.PassGiven(askName, (int)FreePasses.Lasts.TotalMinutes, passes.Left);
+                    sayText = say;
+                    sayMood = BuddyMood.Fresh;
+                    sayUntil = now + SayTime;
+                    asking = askName = declined = null;
+                    onTask = true;
+                    wasOff = false;
+                }
+                else if (passes.CanAsk)
+                {
+                    sayNow = BuddyMood.Curious;
+                    say = BuddyWords.PassWait((int)Math.Ceiling(wait.TotalSeconds));
+                    sayText = say;
+                    sayMood = sayNow;
+                    sayUntil = now + SayTime;
+                }
+                else
+                {
+                    minimize = DeclineLocked();
+                }
             }
             else
             {
@@ -661,7 +694,7 @@ public sealed class SessionWatch : IDisposable
             }
         }
         if (minimize != IntPtr.Zero) ShowWindow(minimize, SwMinimize);
-        if (say is not null) BuddyWindow.Instance.SetMood(BuddyMood.Fresh, true, say);
+        if (say is not null) BuddyWindow.Instance.SetMood(sayNow, true, say);
     }
 
     /// <summary>
