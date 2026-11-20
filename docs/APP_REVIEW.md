@@ -10,20 +10,20 @@ The App Privacy answers are not in Apple's API, so they are entered by hand on t
 SwipeLater is a focus timer. During a focus session it blocks the apps the user picked, using Apple's Screen Time API (Family Controls, individual authorization). There are no accounts and no login.
 
 HOW TO TEST
-1. Open the app. The first-run intro starts (13 short slides). "Skip intro" on the first slide goes straight to the app.
+1. Open the app. The first-run intro starts (about 14 short slides). "Skip intro" on the first slide goes straight to the app.
 2. Slide 2: pick a guess, tap SEE MY ACTUAL TIME and allow Screen Time. The next slide shows the user's own average screen time. It is drawn by our DeviceActivityReport extension; the app itself never reads or sends the numbers.
-3. Slide 8: pick apps to block (the system app picker). Slide 10: pick a time. Slide 12 is the SwipeLater Plus offer; "Not now" closes it.
+3. Slide 8: pick apps to block (the system app picker). Slide 10: pick a time. Slide 12 is the SwipeLater Plus offer; "Not now" closes it. Without Plus, the next slide says the user gets one free Locked session a week (GOT IT).
 4. Last slide: slide the brain to start the first session. Opening a picked app shows SwipeLater's shield screen until the timer ends. END SESSION opens a short quit screen, then ends the session. Later sessions start with LOCK IN.
 
 SCREEN TIME (FAMILY CONTROLS)
-Used only to (a) shield the apps the user chooses during a session they start (with SwipeLater's own shield screen), and (b) show the user their own screen time in the intro. Nothing from Screen Time leaves the device.
+Used only to (a) shield the apps the user chooses during a session they start, and websites unless the user turns "Block websites too" off (with SwipeLater's own shield screen), and (b) show the user their own screen time in the intro. Nothing from Screen Time leaves the device.
 
 SWIPELATER PLUS (auto-renewable subscription)
 Yearly (with a free trial) and monthly. Plus adds:
-- Locked mode: a session with no quit button.
+- Unlimited Locked mode: sessions with no quit button (free users get one Locked session a week).
 - An accountability partner can end a Locked session early.
 - The full weekly history (free users see the last 3 weeks).
-To test Locked mode: buy Plus in the sandbox, tap "Locked mode" under the minutes on the Focus screen, start a short session. To leave early, END SESSION > Emergency exit (once a week, with a 15-minute wait). The session also ends by itself when the timer runs out, so please use the shortest length. Restore Purchases is on the offer screen.
+To test Locked mode: tap "Locked mode" under the minutes on the Focus screen (it shows "1 free" until the weekly free one is used; after that it opens the Plus offer, so buy Plus in the sandbox for more), start a short session. To leave early, END SESSION > Emergency exit (once a week, with a 15-minute wait). The session also ends by itself when the timer runs out, so please use the shortest length. Restore Purchases is on the offer screen.
 
 
 OPTIONAL FEATURES (not needed for review)
