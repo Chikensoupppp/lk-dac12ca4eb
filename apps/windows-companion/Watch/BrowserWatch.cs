@@ -124,9 +124,13 @@ public sealed class BrowserWatch : IDisposable
         var firefox = window.FindFirst(TreeScope.Descendants,
             new PropertyCondition(AutomationElement.AutomationIdProperty, "urlbar-input"));
         if (firefox is not null) return firefox;
-        return window.FindFirst(TreeScope.Descendants, new AndCondition(
+        var textBox = new AndCondition(
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit),
-            new PropertyCondition(AutomationElement.IsValuePatternAvailableProperty, true)));
+            new PropertyCondition(AutomationElement.IsValuePatternAvailableProperty, true));
+        // Opera lists an empty, unfocusable "Address bar" container before the real "Address field"; skip it.
+        return window.FindFirst(TreeScope.Descendants, new AndCondition(textBox,
+                   new PropertyCondition(AutomationElement.IsKeyboardFocusableProperty, true)))
+            ?? window.FindFirst(TreeScope.Descendants, textBox);
     }
 
     /// <summary>How many screens the page moved since the last second, or null when the page's scroll cannot be read.</summary>

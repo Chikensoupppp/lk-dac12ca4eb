@@ -175,11 +175,20 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
   Chromium key at once: Opera started the host only through `HKCU\Software\Chromium\NativeMessagingHosts`
   (already written by `--register-browser`); it ignored Chrome's key and the two Opera-named keys. So no Opera
   key is needed. The host's parent chain was `cmd.exe <- opera.exe`, so `ParentProcess.NameOf` gives "opera".
-  Not run: the real host and companion with Opera (a heartbeat would have flipped the user's live app to
-  extension-required). The window-reading watch (`BrowserWatch`, `Distractions`) covers Opera without the
-  extension. Note: the shipped 0.9.14
+  Then the real pipeline, with the user's app stopped for a minute and the Chromium key pointed at the real
+  `LockIn.Companion.exe` (debug build) as host and the real `GuardianPipe` (a test harness printing what it
+  receives): Opera 140 with the unpacked extension sent `alive browser=opera incognito=False` every 15 s and a
+  `youtube-shorts` signal (14 scrolls, 1.5 screens) over extension -> host -> pipe. The key and the app were
+  restored afterwards; Opera was uninstalled again. The window-reading watch (`BrowserWatch`, `Distractions`)
+  covers Opera without the extension, after one fix: Opera lists an empty unfocusable "Address bar" container
+  before the real "Address field", and `FindAddressBar` took the first text box, so Opera was never classified.
+  It now prefers a focusable text box. Live (stand-in youtube.com/shorts and reddit.com/r/all pages, real
+  BrowserWatch): Opera 140, Chrome 157 and Edge all report youtube-shorts / reddit-feed and count a new Short
+  as an item. Real mouse-wheel counting in Opera (14 notches sent with `mouse_event`, low-level hook):
+  `scrolls=14 screens=1.5`. Note: the shipped 0.9.14
   window has no CONNECT BROWSERS button (removed in 5964e3a) and nothing calls `Installer.OpenExtensionHelp`
-  or `--register-browser` on install, so the extension setup on the website (step 3) no longer matches the app.
+  or `--register-browser` on install. swipelater.app/pc dropped its extension step; `docs/pc/index.html` in this
+  repo still has the old one. The 0.9.14 build also lacks the `FindAddressBar` fix; it ships with the next PC release.
 - Not verified: the extension's own counting on real YouTube Shorts and Reddit pages (DOM and scroll
   behavior can change), Edge, a packed or store-installed extension (the store assigns a new ID), long
   sessions, multi-monitor, and whether Windows always allows Back to work to take the front.
