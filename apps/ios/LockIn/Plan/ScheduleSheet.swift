@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// "Your schedule" under today's plan on the Focus screen: what happens at the plan's time, and a
-/// Change button. Shown once a schedule was set ("Can't do 4:00?" in the intro, or here).
+/// Change button. Shown once a schedule was set ("When works for you?" in the intro, or here).
 struct ScheduleLine: View {
     let plan: LockInPlan
     let schedule: LockInSchedule?
@@ -46,8 +46,7 @@ struct ScheduleLine: View {
 }
 
 /// Change the plan's time, its days, and what happens then, after the intro. "Lock by itself" is
-/// Plus; without Plus it opens the offer. "Turn off" removes the reminders, the auto-lock and
-/// SwipeLater's calendar events.
+/// Plus; without Plus it opens the offer. "Turn off" removes the reminders and the auto-lock.
 struct ScheduleSheet: View {
     @ObservedObject var plus: PlusStore
     @ObservedObject var restrictions: RestrictionController
@@ -58,7 +57,6 @@ struct ScheduleSheet: View {
     @State private var minute: Int
     @State private var weekdays: Set<Int>
     @State private var then: LockInSchedule.Then
-    @State private var addToCalendar: Bool
     @State private var showOffer = false
 
     private static let order = [2, 3, 4, 5, 6, 7, 1]
@@ -76,10 +74,7 @@ struct ScheduleSheet: View {
         _minute = State(initialValue: plan.startMinute)
         _weekdays = State(initialValue: plan.weekdays)
         _then = State(initialValue: schedule?.then ?? .remind)
-        _addToCalendar = State(initialValue: schedule?.addToCalendar ?? false)
     }
-
-    private var calendarAllowed: Bool { CalendarAccess.state == .allowed }
 
     var body: some View {
         ScrollView {
@@ -105,7 +100,6 @@ struct ScheduleSheet: View {
                 ThenCards(then: Binding(get: { then }, set: { new in
                     if new == .autoLock && !plus.hasPlus { showOffer = true } else { then = new }
                 }), minute: minute)
-                if calendarAllowed { AddToCalendarRow(on: $addToCalendar) }
                 Button(action: save) { Text("SAVE") }
                     .buttonStyle(PrintButtonStyle())
                     .disabled(weekdays.isEmpty)
@@ -198,8 +192,7 @@ struct ScheduleSheet: View {
         p.weekdays = weekdays
         p.dayStarts = nil
         PlanStore.save(p)
-        let schedule = LockInSchedule(then: then == .autoLock && plus.hasPlus ? .autoLock : .remind,
-                                      addToCalendar: calendarAllowed && addToCalendar)
+        let schedule = LockInSchedule(then: then == .autoLock && plus.hasPlus ? .autoLock : .remind)
         schedule.save()
         let hasPlus = plus.hasPlus
         Task { @MainActor in
@@ -212,7 +205,6 @@ struct ScheduleSheet: View {
     private func turnOff() {
         PlanReminders.turnOff()
         AutoLockScheduler.turnOff()
-        CalendarAccess.removeLockIns()
         UserDefaults.standard.removeObject(forKey: LockInSchedule.key)
         saved(plan)
         close()

@@ -11,12 +11,12 @@ SwipeLater is a focus timer. During a focus session it blocks the apps the user 
 
 HOW TO TEST
 1. Open the app. The first-run intro starts (13 short slides). "Skip intro" on the first slide goes straight to the app.
-2. On the "Allow Screen Time" slide, tap SHOW MY TIME and allow Screen Time. The next slide shows the user's own average screen time. It is drawn by our DeviceActivityReport extension; the app itself never reads or sends the numbers.
-3. Pick apps to lock (the system app picker), then finish the intro. The last slide is the SwipeLater Plus offer; "Not now" closes it.
-4. A short coach then helps pick a task, minutes and apps; hold the button to start. Later sessions start with LOCK IN. The picked apps show the Screen Time shield until the timer ends. END SESSION opens a short quit screen, then ends the session.
+2. Slide 2: pick a guess, tap SEE MY ACTUAL TIME and allow Screen Time. The next slide shows the user's own average screen time. It is drawn by our DeviceActivityReport extension; the app itself never reads or sends the numbers.
+3. Slide 8: pick apps to block (the system app picker). Slide 10: pick a time. Slide 12 is the SwipeLater Plus offer; "Not now" closes it.
+4. Last slide: slide the brain to start the first session. Opening a picked app shows SwipeLater's shield screen until the timer ends. END SESSION opens a short quit screen, then ends the session. Later sessions start with LOCK IN.
 
 SCREEN TIME (FAMILY CONTROLS)
-Used only to (a) shield the apps the user chooses during a session they start, and (b) show the user their own screen time in the intro. Nothing from Screen Time leaves the device.
+Used only to (a) shield the apps the user chooses during a session they start (with SwipeLater's own shield screen), and (b) show the user their own screen time in the intro. Nothing from Screen Time leaves the device.
 
 SWIPELATER PLUS (auto-renewable subscription)
 Yearly (with a free trial) and monthly. Plus adds:
@@ -25,8 +25,6 @@ Yearly (with a free trial) and monthly. Plus adds:
 - The full weekly history (free users see the last 3 weeks).
 To test Locked mode: buy Plus in the sandbox, tap "Locked mode" under the minutes on the Focus screen, start a short session. To leave early, END SESSION > Emergency exit (once a week, with a 15-minute wait). The session also ends by itself when the timer runs out, so please use the shortest length. Restore Purchases is on the offer screen.
 
-CALENDAR (OPTIONAL)
-On the plan slide, "Can't do 4:00?" offers to use the calendar. With permission, the app reads events on the device to suggest free times (it skips days like an away game) and, only if the user turns on "Add to my calendar", adds its own repeating "SwipeLater lock-in" events. Nothing is saved or sent. Without permission the user picks a time by hand.
 
 OPTIONAL FEATURES (not needed for review)
 - Accountability partner: two phones pair in person (Nearby Interaction + local network). Status and unlock requests go through the CloudKit public database, encrypted for the partner's phone.

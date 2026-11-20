@@ -16,8 +16,8 @@ struct OnboardingFlow: View {
 
     enum Step: Int {
         case hook = 1, guess, reveal, brain, appsWait, comeBack, pulls, lock, goals, plan, plus, slide
-        /// "Can't do 4:00?" from the plan: optional, on the plan's step (`WhenSteps.swift`).
-        case whenAsk, whenFree, whenPick
+        /// "When works for you?" (`WhenSteps.swift`): after the goals, and from the plan's "Change time".
+        case whenPick
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
@@ -44,9 +44,8 @@ struct OnboardingFlow: View {
     /// The plan's "Make it easier" steps and the time picked on the schedule screens.
     @State private var easier = 0
     @State private var timeChoice: TimeChoice?
-    /// The plan as it was when "Can't do 4:00?" was tapped, and the calendar's days for it.
+    /// The plan as it was when "When works for you?" opened (its length and days).
     @State private var draftPlan: LockInPlan?
-    @State private var calendarDays: [CalendarFit.Day] = []
     /// Apple's Screen Time box is up; a second tap waits for it.
     @State private var askingScreenTime = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
@@ -113,7 +112,7 @@ struct OnboardingFlow: View {
             advance(to: .plus)
         case .plus: advance(to: .slide)
         case .slide: finish(startNow: true)
-        case .whenAsk, .whenFree, .whenPick: break
+        case .whenPick: break
         }
     }
 
@@ -126,35 +125,10 @@ struct OnboardingFlow: View {
         return p
     }
 
-    /// After the goals, and from the plan's "Change time". Calendar on: the free-time screen (or
-    /// picking, if the calendar is empty). Otherwise picking, where "Use my calendar" is offered
-    /// once; no separate ask screen in the way.
+    /// "When works for you?": after the goals, and from the plan's "Change time".
     private func openWhen(_ plan: LockInPlan) {
         draftPlan = plan
-        if CalendarAccess.state == .allowed {
-            loadDays(plan)
-            advance(to: calendarHasEvents ? .whenFree : .whenPick)
-        } else {
-            advance(to: .whenPick)
-        }
-    }
-
-    private func useCalendar() {
-        Task { @MainActor in
-            let allowed = await CalendarAccess.ask()
-            if allowed, let plan = draftPlan { loadDays(plan) }
-            let target: Step = allowed && calendarHasEvents ? .whenFree : .whenPick
-            // Already picking: stay on this screen (it now checks the calendar, if allowed).
-            if target != step { advance(to: target) }
-        }
-    }
-
-    private func loadDays(_ plan: LockInPlan) {
-        calendarDays = CalendarFit.days(weekdays: plan.weekdays, events: CalendarAccess.busy(), from: .now)
-    }
-
-    private var calendarHasEvents: Bool {
-        calendarDays.contains { !$0.busy.isEmpty || $0.dayOff != nil }
+        advance(to: .whenPick)
     }
 
     /// A time was chosen: on to the plan (first time), or back to it (from "Change time").
@@ -162,8 +136,6 @@ struct OnboardingFlow: View {
         timeChoice = choice
         Analytics.track("time_picked", ["start_time": DailyNudge.timeText(minute: choice.startMinute),
                                         "start_minute": choice.startMinute, "days": choice.weekdays.count,
-                                        "fitted_each_day": choice.dayStarts != nil,
-                                        "calendar": CalendarAccess.state == .allowed,
                                         "then": String(describing: choice.schedule.then)])
         guard history.contains(.plan) else { advance(to: .plan); return }
         while let last = history.last, last != .plan { history.removeLast() }
@@ -237,19 +209,8 @@ struct OnboardingFlow: View {
                     PlanStep(hoursIndex: hoursIndex, realShown: usedReport, categories: categories, goals: goals,
                              easier: $easier, timeChoice: timeChoice, cantDo: openWhen, next: next)
                 case .plus: PlusOfferStep(plus: plus, next: next)
-                case .whenAsk: WhenAskStep(useCalendar: useCalendar, pickOwn: { advance(to: .whenPick) })
-                case .whenFree:
-                    if let plan = draftPlan {
-                        WhenFreeStep(plan: plan, days: calendarDays, done: chooseTime, pickOwn: { advance(to: .whenPick) })
-                    }
                 case .whenPick:
-                    if let plan = draftPlan {
-                        let allowed = CalendarAccess.state == .allowed
-                        WhenPickStep(plan: plan, days: allowed ? calendarDays : [], calendarAllowed: allowed,
-                                     backToSuggestions: history.last == .whenFree ? back : nil,
-                                     useCalendar: CalendarAccess.state == .notAsked ? useCalendar : nil,
-                                     done: chooseTime)
-                    }
+                    if let plan = draftPlan { WhenPickStep(plan: plan, done: chooseTime) }
                 }
             }
             .environment(\.obBack, history.isEmpty || step == .plan ? nil : back)
