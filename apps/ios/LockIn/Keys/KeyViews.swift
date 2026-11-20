@@ -42,20 +42,18 @@ private func approved(_ answer: UnlockAnswer, for ask: UnlockAsk, by holder: Key
 
 // MARK: - Accountability partner sheet (from the main screen)
 
-/// Warm paper partner sheet (2026-11-16 design): cream-to-sand page, brown ink, one amber pill.
+/// The partner sheet uses the app's regular cream (the newsprint of the main screen and the apps
+/// sheet), not the warm amber it had on 2026-11-16. Same inks as `Ink`, named for their job here.
 private enum PInk {
-    static let top = Color(hex: 0xFFFAF1)
-    static let bottom = Color(hex: 0xF8EAD5)
-    static let ink = Color(hex: 0x3D2B1A)
-    static let soft = Color(hex: 0x7A6450)
-    static let label = Color(hex: 0x9A7B5A)
-    static let line = Color(hex: 0xEDE0CC)
-    static let border = Color(hex: 0xEAD9BF)
-    static let card = Color(hex: 0xFFFCF6)
-    static let dash = Color(hex: 0xE2CBA8)
-    static let chip = Color(hex: 0xF1E3CC)
-    static let amber = Color(hex: 0xF0C78E)
-    static let alarm = Color(hex: 0xB3402E)
+    static let ink = Ink.ink
+    static let soft = Ink.soft
+    static let label = Ink.blue
+    static let line = Ink.ink.opacity(0.15)
+    static let border = Ink.ink
+    static let card = Ink.receipt
+    static let dash = Ink.ink.opacity(0.4)
+    static let chip = Ink.paper
+    static let alarm = Ink.red
 }
 
 /// Pair with a friend in person, see who can let you out (and whom you can let out), and let a friend out.
@@ -79,55 +77,45 @@ struct KeysSheet: View {
                             Spacer()
                             Button(action: done) {
                                 Text("Done")
-                                    .font(.system(size: 18))
-                                    .foregroundStyle(PInk.ink)
+                                    .font(PrintFont.bold(17))
+                                    .tracking(1.5)
+                                    .foregroundStyle(Ink.ink)
                                     .padding(.horizontal, 20)
-                                    .frame(minHeight: 46)
-                                    .background(Capsule().fill(PInk.card.opacity(0.6)))
-                                    .overlay(Capsule().stroke(PInk.border, lineWidth: 2))
+                                    .frame(minHeight: 44)
+                                    .background(Capsule().fill(Ink.receipt))
+                                    .overlay(Capsule().stroke(Ink.ink, lineWidth: 2))
                             }
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 8)
 
-                        Text("Accountability partner.")
-                            .font(.system(size: 44, weight: .heavy))
-                            .tracking(-1.2)
+                        // Same compressed black headline as the apps sheet; the gap under Done matches it too.
+                        Text("Accountability\npartner.".uppercased())
+                            .font(PrintFont.head(UIScreen.main.bounds.height < 700 ? 42 : 52))
                             .foregroundStyle(PInk.ink)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 2)
+                            .padding(.top, 14)
+                            .accessibilityLabel("Accountability partner")
                             .accessibilityAddTraits(.isHeader)
                         Text("A friend who can let you out of a lock-in.")
-                            .font(.system(size: 19))
-                            .foregroundStyle(PInk.soft)
+                            .font(PrintFont.mono(13))
+                            .foregroundStyle(PInk.ink)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 14)
+                            .padding(.top, 16)
 
-                        Button { startPairing(.holder) } label: {
-                            Text("PAIR A FRIEND")
-                                .font(.system(size: 17, weight: .medium))
-                                .tracking(2.6)
-                                .foregroundStyle(PInk.ink)
-                                .frame(maxWidth: .infinity, minHeight: 60)
-                                .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(PInk.amber))
-                                .shadow(color: Color(hex: 0xB98A4A).opacity(0.25), radius: 10, y: 6)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 26)
-                        .accessibilityIdentifier("partner-pair")
+                        Button { startPairing(.holder) } label: { Text("PAIR A FRIEND") }
+                            .buttonStyle(PrintButtonStyle())
+                            .padding(.top, 26)
+                            .accessibilityIdentifier("partner-pair")
 
-                        Text("YOUR PARTNER")
-                            .font(.system(size: 13, weight: .semibold))
-                            .tracking(2.6)
-                            .foregroundStyle(PInk.label)
+                        sectionLabel("Your partner")
                             .padding(.top, 30)
-                            .accessibilityAddTraits(.isHeader)
                         card {
                             if keys.holders.isEmpty {
-                                personRow(mark: Image(systemName: "plus").font(.system(size: 13, weight: .semibold)).foregroundStyle(PInk.soft),
+                                personRow(mark: Image(systemName: "plus").font(.system(size: 13, weight: .bold)).foregroundStyle(PInk.soft),
                                           dashed: true, title: "Nobody yet", detail: "Pair in person, one tap each") {
                                     Button { startPairing(.holder) } label: {
-                                        Text("Invite").font(.system(size: 17)).foregroundStyle(PInk.ink).underline()
+                                        Text("Invite").font(PrintFont.body(17, .bold)).foregroundStyle(PInk.ink).underline()
                                     }
                                     .buttonStyle(.plain)
                                     .frame(minWidth: 44, minHeight: 44)
@@ -152,10 +140,7 @@ struct KeysSheet: View {
                         .padding(.top, 22)
 
                         if !keys.friends.isEmpty {
-                            Text("YOU CAN LET OUT")
-                                .font(.system(size: 13, weight: .semibold))
-                                .tracking(2.6)
-                                .foregroundStyle(PInk.label)
+                            sectionLabel("You can let out")
                                 .padding(.top, 30)
                             card {
                                 ForEach(Array(keys.friends.enumerated()), id: \.element.id) { index, person in
@@ -163,7 +148,7 @@ struct KeysSheet: View {
                                     personRow(mark: initial(person.name), dashed: false, title: person.name, detail: "You can let them out") {
                                         HStack(spacing: 14) {
                                             Button("See") { watching = person }
-                                                .font(.system(size: 16, weight: .semibold))
+                                                .font(PrintFont.body(16, .bold))
                                                 .foregroundStyle(PInk.ink)
                                                 .frame(minWidth: 44, minHeight: 44)
                                                 .accessibilityIdentifier("partner-see")
@@ -175,11 +160,11 @@ struct KeysSheet: View {
                             .padding(.top, 12)
                             Button { helping = true } label: {
                                 Text("LET A FRIEND OUT")
-                                    .font(.system(size: 16, weight: .medium))
+                                    .font(PrintFont.bold(17))
                                     .tracking(2)
                                     .foregroundStyle(PInk.ink)
                                     .frame(maxWidth: .infinity, minHeight: 56)
-                                    .overlay(Capsule().stroke(PInk.ink, lineWidth: 1.5))
+                                    .overlay(Capsule().stroke(PInk.ink, lineWidth: 2))
                             }
                             .buttonStyle(.plain)
                             .padding(.top, 18)
@@ -191,7 +176,7 @@ struct KeysSheet: View {
 
                         Spacer(minLength: 40)
                         Text("One partner at a time. You can unpair without asking them.")
-                            .font(.system(size: 16))
+                            .font(PrintFont.mono(12))
                             .foregroundStyle(PInk.soft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -200,7 +185,13 @@ struct KeysSheet: View {
                     .frame(minHeight: geo.size.height, alignment: .top)
                 }
             }
-            .background(LinearGradient(colors: [PInk.top, PInk.bottom], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
+            .background {
+                ZStack {
+                    Ink.paper
+                    Grain(color: Ink.ink.opacity(0.09)).allowsHitTesting(false)
+                }
+                .ignoresSafeArea()
+            }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $pairRole) { role in PairView(keys: keys, role: role) }
             .navigationDestination(isPresented: $helping) { HelpNearbyView(keys: keys) }
@@ -237,20 +228,33 @@ struct KeysSheet: View {
         }
     }
 
+    /// The small blue-dot label above a group, same as the tag above the onboarding headlines.
+    private func sectionLabel(_ text: String) -> some View {
+        HStack(spacing: 7) {
+            Circle().fill(PInk.label).frame(width: 7, height: 7)
+            Text(text.uppercased())
+                .font(PrintFont.mono(11, .bold))
+                .tracking(1.4)
+                .foregroundStyle(PInk.label)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
             .padding(.horizontal, 18)
-            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(PInk.card))
-            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(PInk.border, lineWidth: 1.5))
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(PInk.card))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(PInk.border, lineWidth: 2))
     }
 
     private func initial(_ name: String) -> some View {
-        Text(String(name.prefix(1)).uppercased()).font(.system(size: 17, weight: .semibold)).foregroundStyle(PInk.ink)
+        Text(String(name.prefix(1)).uppercased()).font(PrintFont.body(17, .bold)).foregroundStyle(PInk.ink)
     }
 
     private func removeButton(_ run: @escaping () -> Void) -> some View {
         Button("Remove", action: run)
-            .font(.system(size: 16))
+            .font(PrintFont.body(16, .bold))
             .foregroundStyle(PInk.alarm)
             .frame(minWidth: 44, minHeight: 44)
     }
@@ -261,14 +265,14 @@ struct KeysSheet: View {
             ZStack {
                 Circle()
                     .fill(dashed ? Color.clear : PInk.chip)
-                    .overlay(Circle().strokeBorder(PInk.dash, style: StrokeStyle(lineWidth: 1.5, dash: dashed ? [3, 3] : [])))
+                    .overlay(Circle().strokeBorder(dashed ? PInk.dash : PInk.ink, style: StrokeStyle(lineWidth: 2, dash: dashed ? [3, 3] : [])))
                     .frame(width: 40, height: 40)
                 mark
             }
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 22, weight: .semibold)).foregroundStyle(PInk.ink)
-                Text(detail).font(.system(size: 16)).foregroundStyle(PInk.soft)
+                Text(title).font(PrintFont.body(22, .bold)).foregroundStyle(PInk.ink)
+                Text(detail).font(PrintFont.mono(12)).foregroundStyle(PInk.soft)
             }
             Spacer(minLength: 8)
             action()
@@ -279,13 +283,14 @@ struct KeysSheet: View {
     private func step(_ number: Int, bold: String, rest: String) -> some View {
         HStack(spacing: 18) {
             Text("\(number)")
-                .font(.system(size: 14, weight: .bold))
+                .font(PrintFont.mono(13, .bold))
                 .foregroundStyle(PInk.ink)
-                .frame(width: 26, height: 26)
+                .frame(width: 28, height: 28)
                 .background(Circle().fill(PInk.chip))
+                .overlay(Circle().stroke(PInk.ink, lineWidth: 2))
                 .accessibilityHidden(true)
-            (Text(bold).fontWeight(.semibold).foregroundColor(PInk.ink) + Text(rest).foregroundColor(PInk.soft))
-                .font(.system(size: 19))
+            (Text(bold).fontWeight(.bold).foregroundColor(PInk.ink) + Text(rest).foregroundColor(PInk.soft))
+                .font(PrintFont.body(17, .semibold))
             Spacer(minLength: 0)
         }
         .padding(.vertical, 18)
