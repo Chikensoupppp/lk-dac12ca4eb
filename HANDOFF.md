@@ -281,7 +281,11 @@ Next steps: (1) owner gets entitlement and signs a development build; (2) run th
   mixed-DPI coordinates are only reasoned, and the 60,000 px rule is not tuned on real layouts), picture-in-picture
   windows, background-tab audio, real browser games, and whether minimizing a window on another monitor
   interrupts a game or video the user chose to leave playing.
-- Brandon's PC (2026-11-20): the installed app is this build (unsigned). His `native-host.json` pointed at a
+- Released 2026-11-20: `pc-0.9.15` (GitHub release, target 8232498, asset `SwipeLater-PC.exe`, signed with
+  Azure Artifact Signing, Valid and timestamped; the public `releases/latest` download was re-downloaded and its
+  hash matches the signed file). Smoke-tested before release (starts, session start/stop). Release notes are in the
+  release. Brandon's own PC still runs the earlier unsigned build of the same code.
+- Brandon's PC (2026-11-20): the installed app is the same code, unsigned (pre-release build). His `native-host.json` pointed at a
   missing `Nogbox.exe`; `SwipeLater.exe --register-browser` rewrote it (backup in the session scratchpad). I
   rewrote `docs/pc/index.html` to three steps (no extension step) and he asked for it back as it was, so it is
   unchanged and still shows the old CONNECT BROWSERS step.
