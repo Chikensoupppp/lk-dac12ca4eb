@@ -33,8 +33,18 @@ app_id = call("GET", f"/apps?filter[bundleId]={BUNDLE}")["data"][0]["id"]
 groups = call("GET", f"/betaGroups?filter[app]={app_id}&filter[name]={GROUP}")["data"]
 if not groups:
     sys.exit(f"No TestFlight group named {GROUP!r}")
-group = groups[0]
-external = not group["attributes"].get("isInternalGroup", False)
+for g in groups:
+    a = g["attributes"]
+    testers = call("GET", f"/betaGroups/{g['id']}/betaTesters?limit=50", fatal=False) or {"data": []}
+    print(f"Group {a.get('name')!r}: internal={a.get('isInternalGroup')} "
+          f"allBuilds={a.get('hasAccessToAllBuilds')} testers={len(testers['data'])}")
+    # An internal group cannot be handed builds one by one; it gets every build once
+    # "automatic distribution" (hasAccessToAllBuilds) is on.
+    if a.get("isInternalGroup") and not a.get("hasAccessToAllBuilds"):
+        if call("PATCH", f"/betaGroups/{g['id']}", fatal=False, json={"data": {
+                "type": "betaGroups", "id": g["id"], "attributes": {"hasAccessToAllBuilds": True}}}) is not None:
+            print("  Turned on automatic distribution: every new build reaches this group")
+external_groups = [g for g in groups if not g["attributes"].get("isInternalGroup")]
 
 # Wait for the build to show up and finish processing.
 deadline = time.time() + WAIT_MINUTES * 60
@@ -56,13 +66,14 @@ while True:
 
 bid, version = build["id"], build["attributes"]["version"]
 
-# Add it to the group (an error here usually means it is already in).
-if call("POST", f"/betaGroups/{group['id']}/relationships/builds", fatal=False,
-        json={"data": [{"type": "builds", "id": bid}]}) is not None:
-    print(f"Build {version} added to {GROUP}")
+# External groups get the build one at a time (an error here usually means it is already in).
+for group in external_groups:
+    if call("POST", f"/betaGroups/{group['id']}/relationships/builds", fatal=False,
+            json={"data": [{"type": "builds", "id": bid}]}) is not None:
+        print(f"Build {version} added to {GROUP} (external)")
 
 # Testers outside the team only get builds Apple's Beta App Review has passed.
-if external:
+if external_groups:
     detail = call("GET", f"/builds/{bid}/buildBetaDetail")["data"]["attributes"]
     print(f"External testing state: {detail.get('externalBuildState')}")
     if detail.get("externalBuildState") in ("READY_FOR_BETA_SUBMISSION", "MISSING_EXPORT_COMPLIANCE", None):
