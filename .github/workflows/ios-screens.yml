@@ -49,6 +49,8 @@ jobs:
           fi
           # A `screens-pick*` tag photographs only the app picker sheet.
           if [[ "${GITHUB_REF_NAME:-}" == screens-pick* ]]; then SHOTS="restrictions"; fi
+          # A `screens-keys*` tag photographs only the accountability partner sheet.
+          if [[ "${GITHUB_REF_NAME:-}" == screens-keys* ]]; then SHOTS="keys"; fi
           # A `screens-look*` tag photographs the main look: clock, running clock, goal page.
           if [[ "${GITHUB_REF_NAME:-}" == screens-look* ]]; then SHOTS="idle active goals"; fi
           # A `screens-ob*` tag photographs only the how-it-works first-run slides.
