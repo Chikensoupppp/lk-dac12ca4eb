@@ -7,7 +7,7 @@ import PostHog
 /// and never reach this code, and app picks are sent as counts, not names.
 ///
 /// Off when the build has no PostHog project token (`POSTHOG_PROJECT_TOKEN` in project.yml) and in
-/// UI tests. Events carry a random install id, no name, email or Apple ID.
+/// Debug builds (simulator CI). Events carry a random install id, no name, email or Apple ID.
 enum Analytics {
     private static var started = false
 
@@ -16,7 +16,8 @@ enum Analytics {
               let token = Bundle.main.object(forInfoDictionaryKey: "PostHogProjectToken") as? String,
               token.hasPrefix("phc_") else { return }
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-ui-testing") }) { return }
+        // Debug builds (the simulator CI) would mix test taps into real users' numbers.
+        return
         #endif
         let config = PostHogConfig(projectToken: token, host: "https://us.i.posthog.com")
         // App opened / backgrounded / installed / updated come for free.
