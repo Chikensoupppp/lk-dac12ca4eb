@@ -17,19 +17,14 @@ iOS's grey one. Option A "paper" (mock: `docs/design/ios-block-screen.html`, pic
 - `apps/ios/Shared/ShieldNote.swift` has the words and the session end time. The app writes it when
   shields go on (`RestrictionController.begin`), the monitor writes it for Plus "Lock by itself".
   Tests: `LockInTests/ShieldNoteTests.swift`.
-- `project.yml` (simulator CI) builds both. `project.testflight.yml` defines them but does not embed
-  them yet (the two commented `- target:` lines), because export fails until Apple approves them.
+- Both are built and embedded by `project.yml` and `project.testflight.yml`.
 
-## Apple setup (Brandon, once)
+## Apple setup (done 2026-11-20)
 
-1. developer.apple.com > Certificates, IDs & Profiles > Identifiers > **+** > App IDs > App.
-   Description `SwipeLater Shield`, Bundle ID (Explicit) `com.brandon132199.lockin.shield`.
-   Tick **Family Controls** and **App Groups**. Register. Then edit it: App Groups > Configure >
-   `group.com.brandon132199.lockin`.
-2. Same again for `SwipeLater Shield Actions`, `com.brandon132199.lockin.shieldaction`.
-3. Ask Apple for Family Controls (Distribution) for each of the two IDs, the same form used for
-   the app and the report: developer.apple.com/contact/request/family-controls-distribution
-4. When both show as approved, uncomment the two lines in `project.testflight.yml` and push.
+`com.brandon132199.lockin.shield` (SwipeLater Shield) and `com.brandon132199.lockin.shieldaction`
+(SwipeLater Shield Actions) are registered with Family Controls (Development and Distribution) and
+App Groups (`group.com.brandon132199.lockin`). The team already had Family Controls Distribution,
+so no new request to Apple was needed.
 
 ## Not verified
 

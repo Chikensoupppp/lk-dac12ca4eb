@@ -32,10 +32,9 @@ targets:
       - target: LockInMonitor
       - target: LockInReport
       - target: LockInWidget
-      # The custom block screen. Turn these two on once Apple approves Family Controls (Distribution)
-      # for com.brandon132199.lockin.shield and .shieldaction; until then export would fail.
-      # - target: LockInShield
-      # - target: LockInShieldAction
+      # The custom block screen (both IDs registered with Family Controls Distribution, 2026-11-20).
+      - target: LockInShield
+      - target: LockInShieldAction
       - package: RevenueCat
         product: RevenueCat
     settings:
