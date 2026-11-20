@@ -46,7 +46,7 @@ struct PlusOfferStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: OnboardingFlow.stepCount - 1, tag: "SwipeLater Plus", title: "Lock in\nfor real.", titleSize: 40,
+        PrintScaffold(step: OnboardingFlow.stepCount - 1, tag: "Optional", title: "Lock in\nfor real.", titleSize: 40,
                       primaryTitle: buttonTitle, primaryEnabled: buttonEnabled, primaryAction: buy,
                       footer: AnyView(footer)) {
             VStack(alignment: .leading, spacing: 12) {

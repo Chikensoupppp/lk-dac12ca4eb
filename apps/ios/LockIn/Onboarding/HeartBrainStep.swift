@@ -30,7 +30,7 @@ struct HeartBrainStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 4, tag: "What that means for your day", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
+        PrintScaffold(step: 4, tag: "Your phone time", grain: true, primaryTitle: "CONTINUE", primaryAction: next) {
             if useReport {
                 ZStack(alignment: .top) {
                     if showReport {

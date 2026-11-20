@@ -210,8 +210,8 @@ final class FocusUITests: XCTestCase {
             button.tap()
         }
 
-        // The long introduction is the default: "LET'S GO" opens it ("Skip intro" ends it).
-        step("onboarding-1-hook", tap: "LET\u{2019}S GO")
+        // The long introduction is the default: "LET'S FIND OUT" opens it ("Skip intro" ends it).
+        step("onboarding-1-hook", tap: "LET\u{2019}S FIND OUT")
         step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
         step("onboarding-4-brain", tap: "CONTINUE")
@@ -384,7 +384,7 @@ final class FocusUITests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10), "missing \(label)")
             button.tap()
         }
-        tap("LET\u{2019}S GO")
+        tap("LET\u{2019}S FIND OUT")
         tap("Skip")                      // guess
         tap("Not now")                   // Screen Time (no guess, so the hours slide is left out)
         tap("onboarding-slide-knob")     // one slide, you're in (moves on by itself)
@@ -413,6 +413,6 @@ final class FocusUITests: XCTestCase {
         let replay = app.buttons["Replay intro"]
         XCTAssertTrue(replay.waitForExistence(timeout: 5))
         replay.tap()
-        XCTAssertTrue(app.buttons["LET\u{2019}S GO"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["LET\u{2019}S FIND OUT"].waitForExistence(timeout: 10))
     }
 }

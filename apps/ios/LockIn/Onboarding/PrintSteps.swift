@@ -20,8 +20,8 @@ struct HookStep: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        PrintScaffold(step: 1, tag: "The big question", title: "Where does\nthe time go?", titleSize: 58, grain: true,
-                      primaryTitle: "LET\u{2019}S GO", primaryAction: next,
+        PrintScaffold(step: 1, tag: "Your phone time", title: "Where does\nthe time go?", titleSize: 58, grain: true,
+                      primaryTitle: "LET\u{2019}S FIND OUT", primaryAction: next,
                       secondaryTitle: "Skip intro", secondaryAction: startNow) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number)
@@ -32,7 +32,7 @@ struct HookStep: View {
                     .monospacedDigit()
                     .misprint()
                     .accessibilityLabel("Unknown hours a day")
-                Text("How many hours do you spend on your phone each day?")
+                Text("Let\u{2019}s find out.")
                     .font(PrintFont.mono(14))
                     .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -96,11 +96,11 @@ struct GuessStep: View {
     let next: () -> Void
 
     var body: some View {
-        PrintScaffold(step: 2, tag: "Take a guess", title: "What\u{2019}s your\nguess?", titleSize: 46, grain: true,
+        PrintScaffold(step: 2, tag: "Your phone time", title: "How many hours\na day?", titleSize: 46, grain: true,
                       primaryTitle: "SEE MY ACTUAL TIME", primaryEnabled: guessIndex != nil, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: { guessIndex = nil; next() }) {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Tap the hours you think you spend on your phone a day. Next, we check.")
+                Text("Guess first. iPhone will ask to share your real number next.")
                     .font(PrintFont.mono(14))
                     .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -224,7 +224,7 @@ struct RevealStep: View {
 
     var body: some View {
         // No grain here: the cover below is flat paper, and grain would show its edges.
-        PrintScaffold(step: 3, tag: "Your real screen time", tagColor: OutlinedText.orangeDeep,
+        PrintScaffold(step: 3, tag: "Your phone time", tagColor: OutlinedText.orangeDeep,
                       primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
             ZStack(alignment: .top) {
                 // Only seen if Apple's report is still drawing when the cover lifts.
@@ -578,11 +578,11 @@ struct PullsStep: View {
 
     var body: some View {
         // The headline is drawn here (not by the scaffold) so the brain can sit beside it.
-        PrintScaffold(step: 7, tag: "What distracts you", grain: true,
+        PrintScaffold(step: 7, tag: "Make it yours", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             header
-            Text("Tap every kind that keeps you longer than you planned.")
+            Text("Tap what keeps you scrolling. It shapes your plan.")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -782,12 +782,12 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 8, tag: "Pick apps to lock", title: words.title, grain: true,
+        PrintScaffold(step: 8, tag: "Make it yours", title: has ? words.title : "Which apps\nto block?", grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
             VStack(alignment: .leading, spacing: 18) {
-                Text(has ? "They lock when you start a session." : words.line)
+                Text(has ? "They lock when you start a session." : "They only lock during a session.")
                     .font(PrintFont.mono(14))
                     .foregroundStyle(Ink.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -996,10 +996,10 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 9, tag: "What you want more of", background: Ink.notebook, title: "What do you\nwant more of?",
+        PrintScaffold(step: 9, tag: "Make it yours", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
-            Text("Tap everything you\u{2019}d rather spend your time on.")
+            Text("Your plan makes room for these.")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1133,7 +1133,7 @@ struct PlanStep: View {
         PrintScaffold(step: 10, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
-            Text("Made from your answers.")
+            Text("When and how long you\u{2019}ll lock in. Change it anytime.")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
             VStack(spacing: 0) {

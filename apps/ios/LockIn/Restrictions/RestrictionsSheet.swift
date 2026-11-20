@@ -40,7 +40,7 @@ enum LockWords: Equatable {
 
 /// Screen Time controls: which apps stay closed during a lock-in. Reports only what the framework
 /// reported; it never claims enforcement it has not applied.
-/// Same printed look and same words as the onboarding "Pick what to pause" slide (LockAppsStep),
+/// Same printed look as the onboarding "Which apps to block?" slide (LockAppsStep),
 /// so the app has one way of choosing apps.
 struct RestrictionsSheet: View {
     @ObservedObject var restrictions: RestrictionController

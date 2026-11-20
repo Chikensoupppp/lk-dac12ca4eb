@@ -145,7 +145,7 @@ struct SlideToLockStep: View {
 
     var body: some View {
         // No NEXT: the slider sits where it was and moves on by itself. VoiceOver gets a Next after.
-        PrintScaffold(step: OnboardingFlow.stepCount, tag: "Your first session", title: "One slide.\nYou\u{2019}re in.",
+        PrintScaffold(step: OnboardingFlow.stepCount, tag: "Start", title: "One slide.\nYou\u{2019}re in.",
                       primaryView: AnyView(track.padding(.bottom, 6)),
                       secondaryTitle: voiceOver && locked ? "Next" : nil, secondaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
@@ -435,9 +435,9 @@ struct LaterStep: View {
     private var allGone: Bool { gone.count == Self.notes.count }
 
     var body: some View {
-        PrintScaffold(step: 5, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 5, tag: "How it works", title: "Your apps\nwait.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.62, ripples: ripples))) {
-            SwapCaption(first: "Every ping waits in Later.", second: "All here when you\u{2019}re done.", swapped: allGone)
+            SwapCaption(first: "While you focus, apps and pings wait.", second: "All here when you\u{2019}re done.", swapped: allGone)
             VStack(spacing: 16) {
                 lockScreen
                 pocket
@@ -632,7 +632,7 @@ struct LaterStep: View {
     }
 }
 
-// MARK: Stack up the days.
+// MARK: Watch your week fill up.
 
 /// Monday to Sunday drop in and stack with a little squash, Sunday in sunflower,
 /// and the brain lands on top. Tap the brain and it hops.
@@ -652,9 +652,9 @@ struct StackDaysStep: View {
     private static let shifts: [CGFloat] = [0, 6, -5, 8, -3, 4, -6]
 
     var body: some View {
-        PrintScaffold(step: 6, tag: "See your progress", title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 6, tag: "How it works", title: "Watch your\nweek fill up.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.6, ripples: ripples))) {
-            Text("One session a day. Watch it grow.")
+            Text("Every session you finish adds a day.")
                 .font(PrintFont.mono(14))
                 .foregroundStyle(Ink.ink)
                 .fixedSize(horizontal: false, vertical: true)
