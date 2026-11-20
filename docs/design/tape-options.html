@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guess tab tape</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #E7E8E3; --ink: #1B1B1B; --blue: #3255A4; --orange: #FF6C2F; }
+body { margin: 0; background: var(--paper); display: flex; gap: 0; font-family: 'IBM Plex Mono', monospace; color: var(--ink); }
+.cell { width: 300px; height: 300px; position: relative; border-right: 1px dashed rgba(27,27,27,.12); }
+.cell:last-child { border-right: 0; }
+.lab { position: absolute; left: 0; right: 0; bottom: 16px; text-align: center; font: 700 12px/1 'IBM Plex Mono'; letter-spacing: 1.4px; color: rgba(27,27,27,.55); }
+.tab { position: absolute; left: 62px; top: 86px; width: 176px; box-sizing: border-box; padding: 18px 14px 14px; background: var(--paper);
+  border: 2px solid var(--ink); border-radius: 12px; box-shadow: 0 6px 0 var(--ink); transform: rotate(-5deg); }
+.m1 { font: 700 10px/1 'IBM Plex Mono'; letter-spacing: 1.4px; color: rgba(27,27,27,.7); }
+.num { font: 400 40px/1.05 Anton, sans-serif; color: var(--orange); margin: 6px 0 4px; letter-spacing: .3px;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink); }
+svg.tape { position: absolute; overflow: visible; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- paper fibre for masking tape -->
+    <filter id="fibre" x="-10%" y="-30%" width="120%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9 0.25" numOctaves="2" seed="4" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.16 0" result="grain"/>
+      <feComposite in="grain" in2="SourceGraphic" operator="in" result="g2"/>
+      <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="g2"/></feMerge>
+    </filter>
+    <!-- rough torn edge -->
+    <filter id="torn" x="-10%" y="-30%" width="120%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" seed="9" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="soft"><feDropShadow dx="0" dy="1.6" stdDeviation="1.3" flood-color="#1B1B1B" flood-opacity=".28"/></filter>
+    <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.25" fill="#1B1B1B" fill-opacity=".22"/></pattern>
+    <linearGradient id="kraft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F1E7C9"/><stop offset="1" stop-color="#E2D3AC"/></linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".0"/><stop offset=".45" stop-color="#fff" stop-opacity=".55"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  </defs>
+</svg>
+
+<!-- A: one wide strip of masking tape across the top, torn ends, fibre, a crease -->
+<div class="cell">
+  <div class="tab"><div class="m1">YOU GUESSED</div><div class="num">5–6 HRS</div><div class="m1" style="font-size:11px">A DAY</div></div>
+  <svg class="tape" style="left:104px;top:66px" width="96" height="30" viewBox="0 0 96 30">
+    <g filter="url(#soft)" transform="rotate(-3 48 15)">
+      <path filter="url(#torn)" d="M3 2 H93 L90 6 L94 10 L90 15 L95 20 L91 24 L94 28 H2 L5 24 L1 19 L5 14 L1 9 L4 5 Z" fill="url(#kraft)" fill-opacity=".92"/>
+      <path d="M3 2 H93 L90 6 L94 10 L90 15 L95 20 L91 24 L94 28 H2 L5 24 L1 19 L5 14 L1 9 L4 5 Z" fill="#fff" fill-opacity=".001" filter="url(#fibre)"/>
+      <path d="M30 3 L36 27" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/>
+      <path d="M31 3 L37 27" stroke="#8A7A50" stroke-opacity=".25" stroke-width="1"/>
+      <path d="M68 3 L64 27" stroke="#fff" stroke-opacity=".4" stroke-width="1"/>
+    </g>
+  </svg>
+  <div class="lab">A · MASKING TAPE</div>
+</div>
+
+<!-- B: riso-blue washi tape with halftone dots, see-through, two corners -->
+<div class="cell">
+  <div class="tab"><div class="m1">YOU GUESSED</div><div class="num">5–6 HRS</div><div class="m1" style="font-size:11px">A DAY</div></div>
+  <svg class="tape" style="left:44px;top:76px" width="70" height="26" viewBox="0 0 70 26">
+    <g filter="url(#soft)" transform="rotate(-36 35 13)">
+      <path filter="url(#torn)" d="M3 2 H67 L65 7 L68 13 L65 19 L67 24 H3 L5 19 L2 13 L5 7 Z" fill="#3255A4" fill-opacity=".72"/>
+      <path d="M3 2 H67 L65 7 L68 13 L65 19 L67 24 H3 L5 19 L2 13 L5 7 Z" fill="url(#dots)"/>
+    </g>
+  </svg>
+  <svg class="tape" style="left:192px;top:66px" width="70" height="26" viewBox="0 0 70 26">
+    <g filter="url(#soft)" transform="rotate(32 35 13)">
+      <path filter="url(#torn)" d="M3 2 H67 L65 7 L68 13 L65 19 L67 24 H3 L5 19 L2 13 L5 7 Z" fill="#3255A4" fill-opacity=".72"/>
+      <path d="M3 2 H67 L65 7 L68 13 L65 19 L67 24 H3 L5 19 L2 13 L5 7 Z" fill="url(#dots)"/>
+    </g>
+  </svg>
+  <div class="lab">B · BLUE WASHI TAPE</div>
+</div>
+
+<!-- C: clear tape, glossy streak, a lifted corner -->
+<div class="cell">
+  <div class="tab"><div class="m1">YOU GUESSED</div><div class="num">5–6 HRS</div><div class="m1" style="font-size:11px">A DAY</div></div>
+  <svg class="tape" style="left:100px;top:62px" width="104" height="34" viewBox="0 0 104 34">
+    <g transform="rotate(-4 52 17)">
+      <rect x="2" y="3" width="100" height="28" rx="1.5" fill="#fff" fill-opacity=".38" stroke="#1B1B1B" stroke-opacity=".12"/>
+      <rect x="2" y="3" width="100" height="28" fill="url(#gloss)"/>
+      <path d="M2 3 V31" stroke="#1B1B1B" stroke-opacity=".18" stroke-dasharray="1.5 1.5"/>
+      <path d="M102 3 V31" stroke="#1B1B1B" stroke-opacity=".18" stroke-dasharray="1.5 1.5"/>
+      <path d="M86 31 L102 31 L102 18 Z" fill="#fff" fill-opacity=".75" filter="url(#soft)"/>
+    </g>
+  </svg>
+  <div class="lab">C · CLEAR TAPE</div>
+</div>
+<script>document.fonts.ready.then(() => window.ready = true); window.render = () => {};</script>
+</body>
+</html>

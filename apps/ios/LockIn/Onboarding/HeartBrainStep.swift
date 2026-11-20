@@ -12,9 +12,8 @@ struct HeartBrainStep: View {
     let next: () -> Void
 
     @State private var showReport = false
-    /// The print pass that wipes the "doing the math" cover off the real slide.
-    @State private var pass = 0.0
-    @State private var coverFaded = false
+    /// The "doing the math" cover has lifted off the real slide.
+    @State private var lifted = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     private static let titles = ["1\u{2013}2 hours\na day.", "3\u{2013}4 hours\na day.", "5\u{2013}6 hours\na day.", "7+ hours\na day."]
@@ -41,16 +40,15 @@ struct HeartBrainStep: View {
                     }
                     // Over the report while it draws: the same layout "doing the math", every number
                     // spinning, so no made-up number shows (it used to show the guess, then jump to
-                    // the real one). A print pass then wipes it off the real slide.
+                    // the real one). Then it lifts off, and the real numbers are underneath.
                     DayBarSlide(hours: 0, headline: "Doing the\nmath\u{2026}", computing: true)
                         .scaleToFit(height: Self.fitHeight)
                         .frame(maxWidth: .infinity, minHeight: Self.fitHeight, alignment: .top)
                         .background(DayBarSlide.paper)
-                        .modifier(PrintPassWipe(progress: pass))
-                        .opacity(coverFaded ? 0 : 1)
-                        .allowsHitTesting(pass < 1 && !coverFaded)
+                        .coverLift(lifted, reduceMotion: effectiveReduceMotion(systemReduceMotion))
+                        .allowsHitTesting(!lifted)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: pass >= 1 || coverFaded)
+                .sensoryFeedback(.impact(weight: .light), trigger: lifted)
                 // Only one Screen Time report on screen at a time: start after slide 3's is gone, then
                 // give it a moment to draw under the cover.
                 .task {
@@ -58,8 +56,7 @@ struct HeartBrainStep: View {
                     showReport = true
                     let still = effectiveReduceMotion(systemReduceMotion)
                     guard await printPause(still ? 1.0 : 1.5) else { return }
-                    if still { withAnimation(.easeOut(duration: 0.3)) { coverFaded = true } }
-                    else { withAnimation(.printPass) { pass = 1 } }
+                    withAnimation(still ? .easeOut(duration: 0.3) : .coverLift) { lifted = true }
                 }
             } else {
                 let band = min(max(hoursIndex ?? 0, 0), 3)

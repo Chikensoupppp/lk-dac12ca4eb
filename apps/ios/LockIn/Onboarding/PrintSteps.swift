@@ -208,18 +208,19 @@ private struct DashedLine: View {
 // MARK: 4. Real hours
 
 /// The real numbers, drawn by Apple's report view inside the LockInReport extension. Lock In
-/// cannot read them. The report starts loading at once, under a "reading your week" cover that
-/// lifts after 2.8 s; if the report still isn't drawn then, a small spinner shows instead of a
-/// blank slide.
+/// cannot read them. The report starts loading at once, under a "reading your week" cover whose
+/// loading bar runs through the seven days; then the cover lifts off (mock: docs/design/reveal-load.html).
+/// If the report still isn't drawn then, a small spinner shows instead of a blank slide.
 struct RevealStep: View {
     let guessIndex: Int?
     let next: () -> Void
     @State private var showReport = false
     @State private var mountReport = false
-    /// The print pass that wipes the cover away (0 → 1); with Reduce Motion the cover fades instead.
-    @State private var pass = 0.0
-    @State private var coverFaded = false
+    @State private var lifted = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+
+    /// Room for the report: its stamp hangs below the receipt, over the "days a year" line's gap.
+    private static let height: CGFloat = 574
 
     var body: some View {
         // No grain here: the cover below is flat paper, and grain would show its edges.
@@ -241,14 +242,13 @@ struct RevealStep: View {
                 // slide transition, and two reports at once can draw each other's content.
                 if mountReport {
                     DeviceActivityReport(.reveal(guess: guessIndex), filter: ScreenTimeReport.lastWeek)
-                        .frame(height: 560)
+                        .frame(height: Self.height)
                         .frame(maxWidth: .infinity)
                 }
                 GuessCheck(guessIndex: guessIndex)
-                    .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, minHeight: Self.height, alignment: .topLeading)
                     .background(Ink.paper)
-                    .modifier(PrintPassWipe(progress: pass))
-                    .opacity(coverFaded ? 0 : 1)
+                    .coverLift(lifted, reduceMotion: effectiveReduceMotion(systemReduceMotion))
                     .allowsHitTesting(!showReport)
             }
         }
@@ -257,26 +257,31 @@ struct RevealStep: View {
             // Slide transitions settle in about a second; wait them out so only one report is up.
             guard await printPause(1.0) else { return }
             mountReport = true
+            // The cover's loading bar finishes about 3.9 s in; lift it just after.
             let still = effectiveReduceMotion(systemReduceMotion)
             guard await printPause(still ? 0.2 : 3.4) else { return }
-            if still { withAnimation(.easeOut(duration: 0.3)) { coverFaded = true } }
-            else { withAnimation(.printPass) { pass = 1 } }
+            withAnimation(still ? .easeOut(duration: 0.3) : .coverLift) { lifted = true }
             showReport = true
         }
     }
 }
 
-/// The cover on slide 4 while Apple's report loads, so the slide is never blank (mock:
-/// docs/design/slide4-guess.html): "Let's check your guess." The guess tab from slide 2 is taped up,
-/// the brain looks at it through a magnifying glass, and the week's bars rise one day at a time
-/// with a "?" on top. Without a guess it reads "Reading your week…" and shows only the bars.
+/// The cover on slide 3 while Apple's report loads, so the slide is never blank (mock:
+/// docs/design/reveal-load.html): "Let's check your guess." The guess tab from slide 2 is taped up,
+/// the brain looks at it through a magnifying glass, and a loading bar reads the week one day at a
+/// time: each day's segment fills, then that day's bar turns solid and its "?" becomes a tick.
+/// Without a guess it reads "Reading your week…" and shows only the bars.
 private struct GuessCheck: View {
     let guessIndex: Int?
+    /// Bars risen so far (they all come up in the first half second).
     @State private var days = 0
+    /// The loading bar segment that is filling (or full), and how many days are done.
+    @State private var filling = -1
+    @State private var loaded = 0
     @State private var bob = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
-    private static let names = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+    private static let names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     private static let letters = ["M", "T", "W", "T", "F", "S", "S"]
     /// Made-up heights: the bars are a "reading" animation, not data.
     private static let heights: [CGFloat] = [0.62, 0.48, 0.70, 0.55, 0.80, 0.92, 0.74]
@@ -310,39 +315,51 @@ private struct GuessCheck: View {
                 .padding(.bottom, 8)
             }
             week
-            Text("Close? Way off? Let\u{2019}s see\u{2026}")
-                .font(PrintFont.hand(20))
-                .foregroundStyle(Ink.ink)
-                .frame(maxWidth: .infinity)
+            loader
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(guessIndex == nil ? "Reading your week" : "Checking your guess against your real week")
+        .accessibilityValue("\(percent) percent")
+        .sensoryFeedback(.selection, trigger: loaded)
         .task {
-            if effectiveReduceMotion(systemReduceMotion) { days = 7; return }
+            if effectiveReduceMotion(systemReduceMotion) { days = 7; filling = 6; loaded = 7; return }
             withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { bob = true }
             for i in 1...7 {
-                guard await printPause(0.5) else { return }
+                guard await printPause(0.07) else { return }
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { days = i }
+            }
+            guard await printPause(0.2) else { return }
+            // About 3.2 s for the week; RevealStep lifts the cover right after the last day.
+            for i in 0..<7 {
+                withAnimation(.timingCurve(0.77, 0, 0.175, 1, duration: 0.42)) { filling = i }
+                guard await printPause(0.46) else { return }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { loaded = i + 1 }
             }
         }
     }
 
+    private var percent: Int { Int((Double(loaded) / 7 * 100).rounded()) }
+
     private func tab(_ g: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("YOU GUESSED").font(PrintFont.mono(10, .bold)).tracking(1.4).opacity(0.85)
-            Text(hoursTabs[min(max(g, 0), 3)]).font(PrintFont.head(40)).lineLimit(1).minimumScaleFactor(0.7)
-            Text("A DAY").font(PrintFont.mono(11, .bold)).tracking(1.2).opacity(0.85)
+            Text("YOU GUESSED").font(PrintFont.mono(10, .bold)).tracking(1.4)
+                .foregroundStyle(Ink.ink.opacity(0.7))
+            OutlinedText(text: hoursTabs[min(max(g, 0), 3)], font: PrintFont.head(40), ink: Ink.ink, outline: 1.5, drop: 3)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text("A DAY").font(PrintFont.mono(11, .bold)).tracking(1.2)
+                .foregroundStyle(Ink.ink.opacity(0.7))
         }
-        .foregroundStyle(.white)
         .padding(.horizontal, 14)
-        .padding(.vertical, 14)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
         .frame(width: 176, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Ink.blue))
+        // Same paper as the slide; the ink edge and drop keep it a separate card.
+        .background(RoundedRectangle(cornerRadius: 12).fill(Ink.paper))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Ink.ink, lineWidth: 2))
         .background(RoundedRectangle(cornerRadius: 12).fill(Ink.ink).offset(y: 6))
         .overlay(alignment: .top) {
-            Rectangle().fill(Ink.sun.opacity(0.75)).frame(width: 80, height: 22)
-                .rotationEffect(.degrees(-12)).offset(y: -12)
+            MaskingTape().rotationEffect(.degrees(-3)).offset(y: -14)
         }
     }
 
@@ -352,22 +369,42 @@ private struct GuessCheck: View {
             HStack {
                 Text("YOUR WEEK")
                 Spacer()
-                Text(days >= 7 ? "ALMOST THERE" : "READING \(Self.names[min(days, 6)])")
+                Text(loaded >= 7 ? "DONE" : "\(loaded) / 7")
                     .foregroundStyle(Ink.blue)
-                    .contentTransition(.opacity)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
             }
             .font(PrintFont.mono(10.5, .bold)).tracking(1.2)
             .foregroundStyle(Color(hex: 0x45473F))
             HStack(alignment: .bottom, spacing: 10) {
                 ForEach(0..<7, id: \.self) { i in
                     let on = i < days
+                    let done = i < loaded
                     VStack(spacing: 4) {
-                        Text("?").font(PrintFont.head(16)).foregroundStyle(Ink.blue).opacity(on ? 1 : 0)
+                        ZStack {
+                            Text("?").font(PrintFont.head(16)).foregroundStyle(Ink.blue).opacity(on && !done ? 1 : 0)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundStyle(.white)
+                                .frame(width: 18, height: 18)
+                                .background(Circle().fill(Ink.ink))
+                                .scaleEffect(done ? 1 : 0.4)
+                                .opacity(done ? 1 : 0)
+                        }
                         UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6)
-                            .fill(Ink.blue.opacity(0.78))
+                            .fill(Ink.blue.opacity(done ? 1 : 0.55))
                             .overlay(UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6)
                                 .strokeBorder(Ink.ink, lineWidth: 2))
                             .frame(height: on ? 86 * Self.heights[i] : 0)
+                            // A little hop as the day comes in.
+                            .keyframeAnimator(initialValue: CGFloat(1), trigger: done) { bar, s in
+                                bar.scaleEffect(y: s, anchor: .bottom)
+                            } keyframes: { _ in
+                                KeyframeTrack {
+                                    CubicKeyframe(1.08, duration: 0.12)
+                                    SpringKeyframe(1, duration: 0.3, spring: .bouncy)
+                                }
+                            }
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -385,6 +422,105 @@ private struct GuessCheck: View {
         .background(shape.fill(Color(hex: 0xF4F4F0)))
         .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
         .background(shape.fill(Ink.ink).offset(y: 5))
+    }
+
+    /// Seven segments, one per day, under the chart: the segment fills, then its day is done.
+    private var loader: some View {
+        let seg = RoundedRectangle(cornerRadius: 6, style: .continuous)
+        let box = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(loaded >= 7 ? "YOUR WEEK IS IN" : "READING YOUR WEEK")
+                    .foregroundStyle(Ink.blue)
+                    .contentTransition(.opacity)
+                Spacer()
+                Text("\(percent)%")
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(percent)))
+            }
+            .font(PrintFont.mono(11, .bold)).tracking(1.4)
+            .foregroundStyle(Ink.ink)
+            HStack(spacing: 5) {
+                ForEach(0..<7, id: \.self) { i in
+                    ZStack {
+                        seg.fill(Ink.ink.opacity(0.07))
+                        seg.fill(Ink.blue).scaleEffect(x: i <= filling ? 1 : 0.001, anchor: .leading)
+                        Text(Self.letters[i])
+                            .font(PrintFont.mono(11, .bold))
+                            .foregroundStyle(i < loaded ? Color.white : Ink.ink.opacity(0.35))
+                    }
+                    .clipShape(seg)
+                }
+            }
+            .padding(4)
+            .frame(height: 42)
+            .background(box.fill(Color.white))
+            .overlay(box.strokeBorder(Ink.ink, lineWidth: 2))
+            .background(box.fill(Ink.ink).offset(y: 4))
+            .padding(.top, 9)
+            Text(loaded >= 7 ? "Got it. Here\u{2019}s your number."
+                 : filling < 0 ? "Opening Screen Time\u{2026}" : "Reading \(Self.names[filling])\u{2026}")
+                .font(PrintFont.body(15, .heavy))
+                .foregroundStyle(Ink.ink)
+                .contentTransition(.opacity)
+                .padding(.top, 14)
+        }
+    }
+}
+
+/// A strip of cream masking tape: a little see-through, torn zig-zag ends, two creases.
+private struct MaskingTape: View {
+    var width: CGFloat = 94
+    private let height: CGFloat = 26
+
+    var body: some View {
+        ZStack {
+            TornStrip().fill(LinearGradient(colors: [Color(hex: 0xF1E7C9), Color(hex: 0xE2D3AC)],
+                                            startPoint: .top, endPoint: .bottom))
+            // Paper fibre, then the creases where it was pressed down.
+            Canvas { context, size in
+                var fibre = Path()
+                var x: CGFloat = 3
+                while x < size.width { fibre.move(to: CGPoint(x: x, y: 0)); fibre.addLine(to: CGPoint(x: x + 1, y: size.height)); x += 4 }
+                context.stroke(fibre, with: .color(.white.opacity(0.18)), lineWidth: 1)
+                let creases: [(CGFloat, CGFloat, Color)] = [(0.31, 0.37, Color.white.opacity(0.6)),
+                                                            (0.32, 0.38, Color(hex: 0x8A7A50).opacity(0.25)),
+                                                            (0.71, 0.67, Color.white.opacity(0.45))]
+                for (a, b, color) in creases {
+                    var crease = Path()
+                    crease.move(to: CGPoint(x: size.width * a, y: 2))
+                    crease.addLine(to: CGPoint(x: size.width * b, y: size.height - 2))
+                    context.stroke(crease, with: .color(color), lineWidth: 1.1)
+                }
+            }
+            .clipShape(TornStrip())
+        }
+        .frame(width: width, height: height)
+        .opacity(0.93)
+        .compositingGroup()
+        .shadow(color: Ink.ink.opacity(0.26), radius: 1.3, y: 1.5)
+        .accessibilityHidden(true)
+    }
+
+    /// A strip with uneven zig-zag ends, the way tape tears off the roll.
+    private struct TornStrip: Shape {
+        func path(in r: CGRect) -> Path {
+            let left: [CGFloat] = [0.04, 0.0, 0.05, 0.01, 0.05, 0.0]
+            let right: [CGFloat] = [0.97, 1.0, 0.96, 1.0, 0.95, 0.99]
+            var p = Path()
+            p.move(to: CGPoint(x: r.minX + r.width * 0.03, y: r.minY))
+            p.addLine(to: CGPoint(x: r.maxX - r.width * 0.02, y: r.minY))
+            for (i, x) in right.enumerated() {
+                p.addLine(to: CGPoint(x: r.minX + r.width * x, y: r.minY + r.height * CGFloat(i + 1) / 7))
+            }
+            p.addLine(to: CGPoint(x: r.maxX - r.width * 0.03, y: r.maxY))
+            p.addLine(to: CGPoint(x: r.minX + r.width * 0.02, y: r.maxY))
+            for (i, x) in left.enumerated().reversed() {
+                p.addLine(to: CGPoint(x: r.minX + r.width * x, y: r.minY + r.height * CGFloat(i + 1) / 7))
+            }
+            p.closeSubpath()
+            return p
+        }
     }
 }
 
@@ -442,7 +578,7 @@ struct PullsStep: View {
 
     var body: some View {
         // The headline is drawn here (not by the scaffold) so the brain can sit beside it.
-        PrintScaffold(step: 8, tag: "What distracts you", grain: true,
+        PrintScaffold(step: 7, tag: "What distracts you", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             header
@@ -646,7 +782,7 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 9, tag: "Pick apps to lock", title: words.title, grain: true,
+        PrintScaffold(step: 8, tag: "Pick apps to lock", title: words.title, grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
@@ -860,7 +996,7 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "What you want more of", background: Ink.notebook, title: "What do you\nwant more of?",
+        PrintScaffold(step: 9, tag: "What you want more of", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             Text("Tap everything you\u{2019}d rather spend your time on.")
@@ -994,7 +1130,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
+        PrintScaffold(step: 10, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
             Text("Made from your answers.")

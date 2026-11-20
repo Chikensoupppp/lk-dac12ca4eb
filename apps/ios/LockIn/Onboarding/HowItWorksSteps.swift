@@ -124,11 +124,14 @@ private var compactScreen: Bool { UIScreen.main.bounds.height < 700 }
 
 // MARK: One slide. You're in.
 
-/// The real "slide to lock in" control, with the brain as the knob. It follows the finger 1:1,
-/// and a flick counts too. A tap also locks it (VoiceOver, UI tests). Once it is slid the next slide
-/// follows by itself; NEXT stays for VoiceOver.
+/// The intro's last slide: the real "slide to lock in" control, with the brain as the knob. It
+/// follows the finger 1:1, and a flick counts too. A tap also locks it (VoiceOver, UI tests). Sliding
+/// starts the first session for real (the plan's minutes): after a beat to see LOCKED IN, the intro
+/// closes on the running session. NEXT stays for VoiceOver.
 struct SlideToLockStep: View {
     let next: () -> Void
+    /// The session length from the plan made a few slides back.
+    private let minutes = PlanStore.load()?.minutes ?? 25
     @State private var x: CGFloat = 0
     @State private var locked = false
     @State private var lockedAt: Date?
@@ -142,16 +145,16 @@ struct SlideToLockStep: View {
 
     var body: some View {
         // No NEXT: the slider sits where it was and moves on by itself. VoiceOver gets a Next after.
-        PrintScaffold(step: 5, tag: "How a session starts", title: "One slide.\nYou\u{2019}re in.",
+        PrintScaffold(step: OnboardingFlow.stepCount, tag: "Your first session", title: "One slide.\nYou\u{2019}re in.",
                       primaryView: AnyView(track.padding(.bottom, 6)),
                       secondaryTitle: voiceOver && locked ? "Next" : nil, secondaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
-            SwapCaption(first: "Slide the brain to start a session.", second: "That\u{2019}s how every session starts.", swapped: locked)
-            SessionPreview(locked: locked, lockedAt: lockedAt)
+            SwapCaption(first: "Slide the brain to start your first session.", second: "That\u{2019}s how every session starts.", swapped: locked)
+            SessionPreview(minutes: minutes, locked: locked, lockedAt: lockedAt)
                 .padding(.top, 6)
         }
         .sensoryFeedback(.success, trigger: locked)
-        // Sliding is the "next": after a beat to see LOCKED IN, the next slide comes by itself.
+        // Sliding is the "next": after a beat to see LOCKED IN, the session takes over by itself.
         // VoiceOver users keep the NEXT button instead of being moved on. Cancelled if they leave first.
         .task(id: locked) {
             guard locked, !voiceOver else { return }
@@ -258,10 +261,11 @@ struct SlideToLockStep: View {
 /// docs/design/slides-4-7-v2.html, slide 6): READY 25:00, then LOCKED IN with the clock running,
 /// the ring starting, and the apps that wait getting a lock one by one.
 private struct SessionPreview: View {
+    let minutes: Int
     let locked: Bool
     let lockedAt: Date?
 
-    private static let length: TimeInterval = 25 * 60
+    private var length: TimeInterval { TimeInterval(minutes * 60) }
     private static let apps: [(letter: String, color: Color)] = [("S", Ink.blue), ("V", Ink.red), ("G", Color(hex: 0xE9A300)), ("C", Ink.ink)]
 
     var body: some View {
@@ -279,13 +283,13 @@ private struct SessionPreview: View {
                             .monospacedDigit()
                             .foregroundStyle(Ink.ink)
                             .contentTransition(.numericText(countsDown: true))
-                        Text("Studying").font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
+                        Text("Your first session").font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
                     }
                     Spacer(minLength: 8)
                     ZStack {
                         Circle().stroke(Ink.ink.opacity(0.12), lineWidth: 9)
                         Circle()
-                            .trim(from: 0, to: locked ? max(0.04, 1 - left / Self.length) : 0)
+                            .trim(from: 0, to: locked ? max(0.04, 1 - left / length) : 0)
                             .stroke(Ink.blue, style: StrokeStyle(lineWidth: 9, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                     }
@@ -293,7 +297,6 @@ private struct SessionPreview: View {
                 }
                 HStack(spacing: 6) {
                     chip("1 break \u{00B7} 5 min")
-                    chip("PC locks too")
                     chip("Pings go to Later")
                 }
                 .padding(.top, 14)
@@ -334,13 +337,13 @@ private struct SessionPreview: View {
         .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
         .background(shape.fill(Ink.ink).offset(y: 5))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(locked ? "Locked in. 25 minutes of studying. Your distracting apps wait till you're done."
-                                   : "Ready: 25 minutes of studying. Your distracting apps will wait till you're done.")
+        .accessibilityLabel(locked ? "Locked in. \(minutes) minutes. Your distracting apps wait till you're done."
+                                   : "Ready: \(minutes) minutes. Your distracting apps will wait till you're done.")
     }
 
     private func remaining(at now: Date) -> TimeInterval {
-        guard locked, let lockedAt else { return Self.length }
-        return max(Self.length - now.timeIntervalSince(lockedAt), 0)
+        guard locked, let lockedAt else { return length }
+        return max(length - now.timeIntervalSince(lockedAt), 0)
     }
 
     private func clock(_ seconds: TimeInterval) -> String {
@@ -432,7 +435,7 @@ struct LaterStep: View {
     private var allGone: Bool { gone.count == Self.notes.count }
 
     var body: some View {
-        PrintScaffold(step: 6, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 5, tag: "What happens to your apps", title: "Swipe\nlater.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.62, ripples: ripples))) {
             SwapCaption(first: "Every ping waits in Later.", second: "All here when you\u{2019}re done.", swapped: allGone)
             VStack(spacing: 16) {
@@ -649,7 +652,7 @@ struct StackDaysStep: View {
     private static let shifts: [CGFloat] = [0, 6, -5, 8, -3, 4, -6]
 
     var body: some View {
-        PrintScaffold(step: 7, tag: "See your progress", title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
+        PrintScaffold(step: 6, tag: "See your progress", title: "Stack up\nthe days.", primaryTitle: "NEXT", primaryAction: next,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.6, ripples: ripples))) {
             Text("One session a day. Watch it grow.")
                 .font(PrintFont.mono(14))

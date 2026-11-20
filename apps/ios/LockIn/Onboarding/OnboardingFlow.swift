@@ -4,18 +4,17 @@ import SwiftUI
 ///
 /// The long way is the default: the first slide opens it, and "Skip intro" ends it so the Focus screen's
 /// coach takes over (task, minutes, distracting apps, one hold to start). The introduction goes:
-/// guess, why we ask, real hours, brain, what pulls you in, lock apps,
-/// goals, three how-it-works slides, making your plan, and the Plus offer last ("Not now" is one tap).
-/// Seeing it here counts as the one Plus offer, so it is not shown again after the first session.
-/// The real hours can only be drawn by Apple's report extension (Lock In can never read them), so
-/// slides 4 and 5 are drawn by it. Without Screen Time access, or without the extension, slide 5
-/// uses the guess. Order: the problem (1-5), how SwipeLater fixes it (6-8), make it yours (9-11),
-/// the plan (12), Plus (13).
+/// guess, real hours, what they mean, two how-it-works slides, what pulls you in, lock apps, goals,
+/// the plan, the Plus offer ("Not now" is one tap), and last a real "slide to lock in" that starts
+/// the first session. Seeing Plus here counts as the one Plus offer, so it is not shown again after
+/// the first session. The real hours can only be drawn by Apple's report extension (Lock In can
+/// never read them), so slides 3 and 4 are drawn by it. Without Screen Time access, or without the
+/// extension, slide 4 uses the guess.
 struct OnboardingFlow: View {
     static let stepCount = 12
 
     enum Step: Int {
-        case hook = 1, guess, reveal, brain, slide, appsWait, comeBack, pulls, lock, goals, plan, plus
+        case hook = 1, guess, reveal, brain, appsWait, comeBack, pulls, lock, goals, plan, plus, slide
         /// "Can't do 4:00?" from the plan: optional, on the plan's step (`WhenSteps.swift`).
         case whenAsk, whenFree, whenPick
 
@@ -25,7 +24,8 @@ struct OnboardingFlow: View {
 
     @ObservedObject var restrictions: RestrictionController
     @ObservedObject var plus: PlusStore
-    let onFinish: () -> Void
+    /// True when the user slid to lock in on the last slide: start the first session now.
+    let onFinish: (_ startNow: Bool) -> Void
 
     @State private var step: Step = .hook
     @State private var history: [Step] = []
@@ -84,15 +84,15 @@ struct OnboardingFlow: View {
         case .hook: advance(to: .guess)
         case .guess: askScreenTime()
         case .reveal: advance(to: .brain)
-        case .brain: advance(to: .slide)
-        case .slide: advance(to: .appsWait)
+        case .brain: advance(to: .appsWait)
         case .appsWait: advance(to: .comeBack)
         case .comeBack: advance(to: .pulls)
         case .pulls: advance(to: .lock)
         case .lock: advance(to: .goals)
         case .goals: advance(to: .plan)
         case .plan: advance(to: .plus)
-        case .plus: finish()
+        case .plus: advance(to: .slide)
+        case .slide: finish(startNow: true)
         case .whenAsk, .whenFree, .whenPick: break
         }
     }
@@ -143,7 +143,7 @@ struct OnboardingFlow: View {
         guard !askingScreenTime else { return }
         let afterAnswer = {
             if screenTimeOn && ScreenTimeReport.isAvailable { usedReport = true; advance(to: .reveal) }
-            else { usedReport = false; advance(to: hoursIndex == nil ? .slide : .brain) }
+            else { usedReport = false; advance(to: hoursIndex == nil ? .appsWait : .brain) }
         }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-onboarding") { afterAnswer(); return }
@@ -161,7 +161,7 @@ struct OnboardingFlow: View {
         }
     }
 
-    private func finish() {
+    private func finish(startNow: Bool = false) {
         OnboardingStore.save(hoursIndex: hoursIndex, categories: categories, goals: goals)
         if let choice = timeChoice, var plan = PlanStore.load() {
             let hasPlus = plus.hasPlus
@@ -173,7 +173,7 @@ struct OnboardingFlow: View {
                 await ScheduleApplier.apply(plan: saved, schedule: choice.schedule, hasPlus: hasPlus, restrictions: restrictions)
             }
         }
-        onFinish()
+        onFinish(startNow)
     }
 
     // MARK: Body
@@ -185,7 +185,7 @@ struct OnboardingFlow: View {
             Ink.paper.ignoresSafeArea()
             Group {
                 switch step {
-                case .hook: HookStep(next: next, startNow: finish)
+                case .hook: HookStep(next: next, startNow: { finish() })
                 case .guess: GuessStep(guessIndex: $guessIndex, next: next)
                 case .reveal: RevealStep(guessIndex: guessIndex, next: next)
                 case .brain: HeartBrainStep(hoursIndex: hoursIndex, useReport: usedReport, next: next)

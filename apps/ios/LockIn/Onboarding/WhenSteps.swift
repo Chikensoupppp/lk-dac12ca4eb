@@ -43,7 +43,7 @@ struct WhenAskStep: View {
     @State private var asking = false
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "When it fits", title: "Let\u{2019}s find your\nfree time.", titleSize: 48,
+        PrintScaffold(step: 10, tag: "When it fits", title: "Let\u{2019}s find your\nfree time.", titleSize: 48,
                       primaryTitle: asking ? "ASKING..." : "USE MY CALENDAR", primaryEnabled: !asking,
                       primaryAction: { asking = true; useCalendar() },
                       secondaryTitle: "I\u{2019}ll pick a time", secondaryAction: pickOwn) {
@@ -211,7 +211,7 @@ struct WhenFreeStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "When it fits", title: "When will you\nbe free?", titleSize: 48,
+        PrintScaffold(step: 10, tag: "When it fits", title: "When will you\nbe free?", titleSize: 48,
                       primaryTitle: eachDay ? "LOCK IN EACH DAY" : "LOCK IN AT \(clock(chosen))", primaryAction: confirm,
                       secondaryTitle: "Pick another time", secondaryAction: pickOwn) {
             VStack(alignment: .leading, spacing: 16) {
@@ -559,7 +559,7 @@ struct WhenPickStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "When it fits", title: "When works\nfor you?", titleSize: 48,
+        PrintScaffold(step: 10, tag: "When it fits", title: "When works\nfor you?", titleSize: 48,
                       primaryTitle: "SET \(clock(minute)) \(ampm(minute))", primaryEnabled: !weekdays.isEmpty,
                       primaryAction: confirm,
                       secondaryTitle: backToSuggestions == nil ? nil : "Back to suggestions",

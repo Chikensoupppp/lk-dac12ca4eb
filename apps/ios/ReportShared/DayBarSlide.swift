@@ -94,6 +94,8 @@ struct DayBarSlide: View {
             card
             enough
         }
+        // The last sticker's drop shadow hangs 3 pt below its row; keep it inside the report's frame.
+        .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .sensoryFeedback(.impact(weight: .light), trigger: landed)
         .task { await run() }
@@ -171,6 +173,7 @@ struct DayBarSlide: View {
                 spinRow(t, 2, "dumbbell.fill", Self.blue, .white, spin(t, 17), "gym sessions")
             }
         }
+        .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Adding up your day")
@@ -324,15 +327,16 @@ struct DayBarSlide: View {
                         .foregroundStyle(.white)
                         .padding(.leading, 10)
                         .opacity(fill > 0.05 && share > 0.06 ? 1 : 0)
-                    HStack {
-                        Spacer()
-                        Text("\(Self.hm(left)) LEFT FOR YOU")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1)
-                            .foregroundStyle(soft)
-                            .padding(.horizontal, 4).padding(.vertical, 3)
-                            .background(Color.white)
-                            .padding(.trailing, 8)
+                    // Only in the white part, never over the blue: the long words, the short ones,
+                    // or nothing when even those don't fit.
+                    ViewThatFits(in: .horizontal) {
+                        leftLabel("\(Self.hm(left)) LEFT FOR YOU")
+                        leftLabel("\(Self.hm(left)) LEFT")
+                        Color.clear.frame(width: 0)
                     }
+                    .frame(width: max(0, w * (1 - CGFloat(share * fill)) - 14), alignment: .trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 8)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Self.ink, lineWidth: 2))
@@ -362,6 +366,14 @@ struct DayBarSlide: View {
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Self.ink).offset(y: 5))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(Self.hm(hours * 60, spoken: true)) a day on your phone, \(Int((share * 100).rounded())) percent of 16 hours awake. Every week \(Self.hm(hours * 7 * 60, spoken: true)). In a year, \(Int((hours * 365 / 24).rounded())) full days.")
+    }
+
+    private func leftLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1)
+            .foregroundStyle(Self.ink.opacity(0.6))
+            .lineLimit(1)
+            .fixedSize()
     }
 
     private func chip(_ label: String, _ value: String, _ i: Int) -> some View {

@@ -82,7 +82,9 @@ struct RevealView: View {
                 + Text("\(Int((hours * 365 / 24).rounded())) DAYS").foregroundColor(Self.orange)
                 + Text(" A YEAR."))
                 .font(.system(size: 26, weight: .black).width(.compressed))
-                .padding(.top, 8)
+                // Clear of the stamp that hangs off the receipt's corner (the app gives this
+                // report 14 pt more height for it).
+                .padding(.top, 24)
         }
         .foregroundStyle(Self.ink)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -128,7 +130,7 @@ struct RevealView: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Self.receipt.opacity(0.92)))
                 .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Self.red, lineWidth: 3.5))
                 .rotationEffect(.degrees(-9))
-                .offset(x: -6, y: 18)
+                .offset(x: -6, y: 6)
         }
     }
 

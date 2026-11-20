@@ -214,25 +214,27 @@ final class FocusUITests: XCTestCase {
         step("onboarding-1-hook", tap: "LET\u{2019}S GO")
         step("onboarding-2-guess", tap: "SEE MY ACTUAL TIME", pre: { app.buttons["5\u{2013}6 hours"].tap() })
         // In UI tests this button skips the Screen Time box; there is no access, so no reveal slide.
-        step("onboarding-5-brain", tap: "CONTINUE")
-        // Sliding moves on by itself (the next step's 2-second wait covers it).
-        step("onboarding-6-slide", tap: "onboarding-slide-knob")
-        step("onboarding-7-apps-wait", tap: "NEXT")
-        step("onboarding-8-come-back", tap: "NEXT")
-        step("onboarding-9-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
+        step("onboarding-4-brain", tap: "CONTINUE")
+        step("onboarding-5-apps-wait", tap: "NEXT")
+        step("onboarding-6-come-back", tap: "NEXT")
+        step("onboarding-7-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
         // Back returns to the previous slide with the choice kept.
         XCTAssertTrue(app.buttons["Skip for now"].waitForExistence(timeout: 10))
         app.buttons["Back"].tap()
         XCTAssertTrue(app.buttons["NEXT"].waitForExistence(timeout: 5))
         app.buttons["NEXT"].tap()
-        step("onboarding-10-lock", tap: "Skip for now")
-        step("onboarding-11-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
-        // The plan receipt is built from the answers; the Plus offer comes last ("Not now" ends the
-        // introduction). The coach takes over on the real Focus screen.
-        step("onboarding-12-plan", tap: "THIS IS MY PLAN")
-        step("onboarding-13-plus", tap: "Not now")
-        XCTAssertTrue(app.buttons["skip-focus-coach"].waitForExistence(timeout: 25))
-        runCoachToSession(app)
+        step("onboarding-8-lock", tap: "Skip for now")
+        step("onboarding-9-goals", tap: "NEXT", pre: { app.buttons["Studying"].tap() })
+        // The plan receipt is built from the answers, then the Plus offer. The last slide is a real
+        // "slide to lock in": sliding ends the introduction with the first session running.
+        step("onboarding-10-plan", tap: "THIS IS MY PLAN")
+        step("onboarding-11-plus", tap: "Not now")
+        step("onboarding-12-slide", tap: "onboarding-slide-knob")
+        XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.staticTexts["first-lock-in-stamp"].exists, "the badge belongs to a finished session")
+        capture("onboarding-session-running")
+        app.buttons["END SESSION"].tap()
+        XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
     }
 
     /// The short way: "Skip intro" on the first slide goes straight to the coach.

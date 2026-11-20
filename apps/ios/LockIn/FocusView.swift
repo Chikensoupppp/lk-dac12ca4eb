@@ -501,12 +501,17 @@ struct FocusView: View {
             // The intro is drawn on top from the very first frame. As a full-screen cover it only
             // slid up after this screen had drawn, so the Focus screen flashed for half a second.
             if !onboardingDone {
-                OnboardingFlow(restrictions: restrictions, plus: plus) {
+                OnboardingFlow(restrictions: restrictions, plus: plus) { startNow in
                     withAnimation(.easeOut(duration: 0.3)) { onboardingDone = true }
                     selectedMinutes = PlanStore.load()?.minutes ?? 25
                     plan = PlanStore.load()
-                    coachPending = true
-                    coachStep = .task
+                    // The intro's last slide is a real "slide to lock in": the first session starts
+                    // straight away. "Skip intro" still hands over to the coach.
+                    if startNow { startFirstSessionFromIntro() }
+                    else {
+                        coachPending = true
+                        coachStep = .task
+                    }
                 }
                 .transition(.opacity)
             }
@@ -782,8 +787,23 @@ struct FocusView: View {
         coachReward = nil
         coachStep = .celebrate
         startSession()
-        // When the shields are really on, the lesson ends with the proof: the brain dares the user
-        // to open a locked app. Without shields (no apps picked, no Screen Time) it just cheers.
+        celebrateFirstStart()
+    }
+
+    /// Slid on the intro's last slide: no coach, the session starts now and the brain cheers.
+    private func startFirstSessionFromIntro() {
+        guard !isLocked else { return }
+        coachPending = false
+        coachPressing = false
+        coachReward = nil
+        coachStep = .celebrate
+        startSession()
+        celebrateFirstStart()
+    }
+
+    /// When the shields are really on, the first start ends with the proof: the brain dares the user
+    /// to open a locked app. Without shields (no apps picked, no Screen Time) it just cheers.
+    private func celebrateFirstStart() {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(3))
             guard coachStep == .celebrate else { return }
