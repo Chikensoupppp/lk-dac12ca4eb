@@ -228,7 +228,10 @@ final class FocusUITests: XCTestCase {
         // No time is set for the user: SET stays off until one is picked.
         XCTAssertTrue(app.buttons["when-time-960"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["PICK A TIME"].isEnabled)
-        step("onboarding-10-when", tap: "SET 4:00 PM", pre: { app.buttons["when-time-960"].tap() })
+        capture("onboarding-10-when")
+        app.buttons["when-time-960"].tap()
+        XCTAssertTrue(app.buttons["SET 4:00 PM"].waitForExistence(timeout: 5))
+        app.buttons["SET 4:00 PM"].tap()
         // The plan receipt is built from the answers, then the Plus offer. The last slide is a real
         // "slide to lock in": sliding ends the introduction with the first session running.
         step("onboarding-11-plan", tap: "THIS IS MY PLAN")
