@@ -51,6 +51,8 @@ struct RestrictionsSheet: View {
     @State private var rows: [Shielded] = []
     @State private var appeared = false
     @State private var shareStats = Analytics.consent == true
+    /// Applies from the next lock-in (RestrictionNaming.blocksWeb).
+    @AppStorage(RestrictionNaming.blockWebKey, store: BrainLevel.shared) private var blockWeb = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// One shared entrance: fade and rise, in order. With Reduce Motion it is a fade only.
@@ -149,11 +151,23 @@ struct RestrictionsSheet: View {
                 .scrollBounceBehavior(.basedOnSize)
 
                 action
-                Text("Locked apps stay closed during a lock-in, on this phone.")
+                HStack(spacing: 18) {
+                    Text("Block websites too")
+                        .font(PrintFont.mono(13))
+                        .foregroundStyle(Ink.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    SwitchPill(on: $blockWeb, label: "Block websites too")
+                        .scaleEffect(0.8)
+                }
+                .padding(.top, 10)
+                .accessibilityIdentifier("restrictions-block-web")
+                Text(blockWeb
+                     ? "Locked apps and every website stay closed during a lock-in, on this phone."
+                     : "Locked apps stay closed during a lock-in, on this phone.")
                     .font(PrintFont.mono(12))
                     .foregroundStyle(Ink.soft)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 10)
                 if Analytics.consentRequired {
                     // Where a yes was needed, taking it back is just as easy.
                     HStack(spacing: 18) {

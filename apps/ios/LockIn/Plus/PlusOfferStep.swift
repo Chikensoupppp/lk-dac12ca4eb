@@ -41,16 +41,6 @@ struct PlusOfferStep: View {
         }
     }
 
-    /// The room between the headline and the buttons: the screen minus the safe areas, the progress
-    /// bars and Back (60), the tag (23), the two-line 40 pt headline and its gap (86), the scroll's
-    /// bottom padding and fade (40), and the button with the footer row under it (114).
-    private static var fitHeight: CGFloat {
-        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first
-        let insets = window?.safeAreaInsets ?? .zero
-        let title: CGFloat = UIScreen.main.bounds.height < 700 ? 70 : 86
-        return max(UIScreen.main.bounds.height - insets.top - insets.bottom - 60 - 23 - title - 40 - 114, 300)
-    }
-
     private var buttonEnabled: Bool {
         plus.isPlus || (plus.loadState == .ready && !plus.busy)
     }
@@ -93,11 +83,11 @@ struct PlusOfferStep: View {
                     .offset(y: plansIn ? 0 : 14)
                 }
                 if let message = plus.message {
-                    Text(message).font(PrintFont.mono(12)).foregroundStyle(Self.softInk)
+                    Text(message).font(PrintFont.mono(13)).foregroundStyle(Self.softInk)
                 }
             }
-            // Everything fits above the button, no scrolling: smaller iPhones shrink it evenly.
-            .scaleToFit(height: Self.fitHeight)
+            // Full size, never scaled down (Brandon: the shrunk version "looks shrunken"). The slide
+            // scrolls on small iPhones; PrintScaffold fades the edge above the button.
         }
         .sensoryFeedback(.impact(weight: .heavy), trigger: stamped)
         .task { await play() }
@@ -183,7 +173,7 @@ struct PlusOfferStep: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(PrintFont.bold(16)).foregroundStyle(Ink.ink)
                 Text(line)
-                    .font(PrintFont.body(13, .medium))
+                    .font(PrintFont.body(14, .medium))
                     .foregroundStyle(Self.softInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -223,7 +213,7 @@ struct PlusOfferStep: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title.uppercased()).font(PrintFont.mono(11, .bold)).tracking(1.2).foregroundStyle(Self.softInk)
                 Text(price).font(PrintFont.head(24)).foregroundStyle(Ink.ink)
-                Text(note).font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
+                Text(note).font(PrintFont.body(13, .semibold)).foregroundStyle(Self.softInk)
             }
             .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
             .padding(.horizontal, 13)
@@ -233,7 +223,7 @@ struct PlusOfferStep: View {
             .overlay(alignment: .topTrailing) {
                 if let badge {
                     Text(badge)
-                        .font(PrintFont.mono(9, .bold)).tracking(1)
+                        .font(PrintFont.mono(10, .bold)).tracking(1)
                         .foregroundStyle(Ink.ink)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 4)
@@ -293,8 +283,9 @@ struct PlusOfferStep: View {
                 .scaleEffect(stops > i ? 1 : 0.5)
                 .padding(.bottom, 2)
             Text(title).font(PrintFont.bold(14)).foregroundStyle(Ink.ink)
-            Text(line).font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
-                .lineLimit(1).minimumScaleFactor(0.8)
+            Text(line).font(PrintFont.body(13, .semibold)).foregroundStyle(Self.softInk)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .multilineTextAlignment(align == .leading ? .leading : align == .trailing ? .trailing : .center)
         .opacity(stops > i ? 1 : 0)
@@ -303,7 +294,7 @@ struct PlusOfferStep: View {
 
     private func legal(_ text: String) -> some View {
         Text(text)
-            .font(PrintFont.body(11, .medium))
+            .font(PrintFont.body(12.5, .medium))
             .foregroundStyle(Self.softInk)
             .fixedSize(horizontal: false, vertical: true)
     }

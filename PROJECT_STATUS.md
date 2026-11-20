@@ -1,8 +1,8 @@
 # Project status
 
-## Session-done screen in Rive - 2026-11-20
+## Session-done screen - 2026-11-20
 
-- New full-screen Rive scene (`apps/rive/complete`) replaces the completion card and the streak screen after a session: ring closes around the brain, time lands, today fills, streak rolls over. Approved from a Rive render; wired through `SessionDoneView.swift`. Uncommitted, not compiled. Details in `HANDOFF.md`.
+- New session-done screen replaces the completion card and the streak screen: ring closes around the brain, time lands, today fills, streak rolls over. Designed and approved as a Rive render (`apps/rive/complete`); the Rive version shipped a free-plan splash screen, so it is rebuilt in pure SwiftUI (`SessionDoneView.swift`) and the Rive runtime is removed from the app. Uncommitted, not compiled. Details in `HANDOFF.md`.
 
 ## Rive animations - 2026-11-20
 

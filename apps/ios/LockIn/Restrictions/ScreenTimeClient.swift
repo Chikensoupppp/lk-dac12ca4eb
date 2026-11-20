@@ -69,6 +69,8 @@ final class SystemScreenTimeClient: ScreenTimeClient {
         store.shield.applicationCategories = selection.categoryTokens.isEmpty
             ? nil : .specific(selection.categoryTokens)
         store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+        // Every website too, so the browser is not a way around the locked apps.
+        store.shield.webDomainCategories = RestrictionNaming.blocksWeb(BrainLevel.shared) ? .all() : nil
     }
 
     func applyLock(_ on: Bool) {

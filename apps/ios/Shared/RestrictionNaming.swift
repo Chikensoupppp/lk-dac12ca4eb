@@ -8,6 +8,16 @@ enum RestrictionNaming {
     static let storeName = "lockin.focus"
     static let activityPrefix = "lockin.session."
 
+    /// "Block websites too": while apps are locked, every website in Safari and other browsers shows
+    /// the block screen as well, so a locked app can't just be opened in the browser instead. On
+    /// unless turned off in the Locked apps sheet. Kept in the app group so the monitor extension
+    /// (Plus "Lock by itself") applies the same rule.
+    static let blockWebKey = "lockin.blockWeb.v1"
+
+    static func blocksWeb(_ defaults: UserDefaults?) -> Bool {
+        defaults?.object(forKey: blockWebKey) as? Bool ?? true
+    }
+
     /// Apple's documented minimum Device Activity interval (`MonitoringError.intervalTooShort`).
     static let minimumMonitoringInterval: TimeInterval = 15 * 60
     /// The backup interval ends slightly after the session so rounding to whole seconds can

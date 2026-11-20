@@ -672,7 +672,8 @@ struct StackDaysStep: View {
             .scaledToFit()
             .frame(width: compactScreen ? 70 : 86)
             .rotationEffect(.degrees(brainIn ? -4 : -18))
-            .offset(y: brainIn ? (bob ? -3 : 3) : -260)
+            // Drops from just above the stack; from higher up it fell through the headline.
+            .offset(y: brainIn ? (bob ? -3 : 3) : -90)
             .scaleEffect(hop ? 1.12 : 1)
             .opacity(brainIn ? 1 : 0)
             .onTapGesture(perform: hopOnce)

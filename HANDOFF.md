@@ -303,7 +303,29 @@ Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved 
 
 > **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.
 
-## Session-done screen in Rive · 2026-11-20 (uncommitted, not compiled)
+## Session-done screen rebuilt in SwiftUI · 2026-11-20 (uncommitted, not compiled)
+
+The Rive version below (ff3bff4) built and passed CI, but its real simulator capture showed Rive's free-plan splash (a black screen with "RIVE") over the scene. Brandon chose "Rebuild in SwiftUI" over paying for Rive Cadet.
+
+- `SessionDoneView.swift` is now pure SwiftUI: same look, coordinates and beat timing as `apps/rive/complete` (kept as the design reference). Ring = `Circle().trim` with the honey gradient; burst = ten capsules scaled outward; brain = `BrainCanvas` (hop, then `.cheer`); streak number = `.contentTransition(.numericText)`; the spark follows a quadratic arc (`Arc` modifier); ground = white cream `#F6F3EC` with the onboarding `HalftoneField` dots (fadeStart 0.6), rippling when today fills and when the streak rolls (Brandon asked for the dots, 2026-11-20; preview `docs/design/session-done-dots.mp4`). Everything is placed on a 390 x 844 frame scaled by `s = min(w/390, h/844)`, top aligned; buttons sit in the safe area.
+- Removed from the app: the `Rive` package (both project specs back to their pre-Rive state), `Rive/RiveClip.swift`, `Resources/Rive/*.riv`. `StreakView.swift` and `CompletionCard.swift` are back to their pre-Rive versions (CompletionCard keeps the new `streakBefore`/`streakAfter` fields; it is no longer shown, `SessionDoneView` has no fallback). `apps/rive/` stays as source.
+- UI test ids kept: `completion-card`, `completion-minutes` (on the headline), `first-lock-in-stamp` (on the subline when it is the first ever session), `completion-keep`/`-change`/`-done`/`-nudge`.
+- Dots everywhere (Brandon, same day): `HalftoneField(fadeStart: -0.36)` so the dots cover the whole screen, not just the lower part.
+- NOT verified: compile, the look on a device (only the Rive render was approved; this port has not been rendered), haptic timing.
+
+## Block websites too + text clipping pass · 2026-11-20 (uncommitted, not compiled)
+
+- Brandon: "make it so it blocks the browser also on the phone whenever they lock in". Lock-ins now also shield every website (`store.shield.webDomainCategories = .all()`) in `ScreenTimeClient.applyShield` and in `LockInMonitor.applyAutoLock`, so Safari is not a way around locked apps. The existing SwipeLater block screen (`LockInShield`, web-domain configurations) shows for sites. Switch "Block websites too" in the Locked apps sheet (`RestrictionsSheet`), on by default, stored in the app group under `RestrictionNaming.blockWebKey`; it applies from the next lock-in. Trade-off: school or work sites in Safari are blocked too while locked in, unless the switch is off.
+- Clipping pass over all 43 screens the last CI run captured (iPhone 16, SE, 16 Pro Max, large text) plus a code scan for single-line text. Fixed: "Locked mode" truncated to "Locke…" on an SE at the largest text size (now wraps); the coach's faded minutes picker hid the picked length's number (fade now applied after `compositingGroup`, same for the task pill); the "Every session fills in a day" brain dropped through the headline (now drops from just above the stack). Seen but fine: typewriter coach bubbles and a rolling number captured mid-animation; the UI-test-only "Completion count" label.
+- NOT verified: compile; web shielding on a device (needs Family Controls on a real phone); screens no UI test visits were only checked in code.
+
+## Paywall text + time picker · 2026-11-20 (uncommitted, not compiled)
+
+- Paywall (`PlusOfferStep`): no longer scaled down to fit above the button (`scaleToFit` made it ~72% on an SE, "looks shrunken"); it shows at full size and scrolls when needed. Smallest sizes raised (feature lines 14, plan notes and timeline lines 13, badge 10, legal 12.5); timeline lines wrap instead of shrinking.
+- "When works for you?" (`WhenSteps`): the "--:--" placeholder (it drew as a row of little blocks in the compressed face) is now a faded 9:00 AM; +/- start from 9 AM instead of 4 PM; quick picks are 9 AM / 12 PM / 4 PM / 7 PM / 9 PM. Holding + or - repeats and speeds up (`RepeatStepButton`: one step on touch, then every 170 ms down to 45 ms). Nothing is picked for the user: the button still says PICK A TIME until they choose (the UI test relies on that).
+- NOT verified: compile, the feel of the hold-to-repeat on a device, how far the paywall scrolls on an SE with real prices.
+
+## Session-done screen in Rive · 2026-11-20 (superseded by the SwiftUI rebuild above)
 
 Brandon said the stamp/sticker version below "sucks" and asked for a very modern redo with Rive. He approved the render of a new full-screen scene and said "Wire it in". Design notes are in DESIGN.md ("Session done").
 
@@ -314,7 +336,9 @@ Brandon said the stamp/sticker version below "sucks" and asked for a very modern
 - `FocusView.swift`: the completion sheet is now a full-screen cover with `SessionDoneView`; `completeSession` records the streak before and after; the separate streak screen only shows when the completion screen is off (UI tests that ask for it).
 - `Streak.swift`: `StreakStore.around()` gives the seven day letters around today and whether the three days before were finished. `CompletionInfo` gained `streakBefore`/`streakAfter`.
 - Layout check (math, not rendered on device): the panel ends at 666 of 844 pt; the SwiftUI footer starts about 9 pt below it on iPhone SE and 6 pt below on the 13 mini. Tight but clear.
-- NOT verified: compile (needs CI), real device look, haptic timing, VoiceOver order, the trailing space in "locked in on " surviving data binding on device (it does in the authored default).
+- Pushed as ff3bff4. Native CI run 44799897303 passed (build, all UI tests, SE and Pro Max checks).
+- **BLOCKER, seen in that run's `completion-card` capture:** the free Rive plan draws a full-screen black "RIVE" splash over the scene (and over every .riv published from this account). Rive's pricing doc: Free = "Exports for runtime, with a Rive splash screen"; Cadet ($17/seat/mo or $108/seat/yr) = without it. Do not ship to TestFlight until Brandon upgrades and the four .riv files are re-published (`rive apps/rive/<name> --publish`, copy `build/<name>.riv` into `apps/ios/LockIn/Resources/Rive/`), or the scene is rebuilt in SwiftUI.
+- NOT verified: real device look, haptic timing, VoiceOver order, the trailing space in "locked in on " surviving data binding on device (it does in the authored default).
 
 ## Rive animations · 2026-11-20 (brain, stamp, streak wired into the iOS code; pushed e010502; TestFlight export built)
 

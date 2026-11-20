@@ -101,12 +101,12 @@ struct WhenPickStep: View {
         _weekdays = State(initialValue: plan.weekdays)
     }
 
-    /// The picked time; before a pick, the +/- buttons start from the middle of the afternoon.
-    private var minute: Int { picked ?? 16 * 60 }
+    /// The picked time; before a pick it shows (faded) and +/- start from 9 AM (Brandon, 2026-11-20).
+    private var minute: Int { picked ?? 9 * 60 }
 
     /// One tap to a starting point, then +/- for the exact time.
     private static let quick: [(minute: Int, label: String)] = [
-        (8 * 60, "8 AM"), (12 * 60, "12 PM"), (16 * 60, "4 PM"), (19 * 60, "7 PM"), (21 * 60, "9 PM")
+        (9 * 60, "9 AM"), (12 * 60, "12 PM"), (16 * 60, "4 PM"), (19 * 60, "7 PM"), (21 * 60, "9 PM")
     ]
 
     var body: some View {
@@ -132,15 +132,17 @@ struct WhenPickStep: View {
         return HStack {
             step("minus", by: -15)
             Spacer(minLength: 4)
+            // Before a pick: the 9 AM starting point, faded. (A "--:--" placeholder here drew as a row
+            // of little blocks in this compressed face.)
             HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text(picked == nil ? "--:--" : clock(minute)).font(PrintFont.head(64)).monospacedDigit()
+                Text(clock(minute)).font(PrintFont.head(64)).monospacedDigit()
                     .contentTransition(.numericText(value: Double(minute)))
-                    .opacity(picked == nil ? 0.25 : 1)
-                if picked != nil { Text(ampm(minute)).font(PrintFont.head(26)) }
+                Text(ampm(minute)).font(PrintFont.head(26))
             }
             .foregroundStyle(Ink.ink)
+            .opacity(picked == nil ? 0.3 : 1)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(picked == nil ? "No time picked" : DailyNudge.timeText(minute: minute))
+            .accessibilityLabel(picked == nil ? "No time picked yet. Starts from 9:00 AM" : DailyNudge.timeText(minute: minute))
             .accessibilityAdjustableAction { direction in
                 switch direction {
                 case .increment: shift(15)
@@ -159,17 +161,8 @@ struct WhenPickStep: View {
     }
 
     private func step(_ icon: String, by delta: Int) -> some View {
-        Button { shift(delta) } label: {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .heavy))
-                .foregroundStyle(Ink.ink)
-                .frame(width: 48, height: 48)
-                .background(Circle().fill(Color.white))
-                .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
-        }
-        .buttonStyle(.plain)
-        .sensoryFeedback(.selection, trigger: minute)
-        .accessibilityLabel(delta > 0 ? "Later" : "Earlier")
+        RepeatStepButton(icon: icon, label: delta > 0 ? "Later" : "Earlier") { shift(delta) }
+            .sensoryFeedback(.selection, trigger: minute)
     }
 
     private func shift(_ delta: Int) {
@@ -230,5 +223,60 @@ struct WhenPickStep: View {
     private func confirm() {
         done(TimeChoice(startMinute: minute, weekdays: weekdays, dayStarts: nil,
                         schedule: LockInSchedule(then: then)))
+    }
+}
+
+/// A round +/- button that keeps going while held: one step on touch, then after 0.4 s it repeats,
+/// faster and faster (170 ms down to 45 ms between steps), until the finger lifts. So 9 AM to
+/// 9 PM is a short hold, not 48 taps (Brandon, 2026-11-20).
+private struct RepeatStepButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+
+    @State private var pressed = false
+    @State private var repeater: Task<Void, Never>?
+
+    var body: some View {
+        Image(systemName: icon)
+            .font(.system(size: 20, weight: .heavy))
+            .foregroundStyle(Ink.ink)
+            .frame(width: 48, height: 48)
+            .background(Circle().fill(Color.white))
+            .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
+            .scaleEffect(pressed ? 0.92 : 1)
+            .animation(.easeOut(duration: 0.12), value: pressed)
+            .contentShape(Circle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        guard !pressed else { return }
+                        pressed = true
+                        action()
+                        repeater = Task { @MainActor in
+                            do {
+                                try await Task.sleep(for: .milliseconds(400))
+                                var gap = 170.0
+                                while !Task.isCancelled {
+                                    action()
+                                    try await Task.sleep(for: .milliseconds(Int(gap)))
+                                    gap = max(gap * 0.86, 45)
+                                }
+                            } catch {}
+                        }
+                    }
+                    .onEnded { _ in stop() }
+            )
+            .onDisappear(perform: stop)
+            .accessibilityElement()
+            .accessibilityLabel(label)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { action() }
+    }
+
+    private func stop() {
+        pressed = false
+        repeater?.cancel()
+        repeater = nil
     }
 }

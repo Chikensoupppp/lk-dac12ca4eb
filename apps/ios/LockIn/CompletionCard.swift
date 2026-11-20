@@ -27,25 +27,6 @@ struct CompletionCard: View {
 
     @State private var nudgeSet = false
     @State private var nudgeAsking = false
-    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-
-    // Rive clips play unless Reduce Motion is on or a build lacks the file; then the static art stays.
-    private var animated: Bool { !effectiveReduceMotion(systemReduceMotion) }
-    private var riveStamp: Bool { animated && info.firstEver && RiveClip.isBundled("stamp") }
-    private var riveBrain: Bool { animated && !info.firstEver && RiveClip.isBundled("brain") }
-
-    /// The top of the card: the stamp slams down on the first ever session, otherwise the brain cheers.
-    @ViewBuilder private var hero: some View {
-        // The clip fills what the card has to spare: tall phones get the big stamp, an iPhone SE
-        // shrinks it so the buttons stay on screen.
-        if riveStamp {
-            RiveStampView().frame(maxWidth: .infinity, minHeight: 120, maxHeight: 220)
-        } else if riveBrain {
-            RiveBrainCheer().frame(maxWidth: .infinity, minHeight: 100, maxHeight: 170)
-        } else {
-            BrainCanvas(stage: 0, expression: .cheer).frame(width: 110, height: 92)
-        }
-    }
 
     /// Optional: "Remind me tomorrow at 3:40 PM". Nothing is asked until it is tapped.
     @ViewBuilder private func nudgeRow(minute: Int) -> some View {
@@ -75,7 +56,8 @@ struct CompletionCard: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            hero
+            BrainCanvas(stage: 0, expression: .cheer)
+                .frame(width: 110, height: 92)
                 .accessibilityHidden(true)
             VStack(spacing: 6) {
                 if info.firstEver {
@@ -83,8 +65,6 @@ struct CompletionCard: View {
                         .font(PrintFont.mono(13, .heavy))
                         .tracking(2)
                         .foregroundStyle(Ink.blue)
-                        // With the Rive stamp there is no text stamp below, so this line carries the badge id.
-                        .accessibilityIdentifier(riveStamp ? "first-lock-in-stamp" : "first-lock-in-label")
                 }
                 Text("Focused \(focusedText)")
                     .font(PrintFont.head(48))
@@ -98,7 +78,7 @@ struct CompletionCard: View {
                         .foregroundStyle(Ink.soft)
                 }
             }
-            if info.firstEver, !riveStamp {
+            if info.firstEver {
                 Text("FIRST LOCK-IN · DAY 1")
                     .font(.caption.weight(.black))
                     .foregroundStyle(Ink.blue)

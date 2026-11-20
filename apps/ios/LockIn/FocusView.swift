@@ -327,6 +327,7 @@ struct FocusView: View {
                             if !isLocked {
                                 WorkTaskPill(tasks: tasks) { showTasks = true }
                                     .overlay(Capsule().strokeBorder(coachStep == .task ? FocusPaper.ink : .clear, lineWidth: 2))
+                                    .compositingGroup()
                                     .opacity(coachStep == nil || coachStep == .task ? 1 : 0.3)
                                     .disabled(coachStep != nil && coachStep != .task)
                             }
@@ -463,6 +464,8 @@ struct FocusView: View {
                 if coachStep == .minutes { coachStep = restrictions.hasSelection ? .goal : .apps; coachReward = "NICE!" }
             }
             .disabled(coachStep != nil && coachStep != .minutes)
+            // Flatten first: faded layer by layer, the picked length's white number vanished into its chip.
+            .compositingGroup()
             .opacity(coachStep == nil || coachStep == .minutes ? 1 : 0.3)
             .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(coachStep == .minutes ? FocusPaper.ink : .clear, lineWidth: 2))
             coachActions
@@ -835,6 +838,9 @@ struct FocusView: View {
                 Image(systemName: lockedNext ? "lock.fill" : "lock.open")
                 Text(lockedNext ? "Locked: no quitting" : "Locked mode")
                     .font(.footnote.weight(.medium))
+                    // At the largest text sizes on an SE it wraps instead of cutting to "Locke…".
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
                 if !plus.hasPlus {
                     Text("Plus").font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 2)
                         .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(FocusPaper.line))
