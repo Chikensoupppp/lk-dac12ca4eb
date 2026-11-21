@@ -29,6 +29,8 @@ struct FocusView: View {
     @State private var showQuit = false
     @State private var showLockedExit = false
     @State private var showKeys = false
+    /// A cheer or nudge from a partner, shown as a banner for a few seconds.
+    @State private var partnerNote: String?
     @State private var showPlusOffer = false
     @State private var showPC = false
     /// Looks for a Nogbox PC on the Wi-Fi while the phone is not paired ("Connect to ...").
@@ -395,7 +397,7 @@ struct FocusView: View {
             guard coachStep == .partner else { return }
             if !keys.holders.isEmpty { coachReward = "NICE!" }
             coachStep = stepAfterPartner
-        }) { KeysSheet(keys: keys) { showKeys = false } }
+        }) { KeysSheet(keys: keys, plus: plus) { showKeys = false } }
         .sheet(isPresented: $showPlusOffer, onDismiss: advanceAfterSession) { PlusOfferStep(plus: plus, intro: false) { showPlusOffer = false } }
         .sheet(isPresented: $showSchedule) {
             if let plan {
@@ -549,9 +551,11 @@ struct FocusView: View {
         .task(id: timing?.startedAt) {
             var round = 0
             while timing != nil, !Task.isCancelled {
-                for pause in await PartnerCloud.pendingPauses(keys: keys) {
+                let fromPartners = await PartnerCloud.pending(keys: keys)
+                for pause in fromPartners.pauses {
                     pc.partnerPause(appKey: pause.appKey, seconds: pause.seconds)
                 }
+                showPartnerNotes(fromPartners.notes)
                 // Heartbeat: the partner's screen calls an update older than 90 s stale, so resend
                 // every 30 s even when nothing changed.
                 if round % 3 == 0 { publishPartnerStatus() }
@@ -570,6 +574,7 @@ struct FocusView: View {
             updateBrainWatch()
             runProofCheck()
             checkKeyRequests()
+            checkPartnerNotes()
             if expiredOnLaunch {
                 expiredOnLaunch = false
                 store.clear()
@@ -591,6 +596,33 @@ struct FocusView: View {
             if let timing, let sessionID { pc.sessionStarted(SessionRecord(id: sessionID, timing: timing), extras: pcExtras) }
             LiveCountdown.reconcile(currentRecord, locked: QuitRules.isLocked(sessionID))
         }
+        .overlay(alignment: .top) {
+            if let partnerNote {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.2.fill").font(.system(size: 14, weight: .semibold))
+                    Text(partnerNote).font(.system(size: 15, weight: .semibold))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(FocusPaper.ink)
+                .padding(.horizontal, 16).padding(.vertical, 12)
+                .background(Capsule().fill(Color.white))
+                .overlay(Capsule().strokeBorder(FocusPaper.line, lineWidth: 1))
+                .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .onTapGesture { withAnimation { self.partnerNote = nil } }
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityIdentifier("partner-note")
+            }
+        }
+        .task(id: partnerNote) {
+            guard partnerNote != nil else { return }
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.3)) { partnerNote = nil }
+        }
+        .sensoryFeedback(.success, trigger: partnerNote) { _, new in new != nil }
         .sensoryFeedback(.impact(weight: .heavy), trigger: startCount)
         .sensoryFeedback(.warning, trigger: endEarlyCount)
         .sensoryFeedback(.success, trigger: completionCount)
@@ -615,6 +647,7 @@ struct FocusView: View {
                 coachStep = .caught
             }
             checkKeyRequests()
+            checkPartnerNotes()
             runProofCheck()
             checkReport()
             if let timing, timing.isFinished(at: .now) {
@@ -949,8 +982,38 @@ struct FocusView: View {
             endsAt: timing?.endsAt, duration: timing?.duration,
             app: shared ? a?.app : nil, appKey: shared ? a?.appKey : nil, title: shared ? a?.title : nil,
             pausedApp: shared ? a?.pausedApp : nil, pausedSecondsLeft: shared ? a?.pausedSecondsLeft : nil,
-            sharing: shared, sentAt: .now)
+            sharing: shared, sentAt: .now, week: partnerWeek())
         Task { await PartnerCloud.publish(status, keys: keys) }
+    }
+
+    /// This week for my partners' weekly card: minutes focused, the goal, the streak. Only
+    /// SwipeLater's own sessions (Apple keeps Screen Time numbers on the phone).
+    private func partnerWeek() -> PartnerWeek {
+        let now = Date.now
+        return PartnerWeek(minutes: FocusLog.week(of: now).minutes,
+                           goalMinutes: goals.goal(forWeekOf: now).map { $0 * 60 },
+                           streak: StreakStore.current(now: now))
+    }
+
+    /// Cheers and nudges my partners sent while I was away, and the push for the next ones. Also
+    /// refreshes the weekly card they see.
+    private func checkPartnerNotes() {
+        guard !keys.holders.isEmpty else { return }
+        Task {
+            await PartnerCloud.subscribeToNotes(keys: keys)
+            let fromPartners = await PartnerCloud.pending(keys: keys)
+            if timing != nil {
+                for pause in fromPartners.pauses { pc.partnerPause(appKey: pause.appKey, seconds: pause.seconds) }
+            }
+            showPartnerNotes(fromPartners.notes)
+            publishPartnerStatus()
+        }
+    }
+
+    /// The newest note as a banner at the top for a few seconds.
+    private func showPartnerNotes(_ notes: [(from: String, note: PartnerNote)]) {
+        guard let last = notes.last else { return }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { partnerNote = last.note.line(from: last.from) }
     }
 
     /// The "This week" row on the PC: this week's minutes per day (Monday first), the goal, the streak

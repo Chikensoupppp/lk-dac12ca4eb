@@ -57,9 +57,14 @@ private enum PInk {
 }
 
 /// Pair with a friend in person, see who can let you out (and whom you can let out), and let a friend out.
+/// Having a partner (someone who can let you out) is Plus; being someone's partner is free, so a
+/// friend never needs Plus to help (Brandon, 2026-11-20: "make the key a Plus feature").
 struct KeysSheet: View {
     @ObservedObject var keys: KeyStore
+    @ObservedObject var plus: PlusStore
     let done: () -> Void
+    @State private var showOffer = false
+    @State private var showPasscode = false
     @State private var pairRole: PairView.Role?
     @State private var helping = false
     @State private var watching: KeyPerson?
@@ -102,6 +107,16 @@ struct KeysSheet: View {
                             .foregroundStyle(PInk.ink)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 16)
+                        if !plus.hasPlus {
+                            HStack(spacing: 8) {
+                                PlusBadge()
+                                Text("Being someone\u{2019}s Key Holder is free. Getting one of your own is Plus.")
+                                    .font(PrintFont.body(14, .semibold))
+                                    .foregroundStyle(PInk.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(.top, 12)
+                        }
 
                         Button { startPairing(.holder) } label: { Text("PAIR A FRIEND") }
                             .buttonStyle(PrintButtonStyle())
@@ -138,6 +153,36 @@ struct KeysSheet: View {
                             step(3, bold: "They approve", rest: " \u{2014} you\u{2019}re out")
                         }
                         .padding(.top, 22)
+
+                        // Extra security (Plus): the partner locks Screen Time with a passcode.
+                        Button { if plus.hasPlus { showPasscode = true } else { showOffer = true } } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "lock.shield.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 40, height: 40)
+                                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Ink.blue))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        Text("Extra security").font(PrintFont.bold(17)).foregroundStyle(PInk.ink)
+                                        PlusBadge()
+                                    }
+                                    Text("Your partner locks Screen Time with a code, so you can\u{2019}t turn it off. iOS 26.4+.")
+                                        .font(PrintFont.body(13.5, .medium))
+                                        .foregroundStyle(PInk.soft)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 4)
+                                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(PInk.soft)
+                            }
+                            .padding(14)
+                            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.8)))
+                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(PInk.ink.opacity(0.15), lineWidth: 1.5))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 16)
+                        .accessibilityIdentifier("partner-passcode")
 
                         if !keys.friends.isEmpty {
                             sectionLabel("You can let out")
@@ -193,7 +238,9 @@ struct KeysSheet: View {
                 .ignoresSafeArea()
             }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(item: $pairRole) { role in PairView(keys: keys, role: role) }
+            .navigationDestination(item: $pairRole) { role in
+                PairView(keys: keys, role: role, hasPlus: plus.hasPlus) { showOffer = true }
+            }
             .navigationDestination(isPresented: $helping) { HelpNearbyView(keys: keys) }
             .navigationDestination(item: $watching) { person in
                 PartnerWatchView(keys: keys, person: person) { watching = nil }
@@ -213,6 +260,8 @@ struct KeysSheet: View {
             } message: {
                 Text("Your friend sees this name.")
             }
+            .sheet(isPresented: $showOffer) { PlusOfferStep(plus: plus, intro: false) { showOffer = false } }
+            .sheet(isPresented: $showPasscode) { PartnerPasscodeGuide { showPasscode = false } }
         }
         .preferredColorScheme(.light)
     }
@@ -304,11 +353,16 @@ private struct PairView: View {
     @StateObject private var link: NearbyLink
     @State private var role: Role
     @State private var saved = false
+    /// "They can let me out" (having a partner) needs Plus; "I can let them out" never does.
+    let hasPlus: Bool
+    let askPlus: () -> Void
 
     enum Role: Hashable { case holder, friend }
 
-    init(keys: KeyStore, role: Role = .holder) {
+    init(keys: KeyStore, role: Role = .holder, hasPlus: Bool, askPlus: @escaping () -> Void) {
         self.keys = keys
+        self.hasPlus = hasPlus
+        self.askPlus = askPlus
         _role = State(initialValue: role)
         _link = StateObject(wrappedValue: NearbyLink(card: keys.myCard))
     }
@@ -326,6 +380,8 @@ private struct PairView: View {
                 if let card = link.peerCard {
                     Text("Found \(card.name).").font(PrintFont.bold(24)).foregroundStyle(KInk.cream)
                     Button(saved ? "PAIRED" : (role == .holder ? "MAKE \(card.name.uppercased()) MY PARTNER" : "BE \(card.name.uppercased())\u{2019}S PARTNER")) {
+                        // Having a partner is Plus: without it, this opens the offer instead.
+                        if role == .holder && !hasPlus { askPlus(); return }
                         if role == .holder { keys.addHolder(card) } else { keys.addFriend(card) }
                         saved = true
                     }
@@ -555,7 +611,7 @@ struct RemoteAskView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 KTitle(text: "Ask from\nfar away.")
-                KBody(text: "They get a notification with your reason. If they say yes, your session ends 10 minutes later. No answer in 30 minutes means no.")
+                KBody(text: "They get a notification with your reason. If they say yes, your session ends right away. No answer in 30 minutes means no.")
                 if keys.holders.count > 1 {
                     Picker("Partner", selection: Binding(get: { holder?.id ?? "" }, set: { holderID = $0 })) {
                         ForEach(keys.holders) { Text($0.name).tag($0.id) }
@@ -571,17 +627,10 @@ struct RemoteAskView: View {
                     Button("SEND TO \((holder?.name ?? "").uppercased())") { send() }
                         .buttonStyle(PrintButtonStyle(fill: KInk.green, text: KInk.bg))
                         .disabled(reason.trimmingCharacters(in: .whitespaces).isEmpty || holder == nil)
-                } else if let approvedAt {
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        let left = max(0, Int(QuitRules.remoteCoolDown - context.date.timeIntervalSince(approvedAt)))
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("\(holder?.name ?? "They") said yes.").font(PrintFont.bold(22)).foregroundStyle(KInk.green)
-                            Text(String(format: "Ends in %d:%02d", left / 60, left % 60))
-                                .font(PrintFont.head(56)).monospacedDigit().foregroundStyle(KInk.cream)
-                            KBody(text: "Still in the zone? You can keep going.")
-                        }
-                        .onChange(of: left) { _, now in if now == 0 { onApproved() } }
-                    }
+                } else if approvedAt != nil {
+                    // A yes ends the session right away (Brandon, 2026-11-20; it used to wait 10 minutes).
+                    Text("\(holder?.name ?? "They") said yes. You\u{2019}re out.")
+                        .font(PrintFont.bold(22)).foregroundStyle(KInk.green)
                 } else {
                     HStack(spacing: 10) {
                         ProgressView().tint(KInk.green)
@@ -622,6 +671,7 @@ struct RemoteAskView: View {
             if let answer = try? await RemoteKeys.answer(for: ask.requestID) {
                 if approved(answer, for: ask, by: holder) {
                     approvedAt = .now
+                    onApproved()
                 } else {
                     message = "\(holder.name) said no. Keep going."
                     self.ask = nil

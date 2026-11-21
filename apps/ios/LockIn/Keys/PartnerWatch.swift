@@ -1,5 +1,7 @@
 import CloudKit
+import UIKit
 import SwiftUI
+import UserNotifications
 
 /// What a partner may see of someone in a lock-in. Sealed to each partner, so only they can read it.
 /// The PC fills `app`, `appKey`, `title` and the pause fields. Sharing on the PC is always on; if no
@@ -16,13 +18,40 @@ struct PartnerStatus: Codable, Equatable {
     var pausedSecondsLeft: Int?
     var sharing: Bool
     var sentAt: Date
+    /// This week so far, from SwipeLater's own sessions (never Screen Time numbers, which Apple keeps
+    /// on the phone). Optional so older updates still read.
+    var week: PartnerWeek? = nil
+}
+
+/// The weekly card a partner sees: minutes focused this week, the weekly goal and the streak.
+struct PartnerWeek: Codable, Equatable {
+    var minutes: Int
+    var goalMinutes: Int?
+    var streak: Int
+}
+
+/// A short message from a partner (Brandon, 2026-11-20): a cheer during a lock-in, or a nudge to
+/// start one. Sent as a PartnerCommand (sealed "note|cheer" / "note|nudge"), so no new record type.
+enum PartnerNote: String {
+    case cheer, nudge
+
+    func line(from name: String) -> String {
+        switch self {
+        case .cheer: return "\(name): Keep going, you\u{2019}ve got this."
+        case .nudge: return "\(name) thinks it\u{2019}s time to lock in."
+        }
+    }
+
+    /// Fewest seconds between two of these to the same person, so nobody gets spammed.
+    var spacing: TimeInterval { self == .cheer ? 5 * 60 : 30 * 60 }
 }
 
 /// The partner link through iCloud (CloudKit public database), like `RemoteKeys`: no Nogbox server.
 /// - PartnerStatus: written by the person in a lock-in for each partner. Fields: ownerID, holderID,
 ///   payload (sealed PartnerStatus), signature, updatedAt.
 /// - PartnerCommand: written by the partner to pause an app on the other person's PC. Fields:
-///   commandID, ownerID, holderID, payload (sealed "appKey|seconds"), signature, createdAt.
+///   commandID, ownerID, holderID, payload (sealed "appKey|seconds", or "note|cheer" / "note|nudge"),
+///   signature, createdAt.
 /// Both record types must exist in the production schema (see HANDOFF).
 enum PartnerCloud {
     private static var db: CKDatabase { CKContainer(identifier: RemoteKeys.containerID).publicCloudDatabase }
@@ -76,8 +105,19 @@ enum PartnerCloud {
 
     @MainActor
     static func sendPause(to owner: KeyPerson, appKey: String, seconds: Int, keys: KeyStore) async -> Bool {
+        await sendCommand("\(appKey)|\(seconds)", to: owner, keys: keys)
+    }
+
+    /// A cheer or a nudge to the person I hold the key for.
+    @MainActor
+    static func sendNote(_ note: PartnerNote, to owner: KeyPerson, keys: KeyStore) async -> Bool {
+        await sendCommand("note|\(note.rawValue)", to: owner, keys: keys)
+    }
+
+    @MainActor
+    private static func sendCommand(_ text: String, to owner: KeyPerson, keys: KeyStore) async -> Bool {
         let id = UUID().uuidString
-        guard let sealed = KeyStore.seal("\(appKey)|\(seconds)", to: owner) else { return false }
+        guard let sealed = KeyStore.seal(text, to: owner) else { return false }
         let payload = sealed.base64EncodedString()
         let record = CKRecord(recordType: "PartnerCommand", recordID: CKRecord.ID(recordName: "pc-\(id)"))
         record["commandID"] = id
@@ -89,16 +129,18 @@ enum PartnerCloud {
         return (try? await db.save(record)) != nil
     }
 
-    /// Pause requests from my partners in the last two minutes that I have not handled yet. Each one is
-    /// checked against its sender's signature and opened on this phone only.
+    /// What my partners sent that I have not handled yet: pauses from the last two minutes (older ones
+    /// are dropped), and cheers and nudges from the last 12 hours. Each one is checked against its
+    /// sender's signature and opened on this phone only.
     @MainActor
-    static func pendingPauses(keys: KeyStore) async -> [(appKey: String, seconds: Int)] {
-        guard !keys.holders.isEmpty else { return [] }
-        let since = Date.now.addingTimeInterval(-120)
+    static func pending(keys: KeyStore) async -> (pauses: [(appKey: String, seconds: Int)], notes: [(from: String, note: PartnerNote)]) {
+        guard !keys.holders.isEmpty else { return ([], []) }
+        let since = Date.now.addingTimeInterval(-12 * 3600)
         let predicate = NSPredicate(format: "ownerID == %@ AND createdAt > %@", keys.myID, since as NSDate)
-        guard let (results, _) = try? await db.records(matching: CKQuery(recordType: "PartnerCommand", predicate: predicate), resultsLimit: 10) else { return [] }
+        guard let (results, _) = try? await db.records(matching: CKQuery(recordType: "PartnerCommand", predicate: predicate), resultsLimit: 20) else { return ([], []) }
         var seen = Set(UserDefaults.standard.stringArray(forKey: seenKey) ?? [])
-        var out: [(appKey: String, seconds: Int)] = []
+        var pauses: [(appKey: String, seconds: Int)] = []
+        var notes: [(from: String, note: PartnerNote)] = []
         for (_, result) in results {
             guard let r = try? result.get(), let id = r["commandID"] as? String, !seen.contains(id),
                   let holderID = r["holderID"] as? String, let holder = keys.holders.first(where: { $0.id == holderID }),
@@ -108,10 +150,36 @@ enum PartnerCloud {
                   let sealed = Data(base64Encoded: payload), let text = keys.open(sealed) else { continue }
             seen.insert(id)
             let parts = text.split(separator: "|", maxSplits: 1).map(String.init)
-            if parts.count == 2, let seconds = Int(parts[1]) { out.append((appKey: parts[0], seconds: min(max(seconds, 60), 3600))) }
+            guard parts.count == 2 else { continue }
+            if parts[0] == "note" {
+                if let note = PartnerNote(rawValue: parts[1]) { notes.append((from: holder.name, note: note)) }
+            } else if let seconds = Int(parts[1]),
+                      let created = r["createdAt"] as? Date, Date.now.timeIntervalSince(created) < 120 {
+                pauses.append((appKey: parts[0], seconds: min(max(seconds, 60), 3600)))
+            }
         }
         UserDefaults.standard.set(Array(seen.suffix(50)), forKey: seenKey)
-        return out
+        return (pauses, notes)
+    }
+
+    /// Lets iCloud push "your partner checked in" to this phone when a partner sends a cheer, a nudge
+    /// or a pause. The push can't say which (the message is sealed); the app shows it when opened.
+    @MainActor
+    static func subscribeToNotes(keys: KeyStore) async {
+        guard !keys.holders.isEmpty else { return }
+        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+        guard granted else { return }
+        UIApplication.shared.registerForRemoteNotifications()
+        let id = "lockin.notes.\(keys.myID)"
+        if (try? await db.subscription(for: id)) != nil { return }
+        let sub = CKQuerySubscription(recordType: "PartnerCommand", predicate: NSPredicate(format: "ownerID == %@", keys.myID),
+                                      subscriptionID: id, options: [.firesOnRecordCreation])
+        let info = CKSubscription.NotificationInfo()
+        info.title = "Your partner checked in"
+        info.alertBody = "Open SwipeLater to see it."
+        info.soundName = "default"
+        sub.notificationInfo = info
+        _ = try? await db.save(sub)
     }
 }
 
@@ -136,6 +204,8 @@ struct PartnerWatchView: View {
     @State private var minutes = 15
     @State private var sending = false
     @State private var sent: String?
+    @State private var noteSent: String?
+    @State private var sendingNote = false
 
     private let top = Color(hex: 0xFFFAF1), bottom = Color(hex: 0xF8EAD5)
     private let ink = FocusPaper.ink, soft = FocusPaper.secondary
@@ -156,6 +226,8 @@ struct PartnerWatchView: View {
                     header.padding(.top, 8)
                     TimelineView(.periodic(from: .now, by: 1)) { context in ring(now: context.date) }
                         .padding(.top, 16)
+                    noteButton.padding(.top, 18)
+                    weekCard.padding(.top, 18)
                     pcCard.padding(.top, 18)
                     Spacer(minLength: 24)
                 }
@@ -241,6 +313,86 @@ struct PartnerWatchView: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(live ? "\(person.name) has \(SessionTiming.display(seconds: left)) left" : "\(person.name) is not in a lock-in")
+    }
+
+    // MARK: Cheer, nudge, this week
+
+    /// While they're locked in: a cheer. Otherwise: a nudge to start. One tap sends a fixed line (no
+    /// free text), spaced out so nobody gets spammed (`PartnerNote.spacing`).
+    @ViewBuilder private var noteButton: some View {
+        if loaded {
+            let note: PartnerNote = fresh.map { $0.state != "free" } == true ? .cheer : .nudge
+            let wait = noteWait(note)
+            VStack(alignment: .leading, spacing: 8) {
+                Button {
+                    sendingNote = true
+                    Task {
+                        let ok = await PartnerCloud.sendNote(note, to: person, keys: keys)
+                        if ok { UserDefaults.standard.set(Date.now, forKey: noteKey(note)) }
+                        noteSent = ok ? (note == .cheer ? "Cheer sent." : "Nudge sent.") : "Could not send. Check iCloud."
+                        sendingNote = false
+                    }
+                } label: {
+                    Label(note == .cheer ? "Send a cheer" : "Nudge \(person.name) to lock in",
+                          systemImage: note == .cheer ? "hands.clap.fill" : "bell.badge.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color(hex: 0xFFFAF1))
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(Capsule().fill(Color(hex: 0x3D2B1A)))
+                }
+                .buttonStyle(.plain)
+                .disabled(sendingNote || wait > 0)
+                .opacity(sendingNote || wait > 0 ? 0.5 : 1)
+                .accessibilityIdentifier(note == .cheer ? "partner-cheer" : "partner-nudge")
+                if let noteSent {
+                    Text(noteSent).font(.system(size: 14)).foregroundStyle(soft)
+                } else if wait > 0 {
+                    Text("You can send another in \(Int((wait / 60).rounded(.up))) min.")
+                        .font(.system(size: 14)).foregroundStyle(soft)
+                }
+            }
+        }
+    }
+
+    private func noteKey(_ note: PartnerNote) -> String { "lockin.partner.note.\(note.rawValue).\(person.id)" }
+
+    /// Seconds until another note of this kind may go to this person.
+    private func noteWait(_ note: PartnerNote) -> TimeInterval {
+        guard let last = UserDefaults.standard.object(forKey: noteKey(note)) as? Date else { return 0 }
+        return max(0, note.spacing - Date.now.timeIntervalSince(last))
+    }
+
+    /// Their week from their own sessions: minutes focused, the goal, the streak. Shown from the last
+    /// update even when they're not locked in right now.
+    @ViewBuilder private var weekCard: some View {
+        if let week = status?.week {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("THIS WEEK").font(.system(size: 12, weight: .semibold)).tracking(2.6).foregroundStyle(FocusPaper.amber)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(Self.hours(week.minutes)).font(.system(size: 34, weight: .bold)).foregroundStyle(ink).monospacedDigit()
+                    Text("focused").font(.system(size: 16)).foregroundStyle(soft)
+                }
+                if let goal = week.goalMinutes, goal > 0 {
+                    ProgressView(value: min(Double(week.minutes) / Double(goal), 1))
+                        .tint(FocusPaper.amber)
+                    Text(week.minutes >= goal ? "Weekly goal of \(Self.hours(goal)) met" : "Goal: \(Self.hours(goal))")
+                        .font(.system(size: 15)).foregroundStyle(soft)
+                }
+                if week.streak > 0 {
+                    Text("\(week.streak)-day streak").font(.system(size: 15, weight: .semibold)).foregroundStyle(ink)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .background(RoundedRectangle(cornerRadius: 22).fill(card))
+            .overlay(RoundedRectangle(cornerRadius: 22).stroke(border, lineWidth: 1.5))
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    /// "4h 50m", "45m".
+    private static func hours(_ minutes: Int) -> String {
+        minutes >= 60 ? "\(minutes / 60)h \(minutes % 60)m" : "\(minutes)m"
     }
 
     @ViewBuilder private var pcCard: some View {

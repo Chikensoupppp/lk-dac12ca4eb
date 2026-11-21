@@ -7,8 +7,6 @@ import Foundation
 /// remote ask through iCloud) or one emergency exit a week with a 15-minute watched wait.
 enum QuitRules {
     static let emergencyWait: TimeInterval = 15 * 60
-    /// After a Key Holder says yes from far away, the session ends after this cool-down.
-    static let remoteCoolDown: TimeInterval = 10 * 60
     /// A remote ask nobody answers expires after this.
     static let remoteTimeout: TimeInterval = 30 * 60
 

@@ -65,6 +65,8 @@ struct PlusOfferStep: View {
                             title: "A friend holds the key", line: "They end it early. Or 1 emergency exit a week.")
                     feature(2, symbol: "calendar", color: Ink.red, glyph: .white,
                             title: "Every week, saved", line: "Your whole history, not just 3 weeks.")
+                    feature(3, symbol: "lock.shield.fill", color: Ink.blue, glyph: .white,
+                            title: "Extra security", line: "Your partner locks Screen Time with a code, so you can\u{2019}t turn it off. iOS 26.4+.")
                 }
                 if plus.isPlus {
                     Text("You have Plus. Thank you.")
@@ -347,7 +349,7 @@ struct PlusOfferStep: View {
     private func play() async {
         if intro { UserDefaults.standard.set(true, forKey: "lockin.plusOffered.v1") }
         if effectiveReduceMotion(systemReduceMotion) {
-            cardIn = true; stamped = true; rows = 3; plansIn = true; stops = 3
+            cardIn = true; stamped = true; rows = 4; plansIn = true; stops = 3
             return
         }
         guard await printPause(0.15) else { return }
@@ -356,7 +358,7 @@ struct PlusOfferStep: View {
         withAnimation(.spring(response: 0.26, dampingFraction: 0.5)) { stamped = true }
         guard await printPause(0.15) else { return }
         withAnimation(.easeInOut(duration: 0.8)) { shine = true }
-        for i in 1...3 {
+        for i in 1...4 {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) { rows = i }
             guard await printPause(0.15) else { return }
         }

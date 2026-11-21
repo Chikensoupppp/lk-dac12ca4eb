@@ -303,6 +303,22 @@ Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved 
 
 > **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.
 
+## Extra security: partner locks Screen Time (Plus) · 2026-11-20 (uncommitted, not compiled)
+
+- Brandon: Plus users get guided to have their accountability partner set a Screen Time passcode on their phone, so they can't turn Screen Time off; needs iOS 26.4 or later (his requirement, not checked against Apple docs here). New `Keys/PartnerPasscodeGuide.swift`: iOS check (`#available(iOS 26.4, *)`, shows the phone's version and how to update), five steps in Settings > Screen Time > Lock Screen Time Settings, partner types the code. SwipeLater never sets or reads the code (Apple's). Entry: "Extra security" card (PLUS) in the partner sheet; without Plus it opens the offer. Plus offer lists it as a 4th feature. Local website lists it under Plus.
+
+## Partner: cheer, nudge, weekly card; a yes ends it right away · 2026-11-20 (uncommitted, not compiled)
+
+- A Key Holder's remote yes now ends the session at once (`QuitRules.remoteCoolDown` removed; `RemoteAskView` calls `onApproved()` on the yes). Texts on the ask and quit screens say "right away".
+- Cheer / nudge (`PartnerNote` in `Keys/PartnerWatch.swift`): the partner's screen (`PartnerWatchView`) shows "Send a cheer" while the person is locked in, else "Nudge <name> to lock in". Fixed lines only, no free text; at most one cheer per 5 min and one nudge per 30 min per person. They travel as `PartnerCommand` records with a sealed "note|cheer" / "note|nudge" payload, so no new CloudKit record type or field. `PartnerCloud.pending` (replaces `pendingPauses`) returns pauses (last 2 min, as before) and notes (last 12 h). The person's phone subscribes to `PartnerCommand` where ownerID == me (push: "Your partner checked in. Open SwipeLater to see it."; the push can't name it, the payload is sealed) and shows the note as a banner on the Focus screen (`partnerNote`, 5 s) on open, on return and every 10 s in a session.
+- Weekly card: `PartnerStatus.week` (`PartnerWeek`: minutes this week, goal, streak) from SwipeLater's own sessions only, never Screen Time numbers. Sent with every status update and on open; the partner sees "THIS WEEK" with a goal bar and the streak.
+- NOT verified: compile; anything over real iCloud (two phones, production CloudKit). The CloudKit subscription on `PartnerCommand.ownerID` needs that field queryable in production (HANDOFF says it is).
+
+## Key Holder is Plus · 2026-11-20 (uncommitted, not compiled)
+
+- Brandon: "make it so key is a pro feature like partner". In pairing (`KeyViews.PairView`), "They can let me out" (having a partner / Key Holder) needs Plus: without it the confirm button opens the Plus offer. "I can let them out" (being someone's partner) stays free, so the friend never needs Plus. `KeysSheet` takes `plus` and shows "PLUS · Being someone's Key Holder is free. Getting one of your own is Plus." Partners paired before stay.
+- Website (local `swipelater-site/index.html`, not published): Key Holder moved from the free column to Plus; FAQ updated.
+
 ## End of the intro fixed + two PC slides · 2026-11-20 (uncommitted, not compiled; Brandon: "dont push, fix it first")
 
 - Time slide (`WhenSteps.ThenInfoCards`; the schedule sheet keeps the selectable `ThenCards`): "Remind me" (FREE) and "Lock by itself" (PLUS) are shown, not picked. The schedule is saved as a reminder, and `OnboardingFlow.finish` makes it the auto lock when the user has Plus at the end (bought on the offer slide or already had it).
