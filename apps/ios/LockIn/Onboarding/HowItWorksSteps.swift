@@ -605,9 +605,10 @@ struct LaterStep: View {
                 } else {
                     HStack(spacing: -4) {
                         ForEach(gone, id: \.self) { i in
-                            Circle().fill(Self.notes[i].tile)
-                                .overlay(Circle().strokeBorder(Ink.paper, lineWidth: 1.5))
-                                .frame(width: 14, height: 14)
+                            // The waiting pings' own icons, small and overlapping.
+                            AppKindIcon(kind: Self.notes[i].kind, size: 16)
+                                .overlay(RoundedRectangle(cornerRadius: 3.6, style: .continuous)
+                                    .strokeBorder(Ink.sun, lineWidth: 1.5))
                                 .transition(.scale.combined(with: .opacity))
                         }
                         Text("waiting").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Ink.ink.opacity(0.75))
