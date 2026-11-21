@@ -81,7 +81,7 @@ private struct DocLines: View {
     }
 }
 
-/// The video standing in for a distraction: a thumbnail in the video app's red (`AppKindIcon.video`)
+/// The video standing in for a distraction: a thumbnail in the video icon's teal (`AppKindIcon.video`)
 /// with a play button, so it reads as "a video" at a glance.
 private struct VideoThumb: View {
     var body: some View {

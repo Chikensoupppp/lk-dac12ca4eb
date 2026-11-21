@@ -58,7 +58,7 @@ The pink brain sits inside the dial above the time. Use the bundled `BrainExact`
 ## Stand-in app icons (2026-11-20)
 - Anywhere the app shows apps that aren't the user's own (slide 5 pings, "What pulls you in?", the PC
   slides, the last slide's websites tile): `AppKindIcon`, an iOS-style squircle in that kind's usual
-  colors with one white symbol (video red play, social pink heart, games purple controller, chat blue
+  colors with one white symbol (video teal play (not red: red with a white play is YouTube's look), social pink heart, games purple controller, chat blue
   bubbles, shopping orange bag, news grey paper, web blue globe). Brandon: letter tiles were hard to get.
   Never a real app's logo or look. The user's own apps are always Apple's real icons (`Label(token)`).
 

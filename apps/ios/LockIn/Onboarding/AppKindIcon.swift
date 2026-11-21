@@ -51,10 +51,12 @@ extension AppKindIcon.Kind {
         }
     }
 
-    /// Top to bottom. Strong enough to read as app icons, a touch softer than neon.
+    /// Top to bottom. Strong enough to read as app icons, a touch softer than neon. Video is teal on
+    /// purpose: a white play triangle on red is YouTube's look, which a stand-in must not copy
+    /// (Brandon, 2026-11-20: "change youtube logo").
     var colors: [Color] {
         switch self {
-        case .video: return [Color(hex: 0xF0564E), Color(hex: 0xC92F2A)]
+        case .video: return [Color(hex: 0x33BFAE), Color(hex: 0x16897C)]
         case .social: return [Color(hex: 0xF4719B), Color(hex: 0xD63C78)]
         case .games: return [Color(hex: 0x9873F0), Color(hex: 0x6544C9)]
         case .chat: return [Color(hex: 0x4FA7F2), Color(hex: 0x2B76D2)]
