@@ -1,0 +1,96 @@
+<!doctype html><meta charset=utf-8>
+<!-- Preview of the partner screens in Apple's style (2026-11-21), drawn like the SwiftUI (402x874 pt):
+     1 KeysSheet  2 PartnerPasscodeGuide  3 PartnerWatchView (cheer + this week)  4 Focus screen banner.
+     Inter stands in for SF Pro. Example names and numbers. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=block" rel="stylesheet">
+<style>
+:root{--paper:#E7E8E3;--ink:#1B1B1B;--sec:rgba(27,27,27,.55);--blue:#3255A4;--sun:#FFB511;--hair:rgba(27,27,27,.14)}
+*{margin:0;box-sizing:border-box}
+body{display:flex;gap:28px;padding:28px;background:#CFCFC9;font-family:Inter,system-ui;color:var(--ink);width:max-content;-webkit-font-smoothing:antialiased}
+.ph{position:relative;width:402px;height:874px;border-radius:44px;overflow:hidden;background:var(--paper);box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.status{height:54px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 34px 6px 42px;font:600 17px Inter}
+.island{position:absolute;top:11px;left:50%;width:124px;height:36px;margin-left:-62px;border-radius:20px;background:#000}
+.c{padding:0 20px}
+.done{display:flex;justify-content:flex-end;height:44px;align-items:center;font:600 17px Inter;color:var(--blue)}
+.lt{font:700 34px/1.1 Inter;letter-spacing:-.9px}
+.sub{font:400 17px/1.35 Inter;color:var(--sec);margin-top:6px}
+.btn{height:50px;border-radius:14px;background:var(--ink);color:#fff;font:600 17px/50px Inter;text-align:center}
+.pill{font:700 11px Inter;letter-spacing:.4px;padding:2px 7px;border-radius:20px;background:var(--sun)}
+.sec{font:400 13px Inter;color:var(--sec);padding:0 16px 7px;text-transform:uppercase}
+.card{background:#fff;border-radius:16px}
+.row{display:flex;gap:12px;align-items:center;padding:10px 16px}
+.hr{height:.5px;background:var(--hair);margin-left:68px}
+.av{width:40px;height:40px;border-radius:50%;background:rgba(27,27,27,.08);display:grid;place-items:center;flex:none;font:600 17px Inter}
+.num{width:40px;height:28px;border-radius:14px;background:rgba(50,85,164,.12);color:var(--blue);font:600 15px/28px Inter;text-align:center;flex:none}
+.foot{font:400 13px/1.35 Inter;color:var(--sec);padding:0 4px}
+</style>
+<body>
+<!-- 1 partner sheet -->
+<div class=ph><div class=island></div><div class=status><span>9:41</span><span style="font-size:13px;letter-spacing:2px">●●● ▮</span></div>
+<div class=c><div class=done>Done</div>
+<div class=lt>Accountability Partner</div>
+<div class=sub>A friend who can let you out of a lock-in.</div>
+<div class=btn style="margin-top:22px">Pair a Friend</div>
+<div class=foot style="display:flex;gap:8px;align-items:baseline;margin-top:10px"><span class=pill style="color:var(--ink)">PLUS</span><span>Being someone’s Key Holder is free. Getting one of your own is Plus.</span></div>
+<div class=sec style="margin-top:28px">Your partner</div>
+<div class=card><div class=row><div class=av style="color:var(--sec)"><svg width=20 height=20 viewBox="0 0 24 24" fill="currentColor"><circle cx=10 cy=8 r=3.6 /><path d="M3 19.5c.8-3.6 3.6-5.4 7-5.4 1.2 0 2.3.2 3.3.7" stroke="currentColor" stroke-width=0 /><path d="M3 19.6c.8-3.6 3.6-5.4 7-5.4 1.4 0 2.6.3 3.7.9a6 6 0 0 0-.9 4.5z"/><path d="M19 13v6M16 16h6" stroke="currentColor" stroke-width=2 stroke-linecap=round /></svg></div>
+ <div style="flex:1"><div style="font:600 17px Inter">Nobody yet</div><div style="font:400 15px Inter;color:var(--sec)">Pair in person, one tap each</div></div><span style="font:400 17px Inter;color:var(--blue)">Invite</span></div></div>
+<div class=sec style="margin-top:26px">How it works</div>
+<div class=card>
+ <div class=row style="padding:13px 16px"><span class=num>1</span><span style="font:400 17px Inter"><b style="font-weight:600">Pair in person</b><span style="color:var(--sec)">, one tap each</span></span></div><div class=hr></div>
+ <div class=row style="padding:13px 16px"><span class=num>2</span><span style="font:400 17px Inter"><b style="font-weight:600">Ask</b><span style="color:var(--sec)"> from the lock screen</span></span></div><div class=hr></div>
+ <div class=row style="padding:13px 16px"><span class=num>3</span><span style="font:400 17px Inter"><b style="font-weight:600">They approve</b><span style="color:var(--sec)"> and you’re out</span></span></div></div>
+<div class=sec style="margin-top:26px">Extra security</div>
+<div class=card><div class=row style="padding:12px 16px">
+ <div style="width:30px;height:30px;border-radius:7px;background:var(--blue);display:grid;place-items:center;flex:none"><svg width=17 height=17 viewBox="0 0 24 24"><path d="M12 2.5l8 3.2v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z" fill="#fff"/><rect x=8.7 y=11 width=6.6 height=5.4 rx=1.2 fill="#3255A4"/><path d="M10 11V9.6a2 2 0 0 1 4 0V11" fill=none stroke="#3255A4" stroke-width=1.6 /></svg></div>
+ <div style="flex:1"><div style="display:flex;gap:6px;align-items:center"><span style="font:400 17px Inter">Lock Screen Time</span><span class=pill>PLUS</span></div>
+ <div style="font:400 13px/1.35 Inter;color:var(--sec);margin-top:2px">Your partner sets a code, so you can’t turn Screen Time off. iOS 26.4 or later.</div></div>
+ <span style="color:rgba(27,27,27,.3);font:600 18px Inter">›</span></div></div>
+<div class=foot style="margin-top:14px">One partner at a time. You can unpair without asking them.</div>
+</div></div>
+
+<!-- 2 guide -->
+<div class=ph><div class=island></div><div class=status><span>9:41</span><span style="font-size:13px;letter-spacing:2px">●●● ▮</span></div>
+<div class=c><div class=done>Done</div>
+<div style="width:72px;height:72px;border-radius:17px;background:var(--blue);margin:6px auto 0;display:grid;place-items:center"><svg width=40 height=40 viewBox="0 0 24 24"><path d="M12 2.5l8 3.2v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z" fill="#fff"/><rect x=8.7 y=11 width=6.6 height=5.4 rx=1.2 fill="#3255A4"/><path d="M10 11V9.6a2 2 0 0 1 4 0V11" fill=none stroke="#3255A4" stroke-width=1.6 /></svg></div>
+<div style="font:700 28px/1.15 Inter;letter-spacing:-.6px;text-align:center;margin-top:16px">Let Your Partner Lock Screen Time</div>
+<div class=sub style="text-align:center;margin-top:8px;padding:0 8px">They set a Screen Time passcode on your iPhone that only they know. Then you can’t switch Screen Time off to get around SwipeLater.</div>
+<div class=card style="margin-top:24px"><div class=row style="padding:12px 16px"><svg width=28 height=28 viewBox="0 0 24 24"><circle cx=12 cy=12 r=11 fill="#2F9E55"/><path d="M7 12.5l3.3 3.3L17 9" fill=none stroke="#fff" stroke-width=2.4 stroke-linecap=round stroke-linejoin=round /></svg>
+ <div><div style="font:600 17px Inter">This iPhone is ready</div><div style="font:400 15px Inter;color:var(--sec)">iOS 26.4</div></div></div></div>
+<div class=sec style="margin-top:24px">How to set it up</div>
+<div class=card>
+
+ <div class=row style="padding:12px 16px;align-items:baseline"><span class=num style="width:28px">1</span><span style="font:400 17px/1.3 Inter">Open <b style="font-weight:600">Settings</b> and tap <b style="font-weight:600">Screen Time</b>.</span></div><div class=hr style="margin-left:56px"></div>
+ <div class=row style="padding:12px 16px;align-items:baseline"><span class=num style="width:28px">2</span><span style="font:400 17px/1.3 Inter">Tap <b style="font-weight:600">Lock Screen Time Settings</b>.</span></div><div class=hr style="margin-left:56px"></div>
+ <div class=row style="padding:12px 16px;align-items:baseline"><span class=num style="width:28px">3</span><span style="font:400 17px/1.3 Inter">Hand your iPhone to your partner. <b style="font-weight:600">They</b> enter a 4-digit code. Don’t watch.</span></div><div class=hr style="margin-left:56px"></div>
+ <div class=row style="padding:12px 16px;align-items:baseline"><span class=num style="width:28px">4</span><span style="font:400 17px/1.3 Inter">If it asks for an Apple Account to reset the code, your partner can use theirs, or tap <b style="font-weight:600">Cancel</b>.</span></div><div class=hr style="margin-left:56px"></div>
+ <div class=row style="padding:12px 16px;align-items:baseline"><span class=num style="width:28px">5</span><span style="font:400 17px/1.3 Inter">That’s it. Turning off Screen Time now needs their code.</span></div></div>
+<div class=foot style="margin-top:8px;padding:0 16px">SwipeLater never sees or stores this code. To change it later, ask your partner.</div>
+</div></div>
+
+<!-- 3 partner's screen -->
+<div class=ph><div class=island></div><div class=status><span>9:41</span><span style="font-size:13px;letter-spacing:2px">●●● ▮</span></div>
+<div class=c><div class=done>Done</div>
+<div style="display:flex;gap:12px;align-items:center;margin-top:8px"><div class=av style="width:44px;height:44px;font-size:18px;font-weight:700">J</div><div><div style="font:700 28px Inter;letter-spacing:-.6px">Jason</div><div style="font:400 16px Inter;color:var(--sec)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--blue);margin-right:8px"></span>Locked in</div></div></div>
+<div style="position:relative;width:250px;height:250px;margin:16px auto 0;border-radius:50%;background:conic-gradient(var(--blue) 0 62%, rgba(27,27,27,.1) 62% 100%);display:grid;place-items:center">
+ <div style="position:absolute;inset:8px;border-radius:50%;background:var(--paper)"></div>
+ <div style="position:relative;text-align:center"><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" style="width:88px"><div style="font:700 50px Inter;letter-spacing:-1.5px">27:41</div><div style="font:400 15px Inter;color:var(--sec)">left of 45 min</div></div></div>
+<div class=btn style="margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px"><svg width=20 height=20 viewBox="0 0 24 24" fill="#fff"><path d="M7.5 21c-2.6 0-4.5-2-4.5-4.6V11a1.4 1.4 0 0 1 2.8 0v2.2l5.5-7.4a1.4 1.4 0 0 1 2.3 1.6l-2.4 3.4 4.7-6.200a1.4 1.4 0 0 1 2.300 1.600l-3.600 5 3.700-4.500a1.300 1.300 0 0 1 2 1.700l-5.800 8.200C13.200 20 10.600 21 7.500 21z"/></svg>Send a cheer</div>
+<div class=card style="margin-top:18px;padding:16px">
+ <div style="font:400 13px Inter;color:var(--sec)">THIS WEEK</div>
+ <div style="margin-top:8px"><span style="font:700 34px Inter;letter-spacing:-.8px">3h 20m</span> <span style="font:400 17px Inter;color:var(--sec)">focused</span></div>
+ <div style="height:4px;border-radius:2px;background:rgba(27,27,27,.1);margin-top:10px"><div style="width:83%;height:4px;border-radius:2px;background:var(--blue)"></div></div>
+ <div style="font:400 15px Inter;color:var(--sec);margin-top:8px">Goal: 4h 0m</div>
+ <div style="font:600 15px Inter;margin-top:8px">4-day streak</div></div>
+</div></div>
+
+<!-- 4 person's focus screen with banner -->
+<div class=ph style="background:#F6F3EC"><div class=island></div><div class=status><span>9:41</span><span style="font-size:13px;letter-spacing:2px">●●● ▮</span></div>
+<div style="position:absolute;top:60px;left:10px;right:10px;padding:12px;border-radius:22px;background:rgba(250,250,250,.86);backdrop-filter:blur(20px);box-shadow:0 8px 16px rgba(0,0,0,.14);display:flex;gap:12px;align-items:center;z-index:2">
+ <div style="width:38px;height:38px;border-radius:9px;background:#fff;display:grid;place-items:center;flex:none"><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" style="width:30px"></div>
+ <div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 15px Inter">Sam</span><span style="font:400 13px Inter;color:var(--sec)">now</span></div><div style="font:400 15px Inter">Keep going, you’ve got this.</div></div></div>
+<div class=c style="padding-top:86px"><div style="font:800 30px Inter;letter-spacing:-1px">SwipeLater.</div><div style="font:600 12px Inter;color:#888;letter-spacing:1px">STUDYING</div>
+<div style="position:relative;width:300px;height:300px;margin:36px auto 0;border-radius:50%;border:8px solid #3255A4;display:grid;place-items:center"><div style="text-align:center"><img src="../../apps/ios/BrainArt/Assets.xcassets/BrainExact.imageset/BrainExact.png" style="width:90px"><div style="font:700 64px Inter;letter-spacing:-2px">27:41</div><div style="font:500 16px Inter;color:#777">Ends 4:45 PM</div></div></div>
+<div style="margin-top:110px;height:56px;border-radius:16px;border:1.5px solid #C4C6BD;display:grid;place-items:center;font:600 17px Inter">END SESSION</div></div></div>
+<script>document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => i.onload = i.onerror = r)))).then(() => window.ready = true)</script>
+</body>

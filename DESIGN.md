@@ -55,6 +55,14 @@ The pink brain sits inside the dial above the time. Use the bundled `BrainExact`
   "That's 152 days a year." in grey, and a light "Most used" card (real app icons, thin bars, top 3).
   No receipt, stamp, pickups, outlined compressed type or slide tag. Preview: docs/design/reveal-apple.png.
 
+## Partner screens (2026-11-21, Apple style)
+- Brandon: "make it more Apple design like". The accountability partner sheet, the Extra security guide
+  and the partner's live screen use plain SF type, a large title, white grouped cards on the app's
+  paper with small grey capitals above each group, Settings-style rows (30 pt icon tile, chevron),
+  text buttons in the blue tint, and one filled black button (14 pt corners, 50 pt tall). No compressed
+  headlines, mono labels, ink borders or grain there. A partner's cheer shows as an iOS-style
+  notification banner (frosted, app mark, name, line, "now"). The print look stays in the intro.
+
 ## Stand-in app icons (2026-11-20)
 - Anywhere the app shows apps that aren't the user's own (slide 5 pings, "What pulls you in?", the PC
   slides, the last slide's websites tile): `AppKindIcon`, an iOS-style squircle in that kind's usual

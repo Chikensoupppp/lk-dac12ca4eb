@@ -47,7 +47,7 @@ for tracking):
 | Purchases | Purchase History | RevenueCat checks that a Plus purchase is active (random app user ID, no name). Purposes: App Functionality, **Analytics** (a "plus_purchased" event goes to PostHog). |
 | Identifiers | User ID | The random RevenueCat app user ID, the random partner IDs in iCloud, and PostHog's random install ID. Purposes: App Functionality, **Analytics**. |
 | Usage Data | Product Interaction | PostHog events: app opens, first-run slides and answers, how many apps were picked (count only), sessions started/finished/ended early. Purpose: **Analytics**. |
-| User Content | Other User Content | The session status sent to a paired partner (locked/break/free, end time, the PC app in front), encrypted for the partner's phone. |
+| User Content | Other User Content | What a paired partner sees, encrypted for the partner's phone: the session status (locked/break/free, end time, the PC app in front), this week's focus minutes, weekly goal and streak from SwipeLater's own sessions, and a partner's fixed cheer or nudge. |
 Not collected: name or other contact info, location, contacts, health, browsing history, search
 history, diagnostics, Screen Time numbers (Apple keeps them on the device; the app
 cannot read them). Remote unlock requests carry no name since build 99: the partner's phone shows

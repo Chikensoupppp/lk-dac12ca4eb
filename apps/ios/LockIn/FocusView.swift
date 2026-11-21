@@ -30,7 +30,7 @@ struct FocusView: View {
     @State private var showLockedExit = false
     @State private var showKeys = false
     /// A cheer or nudge from a partner, shown as a banner for a few seconds.
-    @State private var partnerNote: String?
+    @State private var partnerNote: PartnerBanner?
     @State private var showPlusOffer = false
     @State private var showPC = false
     /// Looks for a Nogbox PC on the Wi-Fi while the phone is not paired ("Connect to ...").
@@ -598,18 +598,29 @@ struct FocusView: View {
         }
         .overlay(alignment: .top) {
             if let partnerNote {
-                HStack(spacing: 10) {
-                    Image(systemName: "person.2.fill").font(.system(size: 14, weight: .semibold))
-                    Text(partnerNote).font(.system(size: 15, weight: .semibold))
-                        .fixedSize(horizontal: false, vertical: true)
+                // Like an iOS notification: the app's mark, who it's from, the line, on frosted material.
+                HStack(spacing: 12) {
+                    Image("BrainExact").resizable().scaledToFit().padding(5)
+                        .frame(width: 38, height: 38)
+                        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.white))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(partnerNote.title).font(.system(size: 15, weight: .semibold))
+                            Spacer(minLength: 8)
+                            Text("now").font(.system(size: 13)).foregroundStyle(.secondary)
+                        }
+                        Text(partnerNote.body).font(.system(size: 15))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .foregroundStyle(FocusPaper.ink)
-                .padding(.horizontal, 16).padding(.vertical, 12)
-                .background(Capsule().fill(Color.white))
-                .overlay(Capsule().strokeBorder(FocusPaper.line, lineWidth: 1))
-                .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
+                .padding(12)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .shadow(color: .black.opacity(0.14), radius: 16, y: 8)
+                .padding(.horizontal, 10)
+                .padding(.top, 6)
+                .accessibilityElement(children: .combine)
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .onTapGesture { withAnimation { self.partnerNote = nil } }
                 .accessibilityAddTraits(.isStaticText)
@@ -1013,7 +1024,9 @@ struct FocusView: View {
     /// The newest note as a banner at the top for a few seconds.
     private func showPartnerNotes(_ notes: [(from: String, note: PartnerNote)]) {
         guard let last = notes.last else { return }
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { partnerNote = last.note.line(from: last.from) }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            partnerNote = PartnerBanner(title: last.from, body: last.note.text)
+        }
     }
 
     /// The "This week" row on the PC: this week's minutes per day (Monday first), the goal, the streak

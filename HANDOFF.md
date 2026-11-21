@@ -303,6 +303,10 @@ Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved 
 
 > **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.
 
+## Partner screens restyled Apple-style · 2026-11-21 (uncommitted, not compiled)
+
+- `KeysSheet` (KeyViews.swift), `PartnerPasscodeGuide`, `PartnerWatchView` and the Focus screen's partner banner (`PartnerBanner`: title + body) redone in Apple's style; see DESIGN.md "Partner screens". `PlusPill` is the small Plus tag there. Pairing, asking and the pending-ask card keep their older look. Preview: `docs/design/partner-features.html` / `.png` (HTML, not SwiftUI).
+
 ## Extra security: partner locks Screen Time (Plus) · 2026-11-20 (uncommitted, not compiled)
 
 - Brandon: Plus users get guided to have their accountability partner set a Screen Time passcode on their phone, so they can't turn Screen Time off; needs iOS 26.4 or later (his requirement, not checked against Apple docs here). New `Keys/PartnerPasscodeGuide.swift`: iOS check (`#available(iOS 26.4, *)`, shows the phone's version and how to update), five steps in Settings > Screen Time > Lock Screen Time Settings, partner types the code. SwipeLater never sets or reads the code (Apple's). Entry: "Extra security" card (PLUS) in the partner sheet; without Plus it opens the offer. Plus offer lists it as a 4th feature. Local website lists it under Plus.

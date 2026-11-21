@@ -30,15 +30,22 @@ struct PartnerWeek: Codable, Equatable {
     var streak: Int
 }
 
+/// A partner's note as the banner shows it: who it's from, and the line.
+struct PartnerBanner: Equatable {
+    let title: String
+    let body: String
+}
+
 /// A short message from a partner (Brandon, 2026-11-20): a cheer during a lock-in, or a nudge to
 /// start one. Sent as a PartnerCommand (sealed "note|cheer" / "note|nudge"), so no new record type.
 enum PartnerNote: String {
     case cheer, nudge
 
-    func line(from name: String) -> String {
+    /// The line under the sender's name in the banner.
+    var text: String {
         switch self {
-        case .cheer: return "\(name): Keep going, you\u{2019}ve got this."
-        case .nudge: return "\(name) thinks it\u{2019}s time to lock in."
+        case .cheer: return "Keep going, you\u{2019}ve got this."
+        case .nudge: return "Time to lock in?"
         }
     }
 
@@ -207,21 +214,22 @@ struct PartnerWatchView: View {
     @State private var noteSent: String?
     @State private var sendingNote = false
 
-    private let top = Color(hex: 0xFFFAF1), bottom = Color(hex: 0xF8EAD5)
-    private let ink = FocusPaper.ink, soft = FocusPaper.secondary
-    private let card = Color(hex: 0xFFFCF6), border = Color(hex: 0xEAD9BF)
+    // Apple-style (2026-11-21): the app's paper as a grouped background, white cards, a blue tint.
+    private let ground = Ink.paper
+    private let ink = Ink.ink, soft = Ink.ink.opacity(0.55)
+    private let card = Color.white, hairline = Ink.ink.opacity(0.14)
+    private let tint = Ink.blue
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [top, bottom], startPoint: .top, endPoint: .bottom).ignoresSafeArea()
+            ground.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         Spacer()
                         Button("Done", action: onDone)
-                            .font(.system(size: 17)).foregroundStyle(ink)
-                            .padding(.horizontal, 20).frame(minHeight: 44)
-                            .overlay(Capsule().stroke(border, lineWidth: 2))
+                            .font(.system(size: 17, weight: .semibold)).foregroundStyle(tint)
+                            .frame(minWidth: 44, minHeight: 44)
                     }
                     header.padding(.top, 8)
                     TimelineView(.periodic(from: .now, by: 1)) { context in ring(now: context.date) }
@@ -231,7 +239,7 @@ struct PartnerWatchView: View {
                     pcCard.padding(.top, 18)
                     Spacer(minLength: 24)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
             }
             .scrollBounceBehavior(.basedOnSize)
         }
@@ -264,12 +272,12 @@ struct PartnerWatchView: View {
         HStack(spacing: 12) {
             Text(String(person.name.prefix(1)).uppercased())
                 .font(.system(size: 18, weight: .bold)).foregroundStyle(ink)
-                .frame(width: 44, height: 44).background(Circle().fill(Color(hex: 0xF1E3CC)))
+                .frame(width: 44, height: 44).background(Circle().fill(ink.opacity(0.08)))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(person.name).font(.system(size: 24, weight: .bold)).foregroundStyle(ink)
+                Text(person.name).font(.system(size: 28, weight: .bold)).tracking(-0.3).foregroundStyle(ink)
                 HStack(spacing: 8) {
-                    Circle().fill(fresh?.state == "locked" ? FocusPaper.amber : Color(hex: 0xB9B09F)).frame(width: 9, height: 9)
+                    Circle().fill(fresh?.state == "locked" ? tint : ink.opacity(0.25)).frame(width: 9, height: 9)
                     Text(line).font(.system(size: 16)).foregroundStyle(soft)
                 }
             }
@@ -284,9 +292,9 @@ struct PartnerWatchView: View {
         let fraction = live && (s?.duration ?? 0) > 0 ? min(Double(left) / (s?.duration ?? 1), 1) : 0
         let total = Int(((s?.duration ?? 0) / 60).rounded())
         return ZStack {
-            Circle().stroke(FocusPaper.line, lineWidth: 6)
+            Circle().stroke(ink.opacity(0.1), lineWidth: 8)
             Circle().trim(from: 0, to: fraction)
-                .stroke(FocusPaper.amber, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                .stroke(tint, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Canvas { ctx, size in
                 let c = CGPoint(x: size.width / 2, y: size.height / 2), r = size.width / 2
@@ -296,7 +304,7 @@ struct PartnerWatchView: View {
                     var p = Path()
                     p.move(to: CGPoint(x: c.x + sin(a) * r1, y: c.y - cos(a) * r1))
                     p.addLine(to: CGPoint(x: c.x + sin(a) * r2, y: c.y - cos(a) * r2))
-                    ctx.stroke(p, with: .color(big ? FocusPaper.secondary : Color(hex: 0xB9B2A4)), lineWidth: big ? 1.6 : 1.1)
+                    ctx.stroke(p, with: .color(Ink.ink.opacity(big ? 0.45 : 0.2)), lineWidth: big ? 1.6 : 1.1)
                 }
             }
             VStack(spacing: 4) {
@@ -305,7 +313,7 @@ struct PartnerWatchView: View {
                 Text(live ? SessionTiming.display(seconds: left) : "Resting")
                     .font(.system(size: live ? 54 : 34, weight: .bold)).foregroundStyle(ink).monospacedDigit()
                 if live && total > 0 {
-                    Text("LEFT OF \(total)").font(.system(size: 13, weight: .semibold)).tracking(2).foregroundStyle(soft)
+                    Text("left of \(total) min").font(.system(size: 15)).foregroundStyle(soft)
                 }
             }
         }
@@ -335,20 +343,20 @@ struct PartnerWatchView: View {
                 } label: {
                     Label(note == .cheer ? "Send a cheer" : "Nudge \(person.name) to lock in",
                           systemImage: note == .cheer ? "hands.clap.fill" : "bell.badge.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(hex: 0xFFFAF1))
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(Capsule().fill(Color(hex: 0x3D2B1A)))
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(ink))
                 }
                 .buttonStyle(.plain)
                 .disabled(sendingNote || wait > 0)
                 .opacity(sendingNote || wait > 0 ? 0.5 : 1)
                 .accessibilityIdentifier(note == .cheer ? "partner-cheer" : "partner-nudge")
                 if let noteSent {
-                    Text(noteSent).font(.system(size: 14)).foregroundStyle(soft)
+                    Text(noteSent).font(.system(size: 13)).foregroundStyle(soft).padding(.horizontal, 4)
                 } else if wait > 0 {
                     Text("You can send another in \(Int((wait / 60).rounded(.up))) min.")
-                        .font(.system(size: 14)).foregroundStyle(soft)
+                        .font(.system(size: 13)).foregroundStyle(soft).padding(.horizontal, 4)
                 }
             }
         }
@@ -367,14 +375,14 @@ struct PartnerWatchView: View {
     @ViewBuilder private var weekCard: some View {
         if let week = status?.week {
             VStack(alignment: .leading, spacing: 10) {
-                Text("THIS WEEK").font(.system(size: 12, weight: .semibold)).tracking(2.6).foregroundStyle(FocusPaper.amber)
+                Text("THIS WEEK").font(.system(size: 13)).foregroundStyle(soft)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(Self.hours(week.minutes)).font(.system(size: 34, weight: .bold)).foregroundStyle(ink).monospacedDigit()
-                    Text("focused").font(.system(size: 16)).foregroundStyle(soft)
+                    Text(Self.hours(week.minutes)).font(.system(size: 34, weight: .bold)).tracking(-0.5).foregroundStyle(ink).monospacedDigit()
+                    Text("focused").font(.system(size: 17)).foregroundStyle(soft)
                 }
                 if let goal = week.goalMinutes, goal > 0 {
                     ProgressView(value: min(Double(week.minutes) / Double(goal), 1))
-                        .tint(FocusPaper.amber)
+                        .tint(tint)
                     Text(week.minutes >= goal ? "Weekly goal of \(Self.hours(goal)) met" : "Goal: \(Self.hours(goal))")
                         .font(.system(size: 15)).foregroundStyle(soft)
                 }
@@ -383,9 +391,8 @@ struct PartnerWatchView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
-            .background(RoundedRectangle(cornerRadius: 22).fill(card))
-            .overlay(RoundedRectangle(cornerRadius: 22).stroke(border, lineWidth: 1.5))
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(card))
             .accessibilityElement(children: .combine)
         }
     }
@@ -398,7 +405,7 @@ struct PartnerWatchView: View {
     @ViewBuilder private var pcCard: some View {
         if let s = fresh, s.state != "free" {
             VStack(alignment: .leading, spacing: 10) {
-                Text("ON THEIR PC").font(.system(size: 12, weight: .semibold)).tracking(2.6).foregroundStyle(FocusPaper.amber)
+                Text("ON THEIR PC").font(.system(size: 13)).foregroundStyle(soft)
                 if !s.sharing {
                     Text("\(person.name) has no PC connected.")
                         .font(.system(size: 17)).foregroundStyle(soft)
@@ -411,9 +418,8 @@ struct PartnerWatchView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
-            .background(RoundedRectangle(cornerRadius: 22).fill(card))
-            .overlay(RoundedRectangle(cornerRadius: 22).stroke(border, lineWidth: 1.5))
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(card))
         } else if loaded {
             Text(status == nil ? "\(person.name)'s phone sends an update while they are locked in." : "You will see them here when they lock in.")
                 .font(.system(size: 16)).foregroundStyle(soft)
@@ -423,16 +429,15 @@ struct PartnerWatchView: View {
     @ViewBuilder private func pauseControls(_ s: PartnerStatus) -> some View {
         if let paused = s.pausedApp, let left = s.pausedSecondsLeft, left > 0 {
             Text("\(paused) is paused for \(left / 60):\(String(format: "%02d", left % 60))")
-                .font(.system(size: 17, weight: .semibold)).foregroundStyle(FocusPaper.amber).padding(.top, 6)
+                .font(.system(size: 17, weight: .semibold)).foregroundStyle(tint).padding(.top, 6)
         } else if let key = s.appKey, s.state == "locked" {
             HStack(spacing: 8) {
                 ForEach([5, 15, 60], id: \.self) { m in
                     Button { minutes = m } label: {
                         Text(m == 60 ? "1 hour" : "\(m) min").font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(minutes == m ? Color(hex: 0xFFFAF1) : soft)
+                            .foregroundStyle(minutes == m ? Color.white : ink)
                             .frame(maxWidth: .infinity, minHeight: 44)
-                            .background(RoundedRectangle(cornerRadius: 14).fill(minutes == m ? Color(hex: 0x3D2B1A) : Color.clear))
-                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(minutes == m ? Color.clear : border, lineWidth: 1.5))
+                            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(minutes == m ? ink : ink.opacity(0.06)))
                     }
                     .buttonStyle(.plain)
                 }
@@ -446,10 +451,10 @@ struct PartnerWatchView: View {
                     sending = false
                 }
             } label: {
-                Text("PAUSE \((s.app ?? "THIS").uppercased())").font(.system(size: 15, weight: .medium)).tracking(2.4)
-                    .foregroundStyle(Color(hex: 0xFFFAF1))
-                    .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(Capsule().fill(Color(hex: 0x3D2B1A)))
+                Text("Pause \(s.app ?? "This")").font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(ink))
             }
             .buttonStyle(.plain).disabled(sending).opacity(sending ? 0.6 : 1)
             .accessibilityIdentifier("partner-pause")
