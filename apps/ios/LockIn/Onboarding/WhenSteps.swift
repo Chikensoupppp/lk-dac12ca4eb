@@ -40,7 +40,7 @@ struct PlusBadge: View {
     }
 }
 
-/// "Remind me" (free) or "Lock by itself" (Plus).
+/// "Remind me" (free) or "Lock by itself" (Plus), picked in the schedule sheet (`ScheduleSheet`).
 struct ThenCards: View {
     @Binding var then: LockInSchedule.Then
     let minute: Int
@@ -84,6 +84,60 @@ struct ThenCards: View {
     }
 }
 
+/// The same two ways on the intro's time slide, shown, not picked (Brandon, 2026-11-20: "not
+/// clickable, just to show"; the paywall comes at the end). Free users get the nudge; having Plus at
+/// the end turns on the auto lock (`OnboardingFlow.finish`).
+struct ThenInfoCards: View {
+    let minute: Int
+    var perDay = false
+
+    var body: some View {
+        let at = perDay ? "your time" : clock(minute)
+        HStack(alignment: .top, spacing: 12) {
+            card(icon: "bell.fill", title: "Remind me", line: "A nudge at \(at). You start it.", plus: false)
+            card(icon: "lock.fill", title: "Lock by itself", line: "Your apps lock at \(at) on their own.", plus: true)
+        }
+        .padding(.top, 2)
+    }
+
+    private func card(icon: String, title: String, line: String, plus: Bool) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(plus ? Ink.ink : Color.white)
+                    .frame(width: 34, height: 34)
+                    .background(Circle().fill(plus ? Ink.sun : Ink.blue))
+                Spacer(minLength: 4)
+                if plus { PlusBadge() } else { FreeBadge() }
+            }
+            Text(title).font(PrintFont.bold(17)).padding(.top, 8)
+            Text(line).font(PrintFont.body(12.5, .medium)).opacity(0.8)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(Ink.ink)
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+        .background(shape.fill(Color.white.opacity(0.75)))
+        .overlay(shape.strokeBorder(Ink.ink.opacity(0.14), lineWidth: 1.5))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(plus ? "with Plus" : "free"). \(line)")
+    }
+}
+
+/// The free counterpart of `PlusBadge`.
+struct FreeBadge: View {
+    var body: some View {
+        Text("FREE")
+            .font(PrintFont.mono(10, .bold)).tracking(1)
+            .foregroundStyle(Ink.ink)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2))
+            .accessibilityLabel("Free")
+    }
+}
+
 // MARK: When works for you?
 
 struct WhenPickStep: View {
@@ -93,7 +147,6 @@ struct WhenPickStep: View {
     /// Nothing until the user picks: no time is chosen for them.
     @State private var picked: Int?
     @State private var weekdays: Set<Int>
-    @State private var then: LockInSchedule.Then = .remind
 
     init(plan: LockInPlan, done: @escaping (TimeChoice) -> Void) {
         self.plan = plan
@@ -110,7 +163,7 @@ struct WhenPickStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "Your time", title: "When works\nfor you?", titleSize: 48,
+        PrintScaffold(step: 12, tag: "Your time", title: "When works\nfor you?", titleSize: 48,
                       primaryTitle: picked == nil ? "PICK A TIME" : "SET \(clock(minute)) \(ampm(minute))",
                       primaryEnabled: picked != nil && !weekdays.isEmpty,
                       primaryAction: confirm) {
@@ -120,7 +173,7 @@ struct WhenPickStep: View {
                 dayStamps
                 if picked != nil {
                     Text("AND THEN?").font(PrintFont.mono(11, .bold)).tracking(1.4).foregroundStyle(WhenInk.soft)
-                    ThenCards(then: $then, minute: minute)
+                    ThenInfoCards(minute: minute)
                 }
             }
             .animation(.spring(response: 0.4, dampingFraction: 0.85), value: picked == nil)
@@ -221,8 +274,9 @@ struct WhenPickStep: View {
     }
 
     private func confirm() {
+        // A reminder for now; `OnboardingFlow.finish` makes it the auto lock if Plus was bought at the end.
         done(TimeChoice(startMinute: minute, weekdays: weekdays, dayStarts: nil,
-                        schedule: LockInSchedule(then: then)))
+                        schedule: LockInSchedule(then: .remind)))
     }
 }
 

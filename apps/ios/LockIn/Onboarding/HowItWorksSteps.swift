@@ -1,3 +1,5 @@
+import FamilyControls
+import ManagedSettings
 import SwiftUI
 
 // Three "how it works" slides between the goals and the plan (mock: docs/design/how-it-works-v2.html).
@@ -126,12 +128,15 @@ private var compactScreen: Bool { UIScreen.main.bounds.height < 700 }
 
 /// The intro's last slide: the real "slide to lock in" control, with the brain as the knob. It
 /// follows the finger 1:1, and a flick counts too. A tap also locks it (VoiceOver, UI tests). Sliding
-/// starts the first session for real (the plan's minutes): after a beat to see LOCKED IN, the intro
-/// closes on the running session. NEXT stays for VoiceOver.
+/// starts the first session for real, the one the plan made a few slides back (its task and minutes),
+/// over the apps the user picked: after a beat to see LOCKED IN, the intro closes on the running
+/// session. "Not now" ends the intro without starting it. NEXT stays for VoiceOver.
 struct SlideToLockStep: View {
+    @ObservedObject var restrictions: RestrictionController
     let next: () -> Void
-    /// The session length from the plan made a few slides back.
-    private let minutes = PlanStore.load()?.minutes ?? 25
+    let notNow: () -> Void
+    /// The plan made a few slides back: its session length, what the time is for, sessions a day.
+    private let plan = PlanStore.load()
     @State private var x: CGFloat = 0
     @State private var locked = false
     @State private var lockedAt: Date?
@@ -147,9 +152,11 @@ struct SlideToLockStep: View {
         // No NEXT: the slider sits where it was and moves on by itself. VoiceOver gets a Next after.
         PrintScaffold(step: OnboardingFlow.stepCount, tag: "Start", title: "Slide to start\nyour first\nsession.",
                       primaryView: AnyView(track.padding(.bottom, 6)),
-                      secondaryTitle: voiceOver && locked ? "Next" : nil, secondaryAction: next,
+                      secondaryTitle: locked ? (voiceOver ? "Next" : nil) : "Not now",
+                      secondaryAction: locked ? next : notNow,
                       backdrop: AnyView(HalftoneField(fadeStart: 0.55, ripples: ripples))) {
-            SessionPreview(minutes: minutes, locked: locked, lockedAt: lockedAt)
+            SessionPreview(minutes: plan?.minutes ?? 25, task: plan?.task, sessionsPerDay: plan?.sessionsPerDay ?? 1,
+                           restrictions: restrictions, locked: locked, lockedAt: lockedAt)
                 .padding(.top, 6)
         }
         .sensoryFeedback(.success, trigger: locked)
@@ -256,33 +263,40 @@ struct SlideToLockStep: View {
     }
 }
 
-/// What sliding starts, so the space above the slider shows the session (mock:
-/// docs/design/slides-4-7-v2.html, slide 6): READY 25:00, then LOCKED IN with the clock running,
-/// the ring starting, and the apps that wait getting a lock one by one.
+/// What sliding starts, so the space above the slider shows the session: the plan's first session
+/// (its task and minutes, and when it would end), and the apps the user picked, drawn by Apple from the
+/// Screen Time picks, each getting a lock when it starts. Nothing made up (Brandon, 2026-11-20).
 private struct SessionPreview: View {
     let minutes: Int
+    let task: String?
+    let sessionsPerDay: Int
+    @ObservedObject var restrictions: RestrictionController
     let locked: Bool
     let lockedAt: Date?
 
     private var length: TimeInterval { TimeInterval(minutes * 60) }
-    private static let apps: [(letter: String, color: Color)] = [("S", Ink.blue), ("V", Ink.red), ("G", Color(hex: 0xE9A300)), ("C", Ink.ink)]
+    private static let soft = Color(hex: 0x45473F)
+    private static let maxIcons = 5
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let left = remaining(at: context.date)
+            let ends = (lockedAt ?? context.date).addingTimeInterval(length)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(locked ? "LOCKED IN" : "READY")
                             .font(PrintFont.mono(11, .bold)).tracking(1.4)
-                            .foregroundStyle(locked ? Ink.blue : Color(hex: 0x45473F))
+                            .foregroundStyle(locked ? Ink.blue : Self.soft)
                         Text(clock(left))
                             .font(PrintFont.head(64))
                             .monospacedDigit()
                             .foregroundStyle(Ink.ink)
                             .contentTransition(.numericText(countsDown: true))
-                        Text("Your first session").font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
+                        Text(task.map { "\($0), session 1" } ?? "Your first session")
+                            .font(PrintFont.bold(17)).foregroundStyle(Ink.ink)
+                            .lineLimit(1).minimumScaleFactor(0.8)
                     }
                     Spacer(minLength: 8)
                     ZStack {
@@ -295,39 +309,24 @@ private struct SessionPreview: View {
                     .frame(width: 84, height: 84)
                 }
                 HStack(spacing: 6) {
-                    chip("1 break \u{00B7} 5 min")
-                    chip("Pings go to Later")
+                    chip("Ends \(ends.formatted(date: .omitted, time: .shortened))")
+                    if sessionsPerDay > 1 { chip("1 of \(sessionsPerDay) today") }
                 }
                 .padding(.top, 14)
-                Text("THESE WAIT TILL YOU\u{2019}RE DONE")
+                Text(hasApps ? "THESE WAIT TILL YOU\u{2019}RE DONE" : "NO APPS PICKED YET")
                     .font(PrintFont.mono(11, .bold)).tracking(1.4)
-                    .foregroundStyle(Color(hex: 0x45473F))
+                    .foregroundStyle(Self.soft)
                     .padding(.top, 14)
-                HStack(spacing: 16) {
-                    ForEach(Array(Self.apps.enumerated()), id: \.offset) { i, app in
-                        Text(app.letter)
-                            .font(.system(size: 18, weight: .heavy))
-                            .foregroundStyle(.white)
-                            .frame(width: 50, height: 50)
-                            .background(RoundedRectangle(cornerRadius: 15, style: .continuous).fill(app.color))
-                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Ink.ink, lineWidth: 2))
-                            .saturation(locked ? 0.15 : 1)
-                            .opacity(locked ? 0.75 : 1)
-                            .overlay(alignment: .bottomTrailing) {
-                                Image(systemName: "lock.fill")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 24, height: 24)
-                                    .background(Circle().fill(Ink.ink))
-                                    .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
-                                    .offset(x: 8, y: 8)
-                                    .scaleEffect(locked ? 1 : 0.01)
-                            }
-                            .animation(.spring(response: 0.35, dampingFraction: 0.55).delay(locked ? 0.15 + Double(i) * 0.12 : 0), value: locked)
-                    }
+                if hasApps {
+                    appRow
+                        .padding(.top, 10)
+                        .padding(.bottom, 6)
+                } else {
+                    Text("Pick them on the Focus screen anytime.")
+                        .font(PrintFont.body(14, .medium))
+                        .foregroundStyle(Self.soft)
+                        .padding(.top, 6)
                 }
-                .padding(.top, 10)
-                .padding(.bottom, 6)
             }
         }
         .padding(16)
@@ -336,8 +335,60 @@ private struct SessionPreview: View {
         .overlay(shape.strokeBorder(Ink.ink, lineWidth: 2))
         .background(shape.fill(Ink.ink).offset(y: 5))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(locked ? "Locked in. \(minutes) minutes. Your distracting apps wait till you're done."
-                                   : "Ready: \(minutes) minutes. Your distracting apps will wait till you're done.")
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var hasApps: Bool { restrictions.hasSelection }
+
+    /// Picked apps, then picked categories, then websites when that switch is on; "+N" for the rest.
+    private var appRow: some View {
+        let apps = Array(restrictions.selection.applicationTokens)
+        let cats = Array(restrictions.selection.categoryTokens)
+        let web = RestrictionNaming.blocksWeb(BrainLevel.shared)
+        let shownApps = Array(apps.prefix(Self.maxIcons))
+        let shownCats = Array(cats.prefix(max(0, Self.maxIcons - shownApps.count)))
+        let extra = apps.count + cats.count - shownApps.count - shownCats.count
+        return HStack(spacing: 14) {
+            ForEach(Array(shownApps.enumerated()), id: \.offset) { i, token in
+                tile(i) { Label(token).labelStyle(.iconOnly) }
+            }
+            ForEach(Array(shownCats.enumerated()), id: \.offset) { i, token in
+                tile(shownApps.count + i) { Label(token).labelStyle(.iconOnly) }
+            }
+            if extra > 0 {
+                Text("+\(extra)")
+                    .font(PrintFont.bold(16))
+                    .foregroundStyle(Ink.ink)
+                    .frame(width: 44, height: 44)
+            } else if web {
+                tile(shownApps.count + shownCats.count) { AppKindIcon(kind: .web, size: 44) }
+            }
+        }
+    }
+
+    /// One picked app: its real icon, greyed when locked, with a lock that pops on one by one.
+    private func tile<Icon: View>(_ i: Int, @ViewBuilder icon: () -> Icon) -> some View {
+        icon()
+            .frame(width: 44, height: 44)
+            .saturation(locked ? 0.2 : 1)
+            .opacity(locked ? 0.8 : 1)
+            .overlay(alignment: .bottomTrailing) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(Ink.ink))
+                    .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
+                    .offset(x: 7, y: 7)
+                    .scaleEffect(locked ? 1 : 0.01)
+            }
+            .animation(.spring(response: 0.35, dampingFraction: 0.55).delay(locked ? 0.15 + Double(i) * 0.12 : 0), value: locked)
+    }
+
+    private var accessibilityText: String {
+        let what = task.map { "\($0), " } ?? ""
+        let apps = hasApps ? "Your picked apps wait till you're done." : "No apps picked yet."
+        return locked ? "Locked in. \(what)\(minutes) minutes. \(apps)" : "Ready: \(what)\(minutes) minutes. \(apps)"
     }
 
     private func remaining(at now: Date) -> TimeInterval {
@@ -414,21 +465,19 @@ struct LaterStep: View {
     @State private var opened = Date.now
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
-    /// The round mark on a ping: a person's initial or a plain symbol, never an app icon.
+    /// A ping: a stand-in app icon for its kind of app (`AppKindIcon`, never a real app's), the kind as
+    /// the app name, and the line.
     private struct Note {
-        let initial: String?
-        let symbol: String
-        let tile: Color
-        let glyph: Color
+        let kind: AppKindIcon.Kind
         let app: String
         let text: String
     }
 
     private static let notes = [
-        Note(initial: "M", symbol: "", tile: Ink.blue, glyph: .white, app: "Social", text: "Mia and 11 others liked your post"),
-        Note(initial: nil, symbol: "play.fill", tile: Ink.red, glyph: .white, app: "Video", text: "Up next in 5\u{2026} 4\u{2026} 3\u{2026}"),
-        Note(initial: nil, symbol: "star.fill", tile: Ink.sun, glyph: Ink.ink, app: "Games", text: "Your free spin is ready"),
-        Note(initial: "C", symbol: "", tile: Ink.ink, glyph: .white, app: "Chat", text: "3 new messages in Squad"),
+        Note(kind: .social, app: "Social", text: "Mia and 11 others liked your post"),
+        Note(kind: .video, app: "Video", text: "Up next in 5\u{2026} 4\u{2026} 3\u{2026}"),
+        Note(kind: .games, app: "Games", text: "Your free spin is ready"),
+        Note(kind: .chat, app: "Chat", text: "3 new messages in Squad"),
     ]
 
     private var allGone: Bool { gone.count == Self.notes.count }
@@ -492,16 +541,7 @@ struct LaterStep: View {
         let isGone = gone.contains(i)
         let dx: CGFloat = drag[i] ?? 0
         return HStack(spacing: 10) {
-            Group {
-                if let initial = note.initial {
-                    Text(initial).font(.system(size: 16, weight: .bold, design: .rounded))
-                } else {
-                    Image(systemName: note.symbol).font(.system(size: 14, weight: .semibold))
-                }
-            }
-            .foregroundStyle(note.glyph)
-            .frame(width: 36, height: 36)
-            .background(Circle().fill(note.tile))
+            AppKindIcon(kind: note.kind, size: 36)
             VStack(alignment: .leading, spacing: 1) {
                 HStack {
                     Text(note.app).font(.system(size: 13, weight: .bold)).foregroundStyle(Ink.ink)

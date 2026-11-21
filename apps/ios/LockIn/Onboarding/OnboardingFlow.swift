@@ -4,7 +4,8 @@ import SwiftUI
 ///
 /// The long way is the default: the first slide opens it, and "Skip intro" ends it so the Focus screen's
 /// coach takes over (task, minutes, distracting apps, one hold to start). The introduction goes:
-/// guess, real hours, what they mean, two how-it-works slides, what pulls you in, lock apps, goals,
+/// guess, real hours, what they mean, two how-it-works slides, two about the PC app, what pulls you
+/// in, lock apps, goals,
 /// when works for you (no time is set for the user),
 /// the plan, the Plus offer ("Not now" is one tap), without Plus the free Locked session a week,
 /// and last a real "slide to lock in" that starts
@@ -13,7 +14,7 @@ import SwiftUI
 /// never read them), so slides 3 and 4 are drawn by it. Without Screen Time access, or without the
 /// extension, slide 4 uses the guess.
 struct OnboardingFlow: View {
-    static let stepCount = 13
+    static let stepCount = 15
 
     enum Step: Int {
         case hook = 1, guess, reveal, brain, appsWait, comeBack, pulls, lock, goals, plan, plus, slide
@@ -21,6 +22,8 @@ struct OnboardingFlow: View {
         case whenPick
         /// The free Locked session a week (`FreeLockGiftStep.swift`): after the Plus offer, without Plus.
         case freeLock
+        /// SwipeLater for Windows (`PCSteps.swift`): after "Every session fills in a day".
+        case pcLock, pcLater
 
         /// Every slide is light now (calm palette), so the status bar text stays dark.
         var isDark: Bool { false }
@@ -95,7 +98,9 @@ struct OnboardingFlow: View {
         case .reveal: advance(to: .brain)
         case .brain: advance(to: .appsWait)
         case .appsWait: advance(to: .comeBack)
-        case .comeBack: advance(to: .pulls)
+        case .comeBack: advance(to: .pcLock)
+        case .pcLock: advance(to: .pcLater)
+        case .pcLater: advance(to: .pulls)
         case .pulls:
             Analytics.track("pulls_chosen", ["pulls": categories.sorted(), "count": categories.count])
             advance(to: .lock)
@@ -178,14 +183,17 @@ struct OnboardingFlow: View {
         Analytics.track("onboarding_completed", ["start_now": startNow, "skipped_intro": step == .hook,
                                                  "last_step": step.name])
         OnboardingStore.save(hoursIndex: hoursIndex, categories: categories, goals: goals)
-        if let choice = timeChoice, var plan = PlanStore.load() {
+        if timeChoice != nil, var plan = PlanStore.load() {
             let hasPlus = plus.hasPlus
             // Fitted-to-each-day is Plus; without it, one time for every day.
             if !hasPlus, plan.dayStarts != nil { plan.dayStarts = nil; PlanStore.save(plan) }
-            choice.schedule.save()
+            // The time slide only shows the two ways (nudge free, auto lock with Plus); with Plus
+            // (bought at the end, or already had) the apps lock by themselves.
+            let schedule = LockInSchedule(then: hasPlus ? .autoLock : .remind)
+            schedule.save()
             let saved = plan
             Task { @MainActor in
-                await ScheduleApplier.apply(plan: saved, schedule: choice.schedule, hasPlus: hasPlus, restrictions: restrictions)
+                await ScheduleApplier.apply(plan: saved, schedule: schedule, hasPlus: hasPlus, restrictions: restrictions)
             }
         }
         onFinish(startNow)
@@ -207,9 +215,11 @@ struct OnboardingFlow: View {
                 case .pulls: PullsStep(categories: $categories, next: next)
                 case .lock: LockAppsStep(restrictions: restrictions, next: next)
                 case .goals: GoalsStep(goals: $goals, next: next)
-                case .slide: SlideToLockStep(next: next)
+                case .slide: SlideToLockStep(restrictions: restrictions, next: next, notNow: { finish(startNow: false) })
                 case .appsWait: LaterStep(next: next)
                 case .comeBack: StackDaysStep(next: next)
+                case .pcLock: PCLockStep(next: next)
+                case .pcLater: PCLaterStep(next: next)
                 case .plan:
                     PlanStep(hoursIndex: hoursIndex, realShown: usedReport, categories: categories, goals: goals,
                              easier: $easier, timeChoice: timeChoice, cantDo: openWhen, next: next)

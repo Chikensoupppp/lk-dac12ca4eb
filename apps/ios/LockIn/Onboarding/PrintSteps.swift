@@ -211,13 +211,13 @@ struct RevealStep: View {
     @State private var lifted = false
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
-    /// Room for the report: its stamp hangs below the receipt, over the "days a year" line's gap.
+    /// Room for the report (number, guess line, days a year, the Most used card).
     private static let height: CGFloat = 574
 
     var body: some View {
-        // No grain here: the cover below is flat paper, and grain would show its edges.
-        PrintScaffold(step: 3, tag: "Your phone time", tagColor: OutlinedText.orangeDeep,
-                      primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
+        // No grain here: the cover below is flat paper, and grain would show its edges. No tag either:
+        // the report's own "Daily average" label heads the slide (Apple Screen Time style, 2026-11-20).
+        PrintScaffold(step: 3, primaryTitle: "NEXT", primaryEnabled: showReport, primaryAction: next) {
             ZStack(alignment: .top) {
                 // Only seen if Apple's report is still drawing when the cover lifts.
                 VStack(spacing: 14) {
@@ -548,19 +548,18 @@ struct PullsStep: View {
     private struct Kind {
         let name: String
         let examples: String
-        let symbol: String
-        let color: Color
-        let glyph: Color
+        /// A stand-in app icon for this kind of app (`AppKindIcon`), so each row reads as apps at a glance.
+        let icon: AppKindIcon.Kind
     }
 
     /// The names are what the plan and `OnboardingStore` keep, so they stay as they were.
     private static let kinds: [Kind] = [
-        Kind(name: "Video", examples: "YouTube, TikTok, streaming", symbol: "play.fill", color: Ink.blue, glyph: .white),
-        Kind(name: "Social", examples: "Instagram, Snapchat, X, Reddit", symbol: "person.2.fill", color: Ink.red, glyph: .white),
-        Kind(name: "Games", examples: "Just one more round", symbol: "gamecontroller.fill", color: Ink.sun, glyph: Ink.ink),
-        Kind(name: "Chat", examples: "Group chats, Discord", symbol: "bubble.left.and.bubble.right.fill", color: Ink.ink, glyph: .white),
-        Kind(name: "Shopping", examples: "Scrolling deals and carts", symbol: "bag.fill", color: Ink.blue, glyph: .white),
-        Kind(name: "News", examples: "Headlines, sports scores", symbol: "newspaper.fill", color: Ink.red, glyph: .white)
+        Kind(name: "Video", examples: "YouTube, TikTok, streaming", icon: .video),
+        Kind(name: "Social", examples: "Instagram, Snapchat, X, Reddit", icon: .social),
+        Kind(name: "Games", examples: "Just one more round", icon: .games),
+        Kind(name: "Chat", examples: "Group chats, Discord", icon: .chat),
+        Kind(name: "Shopping", examples: "Scrolling deals and carts", icon: .shopping),
+        Kind(name: "News", examples: "Headlines, sports scores", icon: .news)
     ]
     private static let reactions = ["Be honest.", "Same here.", "Classic combo.", "Big ones. Got it."]
     private static let exampleInk = Color(hex: 0x3F413B)
@@ -570,7 +569,7 @@ struct PullsStep: View {
 
     var body: some View {
         // The headline is drawn here (not by the scaffold) so the brain can sit beside it.
-        PrintScaffold(step: 7, tag: "Make it yours", grain: true,
+        PrintScaffold(step: 9, tag: "Make it yours", grain: true,
                       primaryTitle: "NEXT", primaryEnabled: !categories.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             header
@@ -663,12 +662,7 @@ struct PullsStep: View {
             if on { categories.remove(kind.name) } else { categories.insert(kind.name) }
         } label: {
             HStack(spacing: 13) {
-                Image(systemName: kind.symbol)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(kind.glyph)
-                    .frame(width: 38, height: 38)
-                    .background(Circle().fill(kind.color))
-                    .overlay(Circle().strokeBorder(Ink.ink, lineWidth: 2))
+                AppKindIcon(kind: kind.icon, size: 40)
                     .keyframeAnimator(initialValue: Hop(), trigger: reduceMotion ? false : on) { view, v in
                         view.offset(y: v.y).rotationEffect(.degrees(v.r))
                     } keyframes: { _ in
@@ -770,7 +764,7 @@ struct LockAppsStep: View {
         let has = restrictions.hasSelection
         // No session runs during the first run, so the apps are picked, not locked yet.
         let words = LockWords(chosen: has ? lockedCount : 0, shieldsOn: false)
-        PrintScaffold(step: 8, tag: "Make it yours", title: has ? "Locked while\nyou focus." : "Which apps\nto block?", grain: true,
+        PrintScaffold(step: 10, tag: "Make it yours", title: has ? "Locked while\nyou focus." : "Which apps\nto block?", grain: true,
                       primaryTitle: primaryTitle(has), primaryAction: { primary(has) },
                       secondaryTitle: has ? "Change apps" : "Skip for now",
                       secondaryAction: { has ? (picking = true) : next() }) {
@@ -889,7 +883,7 @@ struct YearStep: View {
     private var focusDays: Int { OnboardingMath.focusDaysPerYear(minutesPerDay: 25) }
 
     var body: some View {
-        PrintScaffold(step: 7, tag: "What it adds up to", title: "Your next\nyear.", grain: true,
+        PrintScaffold(step: 9, tag: "What it adds up to", title: "Your next\nyear.", grain: true,
                       primaryTitle: "LET\u{2019}S DO IT", primaryAction: next) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(shown) DAYS")
@@ -978,7 +972,7 @@ struct GoalsStep: View {
     ]
 
     var body: some View {
-        PrintScaffold(step: 9, tag: "Make it yours", background: Ink.notebook, title: "What do you\nwant more of?",
+        PrintScaffold(step: 11, tag: "Make it yours", background: Ink.notebook, title: "What do you\nwant more of?",
                       primaryTitle: "NEXT", primaryEnabled: !goals.isEmpty, primaryAction: next,
                       secondaryTitle: "Skip", secondaryAction: next) {
             VStack(alignment: .leading, spacing: 0) {
@@ -1108,7 +1102,7 @@ struct PlanStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 11, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
+        PrintScaffold(step: 13, tag: "Your plan", title: "Your lock-in\nplan.", grain: true,
                       primaryTitle: "THIS IS MY PLAN", primaryAction: accept,
                       secondaryTitle: easeAction == nil ? nil : "Make it easier", secondaryAction: easeAction) {
             VStack(spacing: 0) {
@@ -1321,7 +1315,7 @@ struct PromiseStep: View {
     }
 
     var body: some View {
-        PrintScaffold(step: 10, tag: "Your promise", title: "One small\ncommitment.", grain: true,
+        PrintScaffold(step: 12, tag: "Your promise", title: "One small\ncommitment.", grain: true,
                       primaryView: AnyView(holdButton),
                       secondaryTitle: "Not now", secondaryAction: { signed = false; next() }) {
             VStack(alignment: .leading, spacing: 12) {

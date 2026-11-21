@@ -303,7 +303,21 @@ Week report and history screens rebuilt (GoalViews.swift, free = 3 newest saved 
 
 > **Brand update (2026-11-17):** the iPhone app is now **SwipeLater** (was Nogbox / Lock In). The Windows app is still Nogbox. Internal IDs (`LockIn*`, `lockin.*`, `nogbox://`) did not change. See `docs/BRANDING.md`.
 
-## Free weekly Locked session + gift slide · 2026-11-20 (uncommitted, not compiled)
+## End of the intro fixed + two PC slides · 2026-11-20 (uncommitted, not compiled; Brandon: "dont push, fix it first")
+
+- Time slide (`WhenSteps.ThenInfoCards`; the schedule sheet keeps the selectable `ThenCards`): "Remind me" (FREE) and "Lock by itself" (PLUS) are shown, not picked. The schedule is saved as a reminder, and `OnboardingFlow.finish` makes it the auto lock when the user has Plus at the end (bought on the offer slide or already had it).
+- Plus offer (`PlusOfferStep.planRow`): one row per plan with a radio, the billed price big on the right with "/ year" or "/ month", and the per-month figure only as "$x a month, billed yearly" under Yearly (it read like a monthly price before).
+- Last slide (`SlideToLockStep` / `SessionPreview`): built from the plan and the picks: "<task>, session 1", the plan's minutes, "Ends <time>", "1 of N today", the picked apps' real icons (`Label(token)`, up to 5, "+N"), a globe when websites are blocked. The made-up apps and chips are gone. New "Not now" ends the intro without starting a session.
+- New slides 7 and 8 (`Onboarding/PCSteps.swift`, steps `.pcLock`, `.pcLater` after `.comeBack`): "Your PC locks in too." (phone locks in, the PC shows LOCKED IN, the desk buddy asks "Is this for your work?", Back to work minimizes the video) and "Save it for later." (the video goes to a LATER card, two more links follow, SESSION DONE opens the list). Tappable buttons, or they play by themselves. `stepCount` 13 to 15; later slides renumbered. UI tests tap NEXT through both (captures `onboarding-6b-pc-lock`, `onboarding-6c-pc-later`).
+- Previews (HTML, not SwiftUI): `docs/design/end-slides-v3.html`, `end-slides-fixes.png`, `pc-slides.mp4`. NOT verified: compile, the real look on a phone.
+- Stand-in app icons (Brandon: "make the icons easier to get … all the fake icons for apps"): new `Onboarding/AppKindIcon.swift` (iOS-style squircle per kind of app, one white SF Symbol, no real logos) replaces the letter/circle tiles on slide 5 (pings), slide 9 ("What pulls you in?"), the PC slides (LATER list, flying links, the red video thumbnail) and the last slide's websites tile. Preview over real CI captures: `docs/design/app-icons-before-after.png`. The App Store pictures still use the older glyph tiles.
+
+## Slide 3 (real hours) in Apple style · 2026-11-20 (uncommitted, not compiled)
+
+- Brandon: "slide 3 i want it to pop more with the answer of how many hours and minimalize the other things just use apple style of design". `LockInReport/RevealView.swift` rewritten: "Daily average", the hours big (SF Pro bold, grey units), one line against the guess (arrow.up/down/checkmark symbol), "That's N days a year.", and a "Most used" card with the top 3 apps (`Label(token)` icons, which only the report extension can draw; initial as fallback). Receipt, stamp, pickups and the outlined compressed number are gone. `RevealStep` (PrintSteps.swift) dropped its "Your phone time" tag; the report keeps its 574 pt height and the "check your guess" cover is unchanged.
+- NOT verified: compile; the look on a phone (the simulator has no Screen Time, so CI never shows this slide). Only the HTML preview `docs/design/reveal-apple.html` / `.png` was rendered. App Store picture #2 still shows the old receipt screen.
+
+## Free weekly Locked session + gift slide · 2026-11-20 (pushed in bf3348c, CI 44832719865 passed, TestFlight build 127)
 
 Brandon: "make it so that the free users can kinda lock it", then "1 a week and they get one for free, make like a cool animation after the onboarding and say you get unlimited with Plus".
 

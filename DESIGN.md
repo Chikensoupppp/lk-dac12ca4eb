@@ -48,6 +48,28 @@ The pink brain sits inside the dial above the time. Use the bundled `BrainExact`
 - Borrowed from: Apple Fitness (closing ring + burst), Duolingo (rolling streak number, built in Rive),
   Headspace (one calm hero, little text).
 
+## Slide 3, the real hours (2026-11-20, Apple Screen Time style)
+- Brandon: make the hours pop, keep everything else minimal, Apple style. `LockInReport/RevealView.swift`:
+  grey "Daily average", the hours as the one big thing (SF Pro bold 132 pt digits, 50 pt grey units,
+  like Screen Time and Fitness), one orange line against the guess ("4 hours more than you guessed"),
+  "That's 152 days a year." in grey, and a light "Most used" card (real app icons, thin bars, top 3).
+  No receipt, stamp, pickups, outlined compressed type or slide tag. Preview: docs/design/reveal-apple.png.
+
+## Stand-in app icons (2026-11-20)
+- Anywhere the app shows apps that aren't the user's own (slide 5 pings, "What pulls you in?", the PC
+  slides, the last slide's websites tile): `AppKindIcon`, an iOS-style squircle in that kind's usual
+  colors with one white symbol (video red play, social pink heart, games purple controller, chat blue
+  bubbles, shopping orange bag, news grey paper, web blue globe). Brandon: letter tiles were hard to get.
+  Never a real app's logo or look. The user's own apps are always Apple's real icons (`Label(token)`).
+
+## End of the intro (2026-11-20)
+- Show real data from the user's own answers on the last slide (plan task and minutes, end time, the
+  apps they picked). Never placeholder apps or features that don't exist.
+- Free vs Plus on the time slide is information, not a choice; the paywall is the one place to buy.
+- Paywall plans: one row each, billed price big with its period ("/ year"), per-month only as a note.
+- PC slides (`PCSteps.swift`): a print-style laptop (ink lid, cream screen) with real PC features only:
+  the desk buddy's "Is this for your work?" and Save for later. Preview `docs/design/pc-slides.mp4`.
+
 ## Free weekly Locked session (2026-11-20, not yet seen on device)
 - Free users get one Locked session a week; Plus is every session. Shown once, after the Plus offer
   ("Not now"), as `FreeLockGiftStep`: "One locked session a week, on us."

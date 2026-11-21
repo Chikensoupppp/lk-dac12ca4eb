@@ -2,153 +2,173 @@ import FamilyControls
 import ManagedSettings
 import SwiftUI
 
-/// "Here's your number." The guess (crossed out when it was off), the real daily average, and a printed receipt of the top apps.
-/// Same inks as the app's printed onboarding (copied here; the extension cannot share app code).
+/// "Here's your number." Apple Screen Time style (Brandon, 2026-11-20: make the hours pop, keep the
+/// rest minimal): a small "Daily average" label, the hours as the one big thing, one line against the
+/// guess, a quiet days-a-year line, and a plain "Most used" card. SF Pro only, no print effects.
+/// The app gives this report a fixed 574 pt of height (`RevealStep.height`).
 struct RevealView: View {
     let data: RevealData
 
     /// Paper, to match the app slides (the calm palette keeps color off full backgrounds).
     private static let paper = Color(red: 0.906, green: 0.910, blue: 0.890)
     private static let ink = Color(red: 0.08, green: 0.07, blue: 0.06)
-    private static let receipt = Color(red: 0.965, green: 0.945, blue: 0.906)
-    /// Everything that was red on this slide is riso orange now (orange option O2).
-    private static let red = OutlinedText.orangeDeep
-    private static let orange = OutlinedText.orangeDeep
-    private static let bands = ["1\u{2013}2 HRS", "3\u{2013}4 HRS", "5\u{2013}6 HRS", "7+ HRS"]
+    private static let secondary = Color(red: 0.08, green: 0.07, blue: 0.06).opacity(0.55)
+    private static let card = Color.white.opacity(0.72)
+    private static let more = OutlinedText.orangeDeep
+    private static let less = Color(red: 0.16, green: 0.55, blue: 0.31)
+    private static let bandText = ["1\u{2013}2 hours", "3\u{2013}4 hours", "5\u{2013}6 hours", "7+ hours"]
     /// Top of each guess band, in hours; 7+ has no top.
     private static let bandTop: [Double] = [2, 4, 6, .infinity]
     private static let bandBottom: [Double] = [0, 2, 4, 6]
 
     private var hours: Double { data.perDay / 3600 }
 
-    /// How the real average compares with the band the user guessed.
-    private var verdict: String? {
-        guard let g = data.guess else { return nil }
-        if hours > Self.bandTop[g] { return "That\u{2019}s more than you guessed." }
-        if hours < Self.bandBottom[g] { return "That\u{2019}s less than you guessed." }
-        return "You were close."
-    }
-
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             Self.paper.ignoresSafeArea()
-            if data.daysWithData == 0 {
-                empty
-            } else {
-                filled
-            }
+            if data.daysWithData == 0 { empty } else { filled }
         }
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("NO HISTORY YET.")
-                .font(.system(size: 52, weight: .black).width(.compressed))
-            Text("This iPhone has no Screen Time history for this week. We\u{2019}ll use your guess for now.")
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Daily average")
                 .font(.system(size: 17, weight: .semibold))
-            Spacer()
+                .foregroundStyle(Self.secondary)
+            Text("No history yet")
+                .font(.system(size: 40, weight: .bold))
+                .foregroundStyle(Self.ink)
+            Text("This iPhone has no Screen Time for this week. We\u{2019}ll use your guess for now.")
+                .font(.system(size: 17))
+                .foregroundStyle(Self.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .foregroundStyle(Self.ink)
+        .padding(.top, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var filled: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("YOUR DAILY AVERAGE:")
-                .font(.system(size: 56, weight: .black).width(.compressed))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-            if let g = data.guess {
-                HStack(spacing: 6) {
-                    Text("YOU GUESSED:")
-                    // Crossed out only when the guess was off.
-                    Text(Self.bands[g]).strikethrough(verdict != "You were close.", color: Self.ink)
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Daily average")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Self.secondary)
+                .padding(.top, 8)
+            hero
+                .padding(.top, 2)
+            if let line = guessLine {
+                Label {
+                    Text(line.text)
+                } icon: {
+                    Image(systemName: line.symbol)
                 }
-                .font(.system(size: 14, weight: .heavy, design: .monospaced))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(line.color)
+                .padding(.top, 2)
             }
-            OutlinedText(text: Self.duration(data.perDay), font: .system(size: 110, weight: .black).width(.compressed),
-                         ink: Self.ink, outline: 2.5, drop: 5)
-                .padding(.bottom, 4)
-            if let verdict {
-                Text(verdict)
-                    .font(.system(size: 20, weight: .heavy).width(.condensed))
-                    .foregroundStyle(Self.orange)
+            yearLine
+                .padding(.top, 28)
+            if !data.topApps.isEmpty {
+                mostUsed
+                    .padding(.top, 36)
             }
-            receipt
-                .padding(.top, 10)
-            (Text("THAT\u{2019}S ")
-                + Text("\(Int((hours * 365 / 24).rounded())) DAYS").foregroundColor(Self.orange)
-                + Text(" A YEAR."))
-                .font(.system(size: 26, weight: .black).width(.compressed))
-                // Clear of the stamp that hangs off the receipt's corner (the app gives this
-                // report 14 pt more height for it).
-                .padding(.top, 24)
+            Spacer(minLength: 0)
         }
-        .foregroundStyle(Self.ink)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var receipt: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("YOUR RECEIPT").font(.system(size: 15, weight: .heavy, design: .monospaced)).tracking(2)
-                .frame(maxWidth: .infinity)
-            Text("THIS WEEK \u{00B7} PER DAY").font(.system(size: 12, weight: .medium, design: .monospaced))
-                .frame(maxWidth: .infinity)
-            dashes
-            ForEach(data.topApps) { app in
-                HStack(spacing: 8) {
-                    // A plain initial, not the app's own icon.
-                    Text(String(app.name.prefix(1)).uppercased())
-                        .font(.system(size: 10, weight: .heavy))
-                        .foregroundStyle(Self.receipt)
-                        .frame(width: 18, height: 18)
-                        .background(Circle().fill(Self.ink))
-                    row(app.name, Self.duration(app.seconds), bold: false)
+    /// The number: big bold digits, small grey units, like Screen Time and Fitness.
+    private var hero: some View {
+        let m = Int((data.perDay / 60).rounded())
+        let digits = Font.system(size: 132, weight: .bold).monospacedDigit()
+        let units = Font.system(size: 50, weight: .semibold)
+        return (Text("\(m / 60)").font(digits).foregroundColor(Self.ink)
+                + Text("h ").font(units).foregroundColor(Self.secondary)
+                + Text("\(m % 60)").font(digits).foregroundColor(Self.ink)
+                + Text("m").font(units).foregroundColor(Self.secondary))
+            .tracking(-2)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .accessibilityLabel("\(m / 60) hours \(m % 60) minutes a day")
+    }
+
+    /// One line against the guess: how far over, close, or under.
+    private var guessLine: (text: String, symbol: String, color: Color)? {
+        guard let g = data.guess else { return nil }
+        let top = Self.bandTop[g], bottom = Self.bandBottom[g]
+        if hours > top {
+            let over = Int((hours - top).rounded())
+            let amount = over >= 1 ? "\(over) hour\(over == 1 ? "" : "s") more" : "A bit more"
+            return ("\(amount) than you guessed", "arrow.up.circle.fill", Self.more)
+        }
+        if hours < bottom { return ("Less than you guessed (\(Self.bandText[g]))", "arrow.down.circle.fill", Self.less) }
+        return ("Right where you guessed", "checkmark.circle.fill", Self.ink)
+    }
+
+    private var yearLine: some View {
+        let days = Int((hours * 365 / 24).rounded())
+        return (Text("That\u{2019}s ") + Text("\(days) days").fontWeight(.bold).foregroundColor(Self.ink) + Text(" a year."))
+            .font(.system(size: 20, weight: .medium))
+            .foregroundStyle(Self.secondary)
+    }
+
+    /// Top three apps, Screen Time style: icon, name, a thin bar against the top app, time.
+    private var mostUsed: some View {
+        let apps = Array(data.topApps.prefix(3))
+        let longest = max(apps.first?.seconds ?? 1, 1)
+        return VStack(alignment: .leading, spacing: 14) {
+            Text("MOST USED")
+                .font(.system(size: 13, weight: .semibold))
+                .tracking(0.4)
+                .foregroundStyle(Self.secondary)
+            ForEach(apps) { app in
+                HStack(spacing: 12) {
+                    icon(app)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(app.name)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Self.ink)
+                                .lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text(Self.short(app.seconds))
+                                .font(.system(size: 15, weight: .medium).monospacedDigit())
+                                .foregroundStyle(Self.secondary)
+                        }
+                        GeometryReader { g in
+                            Capsule()
+                                .fill(Self.ink.opacity(0.6))
+                                .frame(width: max(6, g.size.width * app.seconds / longest), height: 4)
+                        }
+                        .frame(height: 4)
+                    }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(app.name), \(Self.short(app.seconds)) a day")
             }
-            dashes
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("TOTAL").lineLimit(1)
-                Text(String(repeating: ".", count: 60)).lineLimit(1).opacity(0.35).layoutPriority(-1)
-                Text(Self.duration(data.perDay)).lineLimit(1).layoutPriority(1).foregroundStyle(Self.orange)
-            }
-            .font(.system(size: 18, weight: .heavy, design: .monospaced))
-            row("PICKUPS", "\u{00D7}\(data.pickupsPerDay)", bold: false).foregroundStyle(Self.red)
         }
-        .padding(18)
-        .padding(.bottom, 8)
-        .background(Self.receipt)
-        .rotationEffect(.degrees(1))
-        .shadow(color: .black.opacity(0.3), radius: 14, y: 12)
-        .overlay(alignment: .bottomTrailing) {
-            Text(hours >= 3 ? "THAT\u{2019}S A LOT" : "NOT BAD")
-                .font(.system(size: 22, weight: .black).width(.compressed))
-                .foregroundStyle(Self.red)
-                .padding(.horizontal, 12).padding(.vertical, 5)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Self.receipt.opacity(0.92)))
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Self.red, lineWidth: 3.5))
-                .rotationEffect(.degrees(-9))
-                .offset(x: -6, y: 6)
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Self.card))
+    }
+
+    /// The app's own icon when Apple gives a token (only drawn here, inside the report), else its initial.
+    @ViewBuilder
+    private func icon(_ app: RevealData.AppTime) -> some View {
+        if let token = app.token {
+            Label(token)
+                .labelStyle(.iconOnly)
+                .frame(width: 32, height: 32)
+        } else {
+            Text(String(app.name.prefix(1)).uppercased())
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Self.ink.opacity(0.8)))
         }
     }
 
-    private var dashes: some View {
-        Rectangle()
-            .stroke(Self.ink.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
-            .frame(height: 1)
-    }
-
-    private func row(_ label: String, _ value: String, bold: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(label).lineLimit(1)
-            Text(String(repeating: ".", count: 60)).lineLimit(1).opacity(0.35).layoutPriority(-1)
-            Text(value).lineLimit(1).layoutPriority(1)
-        }
-        .font(.system(size: bold ? 18 : 13, weight: bold ? .heavy : .medium, design: .monospaced))
-    }
-
-    private static func duration(_ seconds: TimeInterval) -> String {
+    /// "3h 52m", "45m".
+    private static func short(_ seconds: TimeInterval) -> String {
         let m = Int((seconds / 60).rounded())
-        return "\(m / 60)H \(String(format: "%02d", m % 60))M"
+        return m >= 60 ? "\(m / 60)h \(m % 60)m" : "\(m)m"
     }
 }

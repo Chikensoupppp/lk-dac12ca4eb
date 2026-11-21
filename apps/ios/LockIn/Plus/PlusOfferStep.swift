@@ -186,17 +186,21 @@ struct PlusOfferStep: View {
 
     // MARK: Plans and the timeline
 
-    /// Yearly (with the free trial) or monthly. Prices come from the App Store.
+    /// Yearly (with the free trial) over monthly, one row each, like the App Store's own sheets. The
+    /// billed price and its period are the big text on the right ("$29.99 / year"); the yearly row's
+    /// per-month figure is only the small line under its name, so it never reads as a monthly price
+    /// (Brandon, 2026-11-20). Prices come from the App Store.
     private var planPicker: some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 10) {
             if let yearly = plus.yearly {
-                planChip(id: PlusStore.yearlyID, title: "Yearly", price: yearly.displayPrice,
-                         note: perMonth(yearly).map { "\($0) a month" } ?? "Best value",
-                         badge: plus.trialDays(for: yearly).map { "\($0) DAYS FREE" })
+                planRow(id: PlusStore.yearlyID, title: "Yearly", price: yearly.displayPrice, period: "year",
+                        note: perMonth(yearly).map { "\($0) a month, billed yearly" } ?? "Billed once a year",
+                        badge: plus.trialDays(for: yearly).map { "\($0) DAYS FREE" })
             }
             if let monthly = plus.monthly {
-                planChip(id: PlusStore.monthlyID, title: "Monthly", price: monthly.displayPrice,
-                         note: plus.trialDays(for: monthly).map { "\($0) days free" } ?? "No free trial", badge: nil)
+                planRow(id: PlusStore.monthlyID, title: "Monthly", price: monthly.displayPrice, period: "month",
+                        note: plus.trialDays(for: monthly).map { "\($0) days free, then billed monthly" } ?? "Billed every month",
+                        badge: nil)
             }
         }
         .padding(.top, 6)
@@ -207,36 +211,53 @@ struct PlusOfferStep: View {
         return (product.price / 12).formatted(product.priceFormatStyle)
     }
 
-    private func planChip(id: String, title: String, price: String, note: String, badge: String?) -> some View {
+    private func planRow(id: String, title: String, price: String, period: String, note: String, badge: String?) -> some View {
         let on = plus.selectedID == id
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         return Button { plus.selectedID = id } label: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title.uppercased()).font(PrintFont.mono(11, .bold)).tracking(1.2).foregroundStyle(Self.softInk)
-                Text(price).font(PrintFont.head(24)).foregroundStyle(Ink.ink)
-                Text(note).font(PrintFont.body(13, .semibold)).foregroundStyle(Self.softInk)
-            }
-            .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-            .padding(.horizontal, 13)
-            .background(shape.fill(Color.white))
-            .overlay(shape.strokeBorder(on ? Ink.ink : Ink.ink.opacity(0.18), lineWidth: 2))
-            .background(shape.fill(Ink.ink).offset(y: on ? 4 : 0))
-            .overlay(alignment: .topTrailing) {
-                if let badge {
-                    Text(badge)
-                        .font(PrintFont.mono(10, .bold)).tracking(1)
-                        .foregroundStyle(Ink.ink)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Ink.sun))
-                        .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 2))
-                        .offset(x: -10, y: -11)
+            HStack(spacing: 12) {
+                // Radio, so it reads as "pick one".
+                ZStack {
+                    Circle().strokeBorder(on ? Ink.ink : Ink.ink.opacity(0.3), lineWidth: 2)
+                    if on { Circle().fill(Ink.ink).padding(5) }
                 }
+                .frame(width: 22, height: 22)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text(title).font(PrintFont.bold(18)).foregroundStyle(Ink.ink)
+                        if let badge {
+                            Text(badge)
+                                .font(PrintFont.mono(10, .bold)).tracking(0.8)
+                                .foregroundStyle(Ink.ink)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Ink.sun))
+                                .overlay(Capsule().strokeBorder(Ink.ink, lineWidth: 1.5))
+                                .fixedSize()
+                        }
+                    }
+                    Text(note)
+                        .font(PrintFont.body(13, .medium))
+                        .foregroundStyle(Self.softInk)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 6)
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(price).font(PrintFont.bold(20)).foregroundStyle(Ink.ink).monospacedDigit()
+                    Text("/ \(period)").font(PrintFont.body(12, .semibold)).foregroundStyle(Self.softInk)
+                }
+                .fixedSize()
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .background(shape.fill(Color.white))
+            .overlay(shape.strokeBorder(on ? Ink.ink : Ink.ink.opacity(0.16), lineWidth: 2))
+            .background(shape.fill(Ink.ink).offset(y: on ? 4 : 0))
             .animation(.easeOut(duration: 0.15), value: on)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel([title, price, note, badge?.lowercased()].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityLabel([title, "\(price) a \(period)", note, badge?.lowercased()].compactMap { $0 }.joined(separator: ", "))
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 

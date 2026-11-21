@@ -1,0 +1,51 @@
+<!doctype html><meta charset=utf-8>
+<!-- Slide 3 (the reveal), Apple Screen Time style (2026-11-20). Mirrors LockInReport/RevealView.swift
+     inside the slide's PrintScaffold (progress, Back, NEXT). Inter stands in for SF Pro on Windows.
+     Example: 10h 0m a day, guessed 5-6 hours. Rendered at 402x874, 3x. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Barlow+Condensed:wght@800&display=block" rel="stylesheet">
+<style>
+:root{--paper:#E7E8E3;--ink:#141210;--sec:rgba(20,18,16,.55);--more:#E85A1E}
+*{margin:0;box-sizing:border-box}
+body{width:402px;height:874px;overflow:hidden;background:var(--paper);font-family:Inter,system-ui;color:var(--ink);position:relative;-webkit-font-smoothing:antialiased}
+.status{height:54px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 34px 6px 42px;font:600 17px Inter}
+.island{position:absolute;top:11px;left:50%;width:124px;height:36px;margin-left:-62px;border-radius:20px;background:#000}
+.bars{display:flex;gap:3px;margin:12px 24px 0}.bars i{flex:1;height:4px;border-radius:2px;background:rgba(27,27,27,.18)}.bars i.on{background:#1B1B1B}
+.back{height:44px;padding-left:24px;display:flex;align-items:center}
+.c{padding:0 24px}
+.label{font:600 17px Inter;color:var(--sec);margin-top:8px}
+.hero{font-weight:700;letter-spacing:-2px;line-height:1.05;margin-top:2px;white-space:nowrap}
+.hero b{font-size:132px;font-weight:700;font-variant-numeric:tabular-nums}
+.hero span{font-size:50px;font-weight:600;color:var(--sec);margin-left:2px}
+.guess{display:flex;align-items:center;gap:6px;font:600 16px Inter;color:var(--more);margin-top:2px}
+.year{font:500 20px Inter;color:var(--sec);margin-top:28px}.year b{color:var(--ink)}
+.card{margin-top:36px;background:rgba(255,255,255,.72);border-radius:20px;padding:16px}
+.card h4{font:600 13px Inter;letter-spacing:.4px;color:var(--sec)}
+.row{display:flex;gap:12px;align-items:center;margin-top:14px}
+.ic{width:32px;height:32px;border-radius:8px;flex:none;display:grid;place-items:center}
+.nm{flex:1}.top{display:flex;justify-content:space-between;align-items:baseline}
+.top b{font:600 16px Inter}.top span{font:500 15px Inter;color:var(--sec);font-variant-numeric:tabular-nums}
+.bar{height:4px;border-radius:2px;background:rgba(20,18,16,.6);margin-top:6px}
+.btn{position:absolute;left:24px;right:24px;bottom:42px;height:60px;border-radius:30px;background:#1B1B1B;color:var(--paper);font:800 19px/60px 'Barlow Condensed';letter-spacing:2px;text-align:center}
+.home{position:absolute;bottom:8px;left:50%;width:140px;height:5px;margin-left:-70px;border-radius:3px;background:var(--ink)}
+</style>
+<body>
+<div class=island></div>
+<div class=status><span>9:41</span><span style="letter-spacing:2px;font-size:13px">●●● ▮</span></div>
+<div class=bars><i class=on></i><i class=on></i><i class=on></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class=back><svg width=12 height=20 viewBox="0 0 12 20"><path d="M10 2 2 10l8 8" fill=none stroke="#1B1B1B" stroke-width=3 stroke-linecap=round stroke-linejoin=round /></svg></div>
+<div class=c>
+  <div class=label>Daily average</div>
+  <div class=hero><b>10</b><span>h&nbsp;</span><b>0</b><span>m</span></div>
+  <div class=guess><svg width=17 height=17 viewBox="0 0 24 24"><circle cx=12 cy=12 r=11 fill="#E85A1E"/><path d="M12 17V7.5M7.8 11.5 12 7.3l4.2 4.2" fill=none stroke="#fff" stroke-width=2.6 stroke-linecap=round stroke-linejoin=round /></svg>4 hours more than you guessed</div>
+  <div class=year>That’s <b>152 days</b> a year.</div>
+  <div class=card>
+    <h4>MOST USED</h4>
+    <div class=row><div class=ic style="background:#D6455B"><svg width=16 height=16 viewBox="0 0 24 24"><path d="M8.5 6.2v11.6l9.6-5.8z" fill="#fff"/></svg></div><div class=nm><div class=top><b>Video app</b><span>3h 52m</span></div><div class=bar style="width:100%"></div></div></div>
+    <div class=row><div class=ic style="background:#3B6FD8"><svg width=17 height=17 viewBox="0 0 24 24"><path d="M4 6.5A3 3 0 0 1 7 3.5h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-6l-4.5 4v-4H7a3 3 0 0 1-3-3z" fill="#fff"/></svg></div><div class=nm><div class=top><b>Social app</b><span>3h 11m</span></div><div class=bar style="width:82%"></div></div></div>
+    <div class=row><div class=ic style="background:#6C4BD1"><svg width=18 height=18 viewBox="0 0 24 24"><path d="M7 7.5h10a5 5 0 0 1 4.6 7l-.9 2.2a2.3 2.3 0 0 1-3.8.6L15 15.5H9l-1.9 1.8a2.3 2.3 0 0 1-3.8-.6l-.9-2.2A5 5 0 0 1 7 7.5z" fill="#fff"/></svg></div><div class=nm><div class=top><b>Game</b><span>1h 46m</span></div><div class=bar style="width:46%"></div></div></div>
+  </div>
+</div>
+<div class=btn>NEXT</div>
+<div class=home></div>
+<script>document.fonts.ready.then(() => window.ready = true)</script>
+</body>

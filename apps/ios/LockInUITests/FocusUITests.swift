@@ -217,6 +217,9 @@ final class FocusUITests: XCTestCase {
         step("onboarding-4-brain", tap: "CONTINUE")
         step("onboarding-5-apps-wait", tap: "NEXT")
         step("onboarding-6-come-back", tap: "NEXT")
+        // Two slides about the PC app.
+        step("onboarding-6b-pc-lock", tap: "NEXT")
+        step("onboarding-6c-pc-later", tap: "NEXT")
         step("onboarding-7-pulls", tap: "NEXT", pre: { app.buttons["Social"].tap() })
         // Back returns to the previous slide with the choice kept.
         XCTAssertTrue(app.buttons["Skip for now"].waitForExistence(timeout: 10))
@@ -397,6 +400,8 @@ final class FocusUITests: XCTestCase {
         tap("Skip")                      // guess (no guess and no Screen Time: no hours slides)
         tap("NEXT")                      // apps and pings wait
         tap("NEXT")                      // every session fills in a day
+        tap("NEXT")                      // your PC locks in too
+        tap("NEXT")                      // save it for later
         tap("Skip")                      // what pulls you in
         tap("Skip for now")              // lock apps
         XCTAssertFalse(app.buttons["LET\u{2019}S DO IT"].exists)
