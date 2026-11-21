@@ -245,8 +245,18 @@ final class FocusUITests: XCTestCase {
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.staticTexts["first-lock-in-stamp"].exists, "the badge belongs to a finished session")
         capture("onboarding-session-running")
+        waitForIntroToClose(app)
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 5))
+    }
+
+    /// The intro fades out over the running session for about a second. A tap during that fade lands
+    /// on the intro, not on END SESSION (CI run 44869369509 tapped 0.3 s too early and failed), so wait
+    /// until the intro's last slide has left the screen.
+    private func waitForIntroToClose(_ app: XCUIApplication) {
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
+                                             object: app.buttons["onboarding-slide-knob"])
+        XCTAssertEqual(XCTWaiter.wait(for: [gone], timeout: 10), .completed, "the intro should close once the session starts")
     }
 
     /// The short way: "Skip intro" on the first slide goes straight to the coach.
@@ -413,6 +423,7 @@ final class FocusUITests: XCTestCase {
         tap("GOT IT")                    // one free Locked session a week
         tap("onboarding-slide-knob")     // slide to start: the first session runs
         XCTAssertTrue(app.buttons["END SESSION"].waitForExistence(timeout: 15))
+        waitForIntroToClose(app)
         app.buttons["END SESSION"].tap()
         XCTAssertTrue(app.buttons["LOCK IN"].waitForExistence(timeout: 10))
     }
